@@ -49,4 +49,5 @@ amarillenta es justamente lo que distingue la clase.
 
 ## Dependencias
 
-Requiere `opencv-python` y `matplotlib`: `pip install -e ".[experiments]"`
+Requiere `opencv-python-headless` (incluida en la instalación base) y `matplotlib`
+(`pip install -e ".[experiments]"`).
