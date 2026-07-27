@@ -20,6 +20,25 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
+def _loss_denominator(criterion: torch.nn.Module, labels: torch.Tensor) -> float:
+    """
+    Calcula el denominador con el que `criterion` normalizo la perdida del batch.
+
+    `CrossEntropyLoss(reduction="mean")` divide por la suma de los pesos de las
+    muestras del batch, no por su numero: sin pesos ambos coinciden, con pesos no.
+    Reponderar por el tamano del batch mezclaria las dos normalizaciones y sesgaria
+    la perdida reportada en contra de los batches ricos en clases minoritarias.
+
+    @param {torch.nn.Module} criterion Funcion de perdida usada en el batch.
+    @param {torch.Tensor} labels Etiquetas reales del batch.
+    @returns {float} Suma de pesos del batch, o su tamano si el criterio no lleva pesos.
+    """
+    weight = getattr(criterion, "weight", None)
+    if weight is None:
+        return float(labels.size(0))
+    return float(weight.detach()[labels].sum().item())
+
+
 def _metrics_from_predictions(
     labels: list[int], predictions: list[int], loss: float
 ) -> dict[str, float]:
@@ -42,6 +61,11 @@ def run_epoch(
     """
     Ejecuta una pasada completa sobre el loader, entrenando si se pasa optimizer.
 
+    La perdida de la epoca se promedia con el mismo denominador que aplico el criterio
+    en cada batch (suma de pesos con `weight`, tamano del batch sin el), de modo que
+    coincide con `sum(loss_i * w_i) / sum(w_i)` y no favorece a los batches con muchas
+    muestras de clases mayoritarias.
+
     @param {torch.nn.Module} model Modelo a ejecutar.
     @param {DataLoader} loader Origen de los batches.
     @param {torch.nn.Module} criterion Funcion de perdida.
@@ -55,7 +79,7 @@ def run_epoch(
     model.train(is_train)
 
     running_loss = 0.0
-    seen = 0
+    running_denominator = 0.0
     labels_all: list[int] = []
     preds_all: list[int] = []
     probs_all: list[float] = []
@@ -78,15 +102,15 @@ def run_epoch(
                     torch.nn.utils.clip_grad_norm_(model.parameters(), clip_grad_norm)
                 optimizer.step()
 
-            batch_size = labels.size(0)
-            running_loss += loss.item() * batch_size
-            seen += batch_size
+            denominator = _loss_denominator(criterion, labels)
+            running_loss += loss.item() * denominator
+            running_denominator += denominator
             labels_all.extend(labels.detach().cpu().tolist())
             probs = logits.detach().softmax(dim=1)
             preds_all.extend(probs.argmax(dim=1).cpu().tolist())
             probs_all.extend(probs.max(dim=1).values.cpu().tolist())
 
-    avg_loss = running_loss / max(seen, 1)
+    avg_loss = running_loss / running_denominator if running_denominator > 0 else 0.0
     metrics = _metrics_from_predictions(labels_all, preds_all, avg_loss)
     return metrics, labels_all, preds_all, probs_all
 
