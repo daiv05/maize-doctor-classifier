@@ -37,7 +37,7 @@ RUN ?=
 TOP_K ?=
 STABILITY_RUNS ?=
 
-.PHONY: compile-pdf install download-dataset splits splits-baseline train train-baselines inference explain-lime explain-report explain-errors test-loader summary docs-eda lint lint-fix fmt check clean-outputs modal-seed modal-train-baselines modal-clean-outputs modal-explain-lime modal-explain-report modal-explain-errors modal-pull
+.PHONY: compile-pdf install download-dataset splits splits-baseline train train-baselines inference explain-lime explain-report explain-errors test-loader summary docs-eda lint lint-fix fmt check clean-outputs modal-seed modal-train modal-train-baselines modal-clean-outputs modal-explain-lime modal-explain-report modal-explain-errors modal-pull
 
 install:
 	$(PIP) install -e ".[dev,analysis,xai,cloud]"
@@ -93,6 +93,16 @@ modal-train-baselines:
 		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
 		$(if $(NO_PRETRAINED),--no-pretrained,) \
 		$(if $(LIME),--lime,)
+
+modal-train:
+	$(MODAL) run scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
+		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
+		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
+		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
+		$(if $(CLASS_WEIGHTS),--class-weights "$(CLASS_WEIGHTS)",) \
+		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
+		$(if $(CLAHE),--clahe,) \
+		$(if $(NO_PRETRAINED),--no-pretrained,)
 
 modal-clean-outputs:
 	$(MODAL) run scripts/modal/train.py::clean_outputs

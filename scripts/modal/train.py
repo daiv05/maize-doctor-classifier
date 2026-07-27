@@ -111,6 +111,72 @@ def train_baselines(
     outputs_vol.commit()
 
 
+@app.function(
+    gpu="A10",
+    cpu=4.0,
+    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    secrets=[modal.Secret.from_name("hf")],
+    # El pipeline principal corre sobre las 31 623 imagenes (3.2x el perfil capado) con
+    # hasta 60 epocas: ~2-4 h por corrida. El techo de 8 h deja margen para la variante
+    # con CLAHE sin arriesgar una muerte por timeout a mitad de entrenamiento.
+    timeout=8 * 3600,
+)
+def train_main(
+    models: str = "shufflenet_v2_x1_0",
+    epochs: int = 60,
+    batch_size: int = 0,
+    learning_rate: float = 0.0,
+    class_weights: str = "",
+    label_smoothing: float = -1.0,
+    patience: int = 0,
+    clahe: bool = False,
+    no_pretrained: bool = False,
+    num_workers: int = 0,
+) -> None:
+    """
+    Entrena el pipeline principal en GPU, persistiendo en el Volume corn-outputs.
+
+    @param {str} models Modelos separados por espacio.
+    @param {int} epochs Techo de epocas; el early stopping puede cortar antes.
+    @param {int} batch_size 0 usa el default del script.
+    @param {float} learning_rate 0.0 usa el default del script.
+    @param {str} class_weights Estrategia de pesos; "" usa el default (sqrt_inverse).
+    @param {float} label_smoothing Negativo usa el default del script.
+    @param {int} patience 0 usa el default del script.
+    @param {bool} clahe Activa CLAHE como preprocesamiento.
+    @param {bool} no_pretrained Entrena desde cero.
+    @param {int} num_workers 0 usa el default del script.
+    """
+    dataset_vol.reload()
+    command = [
+        sys.executable,
+        "scripts/pipeline/train.py",
+        "--models",
+        *models.split(),
+        "--epochs",
+        str(epochs),
+    ]
+    if batch_size:
+        command += ["--batch-size", str(batch_size)]
+    if learning_rate:
+        command += ["--learning-rate", str(learning_rate)]
+    if class_weights:
+        command += ["--class-weights", class_weights]
+    if label_smoothing >= 0:
+        command += ["--label-smoothing", str(label_smoothing)]
+    if patience:
+        command += ["--patience", str(patience)]
+    if num_workers:
+        command += ["--num-workers", str(num_workers)]
+    if clahe:
+        command.append("--clahe")
+    if no_pretrained:
+        command.append("--no-pretrained")
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
 @app.function(volumes={"/outputs": outputs_vol}, timeout=600)
 def clean_outputs() -> None:
     """Vacía el contenido del Volume corn-outputs (splits/runs/reportes). No borra el Volume."""
