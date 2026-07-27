@@ -157,17 +157,18 @@ def fit(
             "val_accuracy": val_metrics["accuracy"],
             "val_macro_f1": val_metrics["macro_f1"],
             "epoch_seconds": perf_counter() - started,
+            "is_best": False,
         }
         if scheduler is not None:
             row["learning_rate"] = optimizer.param_groups[0]["lr"]
             scheduler.step()
-        history.append(row)
 
         if val_metrics["macro_f1"] > best_val_macro_f1:
             best_val_macro_f1 = val_metrics["macro_f1"]
             row["is_best"] = True
             if run_dir is not None:
                 torch.save(model.state_dict(), run_dir / "best.pth")
+        history.append(row)
         if run_dir is not None:
             torch.save(model.state_dict(), run_dir / "last.pth")
 
