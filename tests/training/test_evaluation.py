@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from src.training.evaluation import (
+    AGGREGATE_ROW_LABEL,
     compute_calibration_metrics,
     compute_environment_metrics,
     compute_grouped_metrics,
@@ -101,8 +102,8 @@ def test_compute_calibration_metrics_valores_calculados_a_mano():
     assert result["n_misses"] == 1
 
 
-def test_metricas_por_environment_separan_lab_y_real():
-    frame = pd.DataFrame(
+def _environment_frame() -> pd.DataFrame:
+    return pd.DataFrame(
         {
             "label": ["common_rust"] * 4,
             "pred_label": ["common_rust", "common_rust", "healthy", "healthy"],
@@ -110,11 +111,41 @@ def test_metricas_por_environment_separan_lab_y_real():
             "environment": ["lab", "lab", "real", "real"],
         }
     )
-    result = compute_environment_metrics(frame).set_index("environment")
 
-    assert result.loc["lab", "accuracy"] == pytest.approx(1.0)
-    assert result.loc["real", "accuracy"] == pytest.approx(0.0)
-    assert result.loc["lab", "n"] == 2
+
+def test_metricas_por_environment_separan_lab_y_real():
+    """Las filas agregadas (class == __all__) conservan accuracy, macro_f1 y n por entorno."""
+    result = compute_environment_metrics(_environment_frame())
+    aggregate = result[result["class"] == AGGREGATE_ROW_LABEL].set_index("environment")
+
+    assert aggregate.loc["lab", "accuracy"] == pytest.approx(1.0)
+    assert aggregate.loc["real", "accuracy"] == pytest.approx(0.0)
+    assert aggregate.loc["lab", "n"] == 2
+
+
+def test_environment_expone_f1_por_clase_con_su_n():
+    """
+    Aislar una clase en un entorno concreto es la razon de existir del artefacto.
+
+    `common_rust` acierta las 2 de lab (F1=1.0) y falla las 2 de real (F1=0.0);
+    la n de cada combinacion debe verse al lado para juzgar su fiabilidad.
+    """
+    result = compute_environment_metrics(_environment_frame())
+    per_class = result[result["class"] != AGGREGATE_ROW_LABEL].set_index(["environment", "class"])
+
+    assert per_class.loc[("lab", "common_rust"), "f1"] == pytest.approx(1.0)
+    assert per_class.loc[("lab", "common_rust"), "n"] == 2
+    assert per_class.loc[("real", "common_rust"), "f1"] == pytest.approx(0.0)
+    assert per_class.loc[("real", "common_rust"), "n"] == 2
+
+
+def test_environment_incluye_clases_solo_predichas_con_n_cero():
+    """`healthy` solo aparece como prediccion en real: F1 definido y n de soporte 0."""
+    result = compute_environment_metrics(_environment_frame())
+    per_class = result[result["class"] != AGGREGATE_ROW_LABEL].set_index(["environment", "class"])
+
+    assert per_class.loc[("real", "healthy"), "n"] == 0
+    assert per_class.loc[("real", "healthy"), "f1"] == pytest.approx(0.0)
 
 
 def test_agrupado_npk_convierte_confusion_interna_en_acierto():

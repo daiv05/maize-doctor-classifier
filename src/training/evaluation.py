@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
+AGGREGATE_ROW_LABEL = "__all__"
+
 
 def expected_calibration_error(
     confidences: list[float],
@@ -87,23 +89,53 @@ def compute_calibration_metrics(
 
 def compute_environment_metrics(predictions_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Desglosa accuracy y macro-F1 por entorno de captura.
+    Desglosa accuracy, macro-F1 y F1 por clase por entorno de captura.
+
+    Formato largo: por cada entorno se emite una fila agregada (`class == "__all__"`,
+    con accuracy y macro_f1) y una fila por clase presente en ese entorno (con su F1
+    y su propia n). El desglose por clase es lo que permite aislar `common_rust` en
+    `real` para evaluar el riesgo de shortcut learning; la n por combinacion queda
+    visible porque algunas son muy pequenas (~16 imagenes reales de `common_rust`)
+    y su F1 es indicativo, no concluyente.
 
     @param {pd.DataFrame} predictions_df Debe incluir la columna environment.
-    @returns {pd.DataFrame} Una fila por entorno, con la n visible para leer su fiabilidad.
+    @returns {pd.DataFrame} Filas (environment, class) con n, accuracy, macro_f1 y f1.
     """
     rows = []
     for environment, group in predictions_df.groupby("environment"):
         rows.append(
             {
                 "environment": environment,
+                "class": AGGREGATE_ROW_LABEL,
                 "n": len(group),
                 "accuracy": accuracy_score(group["label"], group["pred_label"]),
                 "macro_f1": f1_score(
                     group["label"], group["pred_label"], average="macro", zero_division=0
                 ),
+                "f1": float("nan"),
             }
         )
+
+        class_names = sorted(set(group["label"]) | set(group["pred_label"]))
+        per_class_f1 = f1_score(
+            group["label"],
+            group["pred_label"],
+            labels=class_names,
+            average=None,
+            zero_division=0,
+        )
+        for class_name, class_f1 in zip(class_names, per_class_f1):
+            support = group["label"] == class_name
+            rows.append(
+                {
+                    "environment": environment,
+                    "class": class_name,
+                    "n": int(support.sum()),
+                    "accuracy": float("nan"),
+                    "macro_f1": float("nan"),
+                    "f1": float(class_f1),
+                }
+            )
     return pd.DataFrame(rows)
 
 

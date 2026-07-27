@@ -3,6 +3,7 @@ import json
 import pandas as pd
 
 from src.training.artifacts import NPK_GROUPS, write_extended_metrics, write_summary
+from src.training.evaluation import AGGREGATE_ROW_LABEL
 
 
 def _predictions_frame() -> pd.DataFrame:
@@ -43,9 +44,24 @@ def test_environment_incluye_la_n_por_fila(tmp_path):
         tmp_path, _predictions_frame(), {"healthy": 0, "common_rust": 1}, NPK_GROUPS
     )
     frame = pd.read_csv(tmp_path / "test_by_environment.csv")
+    aggregate = frame[frame["class"] == AGGREGATE_ROW_LABEL]
 
     assert set(frame["environment"]) == {"lab", "real"}
-    assert frame["n"].sum() == 4
+    assert aggregate["n"].sum() == 4
+
+
+def test_environment_csv_permite_leer_f1_de_una_clase_en_un_entorno(tmp_path):
+    """El CSV debe dejar aislar (entorno, clase) con su F1 y su n al lado."""
+    write_extended_metrics(
+        tmp_path, _predictions_frame(), {"healthy": 0, "common_rust": 1}, NPK_GROUPS
+    )
+    frame = pd.read_csv(tmp_path / "test_by_environment.csv")
+    per_class = frame[frame["class"] != AGGREGATE_ROW_LABEL].set_index(["environment", "class"])
+
+    assert per_class.loc[("lab", "common_rust"), "f1"] == 1.0
+    assert per_class.loc[("lab", "common_rust"), "n"] == 1
+    assert per_class.loc[("real", "potassium_deficiency"), "f1"] == 0.0
+    assert per_class.loc[("real", "potassium_deficiency"), "n"] == 1
 
 
 def test_agrupado_npk_mejora_sobre_el_desagrupado(tmp_path):
