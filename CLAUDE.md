@@ -19,7 +19,7 @@
 
 - **Datos:** `clean/<clase>/{lab,real}/` → `create_splits.py` (valida integridad PIL, deduplica por SHA-256 con escaneo `sorted()` - determinista entre máquinas -, estratifica por `label+environment`) → `outputs/splits/seed_42/` (9 clases) o `outputs/splits/seed_42_baseline/` (`--baseline`, subset de `config/dataset.yaml -> baseline:`).
 - **Baselines (funcional, PyTorch):** `CornDataset` → `WeightedRandomSampler` → `DataLoader` → `MODEL_REGISTRY.build(<efficientnet_b0|efficientnet_lite0|mobilenet_v3_large|fastvit_t8|ghostnetv2_100|shufflenet_v2_x1_0>)` vía `train_baselines.py`. Pese al nombre, no es un pipeline sklearn - es DL completo, pensado para comparar arquitecturas rápido y barato. Cada run también escribe `predictions.csv` (predicción + confianza por imagen de test), usado por `explain_report.py` para el análisis de errores.
-- **Principal (`train.py`):** comparte toda la infraestructura de datos/modelos con baselines. Entrena una arquitectura (default `shufflenet_v2_x1_0`) sobre el dataset completo (`outputs/splits/seed_42`, 31 623 imágenes) con pérdida ponderada (`sqrt_inverse`) + label smoothing, scheduler cosine con warmup, early stopping y gradient clipping. El `WeightedRandomSampler` va **desactivado**: con desbalance de 32.9x, sampler + pérdida ponderada sobre-compensaría el mismo desbalance por dos vías, y augmenta solo las clases minoritarias. Además de las métricas estándar, escribe `test_calibration.json` (incluye `brier_binary_hit`), `test_by_environment.csv` y `test_grouped_metrics.json`. CLAHE es opt-in vía `--clahe` (CLI) / `CLAHE=1` (Makefile).
+- **Principal (`train.py`):** comparte toda la infraestructura de datos/modelos con baselines. Entrena una arquitectura (default `shufflenet_v2_x1_0`) sobre el dataset completo (`outputs/splits/seed_42`, 31 623 imágenes) con pérdida ponderada (`sqrt_inverse`) + label smoothing, scheduler cosine con warmup, early stopping y gradient clipping. El `WeightedRandomSampler` va **desactivado**: con desbalance de 32.9x, sampler + pérdida ponderada sobre-compensaría el mismo desbalance por dos vías, y augmenta solo las clases minoritarias. Además de las métricas estándar, escribe `test_calibration.json` (incluye `brier_binary_hit`, un Brier **binario** de acierto - el multiclase no es calculable porque `predictions.csv` guarda `pred_prob` escalar), `test_by_environment.csv` (formato largo: fila agregada `class == "__all__"` con accuracy/macro-F1, más una fila por clase con su `f1` y su `n`) y `test_grouped_metrics.json`. CLAHE es opt-in vía `--clahe` (CLI) / `CLAHE=1` (Makefile).
 - **Explicabilidad (post-hoc, no acoplada al entrenamiento):** `explain_lime.py` (reporte visual LIME + Grad-CAM por imagen), `explain_report.py` (fidelidad agregada y análisis de errores, cruzando con `predictions.csv`), `scripts/checks/lime_stability.py` (auditoría manual de estabilidad de LIME). Ver sección "Explicabilidad" más abajo.
 
 ## Clases del dataset
@@ -52,9 +52,11 @@ make splits / make splits-baseline    # regenera splits CSV
 make train-baselines [MODELS=<nombre> NO_CAP=1|MAX_PER_CLASS=<n>]
 make train [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]   # pipeline principal
 make modal-train [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1]                        # el mismo, en GPU
-make explain-lime [MODELS=<nombre>]   # reporte visual LIME+Grad-CAM post-hoc
+make explain-lime [MODELS=<nombre>]   # reporte visual LIME+Grad-CAM post-hoc (runs de baselines)
 make explain-report [MODELS=<nombre> SAMPLE_SIZE=<n>]  # fidelidad agregada
 make explain-errors [MODELS=<nombre>] # LIME dirigido a falsos positivos/negativos
+make explain-lime-main / explain-report-main / explain-errors-main [MAIN_MODELS=<nombre>]
+                                      # los mismos, sobre runs de outputs/main (pipeline principal)
 make summary                          # conteo de imágenes por clase/entorno
 make test-loader                      # smoke check del pipeline de carga
 make lint / make fmt                  # ruff check / ruff format
