@@ -13,7 +13,12 @@ else
 endif
 
 MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
+MAIN_MODELS ?= shufflenet_v2_x1_0
 EPOCHS ?= 30
+MAIN_EPOCHS ?=
+SPLITS_DIR ?=
+CLASS_WEIGHTS ?=
+CLAHE ?=
 NO_CAP ?=
 MAX_PER_CLASS ?=
 REGEN_SPLITS ?=
@@ -47,7 +52,16 @@ splits-baseline:
 	$(PYTHON) scripts/pipeline/create_splits.py --baseline $(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),)
 
 train:
-	$(PYTHON) scripts/pipeline/train.py
+	$(PYTHON) scripts/pipeline/train.py --models $(MAIN_MODELS) \
+		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		$(if $(LEARNING_RATE),--learning-rate $(LEARNING_RATE),) \
+		$(if $(WEIGHT_DECAY),--weight-decay $(WEIGHT_DECAY),) \
+		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
+		$(if $(CLASS_WEIGHTS),--class-weights $(CLASS_WEIGHTS),) \
+		$(if $(CLAHE),--clahe,) \
+		$(if $(NO_PRETRAINED),--no-pretrained,)
 
 train-baselines:
 	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) --baseline \
