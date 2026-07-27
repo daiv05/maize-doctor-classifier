@@ -110,9 +110,7 @@ def compute_grouped_metrics(predictions_df: pd.DataFrame, groups: dict[str, str]
 
     return {
         "groups": groups,
-        "ungrouped_accuracy": accuracy_score(
-            predictions_df["label"], predictions_df["pred_label"]
-        ),
+        "ungrouped_accuracy": accuracy_score(predictions_df["label"], predictions_df["pred_label"]),
         "ungrouped_macro_f1": f1_score(
             predictions_df["label"],
             predictions_df["pred_label"],
