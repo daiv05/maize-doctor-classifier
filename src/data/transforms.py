@@ -1,12 +1,46 @@
 from abc import ABC, abstractmethod
 
+import cv2
+import numpy as np
 import torchvision.transforms as T
 import yaml
+from PIL import Image
 
 from src.config import PROJECT_ROOT
 
 _DEFAULT_CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
 
+
+class CornCLAHETransform:
+    """
+    Ecualizacion adaptativa de histograma sobre el canal L de LAB.
+
+    Solo toca la luminancia: ecualizar los tres canales RGB por separado desplaza el
+    tono, y el color es la senal diagnostica de las deficiencias nutricionales, donde
+    la clorosis amarillenta es justamente lo que distingue la clase. Es preprocesamiento
+    determinista, no augmentation, asi que se aplica igual en train, val, test e inferencia.
+    """
+
+    def __init__(self, clip_limit: float = 2.0, tile_grid: int = 8):
+        """
+        @param {float} clip_limit Umbral de recorte; valores altos amplifican ruido.
+        @param {int} tile_grid Lado de la grilla de tiles.
+        """
+        self.clip_limit = clip_limit
+        self.tile_grid = tile_grid
+
+    def __call__(self, image: Image.Image) -> Image.Image:
+        """
+        @param {Image.Image} image Imagen RGB de entrada.
+        @returns {Image.Image} Imagen RGB con la luminancia ecualizada.
+        """
+        lab = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2LAB)
+        lightness, green_red, blue_yellow = cv2.split(lab)
+        clahe = cv2.createCLAHE(
+            clipLimit=self.clip_limit, tileGridSize=(self.tile_grid, self.tile_grid)
+        )
+        merged = cv2.merge((clahe.apply(lightness), green_red, blue_yellow))
+        return Image.fromarray(cv2.cvtColor(merged, cv2.COLOR_LAB2RGB))
 
 
 class TransformPipelineFactory(ABC):
@@ -113,6 +147,7 @@ class CornTransformFactory:
         self,
         config_path: str = _DEFAULT_CONFIG,
         target_size: tuple[int, int] | None = None,
+        clahe: bool = False,
     ):
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
@@ -123,16 +158,30 @@ class CornTransformFactory:
             target_size = (height, width)
         self.target_size = target_size
 
+        clahe_config = config.get("clahe", {})
+        self.clahe_transform = (
+            CornCLAHETransform(
+                clip_limit=float(clahe_config.get("clip_limit", 2.0)),
+                tile_grid=int(clahe_config.get("tile_grid", 8)),
+            )
+            if clahe
+            else None
+        )
+
     def get_pipeline(self, stage: str) -> T.Compose:
         """Retorna el pipeline de transformación correspondiente a la etapa."""
         if stage.lower() == "train":
-            return CornTrainingTransforms(self.target_size).create_transforms()
+            pipeline = CornTrainingTransforms(self.target_size).create_transforms()
         elif stage.lower() == "minority":
-            return CornMinorityTransforms(self.target_size).create_transforms()
+            pipeline = CornMinorityTransforms(self.target_size).create_transforms()
         elif stage.lower() in ["val", "test", "inference"]:
-            return CornValidationTransforms(self.target_size).create_transforms()
+            pipeline = CornValidationTransforms(self.target_size).create_transforms()
         else:
             raise ValueError(
                 f"Etapa de pipeline desconocida: '{stage}'. "
                 "Use 'train', 'minority', 'val', 'test' o 'inference'."
             )
+
+        if self.clahe_transform is None:
+            return pipeline
+        return T.Compose([self.clahe_transform, *pipeline.transforms])

@@ -19,6 +19,10 @@ dataset:
 augmentation:
   minority_ratio_threshold: 4.0
 
+clahe:
+  clip_limit: 2.0
+  tile_grid: 8
+
 baseline:
   classes:
     - common_rust
