@@ -45,18 +45,26 @@ ingesta de fuentes crudas nuevas (Kaggle/Mendeley/Roboflow) hacia `raw/`, no toc
 
 ## Comandos frecuentes
 
+Convención de nombres: prefijo `modal-` = GPU en la nube, sin prefijo = local; sufijo
+`-baselines` = runs de `outputs/baselines` (var `MODELS`), sufijo `-main` = runs de
+`outputs/main` (var `MAIN_MODELS`). Los targets sin sufijo son los genéricos y apuntan a
+baselines salvo que se pase `OUTPUT_DIR` (local) o `PIPELINE=main` (Modal). `make help`
+lista todo agrupado.
+
 ```bash
 make install                          # pip install -e ".[dev,analysis,xai,cloud]"
 make download-dataset                 # clean/ (HF Hub, fallback Google Drive)
 make splits / make splits-baseline    # regenera splits CSV
 make train-baselines [MODELS=<nombre> NO_CAP=1|MAX_PER_CLASS=<n>]
-make train [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]   # pipeline principal
-make modal-train [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1]                        # el mismo, en GPU
-make explain-lime [MODELS=<nombre>]   # reporte visual LIME+Grad-CAM post-hoc (runs de baselines)
-make explain-report [MODELS=<nombre> SAMPLE_SIZE=<n>]  # fidelidad agregada
-make explain-errors [MODELS=<nombre>] # LIME dirigido a falsos positivos/negativos
+make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]  # alias: make train
+make modal-train-baselines [MODELS=<nombre> EPOCHS=<n>]        # baselines en GPU
+make modal-train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n>]   # principal en GPU (alias: modal-train)
+make explain-lime-baselines [MODELS=<nombre>]   # reporte visual LIME+Grad-CAM post-hoc
+make explain-report-baselines [MODELS=<nombre> SAMPLE_SIZE=<n>]  # fidelidad agregada
+make explain-errors-baselines [MODELS=<nombre>] # LIME dirigido a falsos positivos/negativos
 make explain-lime-main / explain-report-main / explain-errors-main [MAIN_MODELS=<nombre>]
-                                      # los mismos, sobre runs de outputs/main (pipeline principal)
+make modal-explain-lime-baselines / modal-explain-report-baselines / modal-explain-errors-baselines
+make modal-explain-lime-main / modal-explain-report-main / modal-explain-errors-main
 make summary                          # conteo de imágenes por clase/entorno
 make test-loader                      # smoke check del pipeline de carga
 make lint / make fmt                  # ruff check / ruff format

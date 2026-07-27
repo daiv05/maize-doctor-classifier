@@ -1,6 +1,6 @@
 # Entrenamiento en Modal
 
-[Modal](https://modal.com/docs/guide) es la plataforma de GPU en la nube que usa el proyecto para entrenar los **baselines** y correr **explicabilidad** cuando conviene más potencia o más tiempo del que da la máquina local. La idea es simple: defines código Python normal, lo decoras para que Modal sepa qué correr en la nube, y esa ejecución se factura por segundo mientras dura. Cuando termina, la instancia se destruye sola (auto-teardown), así que no hay que acordarse de apagar nada ni pagar por GPU ociosa. Otra ventaja práctica es que los scripts de Modal exponen la misma CLI que sus equivalentes locales (`train_baselines.py`, `explain_lime.py`, `explain_report.py`): cualquier combinación de flags que funcione en local funciona igual en Modal.
+[Modal](https://modal.com/docs/guide) es la plataforma de GPU en la nube que usa el proyecto para entrenar los **baselines**, el **pipeline principal** y correr **explicabilidad** sobre cualquiera de los dos, cuando conviene más potencia o más tiempo del que da la máquina local. La idea es simple: defines código Python normal, lo decoras para que Modal sepa qué correr en la nube, y esa ejecución se factura por segundo mientras dura. Cuando termina, la instancia se destruye sola (auto-teardown), así que no hay que acordarse de apagar nada ni pagar por GPU ociosa. Otra ventaja práctica es que los scripts de Modal exponen la misma CLI que sus equivalentes locales (`train_baselines.py`, `explain_lime.py`, `explain_report.py`): cualquier combinación de flags que funcione en local funciona igual en Modal.
 
 ## Cómo está montado
 
@@ -36,13 +36,29 @@ make modal-train-baselines MODELS=efficientnet_b0 LIME=1
 
 Por debajo, `scripts/modal/train.py` traduce estas variables de `make` a los flags reales del script (`--models`, `--epochs`, `--no-cap`/`--max-per-class`, `--batch-size`, `--image-size`, `--learning-rate`, `--weight-decay`, `--num-workers`, `--no-pretrained`, `--lime`, `--regenerate-splits`), así que cualquier combinación que funcione en local funciona igual aquí.
 
-Una vez que hay un run entrenado, la explicabilidad post-hoc se corre por separado, apuntando al modelo que se quiere analizar:
+El pipeline principal se entrena con su propio target, que usa `MAIN_MODELS`/`MAIN_EPOCHS` en vez de `MODELS`/`EPOCHS` para no confundir la configuración de un pipeline con la del otro:
 
 ```bash
-make modal-explain-lime MODELS=efficientnet_b0
-make modal-explain-report MODELS=efficientnet_b0 SAMPLE_SIZE=50
-make modal-explain-errors MODELS=efficientnet_b0
+make modal-train-main MAIN_MODELS=shufflenet_v2_x1_0 MAIN_EPOCHS=60
 ```
+
+Una vez que hay un run entrenado, la explicabilidad post-hoc se corre por separado. Aquí también los targets están diferenciados por pipeline, porque cada uno lee de un directorio de runs distinto dentro del Volume:
+
+```bash
+# baselines -> /outputs/baselines
+make modal-explain-lime-baselines MODELS=efficientnet_b0
+make modal-explain-report-baselines MODELS=efficientnet_b0 SAMPLE_SIZE=50
+make modal-explain-errors-baselines MODELS=efficientnet_b0
+
+# pipeline principal -> /outputs/main
+make modal-explain-lime-main MAIN_MODELS=shufflenet_v2_x1_0
+make modal-explain-report-main MAIN_MODELS=shufflenet_v2_x1_0 SAMPLE_SIZE=50
+make modal-explain-errors-main MAIN_MODELS=shufflenet_v2_x1_0
+```
+
+Los targets sin sufijo (`modal-explain-lime`, `modal-explain-report`, `modal-explain-errors`) siguen existiendo como genéricos: apuntan a baselines salvo que se les pase `PIPELINE=main`.
+
+Por debajo, esa elección viaja como `--pipeline baselines|main` y es el contenedor el que la traduce a `--output-dir /outputs/<pipeline>`. Se hace por nombre y no pasando la ruta directamente porque, al invocar `make` desde Git Bash en Windows, MSYS reescribe cualquier argumento que empiece con `/` a una ruta de Windows (`/outputs/main` terminaría como `C:/Program Files/Git/outputs/main`).
 
 Igual que con el entrenamiento, `scripts/modal/explain.py` espeja los flags de `explain_lime.py`/`explain_report.py` (`--run`, `--baseline`, `--sample-size`, `--num-samples`, `--errors-only`). La única diferencia a tener en cuenta es que `--image`/`--output` de `explain-lime` deben ser rutas dentro del contenedor (relativas a `/data` u `/outputs`), no del filesystem local.
 
@@ -53,13 +69,15 @@ Quien prefiera no pasar por `make` puede invocar los mismos comandos de Modal di
 ```bash
 modal run scripts/modal/train.py::seed_dataset
 modal run scripts/modal/train.py --models "efficientnet_b0" --epochs 30
+modal run scripts/modal/train.py::train_main --models "shufflenet_v2_x1_0" --epochs 60
 modal run scripts/modal/explain.py::explain_report --models "efficientnet_b0" --sample-size 50
+modal run scripts/modal/explain.py::explain_report --models "shufflenet_v2_x1_0" --pipeline main
 modal run scripts/modal/train.py::clean_outputs
 ```
 
 ## Cómo se traen los resultados
 
-Los resultados de cada corrida se versionan igual que en local, en `/outputs/baselines/<modelo>/<run_id>/` (donde `run_id` es un timestamp), así que un mismo modelo puede acumular varios runs sin pisarse entre sí. Para bajarlos a la máquina local:
+Los resultados de cada corrida se versionan igual que en local, en `/outputs/baselines/<modelo>/<run_id>/` (o `/outputs/main/<modelo>/<run_id>/` para el pipeline principal, donde `run_id` es un timestamp), así que un mismo modelo puede acumular varios runs sin pisarse entre sí. Para bajarlos a la máquina local:
 
 ```bash
 make modal-pull            # copia el volumen corn-outputs -> ./outputs-remote
@@ -73,4 +91,4 @@ Los splits del baseline se generan la primera vez que se necesitan y se reutiliz
 
 Para cambiar de GPU basta con editar `gpu="A10"` en `scripts/modal/train.py`/`explain.py`; las opciones disponibles incluyen T4, L4, A10, L40S, A100 y H100.
 
-Por ahora Modal solo cubre los baselines y su explicabilidad: el pipeline principal (`train.py`) todavía no está integrado.
+A diferencia de `train_baselines.py`, el pipeline principal no genera los splits de forma lazy: requiere `outputs/splits/seed_42` y falla si no existe, así que la primera corrida de `modal-train-main` necesita un `make modal-splits` previo.

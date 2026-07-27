@@ -118,11 +118,16 @@ Guía de instalación local (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md).
 
 ## Comandos
 
-Todos los comandos usan `make` (detecta Windows/Linux automáticamente). Variables comunes:
-`MODELS` (nombre o "all"), `EPOCHS`, `NO_CAP=1` / `MAX_PER_CLASS=<n>` (override del tope de
-imágenes por clase del perfil baseline), `RUN` (run_id específico), `SAMPLE_SIZE`.
+Todos los comandos usan `make` (detecta Windows/Linux automáticamente). El nombre del target
+dice dónde corre y sobre qué pipeline: prefijo `modal-` = GPU en la nube (sin prefijo = local),
+sufijo `-baselines` = runs de baselines (variable `MODELS`), sufijo `-main` = runs del pipeline
+principal (variable `MAIN_MODELS`). `make help` los lista agrupados.
 
-### Locales
+Variables comunes: `MODELS` / `MAIN_MODELS` (nombre o "all"), `EPOCHS` / `MAIN_EPOCHS`,
+`NO_CAP=1` / `MAX_PER_CLASS=<n>` (override del tope de imágenes por clase del perfil baseline),
+`RUN` (run_id específico), `SAMPLE_SIZE`.
+
+### Locales: setup y datos
 
 ```bash
 make install                        # pip install -e ".[dev,analysis,xai,cloud]"
@@ -131,15 +136,28 @@ make download-dataset                # clean/ (HF Hub, fallback Google Drive)
 make splits                          # splits completos (9 clases) -> outputs/splits/seed_42/
 make splits-baseline [NO_CAP=1 | MAX_PER_CLASS=<n>]   # perfil baseline -> outputs/splits/seed_42_baseline/
 
-make train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]   # genera splits (lazy) y entrena
-make train                           # pipeline principal (loop de entrenamiento pendiente)
-
-make explain-lime [MODELS=<nombre> RUN=<id> IMAGE=<ruta> OUTPUT=<ruta>]   # reporte visual LIME+Grad-CAM
-make explain-report [MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n> NUM_SAMPLES=<n>]  # fidelidad agregada
-make explain-errors [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]   # LIME dirigido a errores
-
 make clean-outputs                   # borra outputs/ (splits, runs, reportes - todo regenerable)
 make summary / make test-loader / make lint / make fmt
+```
+
+### Locales: baselines (`outputs/baselines/`)
+
+```bash
+make train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]   # genera splits (lazy) y entrena
+
+make explain-lime-baselines [MODELS=<nombre> RUN=<id> IMAGE=<ruta> OUTPUT=<ruta>]   # visual LIME+Grad-CAM
+make explain-report-baselines [MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n> NUM_SAMPLES=<n>]  # fidelidad agregada
+make explain-errors-baselines [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]   # LIME dirigido a errores
+```
+
+### Locales: pipeline principal (`outputs/main/`)
+
+```bash
+make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]  # alias: make train
+
+make explain-lime-main [MAIN_MODELS=<nombre> RUN=<id>]
+make explain-report-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]
+make explain-errors-main [MAIN_MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]
 ```
 
 ### Modal (GPU en la nube)
@@ -149,10 +167,16 @@ funciona igual en Modal. Detalle completo en [docs/es/deployment/modal.md](docs/
 
 ```bash
 make modal-seed                                            # sube clean/ al Volume (una vez)
-make modal-train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]
-make modal-explain-lime / modal-explain-report / modal-explain-errors [MODELS=<nombre> RUN=<id>]
 make modal-clean-outputs                                    # vacía el Volume corn-outputs
 make modal-pull                                             # trae outputs-remote/ con runs + reportes
+
+# baselines (/outputs/baselines)
+make modal-train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]
+make modal-explain-lime-baselines / modal-explain-report-baselines / modal-explain-errors-baselines [MODELS=<nombre> RUN=<id>]
+
+# pipeline principal (/outputs/main)
+make modal-train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1]        # alias: modal-train
+make modal-explain-lime-main / modal-explain-report-main / modal-explain-errors-main [MAIN_MODELS=<nombre> RUN=<id>]
 ```
 
 ---
