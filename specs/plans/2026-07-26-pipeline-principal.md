@@ -1047,7 +1047,7 @@ def compute_calibration_metrics(
     class_to_idx: dict[str, int],
 ) -> dict:
     """
-    Resume calibracion: ECE, Brier multiclase y confianza media de aciertos vs. fallos.
+    Resume calibracion: ECE, Brier binario de acierto y confianza media de aciertos vs. fallos.
 
     @param {pd.DataFrame} predictions_df Columnas label, pred_label y pred_prob.
     @param {dict[str,int]} class_to_idx Mapeo canonico clase->indice.
@@ -1065,7 +1065,7 @@ def compute_calibration_metrics(
 
     return {
         "ece": expected_calibration_error(confidences, correct),
-        "brier": brier,
+        "brier_binary_hit": brier,
         "mean_confidence_hits": float(hits.mean()) if len(hits) else 0.0,
         "mean_confidence_misses": float(misses.mean()) if len(misses) else 0.0,
         "n_hits": int(len(hits)),

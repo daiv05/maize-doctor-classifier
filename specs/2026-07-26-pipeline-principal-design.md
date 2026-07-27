@@ -84,7 +84,9 @@ Esto invalida una prescripción del reporte. La Tabla 5.5 pide "sampler + pérdi
 
 Todo se calcula en `evaluation.py` sobre `predictions.csv`, sin GPU.
 
-**`test_calibration.json`** — ECE (15 bins uniformes, ~20 líneas a mano), Brier multiclase (`sklearn`), y confianza media desagregada en aciertos vs. fallos. Esta última conecta con el hallazgo de §6.4 (aciertos 0.987 / fallos 0.914): si el label smoothing funciona, el gap debe ensancharse.
+**`test_calibration.json`** — ECE (15 bins uniformes, ~20 líneas a mano), Brier binario del evento "acertó/no acertó" (clave `brier_binary_hit`), y confianza media desagregada en aciertos vs. fallos.
+
+> Corregido durante la implementación: el Brier **multiclase** no es calculable con los datos disponibles, porque `predictions.csv` persiste `pred_prob` como escalar (la confianza de la clase predicha), no el vector completo de probabilidades por clase. La clave se nombra `brier_binary_hit` para no inducir a error a quien lea el JSON. Esta última conecta con el hallazgo de §6.4 (aciertos 0.987 / fallos 0.914): si el label smoothing funciona, el gap debe ensancharse.
 
 **`test_by_environment.csv`** — macro-F1, accuracy y F1 por clase, desglosados en `lab` / `real`. La columna `environment` ya existe en los CSV de splits. Verifica el riesgo de shortcut learning en `common_rust` (95% lab).
 
