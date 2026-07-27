@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev      = ["ipykernel", "jupyterlab", "matplotlib", "seaborn", "ruff", "pyright"]
+dev      = ["ipykernel", "jupyterlab", "matplotlib", "seaborn", "ruff", "pyright", "pytest>=8.0,<9.0"]
 analysis = ["imagededup", "fiftyone", "imageio", "mongoengine", "motor"]
 cloud    = ["huggingface_hub>=0.24,<1.22", "gdown>=5.1,<6.2", "modal>=0.64"]
 xai      = ["lime>=0.2", "scikit-image>=0.22", "matplotlib>=3.8"]
@@ -34,3 +34,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
