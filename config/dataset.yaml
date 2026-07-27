@@ -47,3 +47,14 @@ lime:
 
 gradcam:
   enabled: true
+
+shap:
+  segmentation: slic
+  n_segments: 50
+  compactness: 10.0
+  nsamples: 2048
+  batch_size: 128
+  background: black
+  images_per_class: 5
+  global_sample_size: 30
+  seed: 42
