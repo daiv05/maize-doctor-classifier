@@ -12,10 +12,26 @@ else
 	MODAL   := venv/bin/modal
 endif
 
+# ==============================================================================
+# Variables
+# ==============================================================================
+
+# Modelos: MODELS aplica a los baselines, MAIN_MODELS al pipeline principal.
 MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
 MAIN_MODELS ?= shufflenet_v2_x1_0
-MAIN_OUTPUT_DIR ?= outputs/main
+
+# Explicabilidad local: directorio raíz de runs. Vacío = default del script
+# (outputs/baselines).
 OUTPUT_DIR ?=
+MAIN_OUTPUT_DIR ?= outputs/main
+
+# Explicabilidad en Modal: el directorio se elige por nombre de pipeline
+# ("baselines" | "main") y lo resuelve el contenedor sobre el Volume corn-outputs.
+# Pasar rutas absolutas aquí no funciona: MSYS (Git Bash) reescribe /outputs/... a
+# una ruta de Windows antes de que llegue al comando.
+PIPELINE ?= baselines
+
+# Entrenamiento
 EPOCHS ?= 30
 MAIN_EPOCHS ?=
 SPLITS_DIR ?=
@@ -32,15 +48,58 @@ WEIGHT_DECAY ?=
 NUM_WORKERS ?=
 NO_PRETRAINED ?=
 LIME ?=
+
+# Explicabilidad e inferencia
 NUM_SAMPLES ?=
+SAMPLE_SIZE ?=
 MODEL ?= efficientnet_b0
 IMAGE ?=
+OUTPUT ?=
 CHECKPOINT ?=
 RUN ?=
 TOP_K ?=
 STABILITY_RUNS ?=
 
-.PHONY: compile-pdf install download-dataset splits splits-baseline train train-baselines inference explain-lime explain-report explain-errors explain-lime-main explain-report-main explain-errors-main test-loader summary docs-eda lint lint-fix fmt check clean-outputs modal-seed modal-splits modal-train modal-train-baselines modal-clean-outputs modal-explain-lime modal-explain-report modal-explain-errors modal-pull
+.DEFAULT_GOAL := help
+
+# ==============================================================================
+# Ayuda
+# ==============================================================================
+
+.PHONY: help
+help:
+	@echo "Local - setup y datos:"
+	@echo "  install download-dataset splits splits-baseline summary test-loader"
+	@echo ""
+	@echo "Local - baselines (runs en outputs/baselines, var MODELS):"
+	@echo "  train-baselines"
+	@echo "  explain-lime-baselines explain-report-baselines explain-errors-baselines"
+	@echo ""
+	@echo "Local - pipeline principal (runs en $(MAIN_OUTPUT_DIR), var MAIN_MODELS):"
+	@echo "  train-main (alias: train)"
+	@echo "  explain-lime-main explain-report-main explain-errors-main"
+	@echo ""
+	@echo "Modal - infraestructura:"
+	@echo "  modal-seed modal-splits modal-clean-outputs modal-pull"
+	@echo ""
+	@echo "Modal - baselines (runs en /outputs/baselines, var MODELS):"
+	@echo "  modal-train-baselines"
+	@echo "  modal-explain-lime-baselines modal-explain-report-baselines modal-explain-errors-baselines"
+	@echo ""
+	@echo "Modal - pipeline principal (runs en /outputs/main, var MAIN_MODELS):"
+	@echo "  modal-train-main (alias: modal-train)"
+	@echo "  modal-explain-lime-main modal-explain-report-main modal-explain-errors-main"
+	@echo ""
+	@echo "Otros: inference lint lint-fix fmt check docs-eda compile-pdf clean-outputs"
+	@echo ""
+	@echo "Los targets sin sufijo (explain-lime, modal-explain-report, ...) son los genericos:"
+	@echo "apuntan a baselines salvo que se pase OUTPUT_DIR (local) o PIPELINE=main (Modal)."
+
+# ==============================================================================
+# Local - setup y datos
+# ==============================================================================
+
+.PHONY: install download-dataset splits splits-baseline summary test-loader
 
 install:
 	$(PIP) install -e ".[dev,analysis,xai,cloud]"
@@ -54,18 +113,19 @@ splits:
 splits-baseline:
 	$(PYTHON) scripts/pipeline/create_splits.py --baseline $(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),)
 
-train:
-	$(PYTHON) scripts/pipeline/train.py --models $(MAIN_MODELS) \
-		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
-		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
-		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
-		$(if $(LEARNING_RATE),--learning-rate $(LEARNING_RATE),) \
-		$(if $(WEIGHT_DECAY),--weight-decay $(WEIGHT_DECAY),) \
-		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
-		$(if $(CLASS_WEIGHTS),--class-weights $(CLASS_WEIGHTS),) \
-		$(if $(CLAHE),--clahe,) \
-		$(if $(NO_PRETRAINED),--no-pretrained,)
+summary:
+	$(PYTHON) src/analysis/dataset_summary.py
 
+test-loader:
+	$(PYTHON) scripts/checks/smoke_loader.py
+
+# ==============================================================================
+# Local - entrenamiento
+# ==============================================================================
+
+.PHONY: train-baselines train train-main
+
+# Baselines: comparación rápida de arquitecturas. Runs en outputs/baselines/<modelo>/.
 train-baselines:
 	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) --baseline \
 		$(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),) \
@@ -79,68 +139,30 @@ train-baselines:
 		$(if $(NO_PRETRAINED),--no-pretrained,) \
 		$(if $(LIME),--lime,)
 
-clean-outputs:
-	rm -rf outputs/
-
-modal-seed:
-	$(MODAL) run scripts/modal/train.py::seed_dataset
-
-modal-splits:
-	$(MODAL) run scripts/modal/train.py::make_splits \
-		$(if $(BASELINE),--baseline,) \
-		$(if $(NO_CAP),--no-cap,) \
-		$(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",)
-
-modal-train-baselines:
-	$(MODAL) run scripts/modal/train.py --models "$(MODELS)" --epochs "$(EPOCHS)" \
-		$(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",) \
-		$(if $(REGEN_SPLITS),--regenerate-splits,) \
-		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
-		$(if $(IMAGE_SIZE),--image-size "$(IMAGE_SIZE)",) \
-		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
-		$(if $(WEIGHT_DECAY),--weight-decay "$(WEIGHT_DECAY)",) \
-		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
-		$(if $(NO_PRETRAINED),--no-pretrained,) \
-		$(if $(LIME),--lime,)
-
-modal-train:
-	$(MODAL) run scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
-		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
-		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
-		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
-		$(if $(CLASS_WEIGHTS),--class-weights "$(CLASS_WEIGHTS)",) \
-		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
+# Pipeline principal. Runs en outputs/main/<modelo>/.
+train:
+	$(PYTHON) scripts/pipeline/train.py --models $(MAIN_MODELS) \
+		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		$(if $(LEARNING_RATE),--learning-rate $(LEARNING_RATE),) \
+		$(if $(WEIGHT_DECAY),--weight-decay $(WEIGHT_DECAY),) \
+		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
+		$(if $(CLASS_WEIGHTS),--class-weights $(CLASS_WEIGHTS),) \
 		$(if $(CLAHE),--clahe,) \
 		$(if $(NO_PRETRAINED),--no-pretrained,)
 
-modal-clean-outputs:
-	$(MODAL) run scripts/modal/train.py::clean_outputs
+train-main: train
 
-modal-explain-lime:
-	$(MODAL) run scripts/modal/explain.py::explain_lime --models "$(MODELS)" \
-		$(if $(RUN),--run $(RUN),) $(if $(IMAGE),--image $(IMAGE),) $(if $(OUTPUT),--output $(OUTPUT),)
+# ==============================================================================
+# Local - explicabilidad (post-hoc)
+# ==============================================================================
+# Los targets genéricos aceptan MODELS y OUTPUT_DIR; sin OUTPUT_DIR apuntan a
+# outputs/baselines. Las variantes -baselines / -main fijan modelos y directorio.
 
-modal-explain-report:
-	$(MODAL) run scripts/modal/explain.py::explain_report --models "$(MODELS)" \
-		$(if $(RUN),--run $(RUN),) $(if $(SAMPLE_SIZE),--sample-size $(SAMPLE_SIZE),) \
-		$(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),)
-
-modal-explain-errors:
-	$(MODAL) run scripts/modal/explain.py::explain_errors --models "$(MODELS)" \
-		$(if $(RUN),--run $(RUN),) $(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),)
-
-modal-pull:
-	$(MODAL) volume get --force corn-outputs / ./outputs-remote
-
-# Inferencia + interpretabilidad completa de una imagen puntual.
-# Uso: make inference IMAGE=foto.jpg [MODEL=<nombre> RUN=<run_id> CHECKPOINT=<ruta.pth>
-#      STABILITY_RUNS=<n> TOP_K=<k>]
-inference:
-	$(PYTHON) scripts/pipeline/inference_report.py --model $(MODEL) --image $(IMAGE) \
-		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
-		$(if $(RUN),--run $(RUN),) \
-		$(if $(STABILITY_RUNS),--stability-runs $(STABILITY_RUNS),) \
-		$(if $(TOP_K),--top-k $(TOP_K),)
+.PHONY: explain-lime explain-report explain-errors \
+	explain-lime-baselines explain-report-baselines explain-errors-baselines \
+	explain-lime-main explain-report-main explain-errors-main
 
 explain-lime:
 	$(PYTHON) scripts/pipeline/explain_lime.py --models $(MODELS) $(if $(IMAGE),--image $(IMAGE),) $(if $(OUTPUT),--output $(OUTPUT),) $(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
@@ -156,7 +178,17 @@ explain-errors:
 		$(if $(RUN),--run $(RUN),) $(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),) \
 		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
 
-# Variantes apuntadas a los runs del pipeline principal (outputs/main) en vez de baselines.
+# Runs de baselines (outputs/baselines).
+explain-lime-baselines:
+	$(MAKE) explain-lime MODELS="$(MODELS)"
+
+explain-report-baselines:
+	$(MAKE) explain-report MODELS="$(MODELS)"
+
+explain-errors-baselines:
+	$(MAKE) explain-errors MODELS="$(MODELS)"
+
+# Runs del pipeline principal (outputs/main).
 explain-lime-main:
 	$(MAKE) explain-lime MODELS="$(MAIN_MODELS)" OUTPUT_DIR="$(MAIN_OUTPUT_DIR)"
 
@@ -166,15 +198,123 @@ explain-report-main:
 explain-errors-main:
 	$(MAKE) explain-errors MODELS="$(MAIN_MODELS)" OUTPUT_DIR="$(MAIN_OUTPUT_DIR)"
 
-test-loader:
-	$(PYTHON) scripts/checks/smoke_loader.py
+# ==============================================================================
+# Local - inferencia puntual
+# ==============================================================================
+# Inferencia + interpretabilidad completa de una imagen.
+# Uso: make inference IMAGE=foto.jpg [MODEL=<nombre> RUN=<run_id> CHECKPOINT=<ruta.pth>
+#      STABILITY_RUNS=<n> TOP_K=<k>]
 
-summary:
-	$(PYTHON) src/analysis/dataset_summary.py
+.PHONY: inference
 
-# Requiere shell POSIX (Powershell/Git Bash/WSL en Windows) y que existan outputs/eda/eda_*.png
-docs-eda:
-	cp outputs/eda/eda_*.png public/eda/
+inference:
+	$(PYTHON) scripts/pipeline/inference_report.py --model $(MODEL) --image $(IMAGE) \
+		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		$(if $(RUN),--run $(RUN),) \
+		$(if $(STABILITY_RUNS),--stability-runs $(STABILITY_RUNS),) \
+		$(if $(TOP_K),--top-k $(TOP_K),)
+
+# ==============================================================================
+# Modal - infraestructura (Volumes corn-clean / corn-outputs)
+# ==============================================================================
+
+.PHONY: modal-seed modal-splits modal-clean-outputs modal-pull
+
+modal-seed:
+	$(MODAL) run scripts/modal/train.py::seed_dataset
+
+modal-splits:
+	$(MODAL) run scripts/modal/train.py::make_splits \
+		$(if $(BASELINE),--baseline,) \
+		$(if $(NO_CAP),--no-cap,) \
+		$(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",)
+
+modal-clean-outputs:
+	$(MODAL) run scripts/modal/train.py::clean_outputs
+
+modal-pull:
+	$(MODAL) volume get --force corn-outputs / ./outputs-remote
+
+# ==============================================================================
+# Modal - entrenamiento
+# ==============================================================================
+
+.PHONY: modal-train-baselines modal-train modal-train-main
+
+# Baselines en GPU. Runs en /outputs/baselines/<modelo>/.
+modal-train-baselines:
+	$(MODAL) run scripts/modal/train.py --models "$(MODELS)" --epochs "$(EPOCHS)" \
+		$(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",) \
+		$(if $(REGEN_SPLITS),--regenerate-splits,) \
+		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
+		$(if $(IMAGE_SIZE),--image-size "$(IMAGE_SIZE)",) \
+		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
+		$(if $(WEIGHT_DECAY),--weight-decay "$(WEIGHT_DECAY)",) \
+		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
+		$(if $(NO_PRETRAINED),--no-pretrained,) \
+		$(if $(LIME),--lime,)
+
+# Pipeline principal en GPU. Runs en /outputs/main/<modelo>/.
+modal-train:
+	$(MODAL) run scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
+		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
+		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
+		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
+		$(if $(CLASS_WEIGHTS),--class-weights "$(CLASS_WEIGHTS)",) \
+		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
+		$(if $(CLAHE),--clahe,) \
+		$(if $(NO_PRETRAINED),--no-pretrained,)
+
+modal-train-main: modal-train
+
+# ==============================================================================
+# Modal - explicabilidad (post-hoc)
+# ==============================================================================
+# Mismos genéricos que en local, pero el directorio de runs se elige con
+# PIPELINE=baselines|main. Las variantes -baselines / -main fijan modelos y pipeline.
+
+.PHONY: modal-explain-lime modal-explain-report modal-explain-errors \
+	modal-explain-lime-baselines modal-explain-report-baselines modal-explain-errors-baselines \
+	modal-explain-lime-main modal-explain-report-main modal-explain-errors-main
+
+modal-explain-lime:
+	$(MODAL) run scripts/modal/explain.py::explain_lime --models "$(MODELS)" --pipeline "$(PIPELINE)" \
+		$(if $(RUN),--run $(RUN),) $(if $(IMAGE),--image $(IMAGE),) $(if $(OUTPUT),--output $(OUTPUT),)
+
+modal-explain-report:
+	$(MODAL) run scripts/modal/explain.py::explain_report --models "$(MODELS)" --pipeline "$(PIPELINE)" \
+		$(if $(RUN),--run $(RUN),) $(if $(SAMPLE_SIZE),--sample-size $(SAMPLE_SIZE),) \
+		$(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),)
+
+modal-explain-errors:
+	$(MODAL) run scripts/modal/explain.py::explain_errors --models "$(MODELS)" --pipeline "$(PIPELINE)" \
+		$(if $(RUN),--run $(RUN),) $(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),)
+
+# Runs de baselines (/outputs/baselines).
+modal-explain-lime-baselines:
+	$(MAKE) modal-explain-lime MODELS="$(MODELS)" PIPELINE=baselines
+
+modal-explain-report-baselines:
+	$(MAKE) modal-explain-report MODELS="$(MODELS)" PIPELINE=baselines
+
+modal-explain-errors-baselines:
+	$(MAKE) modal-explain-errors MODELS="$(MODELS)" PIPELINE=baselines
+
+# Runs del pipeline principal (/outputs/main).
+modal-explain-lime-main:
+	$(MAKE) modal-explain-lime MODELS="$(MAIN_MODELS)" PIPELINE=main
+
+modal-explain-report-main:
+	$(MAKE) modal-explain-report MODELS="$(MAIN_MODELS)" PIPELINE=main
+
+modal-explain-errors-main:
+	$(MAKE) modal-explain-errors MODELS="$(MAIN_MODELS)" PIPELINE=main
+
+# ==============================================================================
+# Calidad, documentación y limpieza
+# ==============================================================================
+
+.PHONY: lint lint-fix fmt check docs-eda compile-pdf clean-outputs
 
 lint:
 	$(RUFF) check src/ scripts/
@@ -188,6 +328,13 @@ fmt:
 check:
 	$(PYRIGHT) src/ scripts/
 
+# Requiere shell POSIX (Powershell/Git Bash/WSL en Windows) y que existan outputs/eda/eda_*.png
+docs-eda:
+	cp outputs/eda/eda_*.png public/eda/
+
 compile-pdf:
 	cd reports/firts-phase && pdflatex -interaction=nonstopmode documentation_first_phase.tex
 	cd reports/firts-phase && pdflatex -interaction=nonstopmode documentation_first_phase.tex
+
+clean-outputs:
+	rm -rf outputs/
