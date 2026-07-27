@@ -5,11 +5,14 @@ loop de baselines debe producir numeros identicos antes y despues de extraer el
 codigo compartido a src/training/.
 """
 
+import importlib
 import os
 from pathlib import Path
 
 import pytest
 import torch
+
+import src.config
 
 pytestmark = pytest.mark.filterwarnings("ignore::UserWarning")
 
@@ -24,13 +27,13 @@ def run_one_epoch_baseline(splits_dir: Path, dataset_root: Path, seed: int = 42)
     @returns {dict} Metricas de train y val de la unica epoca.
     """
     os.environ["DATASET_ROOT"] = str(dataset_root)
-
-    from src.training.loop import fit
+    importlib.reload(src.config)
 
     from src.config import set_global_seed
     from src.data.dataset import CornDataset
     from src.data.transforms import CornTransformFactory
     from src.models import build_model
+    from src.training.loop import fit
 
     set_global_seed(seed)
     factory = CornTransformFactory(target_size=(32, 32))
