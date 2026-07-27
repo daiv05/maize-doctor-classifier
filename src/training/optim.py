@@ -55,7 +55,8 @@ class EarlyStopping:
 
     def __init__(self, patience: int, min_delta: float = 0.0) -> None:
         """
-        @param {int} patience Epocas toleradas sin mejora antes de parar.
+        @param {int} patience Epocas malas consecutivas que disparan la parada: con
+            patience=N, step() devuelve True en la N-esima epoca consecutiva sin mejora.
         @param {float} min_delta Mejora minima para considerarse tal.
         """
         self.patience = patience
