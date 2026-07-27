@@ -33,8 +33,11 @@ def expected_calibration_error(
 
     edges = np.linspace(0.0, 1.0, num_bins + 1)
     error = 0.0
-    for lower, upper in zip(edges[:-1], edges[1:]):
-        in_bin = (confidence_array > lower) & (confidence_array <= upper)
+    for bin_index, (lower, upper) in enumerate(zip(edges[:-1], edges[1:])):
+        if bin_index == 0:
+            in_bin = (confidence_array >= lower) & (confidence_array <= upper)
+        else:
+            in_bin = (confidence_array > lower) & (confidence_array <= upper)
         if not in_bin.any():
             continue
         weight = in_bin.mean()
@@ -47,7 +50,14 @@ def compute_calibration_metrics(
     class_to_idx: dict[str, int],
 ) -> dict:
     """
-    Resume calibracion: ECE, Brier multiclase y confianza media de aciertos vs. fallos.
+    Resume calibracion: ECE, Brier binario de acierto y confianza media de aciertos vs. fallos.
+
+    `brier_binary_hit` NO es el Brier score multiclase: `predictions.csv` solo guarda
+    `pred_prob` como escalar (la probabilidad de la clase predicha), no el vector
+    completo de probabilidades por clase, asi que no se puede calcular el Brier
+    multiclase real (que requiere comparar ese vector contra el one-hot de la clase
+    verdadera). Lo que se calcula es el Brier score del evento binario "acerto/no
+    acerto": `mean((pred_prob - acierto)^2)`.
 
     @param {pd.DataFrame} predictions_df Columnas label, pred_label y pred_prob.
     @param {dict[str,int]} class_to_idx Mapeo canonico clase->indice.
@@ -62,11 +72,11 @@ def compute_calibration_metrics(
 
     confidence_array = np.asarray(confidences, dtype=float)
     correct_array = np.asarray(correct, dtype=float)
-    brier = float(np.mean((confidence_array - correct_array) ** 2))
+    brier_binary_hit = float(np.mean((confidence_array - correct_array) ** 2))
 
     return {
         "ece": expected_calibration_error(confidences, correct),
-        "brier": brier,
+        "brier_binary_hit": brier_binary_hit,
         "mean_confidence_hits": float(hits.mean()) if len(hits) else 0.0,
         "mean_confidence_misses": float(misses.mean()) if len(misses) else 0.0,
         "n_hits": int(len(hits)),
@@ -101,12 +111,17 @@ def compute_grouped_metrics(predictions_df: pd.DataFrame, groups: dict[str, str]
     """
     Recalcula las metricas colapsando las clases indicadas en una sola categoria.
 
+    Las clases que no aparecen como key en `groups` quedan intactas. El mapeo se
+    aplica con `.map()` en vez de `.replace()` para evitar el encadenamiento
+    implicito de `Series.replace()` (si el valor destino de una key coincide con
+    otra key del propio mapeo, `.replace()` la sustituiria de nuevo).
+
     @param {pd.DataFrame} predictions_df Columnas label y pred_label.
     @param {dict[str,str]} groups Mapeo clase original -> nombre de la clase agrupada.
     @returns {dict} Metricas antes y despues de agrupar.
     """
-    grouped_labels = predictions_df["label"].replace(groups)
-    grouped_predictions = predictions_df["pred_label"].replace(groups)
+    grouped_labels = predictions_df["label"].map(lambda value: groups.get(value, value))
+    grouped_predictions = predictions_df["pred_label"].map(lambda value: groups.get(value, value))
 
     return {
         "groups": groups,
