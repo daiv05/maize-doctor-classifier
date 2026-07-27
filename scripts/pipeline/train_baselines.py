@@ -1,5 +1,4 @@
 import argparse
-import json
 import logging
 import shutil
 import subprocess
@@ -9,7 +8,6 @@ from pathlib import Path
 import pandas as pd
 import torch
 import yaml
-from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader
 
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
@@ -17,6 +15,13 @@ from src.data.dataset import CornDataset, build_weighted_sampler
 from src.data.transforms import CornTransformFactory
 from src.explainability.augmentation_preview import save_augmentation_evidence
 from src.models import MODEL_REGISTRY, build_model, list_models, resolve_input_size
+from src.training.artifacts import (
+    NPK_GROUPS,
+    write_extended_metrics,
+    write_predictions_csv,
+    write_summary,
+    write_test_outputs,
+)
 from src.training.common import (
     build_run_dir,
     generate_run_id,
@@ -124,64 +129,6 @@ def _build_dataloaders(
     return train_loader, val_loader, test_loader, class_to_idx, idx_to_class, factory
 
 
-def _write_test_outputs(
-    model_dir: Path,
-    idx_to_class: dict[int, str],
-    labels: list[int],
-    predictions: list[int],
-) -> None:
-    target_ids = sorted(idx_to_class)
-    target_names = [idx_to_class[idx] for idx in target_ids]
-
-    report = classification_report(
-        labels,
-        predictions,
-        labels=target_ids,
-        target_names=target_names,
-        output_dict=True,
-        zero_division=0,
-    )
-    pd.DataFrame(report).transpose().to_csv(model_dir / "test_classification_report.csv")
-
-    matrix = confusion_matrix(labels, predictions, labels=target_ids)
-    pd.DataFrame(matrix, index=target_names, columns=target_names).to_csv(
-        model_dir / "test_confusion_matrix.csv"
-    )
-
-
-def _write_summary(
-    run_dir: Path,
-    model_name: str,
-    run_id: str,
-    args: argparse.Namespace,
-    target_size: tuple[int, int],
-    batch_size: int,
-    class_to_idx: dict[str, int],
-    splits_dir: Path,
-    best_epoch: int,
-    best_val_macro_f1: float,
-    test_metrics: dict[str, float],
-) -> None:
-    summary = {
-        "model": model_name,
-        "run_id": run_id,
-        "num_classes": len(class_to_idx),
-        "class_to_idx": class_to_idx,
-        "image_size": list(target_size),
-        "splits_dir": str(splits_dir),
-        "epochs": args.epochs,
-        "batch_size": batch_size,
-        "learning_rate": args.learning_rate,
-        "weight_decay": args.weight_decay,
-        "pretrained": not args.no_pretrained,
-        "best_epoch": best_epoch,
-        "best_val_macro_f1": best_val_macro_f1,
-        "test": test_metrics,
-    }
-    with open(run_dir / "summary.json", "w") as f:
-        json.dump(summary, f, indent=2)
-
-
 def _train_model(
     model_name: str,
     loaders: tuple[DataLoader, DataLoader, DataLoader],
@@ -258,34 +205,35 @@ def _train_model(
         device,
         desc=f"{model_name} test",
     )
-    _write_test_outputs(run_dir, idx_to_class, labels, predictions)
+    write_test_outputs(run_dir, idx_to_class, labels, predictions)
 
     test_dataset = test_loader.dataset
-    predictions_df = pd.DataFrame(
-        {
-            "image_path": test_dataset.data_frame["image_path"].tolist(),
-            "label": test_dataset.data_frame["label"].tolist(),
-            "pred_label": [idx_to_class[p] for p in predictions],
-            "pred_prob": test_probs,
-        }
+    predictions_df = write_predictions_csv(
+        run_dir, test_dataset, idx_to_class, predictions, test_probs
     )
-    predictions_df.to_csv(run_dir / "predictions.csv", index=False)
     logger.info(
         "[%s] Predicciones de test guardadas en %s", model_name, run_dir / "predictions.csv"
     )
+    write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
 
-    _write_summary(
+    write_summary(
         run_dir,
-        model_name,
-        run_id,
-        args,
-        target_size,
-        batch_size,
-        class_to_idx,
-        splits_dir,
-        best_epoch,
-        best_val_macro_f1,
-        test_metrics,
+        {
+            "model": model_name,
+            "run_id": run_id,
+            "num_classes": len(class_to_idx),
+            "class_to_idx": class_to_idx,
+            "image_size": list(target_size),
+            "splits_dir": str(splits_dir),
+            "epochs": args.epochs,
+            "batch_size": batch_size,
+            "learning_rate": args.learning_rate,
+            "weight_decay": args.weight_decay,
+            "pretrained": not args.no_pretrained,
+            "best_epoch": best_epoch,
+            "best_val_macro_f1": best_val_macro_f1,
+            "test": test_metrics,
+        },
     )
     update_latest_pointer(output_dir, model_name, run_id)
     logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
