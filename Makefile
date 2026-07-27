@@ -14,6 +14,8 @@ endif
 
 MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
 MAIN_MODELS ?= shufflenet_v2_x1_0
+MAIN_OUTPUT_DIR ?= outputs/main
+OUTPUT_DIR ?=
 EPOCHS ?= 30
 MAIN_EPOCHS ?=
 SPLITS_DIR ?=
@@ -37,7 +39,7 @@ RUN ?=
 TOP_K ?=
 STABILITY_RUNS ?=
 
-.PHONY: compile-pdf install download-dataset splits splits-baseline train train-baselines inference explain-lime explain-report explain-errors test-loader summary docs-eda lint lint-fix fmt check clean-outputs modal-seed modal-train modal-train-baselines modal-clean-outputs modal-explain-lime modal-explain-report modal-explain-errors modal-pull
+.PHONY: compile-pdf install download-dataset splits splits-baseline train train-baselines inference explain-lime explain-report explain-errors explain-lime-main explain-report-main explain-errors-main test-loader summary docs-eda lint lint-fix fmt check clean-outputs modal-seed modal-train modal-train-baselines modal-clean-outputs modal-explain-lime modal-explain-report modal-explain-errors modal-pull
 
 install:
 	$(PIP) install -e ".[dev,analysis,xai,cloud]"
@@ -134,16 +136,28 @@ inference:
 		$(if $(TOP_K),--top-k $(TOP_K),)
 
 explain-lime:
-	$(PYTHON) scripts/pipeline/explain_lime.py --models $(MODELS) $(if $(IMAGE),--image $(IMAGE),) $(if $(OUTPUT),--output $(OUTPUT),)
+	$(PYTHON) scripts/pipeline/explain_lime.py --models $(MODELS) $(if $(IMAGE),--image $(IMAGE),) $(if $(OUTPUT),--output $(OUTPUT),) $(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
 
 explain-report:
 	$(PYTHON) scripts/pipeline/explain_report.py --models $(MODELS) \
 		$(if $(RUN),--run $(RUN),) $(if $(SAMPLE_SIZE),--sample-size $(SAMPLE_SIZE),) \
-		$(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),)
+		$(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),) \
+		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
 
 explain-errors:
 	$(PYTHON) scripts/pipeline/explain_report.py --models $(MODELS) --errors-only \
-		$(if $(RUN),--run $(RUN),) $(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),)
+		$(if $(RUN),--run $(RUN),) $(if $(NUM_SAMPLES),--num-samples $(NUM_SAMPLES),) \
+		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
+
+# Variantes apuntadas a los runs del pipeline principal (outputs/main) en vez de baselines.
+explain-lime-main:
+	$(MAKE) explain-lime MODELS="$(MAIN_MODELS)" OUTPUT_DIR="$(MAIN_OUTPUT_DIR)"
+
+explain-report-main:
+	$(MAKE) explain-report MODELS="$(MAIN_MODELS)" OUTPUT_DIR="$(MAIN_OUTPUT_DIR)"
+
+explain-errors-main:
+	$(MAKE) explain-errors MODELS="$(MAIN_MODELS)" OUTPUT_DIR="$(MAIN_OUTPUT_DIR)"
 
 test-loader:
 	$(PYTHON) scripts/checks/smoke_loader.py

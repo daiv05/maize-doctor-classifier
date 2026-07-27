@@ -19,7 +19,7 @@ from src.training.common import load_run_metadata, resolve_run_dir
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-_OUTPUT_DIR = get_output_root() / "baselines"
+_DEFAULT_OUTPUT_DIR = get_output_root() / "baselines"
 
 
 def _resolve_model_names(requested: list[str]) -> list[str]:
@@ -82,7 +82,16 @@ def main() -> None:
         help="run_id específico a explicar (p.ej. 20260703_142230). Por defecto usa el "
         "último run registrado en latest.json para cada modelo.",
     )
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        dest="output_dir",
+        help="Directorio raíz donde buscar los runs, con un subdirectorio por modelo. "
+        f"Default: {_DEFAULT_OUTPUT_DIR}. Usa outputs/main para los runs de train.py.",
+    )
     args = parser.parse_args()
+
+    output_dir = Path(args.output_dir) if args.output_dir else _DEFAULT_OUTPUT_DIR
 
     with open(PROJECT_ROOT / "config" / "dataset.yaml") as f:
         cfg = yaml.safe_load(f)
@@ -116,7 +125,7 @@ def main() -> None:
 
     for model_name in model_names:
         try:
-            run_dir = resolve_run_dir(_OUTPUT_DIR, model_name, args.run)
+            run_dir = resolve_run_dir(output_dir, model_name, args.run)
         except SystemExit as e:
             logger.warning(f"[{model_name}] {e}. Se omite.")
             continue
