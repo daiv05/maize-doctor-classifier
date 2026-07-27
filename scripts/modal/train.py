@@ -44,6 +44,38 @@ def seed_dataset() -> None:
 
 
 @app.function(
+    # Indexado y hashing SHA-256 de ~31k imagenes: I/O-bound y paralelizable, sin GPU.
+    cpu=8.0,
+    volumes={"/data": dataset_vol, "/outputs": outputs_vol},
+    secrets=[modal.Secret.from_name("hf")],
+    timeout=2 * 3600,
+)
+def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int = 0) -> None:
+    """
+    Genera los splits CSV en el Volume corn-outputs.
+
+    El pipeline principal (train_main) requiere outputs/splits/seed_42 y falla si no
+    existe: a diferencia de train_baselines, no los genera de forma lazy. Regenerar es
+    idempotente porque create_splits.py fija la semilla (42) y escanea con sorted().
+
+    @param {bool} baseline Genera seed_42_baseline (perfil capado) en vez de seed_42.
+    @param {bool} no_cap Sin tope por clase; solo aplica junto con baseline.
+    @param {int} max_per_class Tope por clase; 0 usa el default del YAML. Solo con baseline.
+    """
+    dataset_vol.reload()
+    command = [sys.executable, "scripts/pipeline/create_splits.py"]
+    if baseline:
+        command.append("--baseline")
+        if no_cap:
+            command.append("--no-cap")
+        elif max_per_class:
+            command += ["--max-per-class", str(max_per_class)]
+
+    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    outputs_vol.commit()
+
+
+@app.function(
     gpu="A10",
     # CPU explícita (el default de Modal es 0.125 cores): garantiza cores reales para el
     # indexado paralelo de splits y el DataLoader, sin depender del burst. Alineado con

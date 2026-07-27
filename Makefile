@@ -23,6 +23,7 @@ CLASS_WEIGHTS ?=
 CLAHE ?=
 NO_CAP ?=
 MAX_PER_CLASS ?=
+BASELINE ?=
 REGEN_SPLITS ?=
 BATCH_SIZE ?=
 IMAGE_SIZE ?=
@@ -39,7 +40,7 @@ RUN ?=
 TOP_K ?=
 STABILITY_RUNS ?=
 
-.PHONY: compile-pdf install download-dataset splits splits-baseline train train-baselines inference explain-lime explain-report explain-errors explain-lime-main explain-report-main explain-errors-main test-loader summary docs-eda lint lint-fix fmt check clean-outputs modal-seed modal-train modal-train-baselines modal-clean-outputs modal-explain-lime modal-explain-report modal-explain-errors modal-pull
+.PHONY: compile-pdf install download-dataset splits splits-baseline train train-baselines inference explain-lime explain-report explain-errors explain-lime-main explain-report-main explain-errors-main test-loader summary docs-eda lint lint-fix fmt check clean-outputs modal-seed modal-splits modal-train modal-train-baselines modal-clean-outputs modal-explain-lime modal-explain-report modal-explain-errors modal-pull
 
 install:
 	$(PIP) install -e ".[dev,analysis,xai,cloud]"
@@ -83,6 +84,12 @@ clean-outputs:
 
 modal-seed:
 	$(MODAL) run scripts/modal/train.py::seed_dataset
+
+modal-splits:
+	$(MODAL) run scripts/modal/train.py::make_splits \
+		$(if $(BASELINE),--baseline,) \
+		$(if $(NO_CAP),--no-cap,) \
+		$(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",)
 
 modal-train-baselines:
 	$(MODAL) run scripts/modal/train.py --models "$(MODELS)" --epochs "$(EPOCHS)" \
