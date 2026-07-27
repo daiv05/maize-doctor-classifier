@@ -5,14 +5,12 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from time import perf_counter
 
 import pandas as pd
 import torch
 import yaml
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
+from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
 from src.data.dataset import CornDataset, build_weighted_sampler
@@ -27,6 +25,7 @@ from src.training.common import (
     update_latest_pointer,
     worker_init_fn,
 )
+from src.training.loop import fit, run_epoch
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -123,64 +122,6 @@ def _build_dataloaders(
         pin_memory=pin_memory,
     )
     return train_loader, val_loader, test_loader, class_to_idx, idx_to_class, factory
-
-
-def _metrics_from_predictions(
-    labels: list[int],
-    predictions: list[int],
-    loss: float,
-) -> dict[str, float]:
-    return {
-        "loss": loss,
-        "accuracy": accuracy_score(labels, predictions),
-        "macro_f1": f1_score(labels, predictions, average="macro", zero_division=0),
-    }
-
-
-def _run_epoch(
-    model: torch.nn.Module,
-    loader: DataLoader,
-    criterion: torch.nn.Module,
-    device: torch.device,
-    optimizer: torch.optim.Optimizer | None = None,
-    desc: str = "",
-) -> tuple[dict[str, float], list[int], list[int], list[float]]:
-    is_train = optimizer is not None
-    model.train(is_train)
-
-    running_loss = 0.0
-    seen = 0
-    labels_all: list[int] = []
-    preds_all: list[int] = []
-    probs_all: list[float] = []
-
-    context = torch.enable_grad() if is_train else torch.no_grad()
-    with context:
-        for images, labels in tqdm(loader, desc=desc, leave=False):
-            images = images.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True)
-
-            if is_train:
-                optimizer.zero_grad(set_to_none=True)
-
-            logits = model(images)
-            loss = criterion(logits, labels)
-
-            if is_train:
-                loss.backward()
-                optimizer.step()
-
-            batch_size = labels.size(0)
-            running_loss += loss.item() * batch_size
-            seen += batch_size
-            labels_all.extend(labels.detach().cpu().tolist())
-            probs = logits.detach().softmax(dim=1)
-            preds_all.extend(probs.argmax(dim=1).cpu().tolist())
-            probs_all.extend(probs.max(dim=1).values.cpu().tolist())
-
-    avg_loss = running_loss / max(seen, 1)
-    metrics = _metrics_from_predictions(labels_all, preds_all, avg_loss)
-    return metrics, labels_all, preds_all, probs_all
 
 
 def _write_test_outputs(
@@ -284,63 +225,33 @@ def _train_model(
         weight_decay=args.weight_decay,
     )
 
-    history: list[dict[str, float | int | str]] = []
-    best_epoch = 0
-    best_val_macro_f1 = -1.0
+    epoch_rows: list[dict[str, float | int | str]] = []
 
-    for epoch in range(1, args.epochs + 1):
-        started = perf_counter()
-        train_metrics, _, _, _ = _run_epoch(
-            model,
-            train_loader,
-            criterion,
-            device,
-            optimizer=optimizer,
-            desc=f"{model_name} train {epoch}/{args.epochs}",
-        )
-        val_metrics, _, _, _ = _run_epoch(
-            model,
-            val_loader,
-            criterion,
-            device,
-            desc=f"{model_name} val {epoch}/{args.epochs}",
-        )
-        epoch_seconds = perf_counter() - started
+    def _persist_epoch_row(_epoch: int, row: dict) -> None:
+        epoch_rows.append(row)
+        pd.DataFrame(epoch_rows).to_csv(run_dir / "train_history.csv", index=False)
 
-        row = {
-            "model": model_name,
-            "epoch": epoch,
-            "train_loss": train_metrics["loss"],
-            "train_accuracy": train_metrics["accuracy"],
-            "train_macro_f1": train_metrics["macro_f1"],
-            "val_loss": val_metrics["loss"],
-            "val_accuracy": val_metrics["accuracy"],
-            "val_macro_f1": val_metrics["macro_f1"],
-            "epoch_seconds": epoch_seconds,
-        }
-        history.append(row)
-        pd.DataFrame(history).to_csv(run_dir / "train_history.csv", index=False)
-
-        if val_metrics["macro_f1"] > best_val_macro_f1:
-            best_epoch = epoch
-            best_val_macro_f1 = val_metrics["macro_f1"]
-            torch.save(model.state_dict(), run_dir / "best.pth")
-
-        torch.save(model.state_dict(), run_dir / "last.pth")
-        logger.info(
-            "[%s] epoch %s/%s train_f1=%.4f val_f1=%.4f",
-            model_name,
-            epoch,
-            args.epochs,
-            train_metrics["macro_f1"],
-            val_metrics["macro_f1"],
-        )
+    history = fit(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        criterion=criterion,
+        optimizer=optimizer,
+        device=device,
+        epochs=args.epochs,
+        model_name=model_name,
+        run_dir=run_dir,
+        on_epoch_end=_persist_epoch_row,
+    )
+    best_row = max(history, key=lambda item: item["val_macro_f1"])
+    best_epoch = best_row["epoch"]
+    best_val_macro_f1 = best_row["val_macro_f1"]
 
     best_path = run_dir / "best.pth"
     if best_path.exists():
         model.load_state_dict(torch.load(best_path, map_location=device))
 
-    test_metrics, labels, predictions, test_probs = _run_epoch(
+    test_metrics, labels, predictions, test_probs = run_epoch(
         model,
         test_loader,
         criterion,
