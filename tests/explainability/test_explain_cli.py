@@ -1,11 +1,14 @@
 import argparse
 import builtins
-import inspect
+import logging
 
+import pandas as pd
 import pytest
+import torch
+import torch.nn as nn
 
 import scripts.pipeline.explain as explain_cli
-from scripts.pipeline.explain import build_parser
+from scripts.pipeline.explain import RunContext, build_parser
 
 _SUBCOMMANDS = {"visual", "fidelity", "errors", "compare", "global"}
 
@@ -81,8 +84,85 @@ def test_compare_accepts_shap_overrides():
     assert args.nsamples == 128
 
 
-def test_compare_and_global_do_not_raise_the_stub_sentinel():
-    from scripts.pipeline import explain
+def test_main_dispatches_compare_and_global_to_their_handlers(monkeypatch):
+    """`main()` resuelve `compare` y `global` a callables reales en su dict `handlers`,
+    no a los stubs que este test reemplaza: se parchean `cmd_compare`/`cmd_global` con
+    sentinelas y se verifica que el subcomando invocado llega exactamente a la suya."""
+    calls: list[str] = []
 
-    assert "aun no esta implementado" not in inspect.getsource(explain.cmd_compare)
-    assert "aun no esta implementado" not in inspect.getsource(explain.cmd_global)
+    def _fake_handler(name):
+        return lambda args, cfg, device: calls.append(name)
+
+    monkeypatch.setattr(explain_cli, "cmd_compare", _fake_handler("compare"))
+    monkeypatch.setattr(explain_cli, "cmd_global", _fake_handler("global"))
+    monkeypatch.setattr(explain_cli, "load_config", lambda: {"lime": {"seed": 42}})
+    monkeypatch.setattr(explain_cli, "select_device", lambda: torch.device("cpu"))
+    monkeypatch.setattr(explain_cli, "set_global_seed", lambda seed: None)
+
+    monkeypatch.setattr("sys.argv", ["explain.py", "compare"])
+    explain_cli.main()
+    monkeypatch.setattr("sys.argv", ["explain.py", "global"])
+    explain_cli.main()
+
+    assert calls == ["compare", "global"]
+
+
+def _dummy_model() -> nn.Module:
+    torch.manual_seed(0)
+    return nn.Sequential(nn.Flatten(), nn.Linear(3 * 8 * 8, 2)).eval()
+
+
+def test_cmd_global_skips_cleanly_when_nothing_could_be_accumulated(tmp_path, monkeypatch, caplog):
+    """Cubre a nivel de CLI el guard de `cmd_global` (scripts/pipeline/explain.py:682):
+    si todas las imagenes de la muestra fallan al cargar, el acumulador queda vacio y el
+    comando debe loguear y continuar, no escribir `explain_global/` ni lanzar."""
+    run_dir = tmp_path / "run"
+    run_dir.mkdir(parents=True)
+    predictions = pd.DataFrame(
+        {
+            "image_path": ["falta/uno.png", "falta/dos.png"],
+            "label": ["healthy", "common_rust"],
+            "pred_label": ["healthy", "healthy"],
+            "pred_prob": [0.9, 0.4],
+        }
+    )
+    predictions.to_csv(run_dir / "predictions.csv", index=False)
+
+    context = RunContext(
+        model_name="dummy",
+        run_dir=run_dir,
+        model=_dummy_model(),
+        idx_to_class={0: "healthy", 1: "common_rust"},
+        target_size=(8, 8),
+        splits_dir=tmp_path / "splits",
+        device=torch.device("cpu"),
+    )
+    monkeypatch.setattr(explain_cli, "iter_run_contexts", lambda *args, **kwargs: iter([context]))
+    monkeypatch.setattr(explain_cli, "get_dataset_root", lambda: tmp_path / "dataset_inexistente")
+
+    args = argparse.Namespace(
+        models=["all"],
+        run=None,
+        baseline=None,
+        output_dir=None,
+        sample_size=None,
+        nsamples=None,
+    )
+    cfg = {
+        "shap": {
+            "segmentation": "slic",
+            "n_segments": 4,
+            "compactness": 10.0,
+            "nsamples": 32,
+            "batch_size": 8,
+            "background": "black",
+            "seed": 42,
+            "global_sample_size": 5,
+        }
+    }
+
+    with caplog.at_level(logging.INFO):
+        explain_cli.cmd_global(args, cfg, device=torch.device("cpu"))
+
+    assert not (run_dir / "explain_global").exists()
+    assert "Nada que perfilar" in caplog.text
