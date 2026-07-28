@@ -80,6 +80,18 @@ class GlobalAccumulator:
             }
         )
 
+    def is_empty(self) -> bool:
+        """
+        Indica si no se acumulo ninguna imagen.
+
+        `summary()` agrupa por columnas que solo existen cuando hay al menos una fila, asi
+        que sobre un acumulador vacio falla dentro de pandas con un error opaco. Los
+        callers consultan esto antes de pedir el resumen.
+
+        @returns {bool} True si el acumulador no recibio ninguna imagen.
+        """
+        return not self._rows
+
     def summary(self) -> pd.DataFrame:
         """
         Agrega las filas acumuladas por clase y correctitud.

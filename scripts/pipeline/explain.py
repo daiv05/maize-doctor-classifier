@@ -679,6 +679,10 @@ def cmd_global(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
             )
             logger.info(f"[{context.model_name}] {image_path.name}: acumulado")
 
+        if accumulator.is_empty():
+            logger.info(f"[{context.model_name}] Nada que perfilar. Se omite.")
+            continue
+
         write_global_report(accumulator, context.run_dir / "explain_global")
 
 

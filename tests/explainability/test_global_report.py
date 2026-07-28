@@ -150,3 +150,20 @@ def test_write_global_report_emits_maps_and_summary(tmp_path):
     assert (tmp_path / "global_summary.csv").exists()
     payload = json.loads((tmp_path / "global_summary.json").read_text(encoding="utf-8"))
     assert payload[0]["label"] == "healthy"
+
+
+def test_fresh_accumulator_reports_itself_as_empty():
+    assert GlobalAccumulator().is_empty()
+
+
+def test_accumulator_is_not_empty_after_one_image():
+    accumulator = GlobalAccumulator()
+    accumulator.accumulate(
+        label="healthy",
+        correct=True,
+        shap_values=np.array([1.0, 0.0]),
+        segments=_half_segments(),
+        image_np=_half_leaf_image(),
+    )
+
+    assert not accumulator.is_empty()
