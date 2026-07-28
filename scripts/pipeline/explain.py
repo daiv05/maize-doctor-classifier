@@ -524,13 +524,162 @@ def cmd_errors(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
 
 
 def cmd_compare(args: argparse.Namespace, cfg: dict, device: torch.device) -> None:
-    """Panel comparado LIME | SHAP | Grad-CAM. Se implementa en la Tarea 10."""
-    raise SystemExit("El subcomando 'compare' aun no esta implementado.")
+    """
+    Panel comparado LIME | SHAP | Grad-CAM sobre una muestra balanceada del test set.
+
+    Cruza con predictions.csv para poder desglosar el acuerdo entre aciertos y errores.
+
+    @param {argparse.Namespace} args Argumentos del subcomando.
+    @param {dict} cfg Configuracion del proyecto.
+    @param {torch.device} device Dispositivo de computo.
+    """
+    from src.explainability.compare_report import render_comparison
+    from src.explainability.visual_report import sample_balanced
+
+    lime_cfg = cfg["lime"]
+    shap_cfg = dict(cfg["shap"])
+    if args.nsamples:
+        shap_cfg["nsamples"] = args.nsamples
+    gradcam_enabled = cfg.get("gradcam", {}).get("enabled", False)
+    sample_size = args.sample_size or shap_cfg["images_per_class"]
+    dataset_root = get_dataset_root()
+
+    for context in iter_run_contexts(args, cfg, device, require_predictions=True):
+        predictions = pd.read_csv(context.run_dir / "predictions.csv")
+        df_sample = sample_balanced(predictions, sample_size, shap_cfg["seed"])
+        panel_dir = context.run_dir / "explain_compare"
+        rows: list[dict] = []
+
+        for _, row in df_sample.iterrows():
+            image_path = dataset_root / row["image_path"]
+            try:
+                image = load_and_normalize_image(image_path)
+            except (FileNotFoundError, RuntimeError) as error:
+                logger.warning(f"[{context.model_name}] Saltando {image_path}: {error}")
+                continue
+
+            result = render_comparison(
+                image=image,
+                model=context.model,
+                model_name=context.model_name if gradcam_enabled else None,
+                idx_to_class=context.idx_to_class,
+                target_size=context.target_size,
+                output_path=panel_dir / f"{image_path.stem}__true-{row['label']}.png",
+                lime_cfg=lime_cfg,
+                shap_cfg=shap_cfg,
+                device=device,
+            )
+            rows.append(
+                {
+                    "image_path": row["image_path"],
+                    "label": row["label"],
+                    "pred_label": row["pred_label"],
+                    "pred_prob": row["pred_prob"],
+                    "correct": row["label"] == row["pred_label"],
+                    "dispersion": result["dispersion"],
+                    **result["agreement"],
+                }
+            )
+            logger.info(
+                f"[{context.model_name}] {image_path.name}: "
+                f"IoU={result['agreement']['iou_topk']:.2f} "
+                f"Spearman={result['agreement']['spearman']:.2f}"
+            )
+
+        if not rows:
+            logger.info(f"[{context.model_name}] Nada que comparar. Se omite.")
+            continue
+
+        summary = (
+            pd.DataFrame(rows)
+            .groupby(["label", "correct"])
+            .agg(
+                n=("dispersion", "size"),
+                mean_pred_prob=("pred_prob", "mean"),
+                mean_shap_dispersion=("dispersion", "mean"),
+                mean_iou_topk=("iou_topk", "mean"),
+                mean_spearman=("spearman", "mean"),
+                mean_sign_agreement=("sign_agreement", "mean"),
+            )
+            .reset_index()
+        )
+        panel_dir.mkdir(parents=True, exist_ok=True)
+        summary.to_csv(panel_dir / "summary.csv", index=False)
+        (panel_dir / "summary.json").write_text(
+            summary.to_json(orient="records", indent=2), encoding="utf-8"
+        )
+        logger.info(f"[{context.model_name}] Acuerdo:\n{summary.to_string(index=False)}")
 
 
 def cmd_global(args: argparse.Namespace, cfg: dict, device: torch.device) -> None:
-    """Perfil global por clase. Se implementa en la Tarea 10."""
-    raise SystemExit("El subcomando 'global' aun no esta implementado.")
+    """
+    Perfil global por clase: mapa espacial medio de atribucion y ratio hoja/fondo.
+
+    No renderiza paneles por imagen: solo acumula los valores de Shapley, que es lo que
+    permite subir el tamano de muestra sin llenar el run de PNGs.
+
+    @param {argparse.Namespace} args Argumentos del subcomando.
+    @param {dict} cfg Configuracion del proyecto.
+    @param {torch.device} device Dispositivo de computo.
+    """
+    import numpy as np
+
+    from src.explainability.global_report import GlobalAccumulator, write_global_report
+    from src.explainability.kernel_shap import explain_with_kernel_shap
+    from src.explainability.segmentation import build_segments
+    from src.explainability.visual_report import (
+        build_predict_fn,
+        prepare_lime_image,
+        sample_balanced,
+    )
+
+    shap_cfg = dict(cfg["shap"])
+    if args.nsamples:
+        shap_cfg["nsamples"] = args.nsamples
+    sample_size = args.sample_size or shap_cfg["global_sample_size"]
+    dataset_root = get_dataset_root()
+
+    for context in iter_run_contexts(args, cfg, device, require_predictions=True):
+        predictions = pd.read_csv(context.run_dir / "predictions.csv")
+        df_sample = sample_balanced(predictions, sample_size, shap_cfg["seed"])
+        predict_fn = build_predict_fn(context.model, device, context.target_size)
+        accumulator = GlobalAccumulator()
+
+        for _, row in df_sample.iterrows():
+            image_path = dataset_root / row["image_path"]
+            try:
+                image = load_and_normalize_image(image_path)
+            except (FileNotFoundError, RuntimeError) as error:
+                logger.warning(f"[{context.model_name}] Saltando {image_path}: {error}")
+                continue
+
+            image_np = prepare_lime_image(image, context.target_size)
+            segments = build_segments(
+                image_np,
+                algorithm=shap_cfg["segmentation"],
+                n_segments=shap_cfg["n_segments"],
+                compactness=shap_cfg["compactness"],
+            )
+            explanation = explain_with_kernel_shap(
+                image_np=image_np,
+                segments=segments,
+                predict_fn=predict_fn,
+                target_idx=int(np.argmax(predict_fn(image_np[np.newaxis, ...])[0])),
+                nsamples=shap_cfg["nsamples"],
+                batch_size=shap_cfg["batch_size"],
+                background=shap_cfg["background"],
+                seed=shap_cfg["seed"],
+            )
+            accumulator.accumulate(
+                label=row["label"],
+                correct=row["label"] == row["pred_label"],
+                shap_values=explanation.values,
+                segments=segments,
+                image_np=image_np,
+            )
+            logger.info(f"[{context.model_name}] {image_path.name}: acumulado")
+
+        write_global_report(accumulator, context.run_dir / "explain_global")
 
 
 def main() -> None:

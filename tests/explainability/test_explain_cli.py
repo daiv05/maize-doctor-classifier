@@ -71,3 +71,17 @@ def test_load_visual_report_functions_reports_missing_xai_dependency(monkeypatch
 
     with pytest.raises(SystemExit, match="Instala el extra xai"):
         explain_cli._load_visual_report_functions()
+
+
+def test_compare_accepts_shap_overrides():
+    args = build_parser().parse_args(["compare", "--sample-size", "3", "--nsamples", "128"])
+
+    assert args.sample_size == 3
+    assert args.nsamples == 128
+
+
+def test_compare_and_global_are_no_longer_stubs():
+    from scripts.pipeline import explain
+
+    assert "no esta implementado" not in (explain.cmd_compare.__doc__ or "")
+    assert "no esta implementado" not in (explain.cmd_global.__doc__ or "")
