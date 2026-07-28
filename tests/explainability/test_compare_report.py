@@ -1,8 +1,10 @@
 import json
 
 import numpy as np
+import pytest
 import torch
 import torch.nn as nn
+from lime import lime_image
 from PIL import Image
 
 from src.explainability.compare_report import render_comparison
@@ -19,6 +21,33 @@ _SHAP_CFG = {
     "background": "black",
     "seed": 42,
 }
+
+
+class _FakeExplanation:
+    """Sustituto minimo de la explicacion de LIME: `render_comparison` solo lee
+    `local_exp`, indexado por clase."""
+
+    def __init__(self, local_exp: dict[int, list[tuple[int, float]]]):
+        self.local_exp = local_exp
+
+
+@pytest.fixture
+def captured_kwargs(monkeypatch) -> dict:
+    """Intercepta `explain_instance` para capturar el `segmentation_fn` que recibe LIME,
+    sin pagar el costo del muestreo real."""
+    captured: dict = {}
+
+    def fake_explain_instance(self, image, classifier_fn, **kwargs):
+        captured.update(kwargs)
+        segments = kwargs["segmentation_fn"](image)
+        local_exp = {
+            class_idx: [(segment_id, 1.0) for segment_id in range(int(segments.max()) + 1)]
+            for class_idx in range(len(_IDX_TO_CLASS))
+        }
+        return _FakeExplanation(local_exp)
+
+    monkeypatch.setattr(lime_image.LimeImageExplainer, "explain_instance", fake_explain_instance)
+    return captured
 
 
 def _dummy_model() -> nn.Module:
@@ -79,3 +108,16 @@ def test_lime_and_shap_share_the_segmentation(tmp_path):
 
     assert len(metadata["lime_weights"]) == len(metadata["shap_values"])
     assert metadata["n_segments"] == len(metadata["shap_values"])
+
+
+def test_lime_and_shap_receive_the_identical_segmentation_array(captured_kwargs, tmp_path):
+    """Prueba de identidad, no solo de forma: el `segmentation_fn` capturado en LIME debe
+    devolver el mismo array de superpixeles que quedo persistido en el sidecar `.npy`, el
+    mismo que `explain_with_kernel_shap` recibio para calcular sus valores de Shapley.
+    Dos segmentaciones distintas con igual cantidad de superpixeles no pasarian esto."""
+    _render(tmp_path)
+
+    segments_from_sidecar = np.load(tmp_path / "compare.npy")
+    forwarded = captured_kwargs["segmentation_fn"](np.zeros((16, 16, 3), dtype=np.uint8))
+
+    np.testing.assert_array_equal(forwarded, segments_from_sidecar)
