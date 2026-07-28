@@ -78,7 +78,7 @@ def _diagnosis_color(class_name: str) -> str:
     return _COLOR_DISEASE
 
 
-def _build_validation_transform(target_size: tuple[int, int]) -> T.Compose:
+def build_validation_transform(target_size: tuple[int, int]) -> T.Compose:
     """Resize + normalize deterministas de validación, compartidos entre `predict_fn`
     (LIME) y la construcción del tensor de entrada para Grad-CAM."""
     return T.Compose(
@@ -90,7 +90,7 @@ def _build_validation_transform(target_size: tuple[int, int]) -> T.Compose:
     )
 
 
-def _prepare_lime_image(image: Image.Image, target_size: tuple[int, int]) -> np.ndarray:
+def prepare_lime_image(image: Image.Image, target_size: tuple[int, int]) -> np.ndarray:
     """Lleva la imagen al tamaño de entrada como array HWC uint8 para LimeImageExplainer.
 
     Usa la misma `T.Resize` que `_build_validation_transform`, no `PIL.Image.resize`: el
@@ -116,20 +116,20 @@ def build_predict_fn(
     un batch de imágenes HWC uint8 y devuelve las probabilidades softmax por clase,
     aplicando las mismas transforms deterministas de validación (resize + normalize).
     """
-    validation_transform = _build_validation_transform(target_size)
+    validation_transform = build_validation_transform(target_size)
 
     @torch.no_grad()
     def predict_fn(images: np.ndarray) -> np.ndarray:
-        batch = torch.stack(
-            [validation_transform(Image.fromarray(img)) for img in images]
-        ).to(device)
+        batch = torch.stack([validation_transform(Image.fromarray(img)) for img in images]).to(
+            device
+        )
         probs = model(batch).softmax(dim=1)
         return probs.cpu().numpy()
 
     return predict_fn
 
 
-def _build_positive_region_panel(image_rgb01: np.ndarray, mask: np.ndarray) -> np.ndarray:
+def build_positive_region_panel(image_rgb01: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """
     Superpíxeles positivos resaltados en verde semitransparente (mezcla 50/50 con
     `_HIGHLIGHT_COLOR`); el resto de la imagen se atenúa (no se oculta) y luego se
@@ -142,7 +142,7 @@ def _build_positive_region_panel(image_rgb01: np.ndarray, mask: np.ndarray) -> n
     return mark_boundaries(region, mask, color=(0, 1, 0), mode="thick", outline_color=(0, 1, 0))
 
 
-def _build_importance_heatmap(
+def build_importance_heatmap(
     image_rgb01: np.ndarray, segments: np.ndarray, local_exp: list[tuple[int, float]]
 ) -> tuple[np.ndarray, plt.Normalize]:
     """
@@ -174,6 +174,7 @@ def render_visual_explanation(
     seed: int = 42,
     device: torch.device | None = None,
     model_name: str | None = None,
+    segments: np.ndarray | None = None,
 ) -> dict:
     """
     Genera el reporte visual (original / regiones positivas / heatmap de importancia
@@ -184,16 +185,27 @@ def render_visual_explanation(
     `GRADCAM_TARGET_LAYERS`, añade el panel Grad-CAM; si es None o la arquitectura no
     está soportada, el reporte mantiene el layout de 3 paneles original.
 
+    `segments` es opcional (default None): con None, LIME segmenta internamente con
+    quickshift, que es su comportamiento historico y el de los reportes ya publicados.
+    Con un mapa explicito, LIME atribuye sobre esas mismas regiones, que es lo que
+    permite comparar sus pesos con los valores de Shapley segmento a segmento.
+
     Devuelve un dict con la predicción y probabilidad, útil para logging/metadata.
+
+    @param {np.ndarray|None} segments Mapa de superpixeles a imponer, o None.
     """
     device = device or torch.device("cpu")
     model.eval()
 
-    image_np = _prepare_lime_image(image, target_size)
+    image_np = prepare_lime_image(image, target_size)
     image_rgb01 = image_np.astype(float) / 255.0
 
     predict_fn = build_predict_fn(model, device, target_size)
     explainer = lime_image.LimeImageExplainer(random_state=seed)
+
+    explain_kwargs = {}
+    if segments is not None:
+        explain_kwargs["segmentation_fn"] = lambda _image: segments
 
     explanation = explainer.explain_instance(
         image_np,
@@ -202,6 +214,7 @@ def render_visual_explanation(
         hide_color=0,
         num_samples=num_samples,
         random_seed=seed,
+        **explain_kwargs,
     )
 
     pred_idx = explanation.top_labels[0]
@@ -214,18 +227,16 @@ def render_visual_explanation(
         num_features=num_features,
         hide_rest=False,
     )
-    region_panel = _build_positive_region_panel(image_rgb01, mask)
+    region_panel = build_positive_region_panel(image_rgb01, mask)
 
     local_exp = explanation.local_exp[pred_idx]
-    heatmap_panel, norm = _build_importance_heatmap(image_rgb01, explanation.segments, local_exp)
+    heatmap_panel, norm = build_importance_heatmap(image_rgb01, explanation.segments, local_exp)
 
     gradcam_panel = None
     if model_name is not None:
         try:
             target_layer = get_target_layer(model, model_name)
-            input_tensor = (
-                _build_validation_transform(target_size)(image).unsqueeze(0).to(device)
-            )
+            input_tensor = build_validation_transform(target_size)(image).unsqueeze(0).to(device)
             with GradCAM(model, target_layer) as cam:
                 heatmap = cam(input_tensor, class_idx=pred_idx)
             gradcam_panel = build_gradcam_overlay(image_rgb01, heatmap, target_size)
@@ -274,9 +285,7 @@ def _save_explanation_artifacts(
             {"segment_id": int(seg_id), "weight": float(weight)} for seg_id, weight in local_exp
         ],
     }
-    output_path.with_suffix(".json").write_text(
-        json.dumps(metadata, indent=2, ensure_ascii=False)
-    )
+    output_path.with_suffix(".json").write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
     np.save(output_path.with_suffix(".npy"), segments)
 
 
@@ -302,7 +311,9 @@ def _save_figure(
 
     ax_original = fig.add_subplot(grid[0, 0])
     ax_original.imshow(original)
-    ax_original.set_title("Imagen Original", fontsize=13, fontweight="bold", color="#2C3E50", pad=12)
+    ax_original.set_title(
+        "Imagen Original", fontsize=13, fontweight="bold", color="#2C3E50", pad=12
+    )
     ax_original.axis("off")
 
     ax_regions = fig.add_subplot(grid[0, 1])
@@ -318,7 +329,9 @@ def _save_figure(
 
     ax_heatmap = fig.add_subplot(grid[0, 2])
     ax_heatmap.imshow(heatmap_panel)
-    ax_heatmap.set_title("Mapa de Importancia", fontsize=13, fontweight="bold", color="#2C3E50", pad=12)
+    ax_heatmap.set_title(
+        "Mapa de Importancia", fontsize=13, fontweight="bold", color="#2C3E50", pad=12
+    )
     ax_heatmap.axis("off")
 
     if has_gradcam:
@@ -372,12 +385,12 @@ def explain_model_visual(
     """
     Genera el reporte visual (3 paneles LIME, 4 si `enable_gradcam`) para una muestra
     balanceada de `test_df` (`images_per_class` imágenes por clase) y las guarda como
-    PNG bajo `<output_dir>/lime_visual/`. `output_dir` ya debe ser el directorio de la
+    PNG bajo `<output_dir>/explain_visual/`. `output_dir` ya debe ser el directorio de la
     corrida concreta (el caller es responsable de incluir model_name/run_id).
     """
     model.eval()
     df_sample = sample_balanced(test_df, images_per_class, seed)
-    lime_dir = output_dir / "lime_visual"
+    lime_dir = output_dir / "explain_visual"
 
     for _, row in df_sample.iterrows():
         img_path = dataset_root / row["image_path"]
@@ -409,4 +422,4 @@ def explain_model_visual(
             f"({result['predicted_prob'] * 100:.1f}%)"
         )
 
-    logger.info(f"[{model_name}] Reportes visuales LIME guardados en {lime_dir}")
+    logger.info(f"[{model_name}] Paneles visuales guardados en {lime_dir}")
