@@ -8,8 +8,10 @@ from lime import lime_image
 from PIL import Image
 
 from src.explainability.compare_report import render_comparison
+from src.explainability.segmentation import build_segments
+from src.explainability.visual_report import prepare_lime_image
 
-_TARGET_SIZE = (16, 16)
+_TARGET_SIZE = (32, 32)
 _IDX_TO_CLASS = {0: "healthy", 1: "common_rust"}
 _LIME_CFG = {"num_samples": 20, "num_features": 3, "seed": 42}
 _SHAP_CFG = {
@@ -52,12 +54,26 @@ def captured_kwargs(monkeypatch) -> dict:
 
 def _dummy_model() -> nn.Module:
     torch.manual_seed(0)
-    return nn.Sequential(nn.Flatten(), nn.Linear(3 * 16 * 16, 2)).eval()
+    return nn.Sequential(nn.Flatten(), nn.Linear(3 * 32 * 32, 2)).eval()
 
 
 def _dummy_image() -> Image.Image:
-    rng = np.random.default_rng(0)
-    return Image.fromarray(rng.integers(0, 255, size=(32, 32, 3), dtype=np.uint8))
+    """Imagen 64x64 con cuatro cuadrantes de color solido y contiguo.
+
+    SLIC segmenta por coherencia de color y espacio: el ruido uniforme (usado
+    originalmente) no tiene regiones coherentes, asi que `enforce_connectivity` termina
+    fusionando todo en un unico superpixel. Cuatro bloques de color bien diferenciados
+    son justo lo que SLIC esta disenado para encontrar, y con ellos el fixture produce
+    un mapa de 4 superpixeles reproducible (ver `test_fixture_segmentation_has_multiple_segments`).
+    """
+    size = 64
+    half = size // 2
+    image = np.zeros((size, size, 3), dtype=np.uint8)
+    image[:half, :half] = (220, 40, 40)
+    image[:half, half:] = (40, 200, 60)
+    image[half:, :half] = (40, 80, 220)
+    image[half:, half:] = (230, 200, 40)
+    return Image.fromarray(image)
 
 
 def _render(tmp_path):
@@ -72,6 +88,28 @@ def _render(tmp_path):
         shap_cfg=_SHAP_CFG,
         device=torch.device("cpu"),
     )
+
+
+def test_fixture_segmentation_has_multiple_segments():
+    """Guarda que el fixture compartido no colapse a un unico superpixel.
+
+    Un mapa de un solo segmento es siempre un array de ceros (las etiquetas de
+    `build_segments` son consecutivas desde 0), y `assert_array_equal` no distingue dos
+    segmentaciones distintas que colapsen igual: la revision detecto que eso volvia vacua
+    la comparacion de identidad en `test_lime_and_shap_receive_the_identical_segmentation_array`,
+    y con ella las demas pruebas del modulo, que validaban vectores de atribucion de
+    longitud 1. Si una edicion futura del fixture (imagen, target_size o n_segments)
+    vuelve a colapsar el mapa, este test debe fallar primero y en voz alta.
+    """
+    image_np = prepare_lime_image(_dummy_image(), _TARGET_SIZE)
+    segments = build_segments(
+        image_np,
+        algorithm=_SHAP_CFG["segmentation"],
+        n_segments=_SHAP_CFG["n_segments"],
+        compactness=_SHAP_CFG["compactness"],
+    )
+
+    assert int(segments.max()) + 1 > 1
 
 
 def test_writes_png_and_sidecars(tmp_path):
@@ -118,6 +156,6 @@ def test_lime_and_shap_receive_the_identical_segmentation_array(captured_kwargs,
     _render(tmp_path)
 
     segments_from_sidecar = np.load(tmp_path / "compare.npy")
-    forwarded = captured_kwargs["segmentation_fn"](np.zeros((16, 16, 3), dtype=np.uint8))
+    forwarded = captured_kwargs["segmentation_fn"](np.zeros((*_TARGET_SIZE, 3), dtype=np.uint8))
 
     np.testing.assert_array_equal(forwarded, segments_from_sidecar)
