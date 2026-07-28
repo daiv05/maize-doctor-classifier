@@ -88,6 +88,52 @@ def test_class_map_averages_over_the_accumulated_images():
     assert class_map[:, 8:].mean() == 0.0
 
 
+def test_ratio_undefined_when_attribution_is_entirely_non_positive():
+    accumulator = GlobalAccumulator()
+    accumulator.accumulate(
+        label="healthy",
+        correct=True,
+        shap_values=np.array([-1.0, -2.0]),
+        segments=_half_segments(),
+        image_np=_half_leaf_image(),
+    )
+
+    row = accumulator.summary().iloc[0]
+
+    assert row["n"] == 1
+    assert row["n_mask_rejected"] == 0
+    assert row["n_ratio_undefined"] == 1
+    assert np.isnan(row["mean_leaf_attribution_ratio"])
+    assert not bool(row["ratio_reliable"])
+
+
+def test_ratio_reliable_is_true_exactly_at_the_30_percent_boundary():
+    accumulator = GlobalAccumulator()
+    for _ in range(3):
+        accumulator.accumulate(
+            label="nitrogen_deficiency",
+            correct=False,
+            shap_values=np.array([1.0, 0.0]),
+            segments=_half_segments(),
+            image_np=_uniform_image(),
+        )
+    for _ in range(7):
+        accumulator.accumulate(
+            label="nitrogen_deficiency",
+            correct=False,
+            shap_values=np.array([1.0, 0.0]),
+            segments=_half_segments(),
+            image_np=_half_leaf_image(),
+        )
+
+    row = accumulator.summary().iloc[0]
+
+    assert row["n"] == 10
+    assert row["n_mask_rejected"] == 3
+    assert row["n_ratio_undefined"] == 0
+    assert bool(row["ratio_reliable"])
+
+
 def test_write_global_report_emits_maps_and_summary(tmp_path):
     accumulator = GlobalAccumulator()
     accumulator.accumulate(

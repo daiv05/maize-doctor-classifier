@@ -57,10 +57,12 @@ class GlobalAccumulator:
         )
         self._counts[label] = self._counts.get(label, 0) + 1
 
-        coverage = mask_coverage(leaf_mask(image_np))
+        mask = leaf_mask(image_np)
+        coverage = mask_coverage(mask)
         rejected = is_coverage_degenerate(coverage)
         positive = np.clip(normalized, 0.0, None)
         positive_total = positive.sum()
+        ratio_undefined = not rejected and positive_total <= 0
         usable = not rejected and positive_total > 0
 
         self._rows.append(
@@ -68,12 +70,11 @@ class GlobalAccumulator:
                 "label": label,
                 "correct": bool(correct),
                 "leaf_attribution_ratio": (
-                    float(positive[leaf_mask(image_np)].sum() / positive_total)
-                    if usable
-                    else float("nan")
+                    float(positive[mask].sum() / positive_total) if usable else float("nan")
                 ),
                 "mask_coverage": coverage,
                 "mask_rejected": rejected,
+                "ratio_undefined": ratio_undefined,
                 "abs_attribution": float(np.abs(normalized).mean()),
                 "dispersion": explanation_dispersion(list(enumerate(shap_values))),
             }
@@ -84,7 +85,13 @@ class GlobalAccumulator:
         Agrega las filas acumuladas por clase y correctitud.
 
         Las imagenes con mascara descartada entran en `n` y en `n_mask_rejected`, pero su
-        ratio es NaN y queda fuera del promedio: se cuentan sin contaminar la metrica.
+        ratio es NaN y queda fuera del promedio: se cuentan sin contaminar la metrica. Lo
+        mismo aplica a las imagenes con mascara valida pero sin atribucion positiva que
+        repartir (`n_ratio_undefined`): son una causa distinta del mismo sintoma - un ratio
+        no confiable - y se cuentan por separado porque el diagnostico que sugieren al
+        lector humano es distinto (mascara de vegetacion fallando vs. modelo sin atribucion
+        positiva). `ratio_reliable` se apaga cuando la suma de ambos supera el umbral: un
+        numero o es confiable o se declara no confiable, nunca miente en silencio.
 
         @returns {pd.DataFrame} Una fila por (label, correct) con las metricas agregadas.
         """
@@ -94,6 +101,7 @@ class GlobalAccumulator:
             .agg(
                 n=("mask_coverage", "size"),
                 n_mask_rejected=("mask_rejected", "sum"),
+                n_ratio_undefined=("ratio_undefined", "sum"),
                 mean_leaf_attribution_ratio=("leaf_attribution_ratio", "mean"),
                 mean_mask_coverage=("mask_coverage", "mean"),
                 mean_abs_attribution=("abs_attribution", "mean"),
@@ -102,7 +110,7 @@ class GlobalAccumulator:
             .reset_index()
         )
         grouped["ratio_reliable"] = (
-            grouped["n_mask_rejected"] / grouped["n"]
+            (grouped["n_mask_rejected"] + grouped["n_ratio_undefined"]) / grouped["n"]
         ) <= self._unreliable_ratio
         return grouped
 
