@@ -238,8 +238,8 @@ def iter_run_contexts(
             continue
         if require_predictions and not (run_dir / "predictions.csv").exists():
             logger.warning(
-                f"[{model_name}] Falta {run_dir / 'predictions.csv'}. "
-                "Re-entrena para generarlo. Se omite."
+                f"[{model_name}] Falta {run_dir / 'predictions.csv'}. Corre "
+                "`make train-baselines` (o re-entrena) para generarlo. Se omite."
             )
             continue
 
@@ -267,6 +267,29 @@ def iter_run_contexts(
         )
 
 
+def _load_visual_report_functions() -> tuple:
+    """
+    Importa las funciones de visual_report.py con un mensaje claro si falta el extra xai.
+
+    Solo `visual` usa esta guarda (paridad con `explain_lime.py`): `fidelity`/`errors`
+    heredan de `explain_report.py`, que nunca la tuvo, y no se les añade aqui.
+
+    @returns {tuple} (explain_model_visual, render_visual_explanation).
+    @throws {SystemExit} Si falta una dependencia opcional del extra xai.
+    """
+    try:
+        from src.explainability.visual_report import (
+            explain_model_visual,
+            render_visual_explanation,
+        )
+    except ModuleNotFoundError as error:
+        raise SystemExit(
+            f"Falta la dependencia opcional '{error.name}' para generar LIME. "
+            "Instala el extra xai con: pip install -e .[xai]"
+        ) from error
+    return explain_model_visual, render_visual_explanation
+
+
 def cmd_visual(args: argparse.Namespace, cfg: dict, device: torch.device) -> None:
     """
     Panel LIME + Grad-CAM: muestreo balanceado del test set, o una imagen puntual.
@@ -274,16 +297,24 @@ def cmd_visual(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
     @param {argparse.Namespace} args Argumentos del subcomando.
     @param {dict} cfg Configuracion del proyecto.
     @param {torch.device} device Dispositivo de computo.
-    @throws {SystemExit} Si --output se usa sin --image o con varios modelos.
+    @throws {SystemExit} Si --output se usa sin --image o con varios modelos, si falta el
+        directorio de splits de respaldo, o si falta una dependencia opcional del extra xai.
     """
-    from src.explainability.visual_report import explain_model_visual, render_visual_explanation
-
     lime_cfg = cfg["lime"]
     gradcam_enabled = cfg.get("gradcam", {}).get("enabled", False)
     resolved_models = resolve_model_names(args.models, MODEL_REGISTRY)
 
     if args.output is not None and (args.image is None or len(resolved_models) != 1):
         raise SystemExit("--output solo es valido junto con --image y un unico modelo.")
+
+    splits_fallback = _fallback_splits_dir(cfg, args.baseline)
+    if not splits_fallback.exists():
+        raise SystemExit(
+            f"El directorio de splits no existe: {splits_fallback}\n"
+            "Genera los splits primero con: make splits  (o make splits-baseline)"
+        )
+
+    explain_model_visual, render_visual_explanation = _load_visual_report_functions()
 
     for context in iter_run_contexts(args, cfg, device, require_predictions=False):
         gradcam_name = context.model_name if gradcam_enabled else None
