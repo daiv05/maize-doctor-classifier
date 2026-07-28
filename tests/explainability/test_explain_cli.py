@@ -1,5 +1,6 @@
 import argparse
 import builtins
+import inspect
 
 import pytest
 
@@ -80,8 +81,8 @@ def test_compare_accepts_shap_overrides():
     assert args.nsamples == 128
 
 
-def test_compare_and_global_are_no_longer_stubs():
+def test_compare_and_global_do_not_raise_the_stub_sentinel():
     from scripts.pipeline import explain
 
-    assert "no esta implementado" not in (explain.cmd_compare.__doc__ or "")
-    assert "no esta implementado" not in (explain.cmd_global.__doc__ or "")
+    assert "aun no esta implementado" not in inspect.getsource(explain.cmd_compare)
+    assert "aun no esta implementado" not in inspect.getsource(explain.cmd_global)
