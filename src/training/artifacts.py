@@ -1,7 +1,8 @@
 """Escritura de los artefactos de un run de entrenamiento.
 
 Compartido por baselines y pipeline principal para que ambos produzcan el mismo
-esquema de salida y explain_report.py pueda leer los dos indistintamente.
+esquema de salida y los subcomandos `fidelity`/`errors` de scripts/pipeline/explain.py
+puedan leer los dos indistintamente.
 """
 
 from __future__ import annotations

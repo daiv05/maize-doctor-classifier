@@ -1,17 +1,20 @@
 # Interpretabilidad
 
 Se combina LIME (regiones de superpíxeles que sostienen el diagnóstico) y Grad-CAM (mapa de activación de la
-clase predicha).
+clase predicha). **SHAP no aplica a los baselines:** los subcomandos `compare` y `global` de `scripts/pipeline/explain.py`
+son exclusivos del pipeline principal (`outputs/main`, ver [interpretabilidad del pipeline principal](../pipeline/interpretabilidad.md)).
+Los baselines existen para comparar arquitecturas rápido y barato, y LIME + Grad-CAM ya cubre ese propósito sin el costo
+extra de correr KernelSHAP sobre cada arquitectura candidata.
 
-## Scripts
+## Subcomandos
 
-Tres scripts cubren distintos niveles de detalle:
+Tres subcomandos de `scripts/pipeline/explain.py` cubren distintos niveles de detalle:
 
-| Script | Salida |
-|---|---|
-| `explain_lime.py` (`make explain-lime`) | Reporte visual LIME + Grad-CAM por imagen |
-| `explain_report.py` (`make explain-report`) | Fidelidad agregada y dispersión por clase |
-| `explain_report.py --errors-only` (`make explain-errors`) | LIME dirigido a errores (label ≠ pred) |
+| Subcomando | Target | Salida |
+|---|---|---|
+| `visual` | `make explain-visual-baselines` | Reporte visual LIME + Grad-CAM por imagen |
+| `fidelity` | `make explain-fidelity-baselines` | Fidelidad agregada y dispersión por clase |
+| `errors` | `make explain-errors-baselines` | LIME dirigido a errores (label ≠ pred) |
 
 ## Qué observar
 

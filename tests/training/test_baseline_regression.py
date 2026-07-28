@@ -77,7 +77,7 @@ def test_una_epoca_es_reproducible(tmp_splits_dir, fake_image_root):
 
 
 def test_historial_tiene_las_claves_del_csv_publicado(tmp_splits_dir, fake_image_root):
-    """El esquema de train_history.csv no cambia: explain_report.py y los notebooks lo leen."""
+    """El esquema de train_history.csv no cambia: scripts/pipeline/explain.py y los notebooks lo leen."""
     row = run_one_epoch_baseline(tmp_splits_dir, fake_image_root)
 
     for key in (

@@ -95,11 +95,11 @@ def load_run_metadata(
     tamaño de entrada con los que se entrenó ese checkpoint. Solo si falta summary.json se
     cae al fallback derivado del YAML + train.csv.
 
-    Compartida por explain_lime.py y explain_report.py: garantiza que ambos traduzcan el
-    argmax del modelo con EXACTAMENTE el mismo mapeo que el head entrenado. Reconstruir el
-    mapeo desde `baseline.classes` (cuyo orden puede diferir del canónico `dataset.classes`
-    que usa CornDataset) produce etiquetas permutadas - ese fue el bug de rótulos de los
-    reportes LIME.
+    Compartida por los cinco subcomandos de `scripts/pipeline/explain.py`: garantiza que
+    todos traduzcan el argmax del modelo con EXACTAMENTE el mismo mapeo que el head
+    entrenado. Reconstruir el mapeo desde `baseline.classes` (cuyo orden puede diferir del
+    canónico `dataset.classes` que usa CornDataset) produce etiquetas permutadas - ese fue
+    el bug de rótulos de los reportes LIME.
     """
     summary_path = run_dir / "summary.json"
     if summary_path.exists():

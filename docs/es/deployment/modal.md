@@ -1,6 +1,6 @@
 # Entrenamiento en Modal
 
-[Modal](https://modal.com/docs/guide) es la plataforma de GPU en la nube que usa el proyecto para entrenar los **baselines**, el **pipeline principal** y correr **explicabilidad** sobre cualquiera de los dos, cuando conviene más potencia o más tiempo del que da la máquina local. La idea es simple: defines código Python normal, lo decoras para que Modal sepa qué correr en la nube, y esa ejecución se factura por segundo mientras dura. Cuando termina, la instancia se destruye sola (auto-teardown), así que no hay que acordarse de apagar nada ni pagar por GPU ociosa. Otra ventaja práctica es que los scripts de Modal exponen la misma CLI que sus equivalentes locales (`train_baselines.py`, `explain_lime.py`, `explain_report.py`): cualquier combinación de flags que funcione en local funciona igual en Modal.
+[Modal](https://modal.com/docs/guide) es la plataforma de GPU en la nube que usa el proyecto para entrenar los **baselines**, el **pipeline principal** y correr **explicabilidad** sobre cualquiera de los dos, cuando conviene más potencia o más tiempo del que da la máquina local. La idea es simple: defines código Python normal, lo decoras para que Modal sepa qué correr en la nube, y esa ejecución se factura por segundo mientras dura. Cuando termina, la instancia se destruye sola (auto-teardown), así que no hay que acordarse de apagar nada ni pagar por GPU ociosa. Otra ventaja práctica es que los scripts de Modal exponen la misma CLI que sus equivalentes locales (`train_baselines.py`, `explain.py`): cualquier combinación de flags que funcione en local funciona igual en Modal.
 
 ## Cómo está montado
 
@@ -9,7 +9,7 @@ Todo el código que corre en Modal comparte una única imagen definida en `scrip
 El almacenamiento persistente se resuelve con dos Volumes de Modal, que se crean solos la primera vez que se usan:
 
 - `corn-clean`, montado en `/data`, contiene el dataset limpio.
-- `corn-outputs`, montado en `/outputs`, contiene los artefactos generados: splits, pesos de modelos, métricas y reportes LIME.
+- `corn-outputs`, montado en `/outputs`, contiene los artefactos generados: splits, pesos de modelos, métricas y reportes de explicabilidad (LIME, Grad-CAM, SHAP).
 
 El dataset no se sube en cada corrida: se sube una única vez al volumen con `make modal-seed`, que es idempotente (si ya existe, no lo vuelve a descargar). Antes de esa primera vez hace falta autenticar la cuenta y darle a Modal acceso al dataset de Hugging Face:
 
@@ -42,25 +42,32 @@ El pipeline principal se entrena con su propio target, que usa `MAIN_MODELS`/`MA
 make modal-train-main MAIN_MODELS=shufflenet_v2_x1_0 MAIN_EPOCHS=60
 ```
 
-Una vez que hay un run entrenado, la explicabilidad post-hoc se corre por separado. Aquí también los targets están diferenciados por pipeline, porque cada uno lee de un directorio de runs distinto dentro del Volume:
+Una vez que hay un run entrenado, la explicabilidad post-hoc se corre por separado con el CLI unificado `scripts/pipeline/explain.py` (cinco subcomandos: `visual`, `fidelity`, `errors`, `compare`, `global`). Aquí también los targets están diferenciados por pipeline, porque cada uno lee de un directorio de runs distinto dentro del Volume:
 
 ```bash
 # baselines -> /outputs/baselines
-make modal-explain-lime-baselines MODELS=efficientnet_b0
-make modal-explain-report-baselines MODELS=efficientnet_b0 SAMPLE_SIZE=50
+make modal-explain-visual-baselines MODELS=efficientnet_b0
+make modal-explain-fidelity-baselines MODELS=efficientnet_b0 SAMPLE_SIZE=50
 make modal-explain-errors-baselines MODELS=efficientnet_b0
 
 # pipeline principal -> /outputs/main
-make modal-explain-lime-main MAIN_MODELS=shufflenet_v2_x1_0
-make modal-explain-report-main MAIN_MODELS=shufflenet_v2_x1_0 SAMPLE_SIZE=50
+make modal-explain-visual-main MAIN_MODELS=shufflenet_v2_x1_0
+make modal-explain-fidelity-main MAIN_MODELS=shufflenet_v2_x1_0 SAMPLE_SIZE=50
 make modal-explain-errors-main MAIN_MODELS=shufflenet_v2_x1_0
 ```
 
-Los targets sin sufijo (`modal-explain-lime`, `modal-explain-report`, `modal-explain-errors`) siguen existiendo como genéricos: apuntan a baselines salvo que se les pase `PIPELINE=main`.
+Los targets sin sufijo (`modal-explain-visual`, `modal-explain-fidelity`, `modal-explain-errors`) siguen existiendo como genéricos: apuntan a baselines salvo que se les pase `PIPELINE=main`.
 
 Por debajo, esa elección viaja como `--pipeline baselines|main` y es el contenedor el que la traduce a `--output-dir /outputs/<pipeline>`. Se hace por nombre y no pasando la ruta directamente porque, al invocar `make` desde Git Bash en Windows, MSYS reescribe cualquier argumento que empiece con `/` a una ruta de Windows (`/outputs/main` terminaría como `C:/Program Files/Git/outputs/main`).
 
-Igual que con el entrenamiento, `scripts/modal/explain.py` espeja los flags de `explain_lime.py`/`explain_report.py` (`--run`, `--baseline`, `--sample-size`, `--num-samples`, `--errors-only`). La única diferencia a tener en cuenta es que `--image`/`--output` de `explain-lime` deben ser rutas dentro del contenedor (relativas a `/data` u `/outputs`), no del filesystem local.
+Igual que con el entrenamiento, `scripts/modal/explain.py` espeja los flags de `scripts/pipeline/explain.py` (`--run`, `--baseline`, `--sample-size`, `--num-samples`, `--errors-only`). La única diferencia a tener en cuenta es que `--image`/`--output` de `explain-visual` deben ser rutas dentro del contenedor (relativas a `/data` u `/outputs`), no del filesystem local.
+
+Los subcomandos `compare` y `global` traen SHAP y son exclusivos del pipeline principal (no tienen variante `-baselines`), porque el spec que introdujo SHAP lo acotó a `outputs/main`:
+
+```bash
+make modal-explain-compare-main MAIN_MODELS=shufflenet_v2_x1_0 SAMPLE_SIZE=5    # panel LIME | SHAP | Grad-CAM + acuerdo
+make modal-explain-global-main MAIN_MODELS=shufflenet_v2_x1_0 SAMPLE_SIZE=30    # perfil global por clase (mapas + ratio hoja/fondo)
+```
 
 Si en algún momento hace falta empezar de cero (splits, runs o reportes viejos que ya no aplican), `make modal-clean-outputs` vacía el volumen de outputs sin tocar el dataset.
 
@@ -70,8 +77,8 @@ Quien prefiera no pasar por `make` puede invocar los mismos comandos de Modal di
 modal run scripts/modal/train.py::seed_dataset
 modal run scripts/modal/train.py --models "efficientnet_b0" --epochs 30
 modal run scripts/modal/train.py::train_main --models "shufflenet_v2_x1_0" --epochs 60
-modal run scripts/modal/explain.py::explain_report --models "efficientnet_b0" --sample-size 50
-modal run scripts/modal/explain.py::explain_report --models "shufflenet_v2_x1_0" --pipeline main
+modal run scripts/modal/explain.py::explain_fidelity --models "efficientnet_b0" --sample-size 50
+modal run scripts/modal/explain.py::explain_fidelity --models "shufflenet_v2_x1_0" --pipeline main
 modal run scripts/modal/train.py::clean_outputs
 ```
 
@@ -92,3 +99,7 @@ Los splits del baseline se generan la primera vez que se necesitan y se reutiliz
 Para cambiar de GPU basta con editar `gpu="A10"` en `scripts/modal/train.py`/`explain.py`; las opciones disponibles incluyen T4, L4, A10, L40S, A100 y H100.
 
 A diferencia de `train_baselines.py`, el pipeline principal no genera los splits de forma lazy: requiere `outputs/splits/seed_42` y falla si no existe, así que la primera corrida de `modal-train-main` necesita un `make modal-splits` previo.
+
+### Problema conocido: `splits_dir` absoluto de contenedor en runs de Modal
+
+Un run entrenado en Modal persiste `splits_dir` en su `summary.json` como ruta absoluta del contenedor (p.ej. `/outputs/main/shufflenet_v2_x1_0/<run_id>/../../splits/seed_42`). `load_run_metadata` (`src/training/common.py`) lee ese valor tal cual (ver docstring), sin traducirlo al filesystem local. Si ese run se explica luego en Windows (por ejemplo tras un `make modal-pull` y `make explain-visual-main` local), el subcomando `visual` de `scripts/pipeline/explain.py` falla al resolver `test.csv` en su modo de muestreo por lotes, porque intenta leer esa ruta absoluta de contenedor tal cual en vez de resolverla contra `outputs/splits/` local. Este bug es preexistente a la migración a SHAP y queda fuera de alcance de este cambio; si te encuentras con un `FileNotFoundError` de `test.csv` al explicar un run entrenado en Modal, sospecha primero de esto antes de asumir que faltan splits.

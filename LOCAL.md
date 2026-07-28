@@ -75,7 +75,7 @@ Esto corre `pip install -e ".[dev,analysis,xai,cloud]"` dentro del venv (instala
 - `dev`: ipykernel, jupyterlab, matplotlib, seaborn, ruff, pyright
 - `analysis`: imagededup, fiftyone, imageio, mongoengine, motor (necesario para deduplicación y
   exploración visual)
-- `xai`: lime, scikit-image, matplotlib (necesario para `make explain-lime`/`explain-report`/`explain-errors`)
+- `xai`: lime, shap, scikit-image, matplotlib (necesario para `make explain-visual`/`fidelity`/`errors`/`compare`/`global`)
 - `cloud`: huggingface_hub, gdown (necesario para descargar/subir el dataset)
 
 Si solo necesitas descargar el dataset sin las herramientas de desarrollo/análisis:

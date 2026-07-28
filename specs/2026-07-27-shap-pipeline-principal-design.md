@@ -150,11 +150,16 @@ Por cada imagen de la muestra se construye un mapa per-píxel asignando a cada p
 |---|---|
 | `n` | imágenes agregadas |
 | `n_mask_rejected` | descartadas del ratio por cobertura degenerada |
+| `n_ratio_undefined` | máscara válida pero sin atribución positiva que repartir (`Σφ⁺ <= 0`) |
 | `mean_leaf_attribution_ratio` | `Σφ⁺` sobre píxeles de hoja / `Σφ⁺` total |
 | `mean_mask_coverage` | fracción media de píxeles de hoja |
 | `mean_abs_attribution` | magnitud media de atribución |
 | `mean_dispersion` | concentración de la explicación |
-| `ratio_reliable` | `false` si `n_mask_rejected / n > 0.3` |
+| `ratio_reliable` | `false` si `(n_mask_rejected + n_ratio_undefined) / n > 0.3` |
+
+> Nota (post-implementación, Tarea 8): `n_ratio_undefined` se trackea separado de `n_mask_rejected`
+> porque son diagnósticos distintos del mismo síntoma - máscara de vegetación fallando vs. modelo sin
+> atribución positiva -, aunque ambos entran en la misma condición de `ratio_reliable`.
 
 La muestra sale de `predictions.csv` (balanceada por clase, `shap.global_sample_size`), que es lo que permite el desglose acierto/error.
 

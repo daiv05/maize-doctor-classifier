@@ -145,8 +145,8 @@ make summary / make test-loader / make lint / make fmt
 ```bash
 make train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]   # genera splits (lazy) y entrena
 
-make explain-lime-baselines [MODELS=<nombre> RUN=<id> IMAGE=<ruta> OUTPUT=<ruta>]   # visual LIME+Grad-CAM
-make explain-report-baselines [MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n> NUM_SAMPLES=<n>]  # fidelidad agregada
+make explain-visual-baselines [MODELS=<nombre> RUN=<id> IMAGE=<ruta> OUTPUT=<ruta>]   # visual LIME+Grad-CAM
+make explain-fidelity-baselines [MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n> NUM_SAMPLES=<n>]  # fidelidad agregada
 make explain-errors-baselines [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]   # LIME dirigido a errores
 ```
 
@@ -155,9 +155,11 @@ make explain-errors-baselines [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]   # LIM
 ```bash
 make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]  # alias: make train
 
-make explain-lime-main [MAIN_MODELS=<nombre> RUN=<id>]
-make explain-report-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]
+make explain-visual-main [MAIN_MODELS=<nombre> RUN=<id>]
+make explain-fidelity-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]
 make explain-errors-main [MAIN_MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]
+make explain-compare-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]   # panel LIME | SHAP | Grad-CAM (solo main)
+make explain-global-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]    # perfil global con SHAP (solo main)
 ```
 
 ### Modal (GPU en la nube)
@@ -172,11 +174,12 @@ make modal-pull                                             # trae outputs-remot
 
 # baselines (/outputs/baselines)
 make modal-train-baselines [MODELS=<nombre>] [NO_CAP=1 | MAX_PER_CLASS=<n>]
-make modal-explain-lime-baselines / modal-explain-report-baselines / modal-explain-errors-baselines [MODELS=<nombre> RUN=<id>]
+make modal-explain-visual-baselines / modal-explain-fidelity-baselines / modal-explain-errors-baselines [MODELS=<nombre> RUN=<id>]
 
 # pipeline principal (/outputs/main)
 make modal-train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1]        # alias: modal-train
-make modal-explain-lime-main / modal-explain-report-main / modal-explain-errors-main [MAIN_MODELS=<nombre> RUN=<id>]
+make modal-explain-visual-main / modal-explain-fidelity-main / modal-explain-errors-main [MAIN_MODELS=<nombre> RUN=<id>]
+make modal-explain-compare-main / modal-explain-global-main [MAIN_MODELS=<nombre> RUN=<id>]   # SHAP: solo pipeline principal
 ```
 
 ---
@@ -200,11 +203,11 @@ maize-doctor-classifier/
 ├── notebooks/            # Análisis exploratorio
 ├── scripts/
 │   ├── dataset/          # Subida/descarga de clean/ (Hugging Face Hub, Google Drive)
-│   ├── pipeline/         # create_splits.py, train_baselines.py, train.py, explain_lime.py, explain_report.py
+│   ├── pipeline/         # create_splits.py, train_baselines.py, train.py, explain.py
 │   └── modal/            # Entrenamiento/explicabilidad en GPU de Modal
 ├── src/                  # Librería principal (pip install -e .)
 │   ├── data/             # CornDataset, loader, splitter, transforms
-│   ├── explainability/   # LIME + Grad-CAM (post-hoc, no acoplado al entrenamiento)
+│   ├── explainability/   # LIME + Grad-CAM + SHAP (post-hoc, no acoplado al entrenamiento)
 │   └── models/           # Registro de modelos + 8 arquitecturas registradas (3 baselines)
 ├── Makefile
 └── pyproject.toml

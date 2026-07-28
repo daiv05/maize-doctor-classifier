@@ -271,8 +271,8 @@ def _load_visual_report_functions() -> tuple:
     """
     Importa las funciones de visual_report.py con un mensaje claro si falta el extra xai.
 
-    Solo `visual` usa esta guarda (paridad con `explain_lime.py`): `fidelity`/`errors`
-    heredan de `explain_report.py`, que nunca la tuvo, y no se les añade aqui.
+    Solo el subcomando `visual` usa esta guarda: `fidelity`/`errors` comparten el mismo
+    modulo de origen que nunca la tuvo, y no se les añade aqui.
 
     @returns {tuple} (explain_model_visual, render_visual_explanation).
     @throws {SystemExit} Si falta una dependencia opcional del extra xai.
