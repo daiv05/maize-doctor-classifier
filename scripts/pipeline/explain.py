@@ -280,8 +280,9 @@ def cmd_visual(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
 
     lime_cfg = cfg["lime"]
     gradcam_enabled = cfg.get("gradcam", {}).get("enabled", False)
+    resolved_models = resolve_model_names(args.models, MODEL_REGISTRY)
 
-    if args.output is not None and (args.image is None or len(args.models) != 1):
+    if args.output is not None and (args.image is None or len(resolved_models) != 1):
         raise SystemExit("--output solo es valido junto con --image y un unico modelo.")
 
     for context in iter_run_contexts(args, cfg, device, require_predictions=False):
