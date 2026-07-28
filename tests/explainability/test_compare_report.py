@@ -1,4 +1,5 @@
 import json
+import logging
 
 import numpy as np
 import pytest
@@ -146,6 +147,43 @@ def test_lime_and_shap_share_the_segmentation(tmp_path):
 
     assert len(metadata["lime_weights"]) == len(metadata["shap_values"])
     assert metadata["n_segments"] == len(metadata["shap_values"])
+
+
+def test_black_background_is_reliable_and_does_not_warn(tmp_path, caplog):
+    """La linea base por defecto (D7) preserva la paridad de nocion de ausencia con
+    LIME: la comparacion es confiable y no dispara ninguna advertencia."""
+    with caplog.at_level(logging.WARNING):
+        result = _render(tmp_path)
+
+    assert result["agreement_reliable"] is True
+    metadata = json.loads((tmp_path / "compare.json").read_text(encoding="utf-8"))
+    assert metadata["agreement_reliable"] is True
+    assert not caplog.records
+
+
+def test_non_black_background_flips_the_flag_and_warns(tmp_path, caplog):
+    """`shap.background != "black"` (ej. "mean") rompe la paridad de nocion de ausencia
+    con `hide_color=0` de LIME: las metricas de acuerdo dejan de ser comparables y eso
+    debe quedar marcado tanto en el log como en el sidecar."""
+    shap_cfg = dict(_SHAP_CFG, background="mean")
+
+    with caplog.at_level(logging.WARNING):
+        result = render_comparison(
+            image=_dummy_image(),
+            model=_dummy_model(),
+            model_name=None,
+            idx_to_class=_IDX_TO_CLASS,
+            target_size=_TARGET_SIZE,
+            output_path=tmp_path / "compare.png",
+            lime_cfg=_LIME_CFG,
+            shap_cfg=shap_cfg,
+            device=torch.device("cpu"),
+        )
+
+    assert result["agreement_reliable"] is False
+    metadata = json.loads((tmp_path / "compare.json").read_text(encoding="utf-8"))
+    assert metadata["agreement_reliable"] is False
+    assert "no son comparables" in caplog.text
 
 
 def test_lime_and_shap_receive_the_identical_segmentation_array(captured_kwargs, tmp_path):

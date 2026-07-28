@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
-from lime import lime_image
 from matplotlib import cm, gridspec
 from matplotlib import pyplot as plt
 from PIL import Image
@@ -22,6 +21,7 @@ from src.explainability.visual_report import (
     build_validation_transform,
     explanation_dispersion,
     prepare_lime_image,
+    run_lime_explanation,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,9 @@ def render_comparison(
     @param {dict} lime_cfg Bloque `lime` de config/dataset.yaml.
     @param {dict} shap_cfg Bloque `shap` de config/dataset.yaml.
     @param {torch.device} device Dispositivo de computo.
-    @returns {dict} Prediccion, confianza, dispersion de SHAP y metricas de acuerdo.
+    @returns {dict} Prediccion, confianza, dispersion de SHAP, metricas de acuerdo y
+        `agreement_reliable` (False cuando `shap_cfg["background"]` no es "black" y las
+        metricas de acuerdo por lo tanto no son comparables, ver D7).
     """
     model.eval()
     image_np = prepare_lime_image(image, target_size)
@@ -77,15 +79,14 @@ def render_comparison(
     )
     n_segments = int(segments.max()) + 1
 
-    explainer = lime_image.LimeImageExplainer(random_state=lime_cfg["seed"])
-    lime_explanation = explainer.explain_instance(
+    lime_explanation = run_lime_explanation(
         image_np,
         predict_fn,
-        top_labels=len(idx_to_class),
-        hide_color=0,
+        num_labels=len(idx_to_class),
         num_samples=lime_cfg["num_samples"],
-        random_seed=lime_cfg["seed"],
-        segmentation_fn=lambda _image: segments,
+        seed=lime_cfg["seed"],
+        hide_color=0,
+        segments=segments,
     )
     lime_weights = densify_weights(lime_explanation.local_exp[target_idx], n_segments)
 
@@ -103,6 +104,15 @@ def render_comparison(
     agreement = attribution_agreement(
         lime_weights, shap_explanation.values, lime_cfg["num_features"]
     )
+    agreement_reliable = shap_cfg["background"] == "black"
+    if not agreement_reliable:
+        logger.warning(
+            f"shap.background={shap_cfg['background']!r}: LIME siempre enmascara con "
+            "hide_color=0 (negro, D7), asi que las metricas de acuerdo (iou_topk, "
+            "spearman, sign_agreement) comparan nociones de ausencia distintas entre "
+            "tecnicas y no son comparables entre si. Usa shap.background=black para "
+            "paridad si necesitas confiar en el acuerdo."
+        )
 
     lime_panel, lime_norm = build_importance_heatmap(
         image_rgb01, segments, list(enumerate(lime_weights))
@@ -148,6 +158,7 @@ def render_comparison(
             "lime_weights": [float(weight) for weight in lime_weights],
             "shap_values": [float(value) for value in shap_explanation.values],
             "agreement": agreement,
+            "agreement_reliable": agreement_reliable,
         },
     )
 
@@ -156,6 +167,7 @@ def render_comparison(
         "predicted_prob": predicted_prob,
         "dispersion": dispersion,
         "agreement": agreement,
+        "agreement_reliable": agreement_reliable,
     }
 
 

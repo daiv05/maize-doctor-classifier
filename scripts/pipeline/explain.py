@@ -577,6 +577,7 @@ def cmd_compare(args: argparse.Namespace, cfg: dict, device: torch.device) -> No
                     "pred_prob": row["pred_prob"],
                     "correct": row["label"] == row["pred_label"],
                     "dispersion": result["dispersion"],
+                    "agreement_reliable": result["agreement_reliable"],
                     **result["agreement"],
                 }
             )
@@ -600,6 +601,7 @@ def cmd_compare(args: argparse.Namespace, cfg: dict, device: torch.device) -> No
                 mean_iou_topk=("iou_topk", "mean"),
                 mean_spearman=("spearman", "mean"),
                 mean_sign_agreement=("sign_agreement", "mean"),
+                agreement_reliable=("agreement_reliable", "all"),
             )
             .reset_index()
         )

@@ -163,6 +163,50 @@ def build_importance_heatmap(
     return np.clip(overlay, 0, 1), norm
 
 
+def run_lime_explanation(
+    image_np: np.ndarray,
+    predict_fn: Callable[[np.ndarray], np.ndarray],
+    num_labels: int,
+    num_samples: int,
+    seed: int,
+    hide_color: int | None = 0,
+    segments: np.ndarray | None = None,
+):
+    """
+    Ejecuta `LimeImageExplainer.explain_instance` con los parametros que
+    `render_visual_explanation` y `render_comparison` deben mantener sincronizados.
+
+    Con `segments=None` no se pasa `segmentation_fn` a `explain_instance` en absoluto -no
+    `segmentation_fn=None`-, de modo que LIME cae en su segmentacion interna con
+    quickshift (comportamiento historico, D5). Con un mapa explicito, LIME atribuye sobre
+    esas mismas regiones, que es lo que permite comparar sus pesos con los valores de
+    Shapley segmento a segmento.
+
+    @param {np.ndarray} image_np Imagen HWC uint8 ya reescalada a target_size.
+    @param {Callable} predict_fn Envoltura del modelo que espera LimeImageExplainer.
+    @param {int} num_labels Cantidad de clases del head; define `top_labels`.
+    @param {int} num_samples Perturbaciones muestreadas por LIME.
+    @param {int} seed Semilla de `random_state` y `random_seed`.
+    @param {int|None} hide_color Color de relleno para los superpixeles ausentes.
+    @param {np.ndarray|None} segments Mapa de superpixeles a imponer, o None.
+    @returns Explicacion de LIME (`lime_image.ImageExplanation`).
+    """
+    explainer = lime_image.LimeImageExplainer(random_state=seed)
+    explain_kwargs = {}
+    if segments is not None:
+        explain_kwargs["segmentation_fn"] = lambda _image: segments
+
+    return explainer.explain_instance(
+        image_np,
+        predict_fn,
+        top_labels=num_labels,
+        hide_color=hide_color,
+        num_samples=num_samples,
+        random_seed=seed,
+        **explain_kwargs,
+    )
+
+
 def render_visual_explanation(
     image: Image.Image,
     model: nn.Module,
@@ -201,20 +245,14 @@ def render_visual_explanation(
     image_rgb01 = image_np.astype(float) / 255.0
 
     predict_fn = build_predict_fn(model, device, target_size)
-    explainer = lime_image.LimeImageExplainer(random_state=seed)
-
-    explain_kwargs = {}
-    if segments is not None:
-        explain_kwargs["segmentation_fn"] = lambda _image: segments
-
-    explanation = explainer.explain_instance(
+    explanation = run_lime_explanation(
         image_np,
         predict_fn,
-        top_labels=len(idx_to_class),
-        hide_color=0,
+        num_labels=len(idx_to_class),
         num_samples=num_samples,
-        random_seed=seed,
-        **explain_kwargs,
+        seed=seed,
+        hide_color=0,
+        segments=segments,
     )
 
     pred_idx = explanation.top_labels[0]

@@ -30,6 +30,7 @@ Los tres primeros subcomandos tienen cuatro entradas en el Makefile: `explain-<s
 ## SHAP: lo que hay que saber antes de tocarlo
 
 - **KernelSHAP sobre superpíxeles**, con línea base única configurable (`shap.background`, `black` por defecto para paridad con el `hide_color=0` de LIME).
+- **`shap.background != "black"` invalida el acuerdo:** LIME siempre enmascara con `hide_color=0`, así que un `background` distinto (`mean`, `blur`) hace que LIME y SHAP comparen nociones de ausencia distintas. `render_comparison` lo advierte por log y marca `agreement_reliable: false` en el sidecar `.json` y en `explain_compare/summary.csv`; no se puede unificar `hide_color` con `background` porque LIME solo admite un escalar.
 - **La segmentación se calcula afuera** (`src/explainability/segmentation.py`) y se inyecta tanto en LIME como en SHAP. Sin eso no hay comparación por superpíxel: LIME segmenta con quickshift por su cuenta.
 - **Consecuencia:** las regiones LIME de `compare` no coinciden con las de `visual`. Es esperado; `shap.segmentation: quickshift` las hace coincidir.
 - **Determinismo:** `explain_with_kernel_shap` fija la semilla de NumPy y restaura el estado previo. No quitar ese bloque: el determinismo es el argumento por el que SHAP entró al pipeline.
