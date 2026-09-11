@@ -33,6 +33,7 @@ from src.analysis.fairness import (
     compute_disparity_metrics,
     compute_subgroup_metrics,
     evaluate_background_shortcut,
+    evaluate_dual_shortcut_audit,
     plot_disaggregated_confusion_matrices,
     plot_subgroup_disparity_bars,
 )
@@ -347,18 +348,27 @@ def main() -> None:
     logger.info("Delta Accuracy (|Real - Lab|): %.4f", disparity_metrics["delta_accuracy"])
     logger.info("Disparate Impact Ratio (DIR): %.4f (Regla 80%% cumplida: %s)", disparity_metrics["disparate_impact_ratio"], disparity_metrics["four_fifths_rule_passed"])
 
-    # 2. Control Negativo contra Atajos Visuales (Shortcut Learning)
-    shortcut_results: dict[str, Any] = {}
+    # 2. Control Negativo y Control Inverso contra Atajos Visuales (Clever Hans Audit)
+    dual_shortcut_results: dict[str, Any] = {}
     if args.run_shortcut_test:
-        logger.info("Ejecutando Test de Control Negativo (Clever Hans check)...")
-        shortcut_results = evaluate_background_shortcut(
+        logger.info("Ejecutando Auditoría Dual de Atajos Visuales (Clever Hans check)...")
+        dual_shortcut_results = evaluate_dual_shortcut_audit(
             model=model,
             loader=test_loader,
             device=device,
-            mask_mode="center_occlusion",
         )
-        logger.info("Confianza Original Media: %.4f -> Confianza Enmascarada Media: %.4f (Caída: %.4f)", shortcut_results["mean_original_confidence"], shortcut_results["mean_masked_confidence"], shortcut_results["confidence_drop"])
-        logger.info("Colapso de confianza confirmado (Sin atajos espurios): %s", shortcut_results["collapse_confirmed"])
+        c_res = dual_shortcut_results["center_occlusion"]
+        p_res = dual_shortcut_results["peripheral_occlusion"]
+
+        logger.info("=== RESULTADOS TEST DE CONTROL NEGATIVO (OCLUSIÓN CENTRAL 60%%) ===")
+        logger.info("Confianza Original Media: %.4f -> Confianza sin Centro: %.4f (Caída: %.4f)", c_res["mean_original_confidence"], c_res["mean_masked_confidence"], c_res["confidence_drop"])
+        logger.info("Ratio de Retención de Certeza en Fondo: %.4f (Atajo detectado: %s, Riesgo: %s)", c_res["shortcut_vulnerability_ratio"], c_res["shortcut_detected"], c_res["risk_level"])
+        logger.info("Exactitud Original: %.4f -> Exactitud sin Centro: %.4f (Caída Acc: %.4f, Flips: %.4f)", c_res["accuracy_original"], c_res["accuracy_masked"], c_res["accuracy_drop"], c_res["flip_rate"])
+
+        logger.info("=== RESULTADOS CONTROL INVERSO (OCLUSIÓN PERIFÉRICA 40%% - SOLO CENTRO) ===")
+        logger.info("Confianza Original Media: %.4f -> Confianza solo Centro: %.4f (Caída: %.4f)", p_res["mean_original_confidence"], p_res["mean_masked_confidence"], p_res["confidence_drop"])
+        logger.info("Exactitud Original: %.4f -> Exactitud solo Centro: %.4f (Caída Acc: %.4f, Flips: %.4f)", p_res["accuracy_original"], p_res["accuracy_masked"], p_res["accuracy_drop"], p_res["flip_rate"])
+        logger.info("Diagnóstico Final de Atajos: %s", dual_shortcut_results["diagnostic_summary"])
 
     # 3. Visualizaciones
     plot_subgroup_disparity_bars(
@@ -415,7 +425,8 @@ def main() -> None:
         "checkpoint_used": str(ckpt_path) if ckpt_path else "pretrained_initial",
         "subgroup_metrics": subgroup_metrics,
         "disparity_analysis": disparity_metrics,
-        "shortcut_learning_test": shortcut_results,
+        "shortcut_learning_test": dual_shortcut_results.get("center_occlusion", {}),
+        "shortcut_learning_audit": dual_shortcut_results,
     }
 
     with open(output_dir / "fairness_metrics.json", "w", encoding="utf-8") as f:

@@ -10,6 +10,7 @@ from src.analysis.fairness import (
     compute_disparity_metrics,
     compute_subgroup_metrics,
     evaluate_background_shortcut,
+    evaluate_dual_shortcut_audit,
     plot_disaggregated_confusion_matrices,
     plot_subgroup_disparity_bars,
 )
@@ -87,18 +88,49 @@ def test_evaluate_background_shortcut():
     ds = TensorDataset(images, targets)
     loader = DataLoader(ds, batch_size=4)
 
-    res = evaluate_background_shortcut(
+    # 1. Test oclusión central
+    res_center = evaluate_background_shortcut(
         model=model,
         loader=loader,
         device=device,
         mask_mode="center_occlusion",
     )
 
-    assert "mean_original_confidence" in res
-    assert "mean_masked_confidence" in res
-    assert "confidence_drop" in res
-    assert "shortcut_vulnerability_ratio" in res
-    assert isinstance(res["collapse_confirmed"], bool)
+    assert "mean_original_confidence" in res_center
+    assert "mean_masked_confidence" in res_center
+    assert "confidence_drop" in res_center
+    assert "shortcut_vulnerability_ratio" in res_center
+    assert "accuracy_original" in res_center
+    assert "accuracy_masked" in res_center
+    assert "flip_rate" in res_center
+    assert "shortcut_detected" in res_center
+    assert "risk_level" in res_center
+    assert isinstance(res_center["collapse_confirmed"], bool)
+
+    # 2. Test oclusión periférica (control inverso)
+    res_periph = evaluate_background_shortcut(
+        model=model,
+        loader=loader,
+        device=device,
+        mask_mode="peripheral_occlusion",
+    )
+
+    assert res_periph["mask_mode"] == "peripheral_occlusion"
+    assert "accuracy_drop" in res_periph
+    assert isinstance(res_periph["shortcut_detected"], bool)
+
+    # 3. Test auditoría dual completa
+    res_dual = evaluate_dual_shortcut_audit(
+        model=model,
+        loader=loader,
+        device=device,
+    )
+
+    assert "center_occlusion" in res_dual
+    assert "peripheral_occlusion" in res_dual
+    assert "shortcut_confirmed" in res_dual
+    assert "overall_risk_level" in res_dual
+    assert "diagnostic_summary" in res_dual
 
 
 def test_plot_generation(tmp_path: Path):

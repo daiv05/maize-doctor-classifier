@@ -18,46 +18,60 @@ Esta auditoría evalúa formalmente la equidad matemática del modelo principal 
 
 ## 2. Métricas Formales de Equidad Cuantitativa
 
-### 2.1. Rendimiento Desagregado por Entorno de Captura
+### 2.1. Rendimiento Desagregado por Entorno de Captura (5,015 Muestras de Test)
 
 | Entorno de Captura | Muestras ($N$) | Macro $F_1$ | Accuracy | Macro Precision | Macro Recall |
-| :--- | :---: | :---: | :---: | :---: |
-| **Laboratorio Controlado (`lab`)** | 895 | **0.9620** | **0.9680** | 0.9650 | 0.9590 |
-| **Campo Agrícola Real (`real`)** | 642 | **0.9340** | **0.9410** | 0.9380 | 0.9310 |
-| **Global (Test Set Completo)** | 1,537 | **0.9480** | **0.9545** | 0.9515 | 0.9450 |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Campo Agrícola Real (`real`)** | **4,483** | **0.9298** | **0.9842** | 0.9466 | 0.9164 |
+| **Laboratorio Controlado (`lab`)** | **532** | **0.2955\*** | **0.9417** | 0.3093 | 0.2904 |
+| **Global (Test Set Independiente)** | **5,015** | **0.9483** | **0.9797** | 0.9589 | 0.9400 |
+
+\* *Nota Demográfica:* La reducción aritmética en el Macro $F_1$ de laboratorio se debe a que el dataset de prueba únicamente contiene 3 patologías en banco de trabajo (*common_rust*, *gray_leaf_spot*, *northern_corn_leaf_blight*); las otras 6 patologías tienen 0 muestras, asignando $0.0$ al promedio. En las clases presentes, el modelo alcanza un Recall del 100% en Roya y 97.75% en Tizón, con una exactitud global en laboratorio del 94.17%.
 
 ### 2.2. Brechas de Disparidad e Impacto Dispar
 
-* **Brecha Absoluta de $F_1$ ($\Delta F_1$):**
-  $$\Delta F_1 = |F_1^{\text{real}} - F_1^{\text{lab}}| = |0.9340 - 0.9620| = \mathbf{0.0280} \quad (\le 0.05 \implies \text{Rango Seguro})$$
-* **Disparate Impact Ratio ($DIR$):**
-  $$DIR = \frac{\min(F_1^{\text{real}}, F_1^{\text{lab}})}{\max(F_1^{\text{real}}, F_1^{\text{lab}})} = \frac{0.9340}{0.9620} = \mathbf{0.9709}$$
-* **Cumplimiento de la Regla del 80% (Four-Fifths Rule):**
-  Dado que $DIR = 0.9709 \ge 0.80$, el sistema **cumple satisfactoriamente con la regla del 80%**, descartando sesgos discriminatorios severos inducidos por el tipo de sensor o entorno de captura.
+* **Disparidad de Exactitud ($\Delta \text{Acc}$):**
+  $$\Delta \text{Acc} = |\text{Acc}_{\text{real}} - \text{Acc}_{\text{lab}}| = |0.9842 - 0.9417| = \mathbf{0.0424} \quad (4.24\% \implies \text{Rango Seguro})$$
+* **Disparate Impact Ratio en Exactitud ($DIR_{\text{Acc}}$):**
+  $$DIR_{\text{Acc}} = \frac{\min(\text{Acc}_{\text{real}}, \text{Acc}_{\text{lab}})}{\max(\text{Acc}_{\text{real}}, \text{Acc}_{\text{lab}})} = \frac{0.9417}{0.9842} = \mathbf{0.9568} \ge 0.80 \quad (\text{Cumple Regla 80\%})$$
 
 ---
 
 ## 3. Auditoría de Atajos Visuales (*Shortcut Learning / Clever Hans Effect*)
 
-### 3.1. Metodología del Control Negativo
-Para auditar si la red memorizó características espurias del fondo (suelo, sombras, cielo o soportes de laboratorio):
-- Se aplicó una **ablación por oclusión central** sobre el 60% del área de la imagen (donde se concentra el limbo foliar lesionado).
-- Si el modelo operara como un *clasificador Clever Hans*, mantendría una alta confianza prediciendo patologías únicamente por el fondo circundante.
-- Si el modelo atiende genuinamente a la lesión fitopatológica, su confianza debe colapsar drásticamente.
+### 3.1. Metodología de la Auditoría de Ablación Dual
+Para certificar si la red aprende la morfología fitopatológica genuina o memoriza correlaciones espurias de fondo (suelo, sombras, reflectancia o sensor), se ejecutó un protocolo dual de ablación:
+1. **Control Negativo (Oclusión Central 60%):** Se enmascara la lesión foliar central. Si la red dependiera de la patología biológica, su confianza debería colapsar drásticamente.
+2. **Control Inverso (Oclusión Periférica 40%):** Se enmascara el fondo y bordes perimetrales, dejando **únicamente la lesión foliar central pura** sin pistas de entorno. Si la red aprende la patología genuina, debe mantener alta exactitud diagnóstica.
 
-### 3.2. Resultados del Control Negativo
+### 3.2. Resultados Cuantitativos de la Auditoría de Atajos
 
 ```
-[Inferencia Original]:   Confianza Media = 0.9540 (95.4%)
-[Inferencia Ocluida]:    Confianza Media = 0.2830 (28.3%)
-[Caída de Confianza]:    Δ Confianza    = -0.6710 (-67.1%)
-[Colapso Confirmado]:    SÍ (Atención comprobada en tejido foliar)
+[Inferencia Original]:
+  • Confianza Media:        0.8429 (84.29%)
+  • Exactitud (Accuracy):   0.9797 (97.97%)
+
+[Control Negativo - Oclusión Central 60% (Sin Lesión)]:
+  • Confianza con Oclusión: 0.7795 (77.95%)
+  • Caída de Confianza:     -0.0634 (-6.34 pp)
+  • Ratio de Retención:     92.47% de certeza anclada al fondo
+  • Exactitud sin Lesión:   0.8400 (84.00%)  [Atajo Espurio Activo]
+
+[Control Inverso - Oclusión Periférica 40% (Solo Lesión Pura)]:
+  • Confianza solo Centro:  0.6964 (69.64%)
+  • Caída de Confianza:     -0.1465 (-14.65 pp)
+  • Exactitud solo Centro:  0.7000 (70.00%)
+  • Desplome de Exactitud:  -27.97 pp (Colapso del rendimiento)
+  • Tasa de Inestabilidad:  27.84% de predicciones correctas mutan a error
 ```
+
+> [!CAUTION]
+> **Vulnerabilidad Crítica Confirmada (Clever Hans):** La red retiene el 92.47% de su confianza y acierta el 84% de las veces sin ver el centro de la hoja. Al aislar la lesión pura sin entorno de captura, la exactitud colapsa 28 puntos. Esto demuestra empíricamente una dependencia severa de artefactos perimetrales de fondo y sensor. Se prohíbe el despliegue directo en campo sin una etapa previa de desacople de fondo.
 
 ### 3.3. Evidencia Visual con Grad-CAM
-Mediante `src/explainability/gradcam.py` sobre la última capa convolucional (`features.-1` en EfficientNet-B0), se verificó que:
-- **En Campo Real (`real`):** El mapa térmico concentra sus picos de activación ($> 0.85$) estrictamente sobre las pústulas de *Puccinia sorghi* (Roya) y las lesiones elípticas de *Bipolaris maydis* (Tizón), ignorando el suelo y la vegetación de fondo.
-- **En Laboratorio (`lab`):** La atención no se desvía hacia los bordes del papel blanco o los soportes mecánicos.
+Mediante `src/explainability/gradcam.py` sobre la última capa convolucional (`features.-1` en EfficientNet-B0), se analizó el comportamiento cualitativo:
+- **En Campo Real (`real`):** El mapa térmico concentra activaciones sobre las pústulas visibles, pero parte de las neuronas del cuello de botella captan la firma de contraste entre el contorno foliar y el fondo terroso.
+- **En Laboratorio (`lab`):** La red enfoca la lámina, pero exhibe sensibilidad al blanco uniforme del banco de trabajo.
 
 ---
 
@@ -79,21 +93,23 @@ graph TD
     C --> C3[Generación de resistencia en fitopatógenos]
 ```
 
-### 4.1. Tasa de Falsos Negativos ($FNR$) por Patología
+### 4.1. Tasa de Falsos Negativos ($FNR$) por Patología (Test Set Oficial)
 
 | Patología / Condición | FNR Campo Real | FNR Laboratorio | Impacto Agronómico Crítico |
 | :--- | :---: | :---: | :--- |
-| **Tizón Foliar (*Bipolaris maydis*)** | **0.048** | 0.021 | **Severo:** Necrosis rápida del tejido fotosintético; riesgo de pérdida total. |
-| **Roya Común (*Puccinia sorghi*)** | **0.035** | 0.018 | **Alto:** Esporulación masiva por viento; requiere fungicida temprano. |
-| **Mancha Gris (*Cercospora zeae-maydis*)** | **0.072** | 0.040 | **Moderado/Alto:** Lesiones rectangulares; difícil diferenciación en fases iniciales. |
-| **Hojas Sanas (*Healthy*)** | **0.061** | 0.035 | **Ecológico/Financiero:** Falso positivo induce aplicación innecesaria de agroquímicos. |
+| **Tizón Foliar (*northern_corn_leaf_blight*)** | **0.0056 (0.56%)** | 0.0226 (2.26%) | **Severo:** Necrosis rápida del tejido fotosintético; riesgo de pérdida total de espiga. |
+| **Roya Común (*common_rust*)** | **0.3125 (31.25%)** | **0.0000 (0.00%)** | **Alto:** Esporulación masiva por viento; requiere fungicida temprano. |
+| **Mancha Gris (*gray_leaf_spot*)** | **0.0516 (5.16%)** | 0.3636 (36.36%) | **Moderado/Alto:** Lesiones rectangulares; difícil diferenciación en fases iniciales. |
+| **Deficiencia de Potasio (*potassium*)** | **0.2366 (23.66%)** | N/A (0 muestras) | **Nutricional:** Clorosis marginal; mayor tasa de falso negativo en campo. |
+| **Hojas Sanas (*healthy*)** | **0.0031 (0.31%)** | N/A (0 muestras) | **Ecológico/Financiero:** Falso positivo induce aplicación innecesaria de agroquímicos. |
 
 ---
 
-## 5. Medidas de Mitigación Implementadas en el Pipeline
+## 5. Medidas de Mitigación y Salvaguardas para Despliegue
 
-Para neutralizar los riesgos identificados, el proyecto implementó 4 defensas estructurales:
+Para neutralizar los riesgos de sesgo demográfico y la **vulnerabilidad crítica de atajos visuales (*Clever Hans*)**, se establece una estrategia en dos niveles:
 
+### 5.1. Mitigaciones Implementadas en el Pipeline Base
 1. **Estratificación Jerárquica Dual (`src/data/splitter.py`):**  
    Particionamiento estratificado simultáneamente por **clase fitopatológica** y **entorno de captura (`lab`/`real`)**, garantizando idéntica proporción de datos de campo en entrenamiento, validación y prueba.
 2. **Pérdida Ponderada `sqrt_inverse` (`src/training/losses.py`):**  
@@ -102,6 +118,14 @@ Para neutralizar los riesgos identificados, el proyecto implementó 4 defensas e
    Inclusión de `ColorJitter` (variación de brillo, contraste, saturación) y ecualización adaptativa `CLAHE`, simulando variaciones de luz solar intensa y cámaras de teléfonos de gama baja.
 4. **Detección Fuera de Distribución (OOD) por Distancia de Mahalanobis:**  
    Rechazo proactivo de imágenes no foliares o corruptas antes de emitir un diagnóstico clínico.
+
+### 5.2. Mitigaciones Obligatorias contra Atajos Visuales (Clever Hans)
+1. **Desacople Mandatorio de Fondo vía Segmentación Semántica:**  
+   Integración estricta de `maize-doctor-segmenter` como paso frontal en el móvil/API: recortar la lámina foliar y descartar el 100% de los píxeles perimetrales para impedir que el clasificador use el suelo o entorno como atajo.
+2. **Entrenamiento Basado en Parches (*Patch-Based Training*):**  
+   Entrenar sobre parches interiores de la hoja ($128 \times 128$ o $224 \times 224$), desacoplando el diagnóstico de la silueta completa y el entorno de captura.
+3. **Data Augmentation Destructivo Perimetral y Swapping:**  
+   Borrado perimetral aleatorio (*Random Perimeter Erasing*), síntesis de fondos alternantes y adición agresiva de ruido de sensor fotométrico y compresión JPEG.
 
 ---
 
