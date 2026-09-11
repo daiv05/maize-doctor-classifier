@@ -83,6 +83,7 @@ const esDatasetSidebar = [
     text: "Procedencia y fuga",
     items: [
       { text: "Plan de experimentación", link: "/es/provenance/" },
+      { text: "Consolidación y siguientes pasos", link: "/es/provenance/consolidacion" },
       { text: "Fase 0 - Auditoría", link: "/es/provenance/fase-0-auditoria" },
       { text: "Fase 1 - Partición honesta", link: "/es/provenance/fase-1-particion-honesta" },
       { text: "Fase 2 - Intervenciones", link: "/es/provenance/fase-2-intervenciones" },

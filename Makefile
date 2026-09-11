@@ -117,7 +117,7 @@ help:
 	@echo ""
 	@echo "Procedencia y fuga (docs/es/provenance):"
 	@echo "  provenance-audit  (local, sin GPU)"
-	@echo "  modal-provenance-leak  modal-loso  modal-pull-provenance"
+	@echo "  modal-provenance-leak  modal-loso  modal-aligned-loso  modal-pull-provenance"
 	@echo "    DETACH=1 deja la corrida viva en Modal aunque se cierre la terminal"
 	@echo ""
 	@echo "Otros: inference lint lint-fix fmt check docs-eda compile-pdf clean-outputs"
@@ -376,7 +376,7 @@ modal-pull-segmentation-previews:
 # Procedencia y fuga (docs/es/provenance)
 # ==============================================================================
 
-.PHONY: provenance-audit modal-provenance-leak modal-loso modal-pull-provenance
+.PHONY: provenance-audit modal-provenance-leak modal-loso modal-aligned-loso modal-pull-provenance
 
 # Auditoria local: fuente por imagen, duplicados exactos y barrido de casi-duplicados.
 # No requiere GPU ni Modal.
@@ -402,6 +402,11 @@ modal-loso:
 		$(if $(BALANCE),--balance-groups,) \
 		$(if $(BACKMIX),--backmix "$(BACKMIX)",) \
 		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",)
+
+# Validacion por fuente con los componentes del pipeline principal (detached con DETACH=1).
+# Uso: make modal-aligned-loso [DETACH=1 ARM=colour_strong SEED=1 TRAIN_CAP=1000]
+modal-aligned-loso:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/pipeline_aligned_loso.py 		$(if $(ARM),--arm "$(ARM)",) 		$(if $(SEED),--seed "$(SEED)",) 		$(if $(FOLDS),--folds "$(FOLDS)",) 		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",)
 
 modal-pull-provenance:
 	$(MODAL) volume get --force corn-outputs experiments ./outputs/experiments
