@@ -41,7 +41,9 @@ def parse_args() -> argparse.Namespace:
     """Define la interfaz de línea de comandos del experimento."""
     parser = argparse.ArgumentParser(description="Endurecimiento por augmentation.")
     parser.add_argument("--splits-dir", type=Path, default=None)
-    parser.add_argument("--augment", choices=("none", "hardened"), default="none")
+    parser.add_argument("--augment",
+                        choices=("none", "crop", "codec", "colour", "hardened"),
+                        default="none")
     parser.add_argument("--model", type=str, default="efficientnet_lite0")
     parser.add_argument("--epochs", type=int, default=25)
     parser.add_argument("--patience", type=int, default=6)
@@ -124,23 +126,41 @@ def jitter_colour(array: np.ndarray, rng) -> np.ndarray:
 def build_augment(name: str, min_crop_scale: float):
     """Devuelve la función de augmentation correspondiente al nombre, o None.
 
-    @param {str} name Uno de none o hardened.
+    Los componentes aislados conservan las mismas probabilidades que tienen dentro de
+    ``hardened``, de modo que la ablación descompone exactamente esa combinación.
+
+    @param {str} name Uno de none, crop, codec, colour o hardened.
     @returns {callable|None} Transformación aplicada al array uint8 durante el entrenamiento.
     """
     if name == "none":
         return None
 
-    def hardened(array: np.ndarray, rng) -> np.ndarray:
-        array = random_resized_crop(array, rng, min_crop_scale)
+    def apply_crop(array, rng):
+        return random_resized_crop(array, rng, min_crop_scale)
+
+    def apply_codec(array, rng):
         if rng.random() < 0.7:
             array = resample(array, rng)
         if rng.random() < 0.7:
             array = recompress(array, rng)
-        if rng.random() < 0.8:
-            array = jitter_colour(array, rng)
         return array
 
-    return hardened
+    def apply_colour(array, rng):
+        return jitter_colour(array, rng) if rng.random() < 0.8 else array
+
+    components = {
+        "crop": (apply_crop,),
+        "codec": (apply_codec,),
+        "colour": (apply_colour,),
+        "hardened": (apply_crop, apply_codec, apply_colour),
+    }[name]
+
+    def augment(array: np.ndarray, rng) -> np.ndarray:
+        for component in components:
+            array = component(array, rng)
+        return array
+
+    return augment
 
 
 def run_fold(fold, manifest, dataset_root, classes, args, device) -> dict[str, object]:
