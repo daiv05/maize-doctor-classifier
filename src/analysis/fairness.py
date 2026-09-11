@@ -209,15 +209,23 @@ def evaluate_background_shortcut(
     loader: DataLoader,
     device: torch.device,
     mask_mode: str = "center_occlusion",
-) -> dict[str, float]:
-    """Test de control negativo contra atajos visuales (Clever Hans Effect).
+) -> dict[str, Any]:
+    """Test de ablación contra atajos visuales (Clever Hans Effect).
 
-    Aplica una ablación oclusiva para verificar si el modelo mantiene espuriamente
-    alta confianza en ausencia de la lesión foliar o si su confianza colapsa adecuadamente.
+    Modos soportados:
+    - 'center_occlusion': Ocluye el 60% central (donde reside la lesión patológica).
+      Si el modelo retiene alta confianza mirando solo la periferia/fondo, confirma
+      aprendizaje de atajos espurios (Shortcut Learning).
+    - 'peripheral_occlusion': Ocluye el 40% periférico dejando visible únicamente
+      el 60% central (lesión pura sin entorno). Si la confianza o exactitud colapsa
+      al retirar el fondo, confirma que la red dependía del contexto exterior.
+    - 'edge_only': Modo complementario de oclusión del 80% central.
     """
     model.eval()
     orig_confidences: list[float] = []
     masked_confidences: list[float] = []
+    orig_correct: int = 0
+    masked_correct: int = 0
     correct_flips: int = 0
     total_samples: int = 0
 
@@ -233,29 +241,38 @@ def evaluate_background_shortcut(
             probs_orig = torch.softmax(logits_orig, dim=-1)
             conf_orig, preds_orig = torch.max(probs_orig, dim=-1)
             orig_confidences.extend(conf_orig.cpu().tolist())
+            orig_correct += int((preds_orig == targets).sum().item())
 
-            # Crear imagen enmascarada (control negativo)
-            masked_images = images.clone()
+            # Crear imagen enmascarada
             _, _, h, w = images.shape
+            h_start, h_end = int(h * 0.2), int(h * 0.8)
+            w_start, w_end = int(w * 0.2), int(w * 0.8)
 
             if mask_mode == "center_occlusion":
-                # Ocluir el 60% central
-                h_start, h_end = int(h * 0.2), int(h * 0.8)
-                w_start, w_end = int(w * 0.2), int(w * 0.8)
+                # Ocluir el 60% central (tapar la lesión, dejar solo fondo/bordes)
+                masked_images = images.clone()
                 masked_images[:, :, h_start:h_end, w_start:w_end] = 0.0
+            elif mask_mode in ("peripheral_occlusion", "inverse_occlusion", "center_only"):
+                # Control inverso: tapar el 40% periférico, dejando visible ÚNICAMENTE el 60% central
+                masked_images = torch.zeros_like(images)
+                masked_images[:, :, h_start:h_end, w_start:w_end] = images[:, :, h_start:h_end, w_start:w_end]
             elif mask_mode == "edge_only":
-                # Ocluir el 80% central dejando solo bordes/fondo periférico
-                h_start, h_end = int(h * 0.1), int(h * 0.9)
-                w_start, w_end = int(w * 0.1), int(w * 0.9)
-                masked_images[:, :, h_start:h_end, w_start:w_end] = 0.0
+                # Ocluir el 80% central dejando solo bordes extremos
+                h_edge_start, h_edge_end = int(h * 0.1), int(h * 0.9)
+                w_edge_start, w_edge_end = int(w * 0.1), int(w * 0.9)
+                masked_images = images.clone()
+                masked_images[:, :, h_edge_start:h_edge_end, w_edge_start:w_edge_end] = 0.0
+            else:
+                raise ValueError(f"mask_mode '{mask_mode}' no reconocido.")
 
             # Inferencia sobre imagen enmascarada
             logits_masked = model(masked_images)
             probs_masked = torch.softmax(logits_masked, dim=-1)
             conf_masked, preds_masked = torch.max(probs_masked, dim=-1)
             masked_confidences.extend(conf_masked.cpu().tolist())
+            masked_correct += int((preds_masked == targets).sum().item())
 
-            # Contar caídas de predicción espuria
+            # Contar aciertos originales que cambiaron a error (flip)
             flips = (preds_masked != targets) & (preds_orig == targets)
             correct_flips += int(flips.sum().item())
 
@@ -264,12 +281,77 @@ def evaluate_background_shortcut(
     confidence_drop = float(mean_orig_conf - mean_masked_conf)
     shortcut_vulnerability_score = float(mean_masked_conf / (mean_orig_conf + 1e-6))
 
+    acc_orig = float(orig_correct / total_samples) if total_samples > 0 else 0.0
+    acc_masked = float(masked_correct / total_samples) if total_samples > 0 else 0.0
+    acc_drop = float(acc_orig - acc_masked)
+    flip_rate = float(correct_flips / max(orig_correct, 1))
+
+    # Diagnóstico riguroso según la dirección de la oclusión:
+    if mask_mode == "center_occlusion":
+        # En oclusión central: si la confianza se mantiene alta (poca caída) o retiene > 75%,
+        # significa que la red clasifica por fondo/bordes -> ALERTA DE ATAJO CONFIRMADA.
+        collapse_confirmed = bool(confidence_drop > 0.40 and shortcut_vulnerability_score < 0.60)
+        shortcut_detected = bool(shortcut_vulnerability_score >= 0.75 or confidence_drop < 0.20)
+        risk_level = "CRITICAL" if shortcut_detected else ("MODERATE" if confidence_drop < 0.35 else "LOW")
+    elif mask_mode in ("peripheral_occlusion", "inverse_occlusion", "center_only"):
+        # En control inverso (solo centro):
+        # Si la precisión o confianza colapsa al retirar el fondo, el modelo depende del fondo.
+        collapse_confirmed = bool(acc_drop > 0.25 or confidence_drop > 0.30)
+        shortcut_detected = bool(acc_drop > 0.20 or confidence_drop > 0.25)
+        risk_level = "CRITICAL" if shortcut_detected else ("MODERATE" if acc_drop > 0.10 else "LOW")
+    else:
+        collapse_confirmed = bool(confidence_drop > 0.15 or shortcut_vulnerability_score < 0.75)
+        shortcut_detected = not collapse_confirmed
+        risk_level = "MODERATE"
+
     return {
+        "mask_mode": mask_mode,
+        "total_samples": total_samples,
         "mean_original_confidence": round(mean_orig_conf, 4),
         "mean_masked_confidence": round(mean_masked_conf, 4),
         "confidence_drop": round(confidence_drop, 4),
         "shortcut_vulnerability_ratio": round(shortcut_vulnerability_score, 4),
-        "collapse_confirmed": bool(confidence_drop > 0.15 or shortcut_vulnerability_score < 0.75),
+        "accuracy_original": round(acc_orig, 4),
+        "accuracy_masked": round(acc_masked, 4),
+        "accuracy_drop": round(acc_drop, 4),
+        "flip_rate": round(flip_rate, 4),
+        "collapse_confirmed": collapse_confirmed,
+        "shortcut_detected": shortcut_detected,
+        "risk_level": risk_level,
+    }
+
+
+def evaluate_dual_shortcut_audit(
+    model: nn.Module,
+    loader: DataLoader,
+    device: torch.device,
+) -> dict[str, Any]:
+    """Ejecuta una auditoría dual completa de atajos visuales:
+
+    1. Oclusión Central: mide la retención espuria de certeza ante pérdida de la lesión.
+    2. Oclusión Periférica (Control Inverso): mide la capacidad diagnóstica sobre la lesión pura sin fondo.
+    """
+    center_res = evaluate_background_shortcut(model, loader, device, mask_mode="center_occlusion")
+    peripheral_res = evaluate_background_shortcut(model, loader, device, mask_mode="peripheral_occlusion")
+
+    # Diagnóstico conjunto
+    shortcut_confirmed = bool(center_res["shortcut_detected"] or peripheral_res["shortcut_detected"])
+
+    if center_res["shortcut_vulnerability_ratio"] >= 0.85:
+        verdict = (
+            f"VULNERABILIDAD SEVERA (Clever Hans Confirmado): El modelo retiene el "
+            f"{center_res['shortcut_vulnerability_ratio']*100:.1f}% de su confianza sin ver la lesión central. "
+            f"El {100 - center_res['confidence_drop']*100:.1f}% de su comportamiento está anclado a artefactos periféricos."
+        )
+    else:
+        verdict = "Comportamiento dentro de márgenes esperados de atención foliar."
+
+    return {
+        "center_occlusion": center_res,
+        "peripheral_occlusion": peripheral_res,
+        "shortcut_confirmed": shortcut_confirmed,
+        "overall_risk_level": "CRITICAL" if shortcut_confirmed else "LOW",
+        "diagnostic_summary": verdict,
     }
 
 
