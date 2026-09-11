@@ -93,6 +93,26 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def replace_transform(pipeline: T.Compose, target_type: type, replacement) -> T.Compose:
+    """Sustituye la primera transformación de un tipo dado, conservando el resto del pipeline.
+
+    Los brazos son aditivos sobre las transformaciones reales del proyecto: reescribirlas
+    desde cero mezclaría el cambio que se quiere medir con la pérdida de todo lo demás, que
+    es exactamente el error que invalidó la primera versión de estos brazos.
+
+    @param {T.Compose} pipeline Pipeline de partida.
+    @param {type} target_type Tipo de la transformación a sustituir.
+    @param {object} replacement Transformación que ocupa su lugar.
+    @returns {T.Compose} Pipeline con la sustitución aplicada.
+    """
+    steps = list(pipeline.transforms)
+    for index, step in enumerate(steps):
+        if isinstance(step, target_type):
+            steps[index] = replacement
+            return T.Compose(steps)
+    raise ValueError(f"el pipeline no contiene ninguna transformación {target_type.__name__}")
+
+
 def build_arm_transforms(arm: str, factory: CornTransformFactory):
     """Devuelve las transformaciones de entrenamiento y de minoritarias del brazo.
 
@@ -104,8 +124,6 @@ def build_arm_transforms(arm: str, factory: CornTransformFactory):
     @returns {tuple} Par (transformación estándar, transformación de minoritarias).
     """
     size = factory.target_size
-    mean = [0.485, 0.456, 0.406]
-    std = [0.229, 0.224, 0.225]
     standard = factory.get_pipeline("train")
     minority = factory.get_pipeline("minority")
 
@@ -113,28 +131,14 @@ def build_arm_transforms(arm: str, factory: CornTransformFactory):
         return standard, minority
 
     if arm == "colour_strong":
-        strong = T.Compose([
-            T.Resize(size),
-            T.RandomHorizontalFlip(p=0.5),
-            T.RandomVerticalFlip(p=0.5),
-            T.RandomRotation(degrees=15, interpolation=T.InterpolationMode.BILINEAR),
-            T.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
-            T.ToTensor(),
-            T.Normalize(mean=mean, std=std),
-        ])
-        return strong, strong
+        jitter = T.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1)
+        return (replace_transform(standard, T.ColorJitter, jitter),
+                replace_transform(minority, T.ColorJitter, jitter))
 
     if arm == "crop_all":
-        cropped = T.Compose([
-            T.RandomResizedCrop(size, scale=(0.3, 1.0)),
-            T.RandomHorizontalFlip(p=0.5),
-            T.RandomVerticalFlip(p=0.5),
-            T.RandomRotation(degrees=15, interpolation=T.InterpolationMode.BILINEAR),
-            T.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0),
-            T.ToTensor(),
-            T.Normalize(mean=mean, std=std),
-        ])
-        return cropped, cropped
+        crop = T.RandomResizedCrop(size, scale=(0.3, 1.0))
+        return (replace_transform(standard, T.Resize, crop),
+                replace_transform(minority, T.RandomResizedCrop, crop))
 
     if arm == "minority_for_all":
         return minority, minority
