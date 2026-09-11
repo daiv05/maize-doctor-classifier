@@ -1,0 +1,192 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/daiv05/main/ap-3NELXVBXjvgsx3pLf0BkTY
+✓ Created objects.
+├── 🔨 Created mount 
+│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\leave_one_sour
+│   ce_out.py
+├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
+├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+└── 🔨 Created function run_leave_one_source_out.
+[*] casi-duplicados eliminados: 165 de 33433
+[*] grupos de procedencia: 11 | pliegues: 11
+    test=corn-leaf-diseases-classification-roboflow (476) val=corn-leaf-roboflow clases=1
+    test=corn-leaf-roboflow (2919) val=cropdg-unified-multidomain clases=6
+    test=cropdg-unified-multidomain (2560) val=maize-2-roboflow clases=3
+    test=maize-2-roboflow (845) val=maize-beans-tomatoes-africa clases=3
+    test=maize-beans-tomatoes-africa (12112) val=maize-deficiency-scanner-roboflow clases=4
+    test=maize-deficiency-scanner-roboflow (158) val=maize-diseases clases=3
+    test=maize-diseases (6970) val=maize-in-field-dataset clases=3
+    test=maize-in-field-dataset (851) val=maize-leaf-roboflow clases=3
+    test=maize-leaf-roboflow (331) val=maize-nutrient-deficiency clases=1
+    test=maize-nutrient-deficiency (337) val=multicrop-disease-maiz clases=4
+    test=multicrop-disease-maiz (5709) val=corn-leaf-diseases-classification-roboflow clases=3
+    [corn-leaf-diseases-classification-roboflow] epoca 1 val_macro_f1=0.1317
+    [corn-leaf-diseases-classification-roboflow] epoca 2 val_macro_f1=0.1445
+    [corn-leaf-diseases-classification-roboflow] epoca 3 val_macro_f1=0.1446
+    [corn-leaf-diseases-classification-roboflow] epoca 4 val_macro_f1=0.1484
+    [corn-leaf-diseases-classification-roboflow] epoca 5 val_macro_f1=0.1379
+    [corn-leaf-diseases-classification-roboflow] epoca 6 val_macro_f1=0.1355
+    [corn-leaf-diseases-classification-roboflow] epoca 7 val_macro_f1=0.1431
+    [corn-leaf-diseases-classification-roboflow] epoca 8 val_macro_f1=0.1337
+    [corn-leaf-diseases-classification-roboflow] epoca 9 val_macro_f1=0.1369
+    [corn-leaf-diseases-classification-roboflow] epoca 10 val_macro_f1=0.1361
+[corn-leaf-diseases-classification-roboflow] TEST macro_f1=0.0585 accuracy=0.3571
+    [corn-leaf-roboflow] epoca 1 val_macro_f1=0.0983
+    [corn-leaf-roboflow] epoca 2 val_macro_f1=0.1172
+    [corn-leaf-roboflow] epoca 3 val_macro_f1=0.1002
+    [corn-leaf-roboflow] epoca 4 val_macro_f1=0.0928
+    [corn-leaf-roboflow] epoca 5 val_macro_f1=0.1085
+    [corn-leaf-roboflow] epoca 6 val_macro_f1=0.1119
+    [corn-leaf-roboflow] epoca 7 val_macro_f1=0.1108
+    [corn-leaf-roboflow] epoca 8 val_macro_f1=0.1123
+[corn-leaf-roboflow] TEST macro_f1=0.1398 accuracy=0.1881
+    [cropdg-unified-multidomain] epoca 1 val_macro_f1=0.0925
+    [cropdg-unified-multidomain] epoca 2 val_macro_f1=0.0889
+    [cropdg-unified-multidomain] epoca 3 val_macro_f1=0.0941
+    [cropdg-unified-multidomain] epoca 4 val_macro_f1=0.1084
+    [cropdg-unified-multidomain] epoca 5 val_macro_f1=0.1041
+    [cropdg-unified-multidomain] epoca 6 val_macro_f1=0.1008
+    [cropdg-unified-multidomain] epoca 7 val_macro_f1=0.0913
+    [cropdg-unified-multidomain] epoca 8 val_macro_f1=0.1000
+    [cropdg-unified-multidomain] epoca 9 val_macro_f1=0.0922
+    [cropdg-unified-multidomain] epoca 10 val_macro_f1=0.0982
+[cropdg-unified-multidomain] TEST macro_f1=0.1193 accuracy=0.3754
+    [maize-2-roboflow] epoca 1 val_macro_f1=0.2315
+    [maize-2-roboflow] epoca 2 val_macro_f1=0.2630
+    [maize-2-roboflow] epoca 3 val_macro_f1=0.2582
+    [maize-2-roboflow] epoca 4 val_macro_f1=0.2614
+    [maize-2-roboflow] epoca 5 val_macro_f1=0.2764
+    [maize-2-roboflow] epoca 6 val_macro_f1=0.2816
+    [maize-2-roboflow] epoca 7 val_macro_f1=0.2751
+    [maize-2-roboflow] epoca 8 val_macro_f1=0.2790
+    [maize-2-roboflow] epoca 9 val_macro_f1=0.2778
+    [maize-2-roboflow] epoca 10 val_macro_f1=0.2772
+    [maize-2-roboflow] epoca 11 val_macro_f1=0.2828
+    [maize-2-roboflow] epoca 12 val_macro_f1=0.2739
+    [maize-2-roboflow] epoca 13 val_macro_f1=0.2761
+    [maize-2-roboflow] epoca 14 val_macro_f1=0.2812
+    [maize-2-roboflow] epoca 15 val_macro_f1=0.2785
+    [maize-2-roboflow] epoca 16 val_macro_f1=0.2783
+    [maize-2-roboflow] epoca 17 val_macro_f1=0.2785
+[maize-2-roboflow] TEST macro_f1=0.0824 accuracy=0.1775
+    [maize-beans-tomatoes-africa] epoca 1 val_macro_f1=0.1264
+    [maize-beans-tomatoes-africa] epoca 2 val_macro_f1=0.1286
+    [maize-beans-tomatoes-africa] epoca 3 val_macro_f1=0.1282
+    [maize-beans-tomatoes-africa] epoca 4 val_macro_f1=0.0938
+    [maize-beans-tomatoes-africa] epoca 5 val_macro_f1=0.1446
+    [maize-beans-tomatoes-africa] epoca 6 val_macro_f1=0.1008
+    [maize-beans-tomatoes-africa] epoca 7 val_macro_f1=0.1223
+    [maize-beans-tomatoes-africa] epoca 8 val_macro_f1=0.1050
+    [maize-beans-tomatoes-africa] epoca 9 val_macro_f1=0.1065
+    [maize-beans-tomatoes-africa] epoca 10 val_macro_f1=0.1007
+    [maize-beans-tomatoes-africa] epoca 11 val_macro_f1=0.1237
+[maize-beans-tomatoes-africa] TEST macro_f1=0.2744 accuracy=0.5899
+    [maize-deficiency-scanner-roboflow] epoca 1 val_macro_f1=0.1800
+    [maize-deficiency-scanner-roboflow] epoca 2 val_macro_f1=0.2058
+    [maize-deficiency-scanner-roboflow] epoca 3 val_macro_f1=0.2093
+    [maize-deficiency-scanner-roboflow] epoca 4 val_macro_f1=0.1956
+    [maize-deficiency-scanner-roboflow] epoca 5 val_macro_f1=0.2145
+    [maize-deficiency-scanner-roboflow] epoca 6 val_macro_f1=0.2083
+    [maize-deficiency-scanner-roboflow] epoca 7 val_macro_f1=0.2164
+    [maize-deficiency-scanner-roboflow] epoca 8 val_macro_f1=0.2090
+    [maize-deficiency-scanner-roboflow] epoca 9 val_macro_f1=0.2112
+    [maize-deficiency-scanner-roboflow] epoca 10 val_macro_f1=0.2097
+    [maize-deficiency-scanner-roboflow] epoca 11 val_macro_f1=0.2090
+    [maize-deficiency-scanner-roboflow] epoca 12 val_macro_f1=0.2163
+    [maize-deficiency-scanner-roboflow] epoca 13 val_macro_f1=0.2064
+[maize-deficiency-scanner-roboflow] TEST macro_f1=0.1246 accuracy=0.3797
+    [maize-diseases] epoca 1 val_macro_f1=0.0659
+    [maize-diseases] epoca 2 val_macro_f1=0.0695
+    [maize-diseases] epoca 3 val_macro_f1=0.0666
+    [maize-diseases] epoca 4 val_macro_f1=0.0691
+    [maize-diseases] epoca 5 val_macro_f1=0.0663
+    [maize-diseases] epoca 6 val_macro_f1=0.0686
+    [maize-diseases] epoca 7 val_macro_f1=0.0700
+    [maize-diseases] epoca 8 val_macro_f1=0.0691
+    [maize-diseases] epoca 9 val_macro_f1=0.0717
+    [maize-diseases] epoca 10 val_macro_f1=0.0755
+    [maize-diseases] epoca 11 val_macro_f1=0.0712
+    [maize-diseases] epoca 12 val_macro_f1=0.0725
+    [maize-diseases] epoca 13 val_macro_f1=0.0769
+    [maize-diseases] epoca 14 val_macro_f1=0.0714
+    [maize-diseases] epoca 15 val_macro_f1=0.0721
+    [maize-diseases] epoca 16 val_macro_f1=0.0743
+    [maize-diseases] epoca 17 val_macro_f1=0.0749
+    [maize-diseases] epoca 18 val_macro_f1=0.0694
+    [maize-diseases] epoca 19 val_macro_f1=0.0694
+[maize-diseases] TEST macro_f1=0.2156 accuracy=0.5568
+    [maize-in-field-dataset] epoca 1 val_macro_f1=0.0794
+    [maize-in-field-dataset] epoca 2 val_macro_f1=0.0933
+    [maize-in-field-dataset] epoca 3 val_macro_f1=0.0724
+    [maize-in-field-dataset] epoca 4 val_macro_f1=0.0870
+    [maize-in-field-dataset] epoca 5 val_macro_f1=0.0824
+    [maize-in-field-dataset] epoca 6 val_macro_f1=0.0802
+    [maize-in-field-dataset] epoca 7 val_macro_f1=0.0816
+    [maize-in-field-dataset] epoca 8 val_macro_f1=0.0745
+[maize-in-field-dataset] TEST macro_f1=0.0544 accuracy=0.1763
+    [maize-leaf-roboflow] epoca 1 val_macro_f1=0.0729
+    [maize-leaf-roboflow] epoca 2 val_macro_f1=0.0885
+    [maize-leaf-roboflow] epoca 3 val_macro_f1=0.0855
+    [maize-leaf-roboflow] epoca 4 val_macro_f1=0.0811
+    [maize-leaf-roboflow] epoca 5 val_macro_f1=0.0794
+    [maize-leaf-roboflow] epoca 6 val_macro_f1=0.0825
+    [maize-leaf-roboflow] epoca 7 val_macro_f1=0.0810
+    [maize-leaf-roboflow] epoca 8 val_macro_f1=0.0817
+[maize-leaf-roboflow] TEST macro_f1=0.0777 accuracy=0.5378
+    [maize-nutrient-deficiency] epoca 1 val_macro_f1=0.2189
+    [maize-nutrient-deficiency] epoca 2 val_macro_f1=0.2375
+    [maize-nutrient-deficiency] epoca 3 val_macro_f1=0.2320
+    [maize-nutrient-deficiency] epoca 4 val_macro_f1=0.2283
+    [maize-nutrient-deficiency] epoca 5 val_macro_f1=0.2300
+    [maize-nutrient-deficiency] epoca 6 val_macro_f1=0.2377
+    [maize-nutrient-deficiency] epoca 7 val_macro_f1=0.2368
+    [maize-nutrient-deficiency] epoca 8 val_macro_f1=0.2410
+    [maize-nutrient-deficiency] epoca 9 val_macro_f1=0.2491
+    [maize-nutrient-deficiency] epoca 10 val_macro_f1=0.2355
+    [maize-nutrient-deficiency] epoca 11 val_macro_f1=0.2376
+    [maize-nutrient-deficiency] epoca 12 val_macro_f1=0.2413
+    [maize-nutrient-deficiency] epoca 13 val_macro_f1=0.2460
+    [maize-nutrient-deficiency] epoca 14 val_macro_f1=0.2438
+    [maize-nutrient-deficiency] epoca 15 val_macro_f1=0.2493
+    [maize-nutrient-deficiency] epoca 16 val_macro_f1=0.2510
+    [maize-nutrient-deficiency] epoca 17 val_macro_f1=0.2427
+    [maize-nutrient-deficiency] epoca 18 val_macro_f1=0.2486
+    [maize-nutrient-deficiency] epoca 19 val_macro_f1=0.2404
+    [maize-nutrient-deficiency] epoca 20 val_macro_f1=0.2490
+    [maize-nutrient-deficiency] epoca 21 val_macro_f1=0.2509
+    [maize-nutrient-deficiency] epoca 22 val_macro_f1=0.2460
+[maize-nutrient-deficiency] TEST macro_f1=0.0967 accuracy=0.2047
+    [multicrop-disease-maiz] epoca 1 val_macro_f1=0.0646
+    [multicrop-disease-maiz] epoca 2 val_macro_f1=0.0582
+    [multicrop-disease-maiz] epoca 3 val_macro_f1=0.0634
+    [multicrop-disease-maiz] epoca 4 val_macro_f1=0.0597
+    [multicrop-disease-maiz] epoca 5 val_macro_f1=0.0532
+    [multicrop-disease-maiz] epoca 6 val_macro_f1=0.0634
+    [multicrop-disease-maiz] epoca 7 val_macro_f1=0.0664
+    [multicrop-disease-maiz] epoca 8 val_macro_f1=0.0569
+    [multicrop-disease-maiz] epoca 9 val_macro_f1=0.0612
+    [multicrop-disease-maiz] epoca 10 val_macro_f1=0.0620
+    [multicrop-disease-maiz] epoca 11 val_macro_f1=0.0662
+    [multicrop-disease-maiz] epoca 12 val_macro_f1=0.0582
+    [multicrop-disease-maiz] epoca 13 val_macro_f1=0.0643
+[multicrop-disease-maiz] TEST macro_f1=0.2381 accuracy=0.6194
+{
+  "n": 33268,
+  "macro_f1": 0.40047784295108474,
+  "accuracy": 0.5064626668269809,
+  "per_class_f1": {
+    "common_rust": 0.7785896967482645,
+    "fall_armyworm": 0.37607269056032305,
+    "gray_leaf_spot": 0.21331581252737625,
+    "healthy": 0.5498060280513279,
+    "lethal_necrosis": 0.761128741744575,
+    "nitrogen_deficiency": 0.2123319425127492,
+    "northern_corn_leaf_blight": 0.46048948539438744,
+    "phosphorus_deficiency": 0.13898305084745763,
+    "potassium_deficiency": 0.11358313817330211
+  }
+}
+[*] resultados en /outputs/experiments/leave_one_source_out_balanced_border_ring.json
+✓ App completed. View run at 
+https://modal.com/apps/daiv05/main/ap-3NELXVBXjvgsx3pLf0BkTY

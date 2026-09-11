@@ -54,3 +54,34 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-09.
 
 El CLI de Modal falla en esta máquina con `'charmap' codec can't encode '✓'` si la consola
 usa cp1252. Todas las invocaciones se hicieron con `PYTHONIOENCODING=utf-8`.
+
+## Fase 2 — Intervenciones
+
+Documento: [Fase 2](/es/provenance/fase-2-intervenciones)
+
+Generado con:
+
+```bash
+make modal-loso DETACH=1 BALANCE=1
+make modal-loso DETACH=1 BALANCE=1 ARM=border_ring
+make modal-loso DETACH=1 BACKMIX=0.5
+make modal-loso DETACH=1 BACKMIX=0.5 ARM=border_ring
+```
+
+Ejecutado en Modal sobre GPU A10 el 2026-09-10, cuatro corridas en paralelo.
+
+| Archivo | Contenido |
+|---|---|
+| `leave_one_source_out_balanced*.json` | Balanceo de grupos, ambos brazos, con sus trazas `.run.txt` |
+| `leave_one_source_out_backmix0.5*.json` | BackMix 0,5, ambos brazos, con sus trazas |
+| `fase2_gate.csv` | Compuerta 2 aplicada: F1 y recuperación del marco por clase e intervención |
+
+## Nota sobre los targets del Makefile
+
+`MODAL` y `PYTHON` usan rutas con barra invertida de Windows, así que los targets funcionan
+desde PowerShell pero no desde Git Bash, donde la barra se pierde. Las corridas de este
+directorio se lanzaron invocando Modal directamente:
+
+```bash
+PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -m modal run --detach     scripts/modal/leave_one_source_out.py --balance-groups --arm border_ring
+```

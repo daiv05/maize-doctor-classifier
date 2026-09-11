@@ -85,6 +85,7 @@ const esDatasetSidebar = [
       { text: "Plan de experimentación", link: "/es/provenance/" },
       { text: "Fase 0 - Auditoría", link: "/es/provenance/fase-0-auditoria" },
       { text: "Fase 1 - Partición honesta", link: "/es/provenance/fase-1-particion-honesta" },
+      { text: "Fase 2 - Intervenciones", link: "/es/provenance/fase-2-intervenciones" },
       { text: "Evidencia bruta", link: "/es/provenance/evidencia/" },
     ],
   },
