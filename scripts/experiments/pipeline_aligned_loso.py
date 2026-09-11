@@ -73,7 +73,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--split-mode", choices=("random", "source"), default="source")
     parser.add_argument("--model", type=str, default="efficientnet_lite0")
     parser.add_argument("--epochs", type=int, default=60)
-    parser.add_argument("--patience", type=int, default=8)
+    parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
@@ -178,7 +178,14 @@ def run_fold(fold, manifest, args, factory, device, workdir: Path) -> dict[str, 
         val = manifest[manifest.provenance == fold["val_group"]]
         train = manifest[~manifest.provenance.isin({fold["test_group"], fold["val_group"]})]
     if args.val_cap > 0 and len(val) > args.val_cap:
-        val = val.sample(args.val_cap, random_state=args.seed)
+        # Estratificado por clase: un muestreo plano puede dejar sin representar a las
+        # clases escasas de la fuente de validacion y hacer ruidoso el early stopping.
+        share = args.val_cap / len(val)
+        val = pd.concat(
+            [group.sample(max(1, round(len(group) * share)), random_state=args.seed)
+             for _, group in val.groupby("label")],
+            ignore_index=True,
+        )
 
     fold_dir = workdir / fold["test_group"]
     fold_dir.mkdir(parents=True, exist_ok=True)
@@ -238,7 +245,8 @@ def run_fold(fold, manifest, args, factory, device, workdir: Path) -> dict[str, 
 
     model.load_state_dict(best_state)
     result = {"arm": args.arm, "test_group": fold["test_group"], "val_group": fold["val_group"],
-              "n_train": int(len(train)), "n_test": int(len(test)),
+              "n_train": int(len(train_dataset)), "n_val": int(len(val)),
+              "n_test": int(len(test)),
               "minority_classes": sorted(train_dataset.minority_classes),
               "val_macro_f1": best_f1, "arms": {}}
     for eval_arm in EVAL_ARMS:
