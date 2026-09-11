@@ -55,18 +55,19 @@ Para certificar si la red aprende la morfología fitopatológica genuina o memor
   • Confianza con Oclusión: 0.7795 (77.95%)
   • Caída de Confianza:     -0.0634 (-6.34 pp)
   • Ratio de Retención:     92.47% de certeza anclada al fondo
-  • Exactitud sin Lesión:   0.8400 (84.00%)  [Atajo Espurio Activo]
+  • Exactitud sin Lesión:   0.8046 (80.46%)  [Atajo Espurio Activo: Retiene >80% Acc]
+  • Tasa de Inestabilidad:  18.60% de aciertos mutan a error
 
 [Control Inverso - Oclusión Periférica 40% (Solo Lesión Pura)]:
-  • Confianza solo Centro:  0.6964 (69.64%)
-  • Caída de Confianza:     -0.1465 (-14.65 pp)
-  • Exactitud solo Centro:  0.7000 (70.00%)
-  • Desplome de Exactitud:  -27.97 pp (Colapso del rendimiento)
-  • Tasa de Inestabilidad:  27.84% de predicciones correctas mutan a error
+  • Confianza solo Centro:  0.7060 (70.60%)
+  • Caída de Confianza:     -0.1369 (-13.69 pp)
+  • Exactitud solo Centro:  0.7176 (71.76%)
+  • Desplome de Exactitud:  -26.20 pp (Colapso del rendimiento al retirar el fondo)
+  • Tasa de Inestabilidad:  27.58% de predicciones correctas mutan a error
 ```
 
 > [!CAUTION]
-> **Vulnerabilidad Crítica Confirmada (Clever Hans):** La red retiene el 92.47% de su confianza y acierta el 84% de las veces sin ver el centro de la hoja. Al aislar la lesión pura sin entorno de captura, la exactitud colapsa 28 puntos. Esto demuestra empíricamente una dependencia severa de artefactos perimetrales de fondo y sensor. Se prohíbe el despliegue directo en campo sin una etapa previa de desacople de fondo.
+> **Vulnerabilidad Crítica Confirmada (Clever Hans):** La red retiene el 92.47% de su confianza y acierta el 80.46% de las veces sin ver el centro de la hoja. Al aislar la lesión pura sin entorno de captura, la exactitud colapsa 26.20 puntos porcentuales. Esto demuestra empíricamente una dependencia severa de artefactos perimetrales de fondo y sensor. Se prohíbe el despliegue directo en campo sin una etapa previa de desacople de fondo.
 
 ### 3.3. Evidencia Visual con Grad-CAM
 Mediante `src/explainability/gradcam.py` sobre la última capa convolucional (`features.-1` en EfficientNet-B0), se analizó el comportamiento cualitativo:

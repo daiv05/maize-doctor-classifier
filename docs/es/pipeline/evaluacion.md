@@ -90,13 +90,13 @@ Para evaluar de forma cuantitativa y concluyente este sesgo, se ejecutó una **a
 | Condición de Inferencia | Confianza Media | $\Delta$ Confianza | Exactitud ($Acc$) | $\Delta Acc$ | Ratio de Certeza Retenida | Tasa de Error Inducido (*Flip Rate*) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Inferencia Original (Test Base)** | **84.29%** | — | **97.97%** | — | 100.0% | 0.0% |
-| **Oclusión Central (Sin Lesión)** | **77.95%** | `-6.34 pp` | **84.00%** | `-13.97 pp` | **`92.47%`** | 14.26% |
-| **Control Inverso (Solo Lesión Pura)** | **69.64%** | `-14.65 pp` | **70.00%** | **`-27.97 pp`** | 82.62% | **27.84%** |
+| **Oclusión Central (Sin Lesión)** | **77.95%** | `-6.34 pp` | **80.46%** | `-17.51 pp` | **`92.47%`** | 18.60% |
+| **Control Inverso (Solo Lesión Pura)** | **70.60%** | `-13.69 pp` | **71.76%** | **`-26.20 pp`** | 83.76% | **27.58%** |
 
 ::: danger Alerta Crítica: Presencia Confirmada de Atajo Visual (Clever Hans Effect)
-**Inconsistencia Técnica Corregida:** Una caída de apenas **`-6.34 pp`** (de 84.29% a 77.95%) tras tapar el 60% central de la imagen **no demuestra robustez biológica**. Por el contrario, demuestra que el **`92.47%` de la certeza del modelo** y un **`84.00%` de su exactitud diagnóstica** dependen exclusivamente del 40% periférico exterior (fondo, entorno de captura y ruido de sensor), donde **no** está la patología foliar.
+**Inconsistencia Técnica Corregida:** Una caída de apenas **`-6.34 pp`** (de 84.29% a 77.95%) tras tapar el 60% central de la imagen **no demuestra robustez biológica**. Por el contrario, demuestra que el **`92.47%` de la certeza del modelo** y un **`80.46%` de su exactitud diagnóstica** dependen exclusivamente del 40% periférico exterior (fondo, entorno de captura y ruido de sensor), donde **no** está la patología foliar.
 
-El **Control Inverso (Oclusión Periférica)** ratifica de forma definitiva esta dependencia espuria: al obligar a la red a clasificar observando únicamente la lesión central pura sin las pistas del fondo, la exactitud se desploma **27.97 puntos porcentuales** (de 97.97% a 70.00%) y el **27.84% de las predicciones correctas mutan a falsos diagnósticos**.
+El **Control Inverso (Oclusión Periférica)** ratifica de forma definitiva esta dependencia espuria: al obligar a la red a clasificar observando únicamente la lesión central pura sin las pistas del fondo, la exactitud se desploma **26.20 puntos porcentuales** (de 97.97% a 71.76%) y el **27.58% de las predicciones correctas mutan a falsos diagnósticos**.
 
 **Dictamen Ético y Técnico:** El modelo en su estado actual presenta una vulnerabilidad severa a sesgos de contexto ambiental. El clasificador **no debe ser desplegado directamente sobre tomas en bruto de cámara** sin una fase previa de desacople de fondo o preprocesamiento específico.
 :::
