@@ -19,7 +19,7 @@ from scripts.modal._common import REPO_ANCHOR, dataset_vol, image, outputs_vol
 
 app = modal.App("corn-pipeline-aligned-loso", image=image)
 
-RESULTS_TEMPLATE = "/outputs/experiments/aligned_{arm}{seed}.json"
+RESULTS_TEMPLATE = "/outputs/experiments/aligned_{mode}_{arm}{seed}.json"
 
 
 @app.function(
@@ -33,9 +33,10 @@ RESULTS_TEMPLATE = "/outputs/experiments/aligned_{arm}{seed}.json"
 )
 def run_aligned_loso(
     arm: str = "baseline",
+    split_mode: str = "source",
     model: str = "efficientnet_lite0",
     epochs: int = 60,
-    train_cap: int = 0,
+    train_cap: int = 1500,
     val_cap: int = 0,
     batch_size: int = 32,
     seed: int = 42,
@@ -58,6 +59,7 @@ def run_aligned_loso(
         "scripts/experiments/pipeline_aligned_loso.py",
         "--splits-dir", str(splits_dir),
         "--arm", arm,
+        "--split-mode", split_mode,
         "--model", model,
         "--epochs", str(epochs),
         "--train-cap", str(train_cap),
@@ -66,7 +68,8 @@ def run_aligned_loso(
         "--seed", str(seed),
         "--num-workers", "8",
         "--output", RESULTS_TEMPLATE.format(
-            arm=arm, seed="" if seed == 42 else f"_seed{seed}"),
+            mode=split_mode, arm=arm,
+            seed="" if seed == 42 else f"_seed{seed}"),
     ]
     if folds:
         command += ["--folds", folds]
@@ -78,9 +81,10 @@ def run_aligned_loso(
 @app.local_entrypoint()
 def main(
     arm: str = "baseline",
+    split_mode: str = "source",
     model: str = "efficientnet_lite0",
     epochs: int = 60,
-    train_cap: int = 0,
+    train_cap: int = 1500,
     val_cap: int = 0,
     batch_size: int = 32,
     seed: int = 42,
@@ -88,6 +92,7 @@ def main(
 ) -> None:
     """Entrypoint de `modal run`: dispara la validación alineada en la GPU remota."""
     run_aligned_loso.remote(
-        arm=arm, model=model, epochs=epochs, train_cap=train_cap, val_cap=val_cap,
+        arm=arm, split_mode=split_mode, model=model, epochs=epochs,
+        train_cap=train_cap, val_cap=val_cap,
         batch_size=batch_size, seed=seed, folds=folds,
     )

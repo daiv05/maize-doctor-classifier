@@ -183,6 +183,7 @@ train:
 		$(if $(LEARNING_RATE),--learning-rate $(LEARNING_RATE),) \
 		$(if $(WEIGHT_DECAY),--weight-decay $(WEIGHT_DECAY),) \
 		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
+		$(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),) \
 		$(if $(CLASS_WEIGHTS),--class-weights $(CLASS_WEIGHTS),) \
 		$(if $(CLAHE),--clahe,) \
 		$(if $(NO_PRETRAINED),--no-pretrained,) \

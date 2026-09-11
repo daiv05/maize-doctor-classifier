@@ -70,6 +70,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validación por fuente alineada al pipeline.")
     parser.add_argument("--splits-dir", type=Path, default=None)
     parser.add_argument("--arm", type=str, default="baseline")
+    parser.add_argument("--split-mode", choices=("random", "source"), default="source")
     parser.add_argument("--model", type=str, default="efficientnet_lite0")
     parser.add_argument("--epochs", type=int, default=60)
     parser.add_argument("--patience", type=int, default=8)
@@ -82,7 +83,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--label-smoothing", type=float, default=0.1)
     parser.add_argument("--clip-grad-norm", type=float, default=1.0)
     parser.add_argument("--clahe", action="store_true")
-    parser.add_argument("--train-cap", type=int, default=0)
+    parser.add_argument("--train-cap", type=int, default=1500)
     parser.add_argument("--val-cap", type=int, default=0)
     parser.add_argument("--ring-fraction", type=float, default=0.10)
     parser.add_argument("--num-workers", type=int, default=8)
@@ -164,17 +165,16 @@ def evaluate(model, loader, device) -> tuple[np.ndarray, np.ndarray]:
 
 def run_fold(fold, manifest, args, factory, device, workdir: Path) -> dict[str, object]:
     """Entrena un pliegue con los componentes del pipeline principal y evalúa ambos brazos."""
-    test = manifest[manifest.provenance == fold["test_group"]]
-    val = manifest[manifest.provenance == fold["val_group"]]
-    train = manifest[~manifest.provenance.isin({fold["test_group"], fold["val_group"]})]
+    if args.split_mode == "random":
+        train = manifest[manifest.split == "train"]
+        val = manifest[manifest.split == "val"]
+        test = manifest[manifest.split == "test"]
+    else:
+        test = manifest[manifest.provenance == fold["test_group"]]
+        val = manifest[manifest.provenance == fold["val_group"]]
+        train = manifest[~manifest.provenance.isin({fold["test_group"], fold["val_group"]})]
     if args.val_cap > 0 and len(val) > args.val_cap:
         val = val.sample(args.val_cap, random_state=args.seed)
-    if args.train_cap > 0:
-        train = pd.concat(
-            [group.sample(min(len(group), args.train_cap), random_state=args.seed)
-             for _, group in train.groupby("label")],
-            ignore_index=True,
-        )
 
     fold_dir = workdir / fold["test_group"]
     fold_dir.mkdir(parents=True, exist_ok=True)
@@ -184,6 +184,7 @@ def run_fold(fold, manifest, args, factory, device, workdir: Path) -> dict[str, 
     train_dataset = CornDataset(
         csv_path=str(csvs["train"]), config_path=CONFIG_PATH,
         transform=standard, minority_transform=minority,
+        max_per_class=args.train_cap or None, seed=args.seed,
     )
     class_to_idx = train_dataset.class_to_idx
     val_dataset = CornDataset(
@@ -262,14 +263,28 @@ def main() -> None:
         get_output_root() / "experiments" / f"aligned_{args.arm}.json")
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    manifest = pd.concat(
-        [pd.read_csv(splits_dir / f"{name}.csv") for name in ("train", "val", "test")],
-        ignore_index=True,
-    )
+    frames = {name: pd.read_csv(splits_dir / f"{name}.csv") for name in ("train", "val", "test")}
+    manifest = pd.concat(frames.values(), ignore_index=True)
     manifest["provenance"] = manifest.image_path.map(provenance_from_path)
-    manifest, dropped = deduplicate(manifest, get_dataset_root(), args.num_workers)
+
+    if args.split_mode == "source":
+        # Agrupar por fuente obliga a deduplicar antes: sin eso la misma foto puede caer a
+        # ambos lados de la frontera aunque las fuentes esten separadas.
+        manifest, dropped = deduplicate(manifest, get_dataset_root(),
+                                        max(args.num_workers, 1))
+        folds = build_folds(manifest)
+    else:
+        # Reproduce la particion vigente tal cual, sin agrupar ni deduplicar, para que su
+        # cifra sea comparable con las corridas que el proyecto ya tiene.
+        dropped = 0
+        splits_of = {name: set(frame.image_path) for name, frame in frames.items()}
+        manifest["split"] = manifest.image_path.map(
+            lambda path: next(n for n, s in splits_of.items() if path in s))
+        folds = [{"test_group": "seed_42", "val_group": "seed_42",
+                  "n_test": int(len(frames["test"])),
+                  "test_classes": sorted(frames["test"].label.unique())}]
+
     classes = sorted(manifest.label.unique())
-    folds = build_folds(manifest)
     if args.folds:
         wanted = set(args.folds.split(","))
         folds = [f for f in folds if f["test_group"] in wanted]

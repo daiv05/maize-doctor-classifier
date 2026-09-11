@@ -99,6 +99,15 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--no-pretrained", action="store_true", dest="no_pretrained")
     parser.add_argument("--num-workers", type=int, default=4, dest="num_workers")
     parser.add_argument(
+        "--max-per-class",
+        type=int,
+        default=0,
+        dest="max_per_class",
+        help="Tope de imagenes de entrenamiento por clase; 0 usa el split completo. "
+        "Se aplica despues de derivar las clases minoritarias, asi que reduce volumen "
+        "sin desactivar el augmentation asimetrico.",
+    )
+    parser.add_argument(
         "--export",
         default=None,
         dest="export_formats",
@@ -158,6 +167,7 @@ def main() -> None:
             config_path=str(config_path),
             transform=factory.get_pipeline("train"),
             minority_transform=factory.get_pipeline("minority"),
+            max_per_class=args.max_per_class,
         )
         class_to_idx = train_dataset.class_to_idx
         idx_to_class = train_dataset.idx_to_class

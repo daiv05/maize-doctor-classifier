@@ -58,6 +58,8 @@ class CornDataset(Dataset):
         exclude_classes: list[str] | None = None,
         class_to_idx: dict[str, int] | None = None,
         minority_classes: set[str] | None = None,
+        max_per_class: int | None = None,
+        seed: int = 42,
     ):
         """
         Args:
@@ -71,6 +73,10 @@ class CornDataset(Dataset):
             class_to_idx: Mapeo canónico clase->índice a reutilizar (el del split de train,
                           inyectado en val/test) para mantener índices consistentes entre
                           splits. Si None, se construye desde el YAML.
+            max_per_class: Tope de muestras por clase. Se aplica despues de derivar las
+                           clases minoritarias, de modo que reduce volumen sin alterar que
+                           clases reciben augmentation agresivo. None o 0 desactiva el tope.
+            seed: Semilla del submuestreo por clase.
             minority_classes: Conjunto de clases que reciben augmentation agresivo. Si None,
                               se deriva de la distribución real del split (ver
                               `compute_minority_classes` y `augmentation.minority_ratio_threshold`).
@@ -121,6 +127,17 @@ class CornDataset(Dataset):
         else:
             self.minority_classes = compute_minority_classes(
                 self.data_frame, _load_minority_ratio_threshold(config_path)
+            )
+
+        # El submuestreo va despues de derivar las minoritarias a proposito: recortar primero
+        # comprimiria los ratios y vaciaria el conjunto, desactivando en silencio el
+        # augmentation asimetrico. Con tope 1500 sobre el split de 9 clases ninguna clase
+        # superaria el umbral de 4.0.
+        if max_per_class:
+            self.data_frame = pd.concat(
+                [group.sample(min(len(group), max_per_class), random_state=seed)
+                 for _, group in self.data_frame.groupby("label")],
+                ignore_index=True,
             )
 
     def __len__(self) -> int:
