@@ -49,6 +49,7 @@ WEIGHT_DECAY ?=
 NUM_WORKERS ?=
 NO_PRETRAINED ?=
 LIME ?=
+DETACH ?=
 
 # Optuna HPO & K-Fold Cross Validation
 N_TRIALS ?= 20
@@ -211,7 +212,7 @@ tune:
 tune-main: tune
 
 tune-dashboard:
-	venv\Scripts\optuna-dashboard sqlite:///outputs/tuning/optuna_study.db --port 8080
+	$(PYTHON) -c "from optuna_dashboard._cli import main; main()" sqlite:///outputs/tuning/optuna_study.db --port 8080
 
 # Ensamble por Soft Voting (Criterio 2 Etapa 2)
 .PHONY: evaluate-ensemble ensemble
@@ -237,6 +238,19 @@ cross-validate:
 
 kfold-main: cross-validate
 kfold: cross-validate
+
+# Auditoría de Equidad y Sesgos (Criterio 4 Etapa 2)
+.PHONY: fairness-report fairness
+fairness-report:
+	$(PYTHON) scripts/pipeline/evaluate_fairness.py \
+		$(if $(MODEL),--model $(MODEL),) \
+		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
+		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),) \
+		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
+		--run-gradcam --run-shortcut-test
+
+fairness: fairness-report
 
 # ==============================================================================
 # Local - exportacion (ONNX/TFLite)
@@ -370,7 +384,16 @@ explain-global-main:
 # Uso: make inference IMAGE=foto.jpg [MODEL=<nombre> RUN=<run_id> CHECKPOINT=<ruta.pth>
 #      STABILITY_RUNS=<n> TOP_K=<k>]
 
-.PHONY: inference
+.PHONY: predict inference
+
+# Predicción rápida en imagen o carpeta (soporta MODEL=ensemble, efficientnet_b0, shufflenet_v2_x1_0).
+# Uso: make predict IMAGE=experiments/clahe/input [MODEL=ensemble TOP_K=4]
+predict:
+	$(PYTHON) scripts/pipeline/predict.py \
+		$(if $(MODEL),--model $(MODEL),--model ensemble) \
+		--image $(IMAGE) \
+		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		$(if $(TOP_K),--top-k $(TOP_K),)
 
 inference:
 	$(PYTHON) scripts/pipeline/inference_report.py --model $(MODEL) --image $(IMAGE) \
@@ -428,7 +451,7 @@ modal-pull-segmentation-previews:
 
 # Baselines en GPU. Runs en /outputs/baselines/<modelo>/.
 modal-train-baselines:
-	$(MODAL) run scripts/modal/train.py --models "$(MODELS)" --epochs "$(EPOCHS)" \
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py --models "$(MODELS)" --epochs "$(EPOCHS)" \
 		$(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",) \
 		$(if $(REGEN_SPLITS),--regenerate-splits,) \
 		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
@@ -443,7 +466,7 @@ modal-train-baselines:
 # SEGMENTED=1 entrena sobre corn-clean-segmented + splits/seed_42_segmented (requiere
 # modal-segment-dataset y modal-splits-segmented corridos antes).
 modal-train:
-	$(MODAL) run scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
 		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
 		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
 		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
@@ -455,6 +478,53 @@ modal-train:
 		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",)
 
 modal-train-main: modal-train
+
+.PHONY: modal-tune modal-tune-dashboard
+modal-tune:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::tune_main \
+		$(if $(MODEL),--models "$(MODEL)",--models "$(MODELS)") \
+		$(if $(N_TRIALS),--n-trials "$(N_TRIALS)",) \
+		$(if $(EPOCHS),--epochs "$(EPOCHS)",) \
+		$(if $(TIMEOUT),--timeout "$(TIMEOUT)",) \
+		$(if $(PRUNER),--pruner "$(PRUNER)",) \
+		$(if $(BASELINE_F1),--baseline-macro-f1 "$(BASELINE_F1)",) \
+		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",)
+
+modal-tune-dashboard:
+	$(MODAL) serve scripts/modal/train.py
+
+# Ensamble, Validación Cruzada y Fairness en GPU Modal (Etapa 2)
+.PHONY: modal-ensemble modal-evaluate-ensemble modal-cross-validate modal-kfold modal-fairness modal-fairness-report
+
+modal-ensemble:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::evaluate_ensemble_modal \
+		$(if $(MODELS),--models "$(MODELS)",--models "$(MAIN_MODELS)") \
+		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
+		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",) \
+		$(if $(OUTPUT_DIR),--output-dir "$(OUTPUT_DIR)",)
+
+modal-evaluate-ensemble: modal-ensemble
+
+modal-cross-validate:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::cross_validate_modal \
+		$(if $(MODEL),--model "$(MODEL)",) \
+		$(if $(K_FOLDS),--k-folds "$(K_FOLDS)",) \
+		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",$(if $(EPOCHS),--epochs "$(EPOCHS)",)) \
+		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
+		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",) \
+		$(if $(OUTPUT_DIR),--output-dir "$(OUTPUT_DIR)",)
+
+modal-kfold: modal-cross-validate
+
+modal-fairness:
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::fairness_report_modal \
+		$(if $(MODEL),--model "$(MODEL)",) \
+		$(if $(CHECKPOINT),--checkpoint "$(CHECKPOINT)",) \
+		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
+		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",) \
+		$(if $(OUTPUT_DIR),--output-dir "$(OUTPUT_DIR)",)
+
+modal-fairness-report: modal-fairness
 
 # ==============================================================================
 # Modal - exportacion (ONNX/TFLite)
@@ -576,6 +646,12 @@ check:
 # Requiere shell POSIX (Powershell/Git Bash/WSL en Windows) y que existan outputs/eda/eda_*.png
 docs-eda:
 	cp outputs/eda/eda_*.png public/eda/
+
+.PHONY: docs docs-dev
+docs-dev:
+	npm run docs:dev
+
+docs: docs-dev
 
 compile-pdf:
 	cd reports/firts-phase && pdflatex -interaction=nonstopmode documentation_first_phase.tex

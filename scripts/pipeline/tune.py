@@ -178,12 +178,26 @@ def main() -> None:
             no_pretrained=args.no_pretrained,
         )
 
+        def _trial_callback(study: optuna.Study, trial: optuna.trial.FrozenTrial) -> None:
+            if trial.state in (optuna.trial.TrialState.COMPLETE, optuna.trial.TrialState.PRUNED):
+                try:
+                    export_tuning_artifacts(
+                        study=study,
+                        output_dir=model_out_dir,
+                        model_name=model_name,
+                        baseline_macro_f1=args.baseline_f1,
+                    )
+                    logger.info("[Trial #%d Finalizado] Artefactos intermedios actualizados en: %s", trial.number, model_out_dir)
+                except Exception as e:
+                    logger.warning("No se pudo actualizar artefactos en trial #%d: %s", trial.number, e)
+
         logger.info("[%s] Iniciando optimización con %d trials...", model_name, args.n_trials)
         study.optimize(
             objective,
             n_trials=args.n_trials,
             timeout=args.timeout,
             show_progress_bar=True,
+            callbacks=[_trial_callback],
         )
 
         summary = export_tuning_artifacts(

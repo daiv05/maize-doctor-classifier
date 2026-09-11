@@ -27,7 +27,7 @@ image = (
         "torchvision==0.27.1",
         index_url="https://download.pytorch.org/whl/cu126",
     )
-    .pip_install_from_pyproject("pyproject.toml", optional_dependencies=["cloud", "xai", "export"])
+    .pip_install_from_pyproject("pyproject.toml", optional_dependencies=["cloud", "xai", "export", "tuning"])
     # Explicito ademas del extra 'export': alli van con marcador sys_platform == 'linux'
     # (litert-torch no existe para Windows/macOS) y no queremos depender de como Modal
     # resuelva ese marcador al construir la imagen. El contenedor siempre es Linux.

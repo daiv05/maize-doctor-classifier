@@ -15,6 +15,8 @@ MODEL_INPUT_SIZES: dict[str, tuple[int, int]] = {
 }
 
 
-def resolve_input_size(name: str, fallback: tuple[int, int]) -> tuple[int, int]:
+def resolve_input_size(
+    name: str, fallback: tuple[int, int] = (224, 224)
+) -> tuple[int, int]:
     """Devuelve la resolución nativa del modelo, o `fallback` si no está declarada."""
     return MODEL_INPUT_SIZES.get(name, fallback)

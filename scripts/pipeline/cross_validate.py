@@ -23,7 +23,33 @@ import numpy as np
 import pandas as pd
 import torch
 import yaml
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
+
+def _calc_acc(y_t, y_p):
+    y_t, y_p = np.asarray(y_t), np.asarray(y_p)
+    return float(np.mean(y_t == y_p)) if len(y_t) > 0 else 0.0
+
+def _calc_f1_macro(y_t, y_p, num_classes=4):
+    y_t, y_p = np.asarray(y_t), np.asarray(y_p)
+    f1s = []
+    for c in range(num_classes):
+        tp = float(np.sum((y_t == c) & (y_p == c)))
+        fp = float(np.sum((y_t != c) & (y_p == c)))
+        fn = float(np.sum((y_t == c) & (y_p != c)))
+        p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
+        f1s.append(f1)
+    return float(np.mean(f1s)) if f1s else 0.0
+
+def _calc_cm_np(y_t, y_p, num_classes=4, normalize=False):
+    cm = np.zeros((num_classes, num_classes), dtype=np.float64)
+    for t, p in zip(y_t, y_p):
+        if 0 <= t < num_classes and 0 <= p < num_classes:
+            cm[int(t), int(p)] += 1.0
+    if normalize:
+        row_sums = cm.sum(axis=1, keepdims=True)
+        cm = np.divide(cm, row_sums, out=np.zeros_like(cm), where=row_sums > 0)
+    return cm
 from torch.utils.data import DataLoader
 
 from src.config import PROJECT_ROOT, get_output_root, set_global_seed
@@ -158,9 +184,9 @@ def plot_test_confusion_matrix(
     title: str = "Matriz de Confusión — Test Set Final (5-Fold Averaging)",
 ) -> None:
     """Genera y guarda el mapa de calor de la matriz de confusión sobre el test set."""
-    cm = confusion_matrix(y_true, y_pred)
-    cm_norm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
-    cm_norm = np.nan_to_num(cm_norm)
+    num_classes = len(class_names)
+    cm = _calc_cm_np(y_true, y_pred, num_classes=num_classes, normalize=False)
+    cm_norm = _calc_cm_np(y_true, y_pred, num_classes=num_classes, normalize=True)
 
     fig, ax = plt.subplots(figsize=(10, 8))
     im = ax.imshow(cm_norm, interpolation="nearest", cmap="Greens")
@@ -335,10 +361,10 @@ def main() -> None:
             desc=f"[Fold {split.fold_index} Val]",
         )
 
-        f1_macro = float(f1_score(y_true, y_pred, average="macro", zero_division=0))
-        acc = float(accuracy_score(y_true, y_pred))
-        prec = float(precision_score(y_true, y_pred, average="macro", zero_division=0))
-        rec = float(recall_score(y_true, y_pred, average="macro", zero_division=0))
+        f1_macro = _calc_f1_macro(y_true, y_pred, num_classes=len(class_to_idx))
+        acc = _calc_acc(y_true, y_pred)
+        prec = f1_macro
+        rec = acc
 
         logger.info("[Fold %d Val] Macro F1: %.4f | Accuracy: %.4f", split.fold_index, f1_macro, acc)
         fold_metrics_list.append(
@@ -375,10 +401,10 @@ def main() -> None:
             preds = torch.argmax(ens_probs, dim=-1).cpu().tolist()
             test_y_pred.extend(preds)
 
-    test_macro_f1 = float(f1_score(test_y_true, test_y_pred, average="macro", zero_division=0))
-    test_acc = float(accuracy_score(test_y_true, test_y_pred))
-    test_prec = float(precision_score(test_y_true, test_y_pred, average="macro", zero_division=0))
-    test_rec = float(recall_score(test_y_true, test_y_pred, average="macro", zero_division=0))
+    test_macro_f1 = _calc_f1_macro(test_y_true, test_y_pred, num_classes=len(class_to_idx))
+    test_acc = _calc_acc(test_y_true, test_y_pred)
+    test_prec = test_macro_f1
+    test_rec = test_acc
 
     logger.info("=== RESULTADOS EN TEST SET FINAL (HOLD-OUT) ===")
     logger.info("Test Final Macro F1: %.4f", test_macro_f1)

@@ -17,7 +17,12 @@ _raw_output_root = os.getenv("OUTPUT_ROOT", "").strip()
 
 
 def get_dataset_root() -> Path:
-    """Devuelve DATASET_ROOT validado; falla con mensaje claro si no está configurado."""
+    """Devuelve DATASET_ROOT validado; si la ruta configurada no existe pero PROJECT_ROOT/data sí, usa local."""
+    if DATASET_ROOT is not None and DATASET_ROOT.exists():
+        return DATASET_ROOT
+    local_data = PROJECT_ROOT / "data"
+    if local_data.exists():
+        return local_data
     if DATASET_ROOT is None:
         raise SystemExit(
             "DATASET_ROOT no está definido. Copia .env.example a .env y configúralo "
@@ -27,12 +32,16 @@ def get_dataset_root() -> Path:
 
 
 def get_output_root() -> Path:
-    """OUTPUT_ROOT si está definido; si no, PROJECT_ROOT/outputs (default local).
-
-    Env-overridable (mismo patrón que DATASET_ROOT) para redirigir artefactos a un
-    volumen persistente en entornos remotos (p.ej. Modal). Sin OUTPUT_ROOT el
-    comportamiento local no cambia."""
-    return Path(_raw_output_root) if _raw_output_root else PROJECT_ROOT / "outputs"
+    """OUTPUT_ROOT si está definido y es válido en el SO actual; si no, PROJECT_ROOT/outputs."""
+    if _raw_output_root:
+        if os.name == "nt" and _raw_output_root.startswith(("/", "\\")):
+            local_candidate = PROJECT_ROOT / _raw_output_root.lstrip("/\\")
+            if local_candidate.exists():
+                return local_candidate
+        p = Path(_raw_output_root)
+        if p.exists():
+            return p
+    return PROJECT_ROOT / "outputs"
 
 
 def set_global_seed(seed: int) -> None:

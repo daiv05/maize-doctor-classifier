@@ -93,22 +93,36 @@ def _parse_args() -> argparse.Namespace:
 
 def _find_checkpoint(model_name: str, output_root: Path) -> Path | None:
     """Busca el checkpoint más reciente en outputs/main/ o outputs/baselines/."""
-    candidates = [
-        output_root / "main" / model_name / "latest" / "checkpoints" / "best.pt",
-        output_root / "main" / model_name / "best.pt",
-        output_root / "baselines" / model_name / "latest" / "checkpoints" / "best.pt",
-        output_root / "baselines" / model_name / "best.pt",
-    ]
-    for cand in candidates:
-        if cand.exists():
-            return cand
+    for pipeline_dir in ["main", "baselines"]:
+        parent = output_root / pipeline_dir / model_name
+        if not parent.exists():
+            continue
+        latest_json = parent / "latest.json"
+        if latest_json.exists():
+            try:
+                with open(latest_json, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+                run_id = meta.get("run_id") or meta.get("run")
+                if run_id:
+                    for name in ["best.pth", "best.pt"]:
+                        p = parent / run_id / name
+                        if p.exists():
+                            return p
+            except Exception:
+                pass
 
-    # Búsqueda por glob en carpetas de runs
-    for parent in [output_root / "main" / model_name, output_root / "baselines" / model_name]:
-        if parent.exists():
-            pts = list(parent.rglob("best.pt"))
-            if pts:
-                return sorted(pts, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+        for name in ["best.pth", "best.pt"]:
+            for cand in [
+                parent / "latest" / "checkpoints" / name,
+                parent / "latest" / name,
+                parent / name,
+            ]:
+                if cand.exists():
+                    return cand
+
+        pts = list(parent.rglob("best.pth")) + list(parent.rglob("best.pt"))
+        if pts:
+            return sorted(pts, key=lambda p: p.stat().st_mtime, reverse=True)[0]
     return None
 
 

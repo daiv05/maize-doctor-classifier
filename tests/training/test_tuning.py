@@ -73,5 +73,5 @@ def test_export_tuning_artifacts(tmp_path: Path):
         data = json.load(f)
     assert data["model_name"] == "efficientnet_b0"
     assert data["total_trials"] == 3
-    assert data["best_val_macro_f1"] == 0.92
+    assert data["best_val_macro_f1"] == study.best_value
     assert "best_params" in data
