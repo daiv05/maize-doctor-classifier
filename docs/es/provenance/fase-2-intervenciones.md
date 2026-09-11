@@ -182,9 +182,64 @@ Frente a la conclusión de la Fase 2, esta tercera intervención **sí mueve el 
 importa**, pero no de forma uniforme: compra independencia del marco y recupera las clases
 escasas, a costa de las de textura fina.
 
-Eso sugiere una ablación por componentes que no se ha hecho: separar recorte, compresión y
-color para ver si el recorte por sí solo compra la independencia del marco sin el coste en
-`gray_leaf_spot`. Es la hipótesis directa que deja este experimento.
+Eso sugiere una ablación por componentes: separar recorte, compresión y color para ver si el
+recorte por sí solo compra la independencia del marco sin el coste en `gray_leaf_spot`.
+
+## Fase 2c — Ablación por componentes
+
+Cada componente se aisló conservando la probabilidad que tiene dentro de la combinación, de
+modo que la ablación descompone exactamente esa transformación. Mismo diseño B, mismos once
+pliegues, misma semilla.
+
+| Brazo | macro-F1 completa | macro-F1 marco | Dependencia | Δ F1 |
+|---|---:|---:|---:|---:|
+| Base | 0,5863 | 0,2629 | 44,8 % | — |
+| `crop` | 0,5643 | 0,1395 | **24,7 %** | −0,022 |
+| `codec` | 0,6171 | 0,2463 | 39,9 % | +0,031 |
+| `colour` | **0,6349** | 0,2499 | 39,4 % | **+0,049** |
+| `hardened` (los tres) | 0,5470 | 0,1630 | 29,8 % | −0,039 |
+
+### Los componentes compran cosas distintas
+
+**El recorte compra independencia del marco.** Baja la dependencia de 44,8 % a 24,7 %, más
+que la combinación de los tres, y pagando menos F1 que ella.
+
+**El color compra rendimiento.** Sube el macro-F1 a 0,6349, el mejor número del proyecto bajo
+partición honesta, y mejora ocho de las nueve clases.
+
+**Los tres por separado superan a la combinación en F1.** `hardened` (−0,039) es peor que
+cualquiera de sus componentes aislados. Apilarlos no suma.
+
+### Dos predicciones propias refutadas
+
+**El color no daña las deficiencias; es lo que más las ayuda.** Antes de ejecutar se anotó
+dos veces el riesgo de que la alteración de tono perjudicara a `nitrogen`, `phosphorus` y
+`potassium`, porque la clorosis es su señal. El brazo de color sube las tres, y
+`potassium_deficiency` encabeza la tabla con +0,106. El
+`ColorJitter(saturation=0.0, hue=0.0)` del pipeline del proyecto, elegido con ese mismo
+razonamiento, está costando rendimiento.
+
+**La compresión no es lo que hunde `gray_leaf_spot`.** Se atribuyó su caída de 0,162 en
+`hardened` al remuestreo y la recompresión. Aislado, `codec` deja esa clase **plana**
+(+0,0003) y sube el conjunto +0,031.
+
+### Los componentes no son aditivos
+
+| Clase | Δ `crop` | Δ `codec` | Δ `colour` | Suma | Δ `hardened` real |
+|---|---:|---:|---:|---:|---:|
+| `gray_leaf_spot` | −0,071 | +0,000 | +0,042 | −0,029 | **−0,162** |
+| `common_rust` | −0,219 | −0,007 | −0,002 | −0,228 | **−0,141** |
+
+En `gray_leaf_spot` la combinación destruye cinco veces más de lo que predice la suma de sus
+partes. En `common_rust` ocurre lo contrario: la combinación daña menos que el recorte solo.
+**La interacción entre componentes domina sobre sus efectos individuales**, en ambas
+direcciones, así que ninguna conclusión sobre la combinación se deduce de las partes.
+
+### Consecuencia
+
+La respuesta a si algo ayuda es **sí**, y con dos palancas separadas: el color para el
+rendimiento y el recorte para la independencia del atajo. Lo que no está probado es si pueden
+combinarse sin que la interacción se las coma, que es lo que la tabla anterior advierte.
 
 ## Qué queda sin verificar
 

@@ -1,0 +1,217 @@
+{
+  "augment": "crop",
+  "classes": [
+    "common_rust",
+    "fall_armyworm",
+    "gray_leaf_spot",
+    "healthy",
+    "lethal_necrosis",
+    "nitrogen_deficiency",
+    "northern_corn_leaf_blight",
+    "phosphorus_deficiency",
+    "potassium_deficiency"
+  ],
+  "duplicates_dropped": 165,
+  "pooled": {
+    "original": {
+      "n": 33268,
+      "macro_f1": 0.564336932332116,
+      "accuracy": 0.6799627269448119,
+      "per_class_f1": {
+        "common_rust": 0.5753372601178035,
+        "fall_armyworm": 0.6223216388038616,
+        "gray_leaf_spot": 0.3531009506564056,
+        "healthy": 0.796244607967521,
+        "lethal_necrosis": 0.7306294241438683,
+        "nitrogen_deficiency": 0.5773305084745762,
+        "northern_corn_leaf_blight": 0.7478551362842609,
+        "phosphorus_deficiency": 0.39166666666666666,
+        "potassium_deficiency": 0.28454619787408014
+      }
+    },
+    "border_ring": {
+      "n": 33268,
+      "macro_f1": 0.13952232642399318,
+      "accuracy": 0.32680052903691237,
+      "per_class_f1": {
+        "common_rust": 0.01321279554937413,
+        "fall_armyworm": 0.3533879197816542,
+        "gray_leaf_spot": 0.0471976401179941,
+        "healthy": 0.49251796865794745,
+        "lethal_necrosis": 0.1874212074520241,
+        "nitrogen_deficiency": 0.09563846558066211,
+        "northern_corn_leaf_blight": 0.043875187355225505,
+        "phosphorus_deficiency": 0.014022787028921999,
+        "potassium_deficiency": 0.008426966292134831
+      }
+    },
+    "frame_dependence": 0.24723231536064588
+  },
+  "folds": [
+    {
+      "test_group": "corn-leaf-diseases-classification-roboflow",
+      "val_group": "corn-leaf-roboflow",
+      "n_train": 7270,
+      "n_test": 476,
+      "val_macro_f1": 0.2739545305619992,
+      "arms": {
+        "original": {
+          "accuracy": 0.6995798319327731
+        },
+        "border_ring": {
+          "accuracy": 0.11764705882352941
+        }
+      }
+    },
+    {
+      "test_group": "corn-leaf-roboflow",
+      "val_group": "cropdg-unified-multidomain",
+      "n_train": 7270,
+      "n_test": 2919,
+      "val_macro_f1": 0.1431545796263719,
+      "arms": {
+        "original": {
+          "accuracy": 0.42788626241863653
+        },
+        "border_ring": {
+          "accuracy": 0.18944844124700239
+        }
+      }
+    },
+    {
+      "test_group": "cropdg-unified-multidomain",
+      "val_group": "maize-2-roboflow",
+      "n_train": 7558,
+      "n_test": 2560,
+      "val_macro_f1": 0.14676504623991493,
+      "arms": {
+        "original": {
+          "accuracy": 0.46015625
+        },
+        "border_ring": {
+          "accuracy": 0.443359375
+        }
+      }
+    },
+    {
+      "test_group": "maize-2-roboflow",
+      "val_group": "maize-beans-tomatoes-africa",
+      "n_train": 7558,
+      "n_test": 845,
+      "val_macro_f1": 0.37411828949290726,
+      "arms": {
+        "original": {
+          "accuracy": 0.3408284023668639
+        },
+        "border_ring": {
+          "accuracy": 0.03550295857988166
+        }
+      }
+    },
+    {
+      "test_group": "maize-beans-tomatoes-africa",
+      "val_group": "maize-deficiency-scanner-roboflow",
+      "n_train": 8245,
+      "n_test": 12112,
+      "val_macro_f1": 0.3452807525012052,
+      "arms": {
+        "original": {
+          "accuracy": 0.8053170409511229
+        },
+        "border_ring": {
+          "accuracy": 0.30341809775429324
+        }
+      }
+    },
+    {
+      "test_group": "maize-deficiency-scanner-roboflow",
+      "val_group": "maize-diseases",
+      "n_train": 8245,
+      "n_test": 158,
+      "val_macro_f1": 0.3252323221207612,
+      "arms": {
+        "original": {
+          "accuracy": 0.7658227848101266
+        },
+        "border_ring": {
+          "accuracy": 0.10759493670886076
+        }
+      }
+    },
+    {
+      "test_group": "maize-diseases",
+      "val_group": "maize-in-field-dataset",
+      "n_train": 8354,
+      "n_test": 6970,
+      "val_macro_f1": 0.11092905913054918,
+      "arms": {
+        "original": {
+          "accuracy": 0.8799139167862267
+        },
+        "border_ring": {
+          "accuracy": 0.669583931133429
+        }
+      }
+    },
+    {
+      "test_group": "maize-in-field-dataset",
+      "val_group": "maize-leaf-roboflow",
+      "n_train": 8392,
+      "n_test": 851,
+      "val_macro_f1": 0.06570155902004454,
+      "arms": {
+        "original": {
+          "accuracy": 0.32432432432432434
+        },
+        "border_ring": {
+          "accuracy": 0.007050528789659225
+        }
+      }
+    },
+    {
+      "test_group": "maize-leaf-roboflow",
+      "val_group": "maize-nutrient-deficiency",
+      "n_train": 8136,
+      "n_test": 331,
+      "val_macro_f1": 0.14185263862766442,
+      "arms": {
+        "original": {
+          "accuracy": 0.6978851963746223
+        },
+        "border_ring": {
+          "accuracy": 0.027190332326283987
+        }
+      }
+    },
+    {
+      "test_group": "maize-nutrient-deficiency",
+      "val_group": "multicrop-disease-maiz",
+      "n_train": 8136,
+      "n_test": 337,
+      "val_macro_f1": 0.23524044976545355,
+      "arms": {
+        "original": {
+          "accuracy": 0.26409495548961426
+        },
+        "border_ring": {
+          "accuracy": 0.18397626112759644
+        }
+      }
+    },
+    {
+      "test_group": "multicrop-disease-maiz",
+      "val_group": "corn-leaf-diseases-classification-roboflow",
+      "n_train": 8403,
+      "n_test": 5709,
+      "val_macro_f1": 0.0964460298586339,
+      "arms": {
+        "original": {
+          "accuracy": 0.5200560518479593
+        },
+        "border_ring": {
+          "accuracy": 0.11595726046593098
+        }
+      }
+    }
+  ]
+}
