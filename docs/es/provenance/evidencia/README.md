@@ -77,6 +77,7 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-10, cuatro corridas en paralelo.
 | `fase2_gate.csv` | Compuerta 2 aplicada: F1 y recuperación del marco por clase e intervención |
 | `augmentation_none.json`, `augmentation_hardened.json` | Fase 2b, diseño B: un entrenamiento evaluado con imagen completa y con sólo el marco, con sus trazas |
 | `augmentation_crop.json`, `augmentation_codec.json`, `augmentation_colour.json` | Fase 2c, ablación por componentes |
+| `augmentation_crop_colour.json` | Combinación de las dos palancas |
 | `ablacion_augmentation.csv`, `ablacion_augmentation_por_clase.csv` | Tablas resumen de la ablación |
 
 ## Nota sobre los targets del Makefile

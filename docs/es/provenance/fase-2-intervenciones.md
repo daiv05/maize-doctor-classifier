@@ -235,11 +235,48 @@ partes. En `common_rust` ocurre lo contrario: la combinación daña menos que el
 **La interacción entre componentes domina sobre sus efectos individuales**, en ambas
 direcciones, así que ninguna conclusión sobre la combinación se deduce de las partes.
 
+### Las dos palancas no se combinan
+
+La advertencia de no-aditividad obligaba a medir la combinación en lugar de deducirla. Se
+midió.
+
+| Brazo | macro-F1 completa | macro-F1 marco | Dependencia | Δ F1 |
+|---|---:|---:|---:|---:|
+| Base | 0,5863 | 0,2629 | 44,8 % | — |
+| `colour` | **0,6349** | 0,2499 | 39,4 % | +0,049 |
+| `crop` | 0,5643 | 0,1395 | **24,7 %** | −0,022 |
+| `crop_colour` | 0,5763 | 0,1795 | 31,2 % | −0,010 |
+| `hardened` | 0,5470 | 0,1630 | 29,8 % | −0,039 |
+
+**La combinación queda peor que `colour` en rendimiento y peor que `crop` en independencia.**
+Cae entre las dos en ambos ejes: se lleva lo peor de cada palanca en lugar de lo mejor.
+
+La interacción se concentra en las tres deficiencias nutricionales, que son justamente las
+que más ganaban con cada componente por separado:
+
+| Clase | `crop` | `colour` | Suma esperada | Real | Interacción |
+|---|---:|---:|---:|---:|---:|
+| `phosphorus_deficiency` | 0,3917 | 0,3645 | 0,4672 | 0,2846 | **−0,183** |
+| `nitrogen_deficiency` | 0,5773 | 0,5399 | 0,6434 | 0,5027 | **−0,141** |
+| `potassium_deficiency` | 0,2845 | 0,3381 | 0,3902 | 0,2566 | **−0,134** |
+| `common_rust` | 0,5753 | 0,7922 | 0,5736 | 0,6818 | **+0,108** |
+
 ### Consecuencia
 
-La respuesta a si algo ayuda es **sí**, y con dos palancas separadas: el color para el
-rendimiento y el recorte para la independencia del atajo. Lo que no está probado es si pueden
-combinarse sin que la interacción se las coma, que es lo que la tabla anterior advierte.
+La respuesta a si algo ayuda es **sí**, con dos palancas, pero **hay que elegir una**:
+
+| Objetivo | Intervención | Resultado |
+|---|---|---|
+| Máximo rendimiento honesto | `colour` | macro-F1 0,6349 con 39,4 % de dependencia |
+| Mínima dependencia del atajo | `crop` | 24,7 % de dependencia con macro-F1 0,5643 |
+
+Ninguna combinación probada supera a cualquiera de las dos en su propio eje. Las cuatro
+corridas combinadas —`crop_colour` y `hardened`— quedan por debajo de sus componentes.
+
+El hallazgo secundario más accionable es que el pipeline del proyecto fija
+`ColorJitter(saturation=0.0, hue=0.0)` razonando que el color es la señal diagnóstica de las
+deficiencias. La medición dice lo contrario: activar ese jitter es la intervención más
+rentable de todas las probadas.
 
 ## Qué queda sin verificar
 
