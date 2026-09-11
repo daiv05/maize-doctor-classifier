@@ -92,6 +92,100 @@ una tercera intentona con estos datos, y no se hará.
 Lo que queda es la [Fase 3](/es/provenance/): predicción selectiva. El objetivo deja de ser
 subir el número y pasa a ser que el sistema sepa cuándo no responder.
 
+## Fase 2b — Endurecimiento por augmentation
+
+Las dos intervenciones anteriores actúan sobre la **composición** de los datos. Ninguna toca
+la firma de captura, que es lo que el brazo del marco mide. Esta tercera sí.
+
+### Un bug previo que había que arreglar
+
+`LeakDataset` sembraba su generador con `default_rng(seed * 1_000_003 + index)`, determinista
+por imagen. **Cada imagen recibía el mismo volteo en todas las épocas**: una asignación
+aleatoria fija, no una augmentation. Con recorte aleatorio el defecto sería fatal, porque
+cada imagen vería siempre el mismo recorte. Se sustituyó por un generador propio de cada
+proceso trabajador, cuyo estado avanza entre épocas.
+
+Los experimentos anteriores llevaban el defecto, pero como todos sus brazos lo compartían,
+sus comparaciones internas siguen siendo válidas.
+
+### Diseño B
+
+Los experimentos anteriores entrenan un modelo sobre anillos para medir **cuánta información
+contiene el marco**. Aquí la pregunta es otra: **cuánto sigue dependiendo del marco un modelo
+entrenado con la imagen completa**. El modelo se entrena una vez y se evalúa dos veces sobre
+el mismo conjunto retenido, con la imagen entera y con sólo el anillo.
+
+Las cifras de esta sección **no son comparables** con las de las secciones anteriores.
+
+### La augmentation endurecida
+
+Recorte aleatorio del 30–100 % del área, remuestreo por reducción y ampliación,
+recompresión JPEG con calidad entre 30 y 95, y alteración de brillo, contraste, saturación y
+tono. El recorte ataca la presencia del marco; el remuestreo y la recompresión, la huella del
+codificador y de la resolución nativa; el color, la respuesta cromática de cada cámara.
+
+Conviene notar que el pipeline del proyecto usa `T.Resize` de la imagen completa y
+`ColorJitter(saturation=0.0, hue=0.0)`, así que **el marco está presente en el 100 % de las
+muestras de entrenamiento y la respuesta cromática se preserva intacta**.
+
+### Resultado
+
+| | Base | Endurecida | Δ |
+|---|---:|---:|---:|
+| macro-F1 con imagen completa | 0,5863 | 0,5470 | −0,039 |
+| macro-F1 con sólo el marco | 0,2629 | 0,1630 | −0,100 |
+| Exactitud con imagen completa | 0,7225 | 0,6702 | −0,052 |
+| **Dependencia del marco** | **44,8 %** | **29,8 %** | **−15,0 pp** |
+
+**La augmentation endurecida sí rompe parte de la dependencia del atajo**, y lo hace con
+diferencia: quince puntos. El coste son cuatro centésimas de macro-F1.
+
+### Por clase
+
+| Clase | F1 base | F1 endurecida | Δ | Dep. base | Dep. endurecida | Δ dep. |
+|---|---:|---:|---:|---:|---:|---:|
+| `nitrogen_deficiency` | 0,4739 | **0,5219** | +0,048 | 27,5 % | 18,5 % | −9,0 |
+| `phosphorus_deficiency` | 0,2889 | **0,3303** | +0,041 | 21,5 % | **0,0 %** | −21,5 |
+| `potassium_deficiency` | 0,2324 | **0,2677** | +0,035 | 28,4 % | **0,0 %** | −28,4 |
+| `fall_armyworm` | 0,6594 | 0,6561 | −0,003 | 62,5 % | 39,4 % | −23,1 |
+| `northern_corn_leaf_blight` | 0,7548 | 0,7165 | −0,038 | 18,8 % | 9,5 % | −9,3 |
+| `healthy` | 0,8265 | 0,7665 | −0,060 | 64,6 % | 64,8 % | +0,2 |
+| `lethal_necrosis` | 0,8231 | 0,7487 | −0,075 | 73,2 % | 41,5 % | −31,7 |
+| `common_rust` | 0,7939 | 0,6529 | −0,141 | 43,7 % | 28,6 % | −15,1 |
+| `gray_leaf_spot` | 0,4241 | 0,2625 | −0,162 | 16,5 % | 19,0 % | +2,5 |
+
+### Lectura
+
+**Las tres deficiencias mejoran, contra lo previsto.** Antes de ejecutar se anotó el riesgo de
+que la alteración de tono dañara a `nitrogen`, `phosphorus` y `potassium`, porque el color
+clorótico es su señal diagnóstica. Ocurre lo contrario: las tres suben, y la dependencia del
+marco de fósforo y potasio cae a **cero**. La predicción era errónea y queda registrada como
+tal.
+
+**El comportamiento se separa en tres grupos según de qué depende cada clase.**
+
+- Clases cuya señal es **color y estructura de gran escala** (las tres deficiencias): la
+  augmentation actúa como regularización y mejora.
+- Clases que **dependían del marco** (`lethal_necrosis` 73,2 %, `common_rust` 43,7 %): pierden
+  el atajo y su F1 baja. Es el comportamiento esperado y deseable: ese rendimiento estaba
+  inflado.
+- Clases cuya señal es **textura fina**: `gray_leaf_spot` cae 0,162 y su dependencia del marco
+  **no** baja (16,5 % → 19,0 %). No perdió un atajo, perdió señal. La recompresión y el
+  remuestreo destruyen exactamente el detalle de lesión que esa clase necesita.
+
+**`healthy` es el único caso donde la augmentation no reduce la dependencia** (64,6 % →
+64,8 %) y además pierde F1. Su atajo sobrevive al recorte, al remuestreo y al color.
+
+### Consecuencia
+
+Frente a la conclusión de la Fase 2, esta tercera intervención **sí mueve el indicador que
+importa**, pero no de forma uniforme: compra independencia del marco y recupera las clases
+escasas, a costa de las de textura fina.
+
+Eso sugiere una ablación por componentes que no se ha hecho: separar recorte, compresión y
+color para ver si el recorte por sí solo compra la independencia del marco sin el coste en
+`gray_leaf_spot`. Es la hipótesis directa que deja este experimento.
+
 ## Qué queda sin verificar
 
 | Cuestión | Estado |

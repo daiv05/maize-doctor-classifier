@@ -75,6 +75,7 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-10, cuatro corridas en paralelo.
 | `leave_one_source_out_balanced*.json` | Balanceo de grupos, ambos brazos, con sus trazas `.run.txt` |
 | `leave_one_source_out_backmix0.5*.json` | BackMix 0,5, ambos brazos, con sus trazas |
 | `fase2_gate.csv` | Compuerta 2 aplicada: F1 y recuperación del marco por clase e intervención |
+| `augmentation_none.json`, `augmentation_hardened.json` | Fase 2b, diseño B: un entrenamiento evaluado con imagen completa y con sólo el marco, con sus trazas |
 
 ## Nota sobre los targets del Makefile
 

@@ -98,7 +98,8 @@ class LeakDataset(Dataset):
     """Sirve imágenes del manifiesto aplicando el recorte del brazo."""
 
     def __init__(self, frame, dataset_root, class_to_idx, arm, ring_fraction, size, train, seed,
-                 backmix_probability=0.0, backmix_black_level=12, backmix_min_fraction=0.30):
+                 backmix_probability=0.0, backmix_black_level=12, backmix_min_fraction=0.30,
+                 augment=None):
         self.paths = frame["image_path"].tolist()
         self.labels = [class_to_idx[label] for label in frame["label"]]
         self.dataset_root = dataset_root
@@ -110,9 +111,25 @@ class LeakDataset(Dataset):
         self.backmix_probability = backmix_probability
         self.backmix_black_level = backmix_black_level
         self.backmix_min_fraction = backmix_min_fraction
+        self.augment = augment
+        self._rng = None
 
     def __len__(self) -> int:
         return len(self.paths)
+
+    def _worker_rng(self) -> np.random.Generator:
+        """Devuelve un generador propio del worker, cuyo estado avanza entre épocas.
+
+        Sembrar por índice de imagen daría la misma transformación en todas las épocas, que
+        es una asignación aleatoria fija y no una augmentation.
+
+        @returns {np.random.Generator} Generador persistente del proceso trabajador.
+        """
+        if self._rng is None:
+            info = torch.utils.data.get_worker_info()
+            worker_id = info.id if info is not None else 0
+            self._rng = np.random.default_rng([self.seed, worker_id])
+        return self._rng
 
     def load_raw(self, index: int) -> np.ndarray:
         """Decodifica y reescala una imagen sin aplicar brazo ni normalización.
@@ -142,13 +159,16 @@ class LeakDataset(Dataset):
         return np.where(black[:, :, None], donor, array).astype(np.uint8)
 
     def __getitem__(self, index: int):
-        rng = np.random.default_rng(self.seed * 1_000_003 + index)
         array = self.load_raw(index)
-        if self.train and self.backmix_probability and rng.random() < self.backmix_probability:
-            array = self._backmix(array, rng)
+        if self.train:
+            rng = self._worker_rng()
+            if self.backmix_probability and rng.random() < self.backmix_probability:
+                array = self._backmix(array, rng)
+            if self.augment is not None:
+                array = self.augment(array, rng)
+            if rng.random() < 0.5:
+                array = np.ascontiguousarray(array[:, ::-1])
         array = apply_arm(array, self.arm, self.ring_fraction)
-        if self.train and rng.random() < 0.5:
-            array = np.ascontiguousarray(array[:, ::-1])
         tensor = (array.astype(np.float32) / 255.0 - IMAGENET_MEAN) / IMAGENET_STD
         return torch.from_numpy(np.ascontiguousarray(tensor.transpose(2, 0, 1))), self.labels[index]
 
