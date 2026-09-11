@@ -393,6 +393,10 @@ def cross_validate_modal(
     k_folds: int = 5,
     epochs: int = 20,
     batch_size: int = 64,
+    learning_rate: float = 0.0,
+    weight_decay: float = 0.0,
+    class_weights: str = "",
+    best_params: str = "",
     splits_dir: str = "",
     output_dir: str = "",
 ) -> None:
@@ -411,6 +415,14 @@ def cross_validate_modal(
         "--batch-size",
         str(batch_size),
     ]
+    if learning_rate > 0:
+        command += ["--learning-rate", str(learning_rate)]
+    if weight_decay > 0:
+        command += ["--weight-decay", str(weight_decay)]
+    if class_weights:
+        command += ["--class-weights", class_weights]
+    if best_params:
+        command += ["--best-params", best_params]
     if splits_dir:
         command += ["--splits-dir", splits_dir]
     if output_dir:

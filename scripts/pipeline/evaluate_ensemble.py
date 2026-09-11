@@ -213,23 +213,61 @@ def main() -> None:
             logger.error("La cantidad de checkpoints no coincide con la cantidad de modelos.")
             sys.exit(1)
         checkpoint_paths = [Path(p) for p in args.checkpoints]
+        for p in checkpoint_paths:
+            if not p.exists():
+                logger.error("Checkpoint explícito no encontrado: %s", p)
+                sys.exit(1)
     else:
         for m in model_names:
             found = _find_checkpoint(m, output_root)
             if not found:
-                logger.warning("No se encontró checkpoint entrenado para '%s'. Se usará pesos base para test estructural.", m)
-                checkpoint_paths.append(Path("none"))
-            else:
-                checkpoint_paths.append(found)
+                logger.error(
+                    "No se encontró checkpoint entrenado para '%s'. "
+                    "Entrena primero o pasa --checkpoints con rutas explícitas.",
+                    m,
+                )
+                sys.exit(1)
+            checkpoint_paths.append(found)
 
-    # 2. Preparar Dataset de Test
+    # 2. Validar consistencia de class_to_idx entre miembros del ensamble
+    reference_class_to_idx: dict[str, int] | None = None
+    for name, ckpt in zip(model_names, checkpoint_paths):
+        summary_path = ckpt.parent / "summary.json"
+        if summary_path.exists():
+            with open(summary_path, "r", encoding="utf-8") as f:
+                summary = json.load(f)
+            if "class_to_idx" in summary:
+                member_mapping = {str(k): int(v) for k, v in summary["class_to_idx"].items()}
+                if reference_class_to_idx is None:
+                    reference_class_to_idx = member_mapping
+                    logger.info(
+                        "Mapeo de clases obtenido de summary.json de '%s': %s",
+                        name, list(member_mapping.keys()),
+                    )
+                elif member_mapping != reference_class_to_idx:
+                    logger.error(
+                        "Inconsistencia en class_to_idx entre miembros del ensamble.\n"
+                        "  Referencia: %s\n  %s tiene: %s",
+                        reference_class_to_idx, name, member_mapping,
+                    )
+                    sys.exit(1)
+        else:
+            logger.warning("No se encontró summary.json para '%s' en %s", name, ckpt.parent)
+
+    # 3. Preparar Dataset de Test
     factory = CornTransformFactory(config_path=str(config_path), target_size=(224, 224), clahe=False)
     test_dataset = CornDataset(
         csv_path=str(splits_dir / "test.csv"),
         config_path=str(config_path),
         transform=factory.get_pipeline("test"),
+        **(dict(class_to_idx=reference_class_to_idx) if reference_class_to_idx else {}),
     )
-    class_to_idx = test_dataset.class_to_idx
+    if reference_class_to_idx is None:
+        reference_class_to_idx = test_dataset.class_to_idx
+        logger.warning(
+            "No se encontró summary.json en ningún miembro; usando mapeo del dataset de test."
+        )
+    class_to_idx = reference_class_to_idx
     idx_to_class = {v: k for k, v in class_to_idx.items()}
     class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
 
@@ -245,17 +283,14 @@ def main() -> None:
     loaded_models: list[torch.nn.Module] = []
     for name, ckpt in zip(model_names, checkpoint_paths):
         model = build_model(name, num_classes=len(class_to_idx), pretrained=False)
-        if ckpt.exists():
-            checkpoint_data = torch.load(ckpt, map_location=device)
-            state_dict = (
-                checkpoint_data["model_state_dict"]
-                if isinstance(checkpoint_data, dict) and "model_state_dict" in checkpoint_data
-                else checkpoint_data
-            )
-            model.load_state_dict(state_dict)
-            logger.info("Cargado checkpoint para %s desde %s", name, ckpt)
-        else:
-            logger.info("Instanciando modelo base %s para verificación estructural.", name)
+        checkpoint_data = torch.load(ckpt, map_location=device)
+        state_dict = (
+            checkpoint_data["model_state_dict"]
+            if isinstance(checkpoint_data, dict) and "model_state_dict" in checkpoint_data
+            else checkpoint_data
+        )
+        model.load_state_dict(state_dict, strict=True)
+        logger.info("Cargado checkpoint para %s desde %s", name, ckpt)
         model.eval()
         model.to(device)
         loaded_models.append(model)

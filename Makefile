@@ -511,6 +511,10 @@ modal-cross-validate:
 		$(if $(K_FOLDS),--k-folds "$(K_FOLDS)",) \
 		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",$(if $(EPOCHS),--epochs "$(EPOCHS)",)) \
 		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
+		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
+		$(if $(WEIGHT_DECAY),--weight-decay "$(WEIGHT_DECAY)",) \
+		$(if $(CLASS_WEIGHTS),--class-weights "$(CLASS_WEIGHTS)",) \
+		$(if $(BEST_PARAMS),--best-params "$(BEST_PARAMS)",) \
 		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",) \
 		$(if $(OUTPUT_DIR),--output-dir "$(OUTPUT_DIR)",)
 

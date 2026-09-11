@@ -24,6 +24,8 @@ _DEFAULT_IMAGE_SIZE_BY_MODEL = {
     "efficientnet_b4": 380,
 }
 
+_DEFAULT_ENSEMBLE_MODELS = ["efficientnet_b0", "shufflenet_v2_x1_0", "efficientnet_lite0"]
+
 
 def _load_config(config_path: Path) -> dict[str, Any]:
     with open(config_path, "r", encoding="utf-8") as f:
@@ -102,7 +104,11 @@ def _load_state_dict(checkpoint_path: Path, device: torch.device) -> dict[str, t
 
 
 def _find_model_checkpoint(model_name: str, output_root: Path, explicit_checkpoint: str | None = None, run_id: str | None = None) -> Path:
-    """Auto-descubre el mejor checkpoint en outputs/main/ y outputs/baselines/."""
+    """Auto-descubre el mejor checkpoint en outputs/main/ y outputs/baselines/.
+
+    Si *run_id* fue proporcionado explícitamente y no se encuentra su checkpoint,
+    la función falla de inmediato en lugar de caer a un fallback por ``rglob``.
+    """
     if explicit_checkpoint:
         p = Path(explicit_checkpoint)
         if p.exists():
@@ -124,12 +130,22 @@ def _find_model_checkpoint(model_name: str, output_root: Path, explicit_checkpoi
                             cp = model_dir / rid / name
                             if cp.exists():
                                 return cp
+                        # Si el run fue solicitado explícitamente y no tiene checkpoint, fallar
+                        if run_id:
+                            raise SystemExit(
+                                f"No se encontró checkpoint para el run '{run_id}' del modelo "
+                                f"'{model_name}' en {model_dir / run_id}."
+                            )
+                except SystemExit:
+                    raise
                 except Exception:
                     pass
 
-            pts = list(model_dir.rglob("best.pth")) + list(model_dir.rglob("best.pt"))
-            if pts:
-                return sorted(pts, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+            # Fallback rglob solo si no se pidió un run específico
+            if not run_id:
+                pts = list(model_dir.rglob("best.pth")) + list(model_dir.rglob("best.pt"))
+                if pts:
+                    return sorted(pts, key=lambda p: p.stat().st_mtime, reverse=True)[0]
 
     raise SystemExit(f"No se encontró checkpoint para el modelo '{model_name}' en {output_root}")
 
@@ -232,26 +248,50 @@ def main() -> None:
     individual_models: dict[str, torch.nn.Module] | None = None
 
     if is_ensemble:
-        canonical = ["efficientnet_b0", "shufflenet_v2_x1_0"]
+        # Cargar composición desde manifiesto del ensamble evaluado o usar modelos canónicos
+        manifest_path = output_root / "ensemble" / "ensemble_summary.json"
+        if manifest_path.exists():
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                manifest = json.load(f)
+            canonical = manifest.get("models_included", _DEFAULT_ENSEMBLE_MODELS)
+            ensemble_weights = manifest.get("weights", None)
+            logger.info("Ensamble cargado desde manifiesto: %s (pesos: %s)", canonical, ensemble_weights)
+        else:
+            canonical = list(_DEFAULT_ENSEMBLE_MODELS)
+            ensemble_weights = None
+            logger.info("Sin manifiesto de ensamble; usando modelos canónicos: %s", canonical)
+
         models_list = []
         individual_models = {}
-        sample_summary = {}
+        first_summary: dict[str, Any] = {}
+        reference_class_to_idx: dict[str, int] | None = None
 
         for m_name in canonical:
             ckpt = _find_model_checkpoint(m_name, output_root)
             summary = _load_summary(ckpt)
-            if not sample_summary and summary:
-                sample_summary = summary
+            if not first_summary and summary:
+                first_summary = summary
             class_to_idx, idx_to_class = _resolve_class_mapping(summary, splits_dir, cfg)
+
+            # Validar consistencia de class_to_idx entre miembros
+            if reference_class_to_idx is None:
+                reference_class_to_idx = class_to_idx
+            elif class_to_idx != reference_class_to_idx:
+                raise SystemExit(
+                    f"Inconsistencia en class_to_idx entre miembros del ensamble.\n"
+                    f"  Referencia: {reference_class_to_idx}\n"
+                    f"  {m_name}: {class_to_idx}"
+                )
+
             m = build_model(m_name, num_classes=len(class_to_idx), pretrained=False).to(device)
             m.load_state_dict(_load_state_dict(ckpt, device))
             m.eval()
             models_list.append(m)
             individual_models[m_name] = m
 
-        model = SoftVotingEnsemble(models_list, weights=[0.5, 0.5], model_names=canonical)
-        target_size = (224, 224)
-        active_model_name = "Soft Voting Ensemble (EfficientNet-B0 + ShuffleNet-V2)"
+        model = SoftVotingEnsemble(models_list, weights=ensemble_weights, model_names=canonical)
+        target_size = _resolve_target_size(canonical[0], None, first_summary, cfg)
+        active_model_name = f"Soft Voting Ensemble ({' + '.join(canonical)})"
     else:
         checkpoint_path = _find_model_checkpoint(args.model, output_root, args.checkpoint, args.run)
         summary = _load_summary(checkpoint_path)

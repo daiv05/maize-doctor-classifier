@@ -75,15 +75,18 @@ class CornDataset(Dataset):
                               se deriva de la distribución real del split (ver
                               `compute_minority_classes` y `augmentation.minority_ratio_threshold`).
         """
-        if not os.path.exists(csv_path):
-            raise FileNotFoundError(f"No se encontró el archivo de manifiesto: {csv_path}")
-
         self.transform = transform
         self.minority_transform = minority_transform
         self.dataset_root = get_dataset_root()
 
         # 1. Cargar y filtrar el manifiesto
-        df = pd.read_csv(csv_path)
+        if isinstance(csv_path, pd.DataFrame):
+            df = csv_path.copy()
+        else:
+            if not os.path.exists(csv_path):
+                raise FileNotFoundError(f"No se encontró el archivo de manifiesto: {csv_path}")
+            df = pd.read_csv(csv_path)
+
         if exclude_classes:
             df = df[~df["label"].isin(exclude_classes)].reset_index(drop=True)
         self.data_frame = df

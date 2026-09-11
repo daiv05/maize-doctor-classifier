@@ -113,12 +113,15 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _resolve_checkpoint(model_name: str, explicit_path: str | None) -> Path | None:
+def _resolve_checkpoint(model_name: str, explicit_path: str | None) -> Path:
+    """Resuelve el checkpoint entrenado.  Falla con ``sys.exit(1)`` si no se
+    encuentra ninguno — nunca devuelve ``None``."""
     if explicit_path:
         p = Path(explicit_path)
         if p.exists():
             return p
-        logger.warning("Checkpoint especificado no encontrado: %s", explicit_path)
+        logger.error("Checkpoint especificado no encontrado: %s", explicit_path)
+        sys.exit(1)
 
     output_root = get_output_root()
     for pipeline_dir in ["main", "baselines"]:
@@ -156,7 +159,12 @@ def _resolve_checkpoint(model_name: str, explicit_path: str | None) -> Path | No
             logger.info("Checkpoint auto-descubierto: %s", chosen)
             return chosen
 
-    return None
+    logger.error(
+        "No se encontró ningún checkpoint entrenado para '%s'. "
+        "Entrena primero o pasa --checkpoint.",
+        model_name,
+    )
+    sys.exit(1)
 
 
 def _generate_gradcam_panel(
@@ -276,9 +284,29 @@ def main() -> None:
         logger.warning("Columna 'environment' no presente en test.csv. Asignando 'unknown'.")
         test_df["environment"] = "unknown"
 
-    class_names = sorted(test_df["label"].unique().tolist())
-    class_to_idx = {name: idx for idx, name in enumerate(class_names)}
-    idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+    # Resolver checkpoint primero (falla si no existe)
+    ckpt_path = _resolve_checkpoint(args.model, args.checkpoint_path)
+
+    # Mapeo de clases desde summary.json del checkpoint (fuente de verdad)
+    summary_path = ckpt_path.parent / "summary.json"
+    if summary_path.exists():
+        with open(summary_path, "r", encoding="utf-8") as f:
+            summary_data = json.load(f)
+        if "class_to_idx" in summary_data:
+            class_to_idx = {str(k): int(v) for k, v in summary_data["class_to_idx"].items()}
+            idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+            class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
+            logger.info("Mapeo de clases cargado desde summary.json del checkpoint.")
+        else:
+            class_names = sorted(test_df["label"].unique().tolist())
+            class_to_idx = {name: idx for idx, name in enumerate(class_names)}
+            idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+            logger.warning("summary.json sin class_to_idx; reconstruyendo desde test.csv.")
+    else:
+        class_names = sorted(test_df["label"].unique().tolist())
+        class_to_idx = {name: idx for idx, name in enumerate(class_names)}
+        idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+        logger.warning("No se encontró summary.json; reconstruyendo mapeo de clases desde test.csv.")
 
     logger.info("Iniciando Auditoría de Equidad (Fairness Report) para: %s", args.model)
     logger.info("Clases a auditar (%d): %s", len(class_names), class_names)
@@ -294,16 +322,12 @@ def main() -> None:
     factory = CornTransformFactory(config_path=str(config_path), target_size=input_size)
     eval_transform = factory.get_pipeline("test")
 
-    # Instanciar y cargar modelo
-    model = build_model(args.model, num_classes=len(class_names), pretrained=True)
-    ckpt_path = _resolve_checkpoint(args.model, args.checkpoint_path)
-    if ckpt_path and ckpt_path.exists():
-        logger.info("Cargando pesos entrenados desde: %s", ckpt_path)
-        checkpoint = torch.load(ckpt_path, map_location=device)
-        state_dict = checkpoint.get("model_state_dict", checkpoint)
-        model.load_state_dict(state_dict, strict=False)
-    else:
-        logger.warning("No se encontró checkpoint entrenado; auditando con pesos pre-entrenados/iniciales.")
+    # Instanciar y cargar modelo con pesos entrenados (strict=True)
+    model = build_model(args.model, num_classes=len(class_names), pretrained=False)
+    logger.info("Cargando pesos entrenados desde: %s", ckpt_path)
+    checkpoint = torch.load(ckpt_path, map_location=device)
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+    model.load_state_dict(state_dict, strict=True)
 
     model = model.to(device)
     model.eval()
@@ -422,7 +446,7 @@ def main() -> None:
 
     full_report_data = {
         "model_name": args.model,
-        "checkpoint_used": str(ckpt_path) if ckpt_path else "pretrained_initial",
+        "checkpoint_used": str(ckpt_path),
         "subgroup_metrics": subgroup_metrics,
         "disparity_analysis": disparity_metrics,
         "shortcut_learning_test": dual_shortcut_results.get("center_occlusion", {}),

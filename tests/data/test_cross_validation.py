@@ -95,3 +95,22 @@ def test_load_best_params_if_available(tmp_path: Path):
     assert params is not None
     assert params["learning_rate"] == 0.0003
     assert params["batch_size"] == 16
+
+
+def test_corn_dataset_accepts_dataframe(tmp_path: Path):
+    from src.data.dataset import CornDataset
+    import yaml
+
+    cfg_file = tmp_path / "dataset.yaml"
+    cfg_file.write_text(yaml.dump({"dataset": {"classes": ["healthy", "common_rust"]}}))
+
+    df = pd.DataFrame({
+        "image_path": ["dummy1.jpg", "dummy2.jpg"],
+        "label": ["healthy", "common_rust"],
+    })
+
+    ds = CornDataset(csv_path=df, config_path=str(cfg_file))
+    assert len(ds) == 2
+    assert "healthy" in ds.class_to_idx
+    assert "common_rust" in ds.class_to_idx
+

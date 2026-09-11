@@ -28,9 +28,9 @@ def _calc_acc(y_t, y_p):
     y_t, y_p = np.asarray(y_t), np.asarray(y_p)
     return float(np.mean(y_t == y_p)) if len(y_t) > 0 else 0.0
 
-def _calc_f1_macro(y_t, y_p, num_classes=4):
+def _calc_metrics_macro(y_t, y_p, num_classes=9):
     y_t, y_p = np.asarray(y_t), np.asarray(y_p)
-    f1s = []
+    ps, rs, f1s = [], [], []
     for c in range(num_classes):
         tp = float(np.sum((y_t == c) & (y_p == c)))
         fp = float(np.sum((y_t != c) & (y_p == c)))
@@ -38,10 +38,16 @@ def _calc_f1_macro(y_t, y_p, num_classes=4):
         p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
         f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
+        ps.append(p)
+        rs.append(r)
         f1s.append(f1)
-    return float(np.mean(f1s)) if f1s else 0.0
+    return {
+        "macro_precision": float(np.mean(ps)) if ps else 0.0,
+        "macro_recall": float(np.mean(rs)) if rs else 0.0,
+        "macro_f1": float(np.mean(f1s)) if f1s else 0.0,
+    }
 
-def _calc_cm_np(y_t, y_p, num_classes=4, normalize=False):
+def _calc_cm_np(y_t, y_p, num_classes=9, normalize=False):
     cm = np.zeros((num_classes, num_classes), dtype=np.float64)
     for t, p in zip(y_t, y_p):
         if 0 <= t < num_classes and 0 <= p < num_classes:
@@ -166,13 +172,20 @@ def _load_best_params_if_available(model_name: str, explicit_path: str | None, o
                 return data.get("best_params", data)
         logger.warning("No se encontró el archivo de hiperparámetros indicado: %s", explicit_path)
 
-    # Auto-descubrimiento en outputs/tuning/<model>/best_params.json
-    auto_path = output_root / "tuning" / model_name / "best_params.json"
-    if auto_path.exists():
-        with open(auto_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            logger.info("Auto-descubiertos hiperparámetros de Optuna en: %s", auto_path)
-            return data.get("best_params", data)
+    # Auto-descubrimiento en múltiples ubicaciones candidatas
+    candidates = [
+        output_root / "tuning" / model_name / "best_params.json",
+        PROJECT_ROOT / "outputs" / "tuning" / model_name / "best_params.json",
+        Path("outputs") / "tuning" / model_name / "best_params.json",
+        Path("/outputs/tuning") / model_name / "best_params.json",
+        Path("/root/outputs/tuning") / model_name / "best_params.json",
+    ]
+    for auto_path in candidates:
+        if auto_path.exists():
+            with open(auto_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                logger.info("Auto-descubiertos hiperparámetros de Optuna en: %s", auto_path)
+                return data.get("best_params", data)
     return None
 
 
@@ -337,6 +350,9 @@ def main() -> None:
         scheduler = build_scheduler(optimizer, kind="cosine", total_epochs=args.epochs, warmup_epochs=warmup, min_lr=1e-6)
         early_stopping = EarlyStopping(patience=args.patience)
 
+        fold_dir = output_dir / f"fold_{split.fold_index}"
+        fold_dir.mkdir(parents=True, exist_ok=True)
+
         history = fit(
             model=model,
             train_loader=train_loader,
@@ -346,12 +362,14 @@ def main() -> None:
             device=device,
             epochs=args.epochs,
             model_name=f"{args.model}_fold{split.fold_index}",
+            run_dir=fold_dir,
             scheduler=scheduler,
             early_stopping=early_stopping,
             clip_grad_norm=1.0,
         )
 
-        # Evaluar en el conjunto de validación del fold
+        # fit() ya restauró el mejor estado del modelo;
+        # evaluar con el checkpoint óptimo de este fold.
         val_metrics, y_true, y_pred, _ = run_epoch(
             model=model,
             loader=val_loader,
@@ -361,12 +379,20 @@ def main() -> None:
             desc=f"[Fold {split.fold_index} Val]",
         )
 
-        f1_macro = _calc_f1_macro(y_true, y_pred, num_classes=len(class_to_idx))
+        fold_macro = _calc_metrics_macro(y_true, y_pred, num_classes=len(class_to_idx))
+        f1_macro = fold_macro["macro_f1"]
         acc = _calc_acc(y_true, y_pred)
-        prec = f1_macro
-        rec = acc
+        prec = fold_macro["macro_precision"]
+        rec = fold_macro["macro_recall"]
 
-        logger.info("[Fold %d Val] Macro F1: %.4f | Accuracy: %.4f", split.fold_index, f1_macro, acc)
+        # Extraer qué época fue seleccionada como mejor
+        best_rows = [r for r in history if r.get("is_best")]
+        best_epoch = best_rows[-1]["epoch"] if best_rows else len(history)
+
+        logger.info(
+            "[Fold %d Val] Macro F1: %.4f | Accuracy: %.4f | Macro Prec: %.4f | Macro Rec: %.4f (mejor época: %d)",
+            split.fold_index, f1_macro, acc, prec, rec, best_epoch,
+        )
         fold_metrics_list.append(
             {
                 "fold": split.fold_index,
@@ -374,10 +400,20 @@ def main() -> None:
                 "accuracy": acc,
                 "macro_precision": prec,
                 "macro_recall": rec,
+                "best_epoch": best_epoch,
             }
         )
 
+        # Guardar historial y predicciones del fold
+        with open(fold_dir / "history.json", "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2)
+        pd.DataFrame({"y_true": y_true, "y_pred": y_pred}).to_csv(
+            fold_dir / "predictions.csv", index=False,
+        )
+
+        # Mover modelo a CPU para liberar VRAM antes del siguiente fold
         model.eval()
+        model.cpu()
         trained_fold_models.append(model)
 
     # 4. Estadísticas Agregadas de Validación Cruzada
@@ -388,6 +424,9 @@ def main() -> None:
 
     # 5. Evaluación de la Prueba Final en Test Set Retenido (Fold Averaging Ensemble)
     logger.info("=== EVALUACIÓN DE LA PRUEBA FINAL SOBRE TEST SET RETENIDO ===")
+    # Mover modelos de folds de vuelta a GPU para evaluación del ensamble
+    for m in trained_fold_models:
+        m.to(device)
     fold_ensemble = SoftVotingEnsemble(models=trained_fold_models)
     
     test_y_true: list[int] = []
@@ -401,10 +440,11 @@ def main() -> None:
             preds = torch.argmax(ens_probs, dim=-1).cpu().tolist()
             test_y_pred.extend(preds)
 
-    test_macro_f1 = _calc_f1_macro(test_y_true, test_y_pred, num_classes=len(class_to_idx))
+    test_macro = _calc_metrics_macro(test_y_true, test_y_pred, num_classes=len(class_to_idx))
+    test_macro_f1 = test_macro["macro_f1"]
     test_acc = _calc_acc(test_y_true, test_y_pred)
-    test_prec = test_macro_f1
-    test_rec = test_acc
+    test_prec = test_macro["macro_precision"]
+    test_rec = test_macro["macro_recall"]
 
     logger.info("=== RESULTADOS EN TEST SET FINAL (HOLD-OUT) ===")
     logger.info("Test Final Macro F1: %.4f", test_macro_f1)
