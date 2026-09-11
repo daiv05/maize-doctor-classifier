@@ -1,0 +1,74 @@
+{
+  "arm": "colour_strong",
+  "classes": [
+    "common_rust",
+    "fall_armyworm",
+    "gray_leaf_spot",
+    "healthy",
+    "lethal_necrosis",
+    "nitrogen_deficiency",
+    "northern_corn_leaf_blight",
+    "phosphorus_deficiency",
+    "potassium_deficiency"
+  ],
+  "duplicates_dropped": 0,
+  "pooled": {
+    "original": {
+      "n": 5015,
+      "macro_f1": 0.9449991562667786,
+      "accuracy": 0.9772681954137588,
+      "per_class_f1": {
+        "common_rust": 0.991044776119403,
+        "fall_armyworm": 0.9781420765027322,
+        "gray_leaf_spot": 0.9525423728813559,
+        "healthy": 0.9889439573008006,
+        "lethal_necrosis": 0.9963598543941757,
+        "nitrogen_deficiency": 0.8880866425992779,
+        "northern_corn_leaf_blight": 0.9803343166175025,
+        "phosphorus_deficiency": 0.9202898550724637,
+        "potassium_deficiency": 0.8092485549132948
+      }
+    },
+    "border_ring": {
+      "n": 5015,
+      "macro_f1": 0.4082581788968006,
+      "accuracy": 0.505284147557328,
+      "per_class_f1": {
+        "common_rust": 0.8571428571428571,
+        "fall_armyworm": 0.5945945945945946,
+        "gray_leaf_spot": 0.4049382716049383,
+        "healthy": 0.5499025763152198,
+        "lethal_necrosis": 0.5597014925373134,
+        "nitrogen_deficiency": 0.3191489361702128,
+        "northern_corn_leaf_blight": 0.005836575875486381,
+        "phosphorus_deficiency": 0.24444444444444444,
+        "potassium_deficiency": 0.13861386138613863
+      }
+    },
+    "frame_dependence": 0.43201962265196675
+  },
+  "folds": [
+    {
+      "arm": "colour_strong",
+      "test_group": "seed_42",
+      "val_group": "seed_42",
+      "n_train": 23403,
+      "n_test": 5015,
+      "minority_classes": [
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.9456528738937204,
+      "arms": {
+        "original": {
+          "accuracy": 0.9772681954137588
+        },
+        "border_ring": {
+          "accuracy": 0.505284147557328
+        }
+      }
+    }
+  ]
+}

@@ -115,6 +115,70 @@ es una modificación candidata de `src/data/transforms.py` medida directamente**
 
 Cada corrida entrega rendimiento y dependencia del marco sobre el mismo conjunto retenido.
 
+## Resultados sobre el pipeline real
+
+Primeras corridas del arnés alineado, con tope de 1 500 por clase y evaluación doble sobre el
+mismo conjunto retenido.
+
+| Corrida | macro-F1 | Sólo el marco | Dependencia |
+|---|---:|---:|---:|
+| `baseline`, partición aleatoria | 0,9417 | 0,2885 | 30,6 % |
+| `colour_strong`, partición aleatoria | 0,9450 | 0,4083 | 43,2 % |
+| `colour_strong`, agrupada por fuente | **0,6712** | 0,2231 | 33,2 % |
+
+**El arnés reproduce el sistema.** 0,9417 frente al 0,9468 de la corrida real de agosto
+confirma que los componentes están bien enganchados y que las cifras son las del pipeline, no
+las de un montaje aparte.
+
+**Agrupar por fuente cuesta 0,274 de macro-F1** y baja la dependencia del marco diez puntos.
+
+**Con el pipeline real y partición aleatoria el marco ya recupera el 30,6 %.** No era un
+artefacto del arnés mínimo.
+
+### La fuga está concentrada, no repartida
+
+Exactitud por fuente retenida, con la misma augmentation:
+
+| Fuente retenida | n | Original | Sólo el marco | Ratio |
+|---|---:|---:|---:|---:|
+| `maize-diseases` | 6 970 | 0,9875 | 0,8429 | **85,4 %** |
+| `multicrop-disease-maiz` | 5 709 | 0,7966 | 0,5794 | **72,7 %** |
+| `corn-leaf-roboflow` | 2 919 | 0,4135 | 0,1572 | 38,0 % |
+| `maize-beans-tomatoes-africa` | 12 112 | 0,8890 | 0,2795 | 31,4 % |
+| `corn-leaf-diseases-classification-roboflow` | 476 | 0,7647 | 0,1113 | 14,6 % |
+| `maize-leaf-roboflow` | 331 | 0,8610 | 0,0665 | 7,7 % |
+| `maize-2-roboflow` | 845 | 0,4876 | 0,0237 | 4,9 % |
+| `maize-deficiency-scanner-roboflow` | 158 | 0,8608 | 0,0253 | 2,9 % |
+| `cropdg-unified-multidomain` | 2 560 | 0,5309 | 0,0055 | 1,0 % |
+| `maize-in-field-dataset` | 851 | 0,5758 | 0,0059 | 1,0 % |
+
+`maize-nutrient-deficiency` se omite de la lectura: su ratio de 87,5 % se calcula sobre una
+exactitud original de 0,2374, base demasiado débil para significar nada. La misma cautela
+aplica en menor grado a `maize-2-roboflow` y `corn-leaf-roboflow`.
+
+**Dos fuentes concentran casi toda la fuga**, y son las dos derivadas de PlantVillage:
+`maize-diseases` y `multicrop-disease-maiz`, 12 679 imágenes, el 38 % del corpus. Reteniendo
+`maize-diseases` el modelo acierta el 84,3 % **viendo únicamente el marco**. En el extremo
+opuesto, `cropdg` y `maize-in-field` dejan al marco en el 1 %.
+
+Eso cambia la forma del problema: **no hace falta rediseñar el pipeline entero, hace falta
+tratar dos fuentes concretas.**
+
+### Un confound propio, detectado y corregido
+
+La primera definición de los brazos reconstruía cada transformación desde cero, así que
+`colour_strong` devolvía el mismo pipeline de color fuerte también para las minoritarias.
+Esas cuatro clases perdían su `RandomResizedCrop`, su rotación de 30° y su `GaussianBlur`. El
+brazo medía «más color **y** sin pipeline de minoritarias», no «más color».
+
+Es el candidato directo para que la dependencia suba de 30,6 % a 43,2 %: el recorte que se
+perdió era la palanca que la reduce. Los brazos se corrigieron para sustituir una sola
+transformación dentro de los pipelines del proyecto, conservando el resto.
+
+**La fila de `colour_strong` de la tabla anterior corresponde a la versión con el confound.**
+Sirve para comparar particiones entre sí, porque ambas comparten el defecto, pero no para
+juzgar el efecto del color.
+
 ## Siguientes pasos
 
 **1 — Establecer la referencia real.** Correr `baseline`. Da por primera vez el número del

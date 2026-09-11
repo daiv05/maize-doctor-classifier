@@ -1,0 +1,12 @@
+fuente,n,original,solo_borde
+corn-leaf-diseases-classification-roboflow,476,0.7647,0.1113
+corn-leaf-roboflow,2919,0.4135,0.1572
+cropdg-unified-multidomain,2560,0.5309,0.0055
+maize-2-roboflow,845,0.4876,0.0237
+maize-beans-tomatoes-africa,12112,0.889,0.2795
+maize-deficiency-scanner-roboflow,158,0.8608,0.0253
+maize-diseases,6970,0.9875,0.8429
+maize-in-field-dataset,851,0.5758,0.0059
+maize-leaf-roboflow,331,0.861,0.0665
+maize-nutrient-deficiency,337,0.2374,0.2077
+multicrop-disease-maiz,5709,0.7966,0.5794

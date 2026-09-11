@@ -1,0 +1,74 @@
+{
+  "arm": "baseline",
+  "classes": [
+    "common_rust",
+    "fall_armyworm",
+    "gray_leaf_spot",
+    "healthy",
+    "lethal_necrosis",
+    "nitrogen_deficiency",
+    "northern_corn_leaf_blight",
+    "phosphorus_deficiency",
+    "potassium_deficiency"
+  ],
+  "duplicates_dropped": 0,
+  "pooled": {
+    "original": {
+      "n": 5015,
+      "macro_f1": 0.941714603466738,
+      "accuracy": 0.9728813559322034,
+      "per_class_f1": {
+        "common_rust": 0.9778434268833087,
+        "fall_armyworm": 0.9775357385976855,
+        "gray_leaf_spot": 0.9228007181328546,
+        "healthy": 0.9882352941176471,
+        "lethal_necrosis": 0.9942857142857143,
+        "nitrogen_deficiency": 0.8735632183908046,
+        "northern_corn_leaf_blight": 0.9712615684364345,
+        "phosphorus_deficiency": 0.9411764705882353,
+        "potassium_deficiency": 0.8287292817679558
+      }
+    },
+    "border_ring": {
+      "n": 5015,
+      "macro_f1": 0.28847316922867283,
+      "accuracy": 0.42033898305084744,
+      "per_class_f1": {
+        "common_rust": 0.8375558867362146,
+        "fall_armyworm": 0.40605865291653237,
+        "gray_leaf_spot": 0.10289389067524116,
+        "healthy": 0.5433915976694266,
+        "lethal_necrosis": 0.441747572815534,
+        "nitrogen_deficiency": 0.045112781954887216,
+        "northern_corn_leaf_blight": 0.0,
+        "phosphorus_deficiency": 0.17989417989417988,
+        "potassium_deficiency": 0.039603960396039604
+      }
+    },
+    "frame_dependence": 0.3063275945458585
+  },
+  "folds": [
+    {
+      "arm": "baseline",
+      "test_group": "seed_42",
+      "val_group": "seed_42",
+      "n_train": 23403,
+      "n_test": 5015,
+      "minority_classes": [
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.9477716962484192,
+      "arms": {
+        "original": {
+          "accuracy": 0.9728813559322034
+        },
+        "border_ring": {
+          "accuracy": 0.42033898305084744
+        }
+      }
+    }
+  ]
+}

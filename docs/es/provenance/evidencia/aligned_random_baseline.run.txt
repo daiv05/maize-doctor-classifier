@@ -1,0 +1,58 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/daiv05/main/ap-J0IetxYf3LftGPwoV5eQLq
+✓ Created objects.
+├── 🔨 Created mount 
+│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\pipeline_align
+│   ed_loso.py
+├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
+├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+└── 🔨 Created function run_aligned_loso.
+[*] brazo=baseline pliegues=1 clases=9 device=cuda
+    [seed_42] epoca 1 val_macro_f1=0.6221
+    [seed_42] epoca 2 val_macro_f1=0.7551
+    [seed_42] epoca 3 val_macro_f1=0.8203
+    [seed_42] epoca 4 val_macro_f1=0.8299
+    [seed_42] epoca 5 val_macro_f1=0.8511
+    [seed_42] epoca 6 val_macro_f1=0.8798
+    [seed_42] epoca 7 val_macro_f1=0.8919
+    [seed_42] epoca 8 val_macro_f1=0.8944
+    [seed_42] epoca 9 val_macro_f1=0.8912
+    [seed_42] epoca 10 val_macro_f1=0.9023
+    [seed_42] epoca 11 val_macro_f1=0.9087
+    [seed_42] epoca 12 val_macro_f1=0.9107
+    [seed_42] epoca 13 val_macro_f1=0.9186
+    [seed_42] epoca 14 val_macro_f1=0.9195
+    [seed_42] epoca 15 val_macro_f1=0.9243
+    [seed_42] epoca 16 val_macro_f1=0.9303
+    [seed_42] epoca 17 val_macro_f1=0.9226
+    [seed_42] epoca 18 val_macro_f1=0.9231
+    [seed_42] epoca 19 val_macro_f1=0.9352
+    [seed_42] epoca 20 val_macro_f1=0.9282
+    [seed_42] epoca 21 val_macro_f1=0.9275
+    [seed_42] epoca 22 val_macro_f1=0.9345
+    [seed_42] epoca 23 val_macro_f1=0.9280
+    [seed_42] epoca 24 val_macro_f1=0.9420
+    [seed_42] epoca 25 val_macro_f1=0.9369
+    [seed_42] epoca 26 val_macro_f1=0.9433
+    [seed_42] epoca 27 val_macro_f1=0.9415
+    [seed_42] epoca 28 val_macro_f1=0.9368
+    [seed_42] epoca 29 val_macro_f1=0.9359
+    [seed_42] epoca 30 val_macro_f1=0.9403
+    [seed_42] epoca 31 val_macro_f1=0.9421
+    [seed_42] epoca 32 val_macro_f1=0.9439
+    [seed_42] epoca 33 val_macro_f1=0.9478
+    [seed_42] epoca 34 val_macro_f1=0.9413
+    [seed_42] epoca 35 val_macro_f1=0.9410
+    [seed_42] epoca 36 val_macro_f1=0.9443
+    [seed_42] epoca 37 val_macro_f1=0.9417
+    [seed_42] epoca 38 val_macro_f1=0.9412
+    [seed_42] epoca 39 val_macro_f1=0.9425
+    [seed_42] epoca 40 val_macro_f1=0.9412
+    [seed_42] epoca 41 val_macro_f1=0.9407
+    [seed_42] original: acierto 0.9729
+    [seed_42] border_ring: acierto 0.4203
+[*] macro-F1 0.9417 | marco 0.2885 | dependencia 30.6%
+[*] resultados en /outputs/experiments/aligned_random_baseline.json
+✓ App completed. View run at 
+https://modal.com/apps/daiv05/main/ap-J0IetxYf3LftGPwoV5eQLq

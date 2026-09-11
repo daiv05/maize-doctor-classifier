@@ -1,0 +1,4 @@
+corrida,macro_f1,macro_f1_marco,dependencia_%
+random_baseline,0.9417,0.2885,30.6328
+random_colour_strong,0.945,0.4083,43.202
+source_colour_strong,0.6712,0.2231,33.2387

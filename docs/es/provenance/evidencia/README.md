@@ -89,3 +89,28 @@ directorio se lanzaron invocando Modal directamente:
 ```bash
 PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -m modal run --detach     scripts/modal/leave_one_source_out.py --balance-groups --arm border_ring
 ```
+
+## Corridas alineadas al pipeline principal
+
+Documento: [Consolidación](/es/provenance/consolidacion)
+
+Generado con:
+
+```bash
+make modal-aligned-loso DETACH=1 ARM=baseline SPLIT_MODE=random
+make modal-aligned-loso DETACH=1 ARM=colour_strong SPLIT_MODE=random
+make modal-aligned-loso DETACH=1 ARM=colour_strong SPLIT_MODE=source
+```
+
+Ejecutado en Modal sobre GPU A10 el 2026-09-11, con tope de 1 500 imágenes por clase.
+
+| Archivo | Contenido |
+|---|---|
+| `aligned_random_baseline.json` | Pipeline actual sobre la partición vigente |
+| `aligned_random_colour_strong.json` | Color fuerte sobre la partición vigente |
+| `aligned_source_colour_strong.json` | Color fuerte agrupando por fuente, once pliegues |
+| `aligned_resumen.csv` | Las tres corridas: macro-F1, marco y dependencia |
+| `aligned_por_fuente.csv` | Exactitud por fuente retenida, con y sin marco |
+
+Las corridas de `colour_strong` usan la definición de brazo con confound descrita en el
+documento: sirven para comparar particiones, no para juzgar el efecto del color.
