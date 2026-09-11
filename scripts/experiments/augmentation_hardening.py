@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Endurecimiento por augmentation.")
     parser.add_argument("--splits-dir", type=Path, default=None)
     parser.add_argument("--augment",
-                        choices=("none", "crop", "codec", "colour", "hardened"),
+                        choices=("none", "crop", "codec", "colour", "crop_colour", "hardened"),
                         default="none")
     parser.add_argument("--model", type=str, default="efficientnet_lite0")
     parser.add_argument("--epochs", type=int, default=25)
@@ -129,7 +129,7 @@ def build_augment(name: str, min_crop_scale: float):
     Los componentes aislados conservan las mismas probabilidades que tienen dentro de
     ``hardened``, de modo que la ablación descompone exactamente esa combinación.
 
-    @param {str} name Uno de none, crop, codec, colour o hardened.
+    @param {str} name Uno de none, crop, codec, colour, crop_colour o hardened.
     @returns {callable|None} Transformación aplicada al array uint8 durante el entrenamiento.
     """
     if name == "none":
@@ -152,6 +152,7 @@ def build_augment(name: str, min_crop_scale: float):
         "crop": (apply_crop,),
         "codec": (apply_codec,),
         "colour": (apply_colour,),
+        "crop_colour": (apply_crop, apply_colour),
         "hardened": (apply_crop, apply_codec, apply_colour),
     }[name]
 
