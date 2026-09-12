@@ -131,7 +131,11 @@ def make_splits_segmented() -> None:
     # CPU explícita (el default de Modal es 0.125 cores): garantiza cores reales para el
     # indexado paralelo de splits y el DataLoader, sin depender del burst. Alineado con
     # SPLITS_INDEX_WORKERS=24. Facturación: se cobra max(request, uso real).
-    cpu=4.0,
+    # Medido en Modal: con el Volume caliente el coste es integramente decodificar
+    # JPEG (280 img/s en hilos, 435 en los procesos del DataLoader) y la GPU queda
+    # al 2-4%. Copiar a disco local no mejora (245 img/s). Lo unico que escala es
+    # repartir la decodificacion, asi que la CPU sube con los workers.
+    cpu=32.0,
     volumes={"/data": dataset_vol, "/outputs": outputs_vol},
     secrets=[modal.Secret.from_name("hf")],
     # Techo dimensionado para el peor caso `--models all` (7 baselines) x 30 epochs. Con --no-cap
@@ -151,7 +155,7 @@ def train_baselines(
     image_size: int = 0,
     learning_rate: float = 0.0,
     weight_decay: float = 0.0,
-    num_workers: int = 0,
+    num_workers: int = 32,
     no_pretrained: bool = False,
     lime: bool = False,
 ) -> None:
@@ -196,7 +200,7 @@ def train_baselines(
 
 @app.function(
     gpu="A10",
-    cpu=4.0,
+    cpu=32.0,
     volumes={
         "/data": dataset_vol,
         SEGMENTED_DATASET_MOUNT: segmented_dataset_vol,
@@ -218,7 +222,7 @@ def train_main(
     patience: int = 0,
     clahe: bool = False,
     no_pretrained: bool = False,
-    num_workers: int = 0,
+    num_workers: int = 32,
     segmented: bool = False,
     splits_dir: str = "",
 ) -> None:
@@ -281,7 +285,7 @@ def train_main(
 
 @app.function(
     gpu="A10",
-    cpu=4.0,
+    cpu=32.0,
     volumes={
         "/data": dataset_vol,
         "/outputs": outputs_vol,
@@ -300,8 +304,9 @@ def tune_main(
 ) -> None:
     """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).
 
-    Soporta uno o múltiples modelos separados por espacio (ej. 'efficientnet_b0 shufflenet_v2_x1_0').
-    Persiste best_params.json, trials.csv y gráficos en el Volume corn-outputs (/outputs/tuning/<model>/).
+    Soporta uno o múltiples modelos separados por espacio
+    (ej. 'efficientnet_b0 shufflenet_v2_x1_0'). Persiste best_params.json, trials.csv y
+    gráficos en el Volume corn-outputs (/outputs/tuning/<model>/).
     """
     dataset_vol.reload()
     command = [
@@ -350,7 +355,7 @@ def optuna_dashboard_modal():
 
 @app.function(
     gpu="A10",
-    cpu=4.0,
+    cpu=32.0,
     volumes={"/data": dataset_vol, "/outputs": outputs_vol},
     secrets=[modal.Secret.from_name("hf")],
     timeout=3600,
@@ -383,7 +388,7 @@ def evaluate_ensemble_modal(
 
 @app.function(
     gpu="A10",
-    cpu=4.0,
+    cpu=32.0,
     volumes={"/data": dataset_vol, "/outputs": outputs_vol},
     secrets=[modal.Secret.from_name("hf")],
     timeout=8 * 3600,
@@ -434,7 +439,7 @@ def cross_validate_modal(
 
 @app.function(
     gpu="A10",
-    cpu=4.0,
+    cpu=32.0,
     volumes={"/data": dataset_vol, "/outputs": outputs_vol},
     secrets=[modal.Secret.from_name("hf")],
     timeout=3600,
@@ -490,7 +495,7 @@ def main(
     image_size: int = 0,
     learning_rate: float = 0.0,
     weight_decay: float = 0.0,
-    num_workers: int = 0,
+    num_workers: int = 32,
     no_pretrained: bool = False,
     lime: bool = False,
 ) -> None:

@@ -110,6 +110,14 @@ def _parse_args() -> argparse.Namespace:
         default=42,
         help="Semilla para reproducibilidad.",
     )
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=8,
+        dest="num_workers",
+        help="Procesos de carga del DataLoader. La decodificacion JPEG es el cuello "
+             "medido del entrenamiento; 0 la deja en el proceso principal.",
+    )
     return parser.parse_args()
 
 
@@ -343,7 +351,7 @@ def main() -> None:
         test_dataset,
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=0,
+        num_workers=args.num_workers,
     )
 
     # Inferencia completa

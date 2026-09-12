@@ -159,6 +159,14 @@ def _parse_args() -> argparse.Namespace:
         default=str(PROJECT_ROOT / "config" / "dataset.yaml"),
         help="Ruta al archivo dataset.yaml.",
     )
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=8,
+        dest="num_workers",
+        help="Procesos de carga del DataLoader. La decodificacion JPEG es el cuello "
+             "medido del entrenamiento; 0 la deja en el proceso principal.",
+    )
     return parser.parse_args()
 
 
@@ -296,7 +304,7 @@ def main() -> None:
         test_dataset,
         batch_size=bs,
         shuffle=False,
-        num_workers=2,
+        num_workers=args.num_workers,
         pin_memory=pin_memory,
     )
 
@@ -313,6 +321,7 @@ def main() -> None:
             config_path=str(config_path),
             transform=factory.get_pipeline("train"),
             minority_transform=factory.get_pipeline("minority"),
+            class_to_idx=class_to_idx,
         )
 
         val_dataset = CornDataset(
@@ -326,7 +335,7 @@ def main() -> None:
             train_dataset,
             batch_size=bs,
             shuffle=True,
-            num_workers=2,
+            num_workers=args.num_workers,
             pin_memory=pin_memory,
             worker_init_fn=worker_init_fn,
         )
@@ -334,7 +343,7 @@ def main() -> None:
             val_dataset,
             batch_size=bs,
             shuffle=False,
-            num_workers=2,
+            num_workers=args.num_workers,
             pin_memory=pin_memory,
         )
 
