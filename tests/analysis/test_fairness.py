@@ -17,9 +17,10 @@ from src.analysis.fairness import (
 
 
 def test_compute_subgroup_metrics_exact():
-    class_names = ["healthy", "common_rust", "blight"]
+    class_names = ["healthy", "common_rust", "blight", "gray_leaf_spot"]
     # 6 muestras lab (3 acertadas, 3 erradas) -> Acc 0.50
     # 6 muestras real (6 acertadas) -> Acc 1.00
+    # gray_leaf_spot tiene 0 muestras en ambos subgrupos
     y_true = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2]
     y_pred = [0, 1, 0, 0, 0, 0, 0, 1, 2, 0, 1, 2]  # lab: 0->0, 1->1, 2->0, 0->0, 1->0, 2->0
     subgroups = ["lab"] * 6 + ["real"] * 6
@@ -36,6 +37,30 @@ def test_compute_subgroup_metrics_exact():
     assert results["subgroups"]["lab"]["class_fnr"]["blight"] == pytest.approx(1.0)
     assert results["subgroups"]["real"]["class_fnr"]["blight"] == pytest.approx(0.0)
 
+    # Clases sin soporte deben tener FNR=NaN (no 1.0)
+    assert np.isnan(results["subgroups"]["lab"]["class_fnr"]["gray_leaf_spot"])
+    assert np.isnan(results["subgroups"]["real"]["class_fnr"]["gray_leaf_spot"])
+    assert results["subgroups"]["lab"]["support_per_class"]["gray_leaf_spot"] == 0
+    assert results["subgroups"]["lab"]["evaluable_classes"] == 3
+    assert results["subgroups"]["lab"]["total_classes"] == 4
+
+
+def test_compute_subgroup_metrics_macro_f1_ignores_unsupported_classes():
+    class_names = ["healthy", "common_rust", "blight"]
+    # Un subgrupo donde solo hay muestras de healthy (clase 0), todas bien clasificadas.
+    y_true = [0, 0, 0]
+    y_pred = [0, 0, 0]
+    subgroups = ["field"] * 3
+    results = compute_subgroup_metrics(y_true, y_pred, subgroups, class_names)
+    field_res = results["subgroups"]["field"]
+    # Macro F1 debe ser 1.0 (promedio solo sobre la clase evaluable), NO 0.3333 por promediar ceros.
+    assert field_res["macro_f1"] == pytest.approx(1.0)
+    assert field_res["evaluable_classes"] == 1
+    assert field_res["total_classes"] == 3
+    assert field_res["class_fnr"]["healthy"] == pytest.approx(0.0)
+    assert np.isnan(field_res["class_fnr"]["common_rust"])
+    assert np.isnan(field_res["class_fnr"]["blight"])
+
 
 def test_compute_disparity_metrics_perfect_and_disparate():
     # Caso 1: Paridad perfecta
@@ -49,6 +74,7 @@ def test_compute_disparity_metrics_perfect_and_disparate():
     assert disp_perf["delta_macro_f1"] == pytest.approx(0.0)
     assert disp_perf["disparate_impact_ratio"] == pytest.approx(1.0)
     assert disp_perf["four_fifths_rule_passed"] is True
+    assert disp_perf["dir_metric"] == "macro_f1"
 
     # Caso 2: Disparidad notable (lab 0.90 vs real 0.60)
     subgroup_res_disp = {
@@ -62,6 +88,20 @@ def test_compute_disparity_metrics_perfect_and_disparate():
     assert disp["disparate_impact_ratio"] == pytest.approx(0.60 / 0.90, abs=1e-3)
     assert disp["four_fifths_rule_passed"] is False
     assert disp["fnr_disparity_by_class"]["healthy"] == pytest.approx(0.30)
+
+
+def test_compute_disparity_metrics_single_subgroup():
+    subgroup_res_single = {
+        "subgroups": {
+            "lab": {"macro_f1": 0.90, "accuracy": 0.92, "class_fnr": {"healthy": 0.05}},
+        }
+    }
+    disp = compute_disparity_metrics(subgroup_res_single)
+    assert disp["evaluable"] is False
+    assert disp["four_fifths_rule_passed"] is None
+    assert disp["delta_macro_f1"] is None
+    assert disp["disparate_impact_ratio"] is None
+    assert disp["dir_metric"] == "macro_f1"
 
 
 class DummyModel(nn.Module):
@@ -99,7 +139,11 @@ def test_evaluate_background_shortcut():
     assert "mean_original_confidence" in res_center
     assert "mean_masked_confidence" in res_center
     assert "confidence_drop" in res_center
+    assert "confidence_retention" in res_center
     assert "shortcut_vulnerability_ratio" in res_center
+    assert res_center["class_fixed"] is True
+    assert res_center["mask_type"] == "geometric_rectangle"
+    assert "mask_note" in res_center
     assert "accuracy_original" in res_center
     assert "accuracy_masked" in res_center
     assert "flip_rate" in res_center

@@ -46,21 +46,36 @@ def _compute_classification_metrics_np(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     num_classes: int,
-) -> tuple[float, float, float, float, list[float]]:
-    """Calcula Accuracy, Macro F1, Macro Precision, Macro Recall y Recall por clase en NumPy puro."""
+) -> tuple[float, float, float, float, list[float], list[int]]:
+    """Calcula Accuracy, Macro F1, Macro Precision, Macro Recall, Recall por clase y soporte por clase.
+
+    El macro-promedio solo incluye clases con soporte > 0 (muestras reales en y_true).
+    Clases sin muestras reciben recall=NaN y no participan en el promedio: incluirlas
+    produciría F1=0 artificial que deprime el macro sin reflejar rendimiento real.
+    """
     if len(y_true) == 0:
-        return 0.0, 0.0, 0.0, 0.0, [0.0] * num_classes
+        return 0.0, 0.0, 0.0, 0.0, [float("nan")] * num_classes, [0] * num_classes
 
     acc = float(np.mean(y_true == y_pred))
 
     precisions = []
     recalls = []
     f1s = []
+    supports = []
 
     for c in range(num_classes):
         tp = float(np.sum((y_true == c) & (y_pred == c)))
         fp = float(np.sum((y_true != c) & (y_pred == c)))
         fn = float(np.sum((y_true == c) & (y_pred != c)))
+        support = int(tp + fn)
+        supports.append(support)
+
+        if support == 0:
+            # Clase ausente en este subgrupo: no es evaluable.
+            precisions.append(float("nan"))
+            recalls.append(float("nan"))
+            f1s.append(float("nan"))
+            continue
 
         p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
@@ -70,11 +85,16 @@ def _compute_classification_metrics_np(
         recalls.append(r)
         f1s.append(f)
 
-    macro_prec = float(np.mean(precisions))
-    macro_rec = float(np.mean(recalls))
-    macro_f1 = float(np.mean(f1s))
+    # Macro solo sobre clases evaluables (con soporte > 0).
+    evaluable_f1s = [f for f in f1s if not np.isnan(f)]
+    evaluable_precs = [p for p in precisions if not np.isnan(p)]
+    evaluable_recs = [r for r in recalls if not np.isnan(r)]
 
-    return acc, macro_f1, macro_prec, macro_rec, recalls
+    macro_f1 = float(np.mean(evaluable_f1s)) if evaluable_f1s else 0.0
+    macro_prec = float(np.mean(evaluable_precs)) if evaluable_precs else 0.0
+    macro_rec = float(np.mean(evaluable_recs)) if evaluable_recs else 0.0
+
+    return acc, macro_f1, macro_prec, macro_rec, recalls, supports
 
 
 def compute_subgroup_metrics(
@@ -83,9 +103,14 @@ def compute_subgroup_metrics(
     subgroups: list[str] | np.ndarray,
     class_names: list[str],
 ) -> dict[str, Any]:
-    """Calcula métricas de rendimiento desagregadas por subgrupo (p.ej. 'lab' vs 'real')
+    """Calcula métricas de rendimiento desagregadas por subgrupo (p.ej. 'lab' vs 'real').
 
-    y la tasa de falsos negativos (FNR) por clase dentro de cada subgrupo.
+    La tasa de falsos negativos (FNR) se reporta como NaN para clases sin muestras
+    en un subgrupo: reportar FNR=1.0 para una clase ausente es aritméticamente
+    correcto (recall=0 → FNR=1) pero engañoso, porque sugiere que el modelo falla
+    al 100% cuando en realidad no hay evidencia.
+
+    El macro-F1 solo promedia sobre clases con soporte > 0 en cada subgrupo.
 
     Returns:
         dict con métricas desagregadas por subgrupo y métricas globales.
@@ -98,7 +123,7 @@ def compute_subgroup_metrics(
     unique_subgroups = sorted(list(set(subgroups_arr)))
 
     # Global
-    g_acc, g_f1, g_prec, g_rec, g_recalls = _compute_classification_metrics_np(
+    g_acc, g_f1, g_prec, g_rec, g_recalls, g_supports = _compute_classification_metrics_np(
         y_true_arr, y_pred_arr, num_classes
     )
 
@@ -110,8 +135,14 @@ def compute_subgroup_metrics(
             "macro_precision": g_prec,
             "macro_recall": g_rec,
             "sample_count": int(len(y_true_arr)),
+            "evaluable_classes": sum(1 for s in g_supports if s > 0),
+            "total_classes": num_classes,
+            "support_per_class": {
+                cls: g_supports[i] for i, cls in enumerate(class_names)
+            },
             "class_fnr": {
-                cls: float(1.0 - g_recalls[i]) for i, cls in enumerate(class_names)
+                cls: (float(1.0 - g_recalls[i]) if g_supports[i] > 0 else float("nan"))
+                for i, cls in enumerate(class_names)
             },
         },
     }
@@ -124,12 +155,13 @@ def compute_subgroup_metrics(
         yt_g = y_true_arr[mask]
         yp_g = y_pred_arr[mask]
 
-        acc_g, f1_g, prec_g, rec_g, recalls_g = _compute_classification_metrics_np(
+        acc_g, f1_g, prec_g, rec_g, recalls_g, supports_g = _compute_classification_metrics_np(
             yt_g, yp_g, num_classes
         )
 
         fnr_by_class = {
-            cls: float(1.0 - recalls_g[i]) for i, cls in enumerate(class_names)
+            cls: (float(1.0 - recalls_g[i]) if supports_g[i] > 0 else float("nan"))
+            for i, cls in enumerate(class_names)
         }
 
         results["subgroups"][str(group)] = {
@@ -138,6 +170,11 @@ def compute_subgroup_metrics(
             "accuracy": acc_g,
             "macro_precision": prec_g,
             "macro_recall": rec_g,
+            "evaluable_classes": sum(1 for s in supports_g if s > 0),
+            "total_classes": num_classes,
+            "support_per_class": {
+                cls: supports_g[i] for i, cls in enumerate(class_names)
+            },
             "class_fnr": fnr_by_class,
         }
 
@@ -148,22 +185,28 @@ def compute_disparity_metrics(subgroup_results: dict[str, Any]) -> dict[str, Any
     """Calcula las brechas de paridad matemática entre subgrupos (especialmente 'lab' vs 'real').
 
     Métricas calculadas:
-    - delta_macro_f1: |F1_real - F1_lab|
+    - delta_macro_f1: |F1_real - F1_lab| (macro-F1 solo sobre clases evaluables)
     - delta_accuracy: |Acc_real - Acc_lab|
-    - disparate_impact_ratio: min(F1_1, F1_2) / max(F1_1, F1_2)
-    - four_fifths_rule_passed: True si DIR >= 0.80
-    - max_fnr_disparity_by_class: Máxima diferencia de FNR entre subgrupos por cada patología
+    - disparate_impact_ratio: min(F1_1, F1_2) / max(F1_1, F1_2) sobre macro-F1
+    - four_fifths_rule_passed: True si DIR >= 0.80; None si no es evaluable
+    - fnr_disparity_by_class: |FNR_1 - FNR_2| por clase (solo clases evaluables en ambos)
+
+    Nota: DIR y four_fifths_rule se calculan sobre macro-F1 (la métrica primaria del
+    proyecto). No se usa accuracy para evitar que la misma corrida produzca veredictos
+    opuestos según la métrica elegida.
     """
     subgroups = subgroup_results.get("subgroups", {})
     if "lab" not in subgroups or "real" not in subgroups:
         keys = list(subgroups.keys())
         if len(keys) < 2:
             return {
-                "delta_macro_f1": 0.0,
-                "delta_accuracy": 0.0,
-                "disparate_impact_ratio": 1.0,
-                "four_fifths_rule_passed": True,
-                "note": "Menos de 2 subgrupos disponibles.",
+                "evaluable": False,
+                "delta_macro_f1": None,
+                "delta_accuracy": None,
+                "disparate_impact_ratio": None,
+                "dir_metric": "macro_f1",
+                "four_fifths_rule_passed": None,
+                "note": "Menos de 2 subgrupos disponibles; comparación no evaluable.",
             }
         g1, g2 = keys[0], keys[1]
     else:
@@ -182,26 +225,47 @@ def compute_disparity_metrics(subgroup_results: dict[str, Any]) -> dict[str, Any
 
     max_f1 = max(f1_1, f1_2)
     min_f1 = min(f1_1, f1_2)
-    dir_ratio = float(min_f1 / max_f1) if max_f1 > 1e-6 else 1.0
+    dir_ratio = float(min_f1 / max_f1) if max_f1 > 1e-6 else 0.0
     passed_80_rule = bool(dir_ratio >= 0.80)
 
-    # Disparidad de FNR por patología
+    # Disparidad de FNR solo sobre clases evaluables en ambos subgrupos.
     fnr_1 = m1.get("class_fnr", {})
     fnr_2 = m2.get("class_fnr", {})
-    fnr_disparity = {
-        cls: float(abs(fnr_1.get(cls, 0.0) - fnr_2.get(cls, 0.0)))
-        for cls in fnr_1
-    }
+    fnr_disparity = {}
+    for cls in fnr_1:
+        v1 = fnr_1.get(cls, float("nan"))
+        v2 = fnr_2.get(cls, float("nan"))
+        if np.isnan(v1) or np.isnan(v2):
+            fnr_disparity[cls] = None  # No evaluable en ambos subgrupos.
+        else:
+            fnr_disparity[cls] = round(float(abs(v1 - v2)), 4)
 
     return {
+        "evaluable": True,
         "group_a": g1,
         "group_b": g2,
         "delta_macro_f1": round(delta_f1, 4),
         "delta_accuracy": round(delta_acc, 4),
         "disparate_impact_ratio": round(dir_ratio, 4),
+        "dir_metric": "macro_f1",
         "four_fifths_rule_passed": passed_80_rule,
         "fnr_disparity_by_class": fnr_disparity,
     }
+
+
+# Constantes de normalización ImageNet para construir el "negro real" en espacio
+# normalizado. Poner 0.0 en un tensor ya normalizado equivale al color medio de
+# ImageNet (gris parduzco ~RGB 124,116,104), no a negro RGB.
+_IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406])
+_IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225])
+
+
+def _true_black_value(device: torch.device) -> torch.Tensor:
+    """Devuelve el valor que representa negro RGB (0,0,0) en espacio normalizado ImageNet.
+
+    En espacio normalizado, negro = (0 - mean) / std, no 0.0.
+    """
+    return ((-_IMAGENET_MEAN) / _IMAGENET_STD).view(3, 1, 1).to(device)
 
 
 def evaluate_background_shortcut(
@@ -213,13 +277,16 @@ def evaluate_background_shortcut(
     """Test de ablación contra atajos visuales (Clever Hans Effect).
 
     Modos soportados:
-    - 'center_occlusion': Ocluye el 60% central (donde reside la lesión patológica).
-      Si el modelo retiene alta confianza mirando solo la periferia/fondo, confirma
-      aprendizaje de atajos espurios (Shortcut Learning).
-    - 'peripheral_occlusion': Ocluye el 40% periférico dejando visible únicamente
-      el 60% central (lesión pura sin entorno). Si la confianza o exactitud colapsa
-      al retirar el fondo, confirma que la red dependía del contexto exterior.
-    - 'edge_only': Modo complementario de oclusión del 80% central.
+    - 'center_occlusion': Ocluye el 60% central (donde puede residir la lesión).
+    - 'peripheral_occlusion': Ocluye el 40% periférico dejando visible el 60% central.
+    - 'edge_only': Ocluye el 80% central dejando solo bordes extremos.
+
+    Correcciones respecto a la versión original:
+    - El enmascarado usa negro real en espacio normalizado ((0-mean)/std), no 0.0.
+    - La confianza tras enmascarar se mide sobre la MISMA clase que predijo el modelo
+      en la imagen original, no sobre un nuevo argmax que puede ser de otra clase.
+    - La máscara es geométrica (no anatómica): no aísla la lesión de la hoja.
+      Los resultados indican sensibilidad a regiones, no causalidad sobre el fondo.
     """
     model.eval()
     orig_confidences: list[float] = []
@@ -228,6 +295,7 @@ def evaluate_background_shortcut(
     masked_correct: int = 0
     correct_flips: int = 0
     total_samples: int = 0
+    black_val = _true_black_value(device)
 
     with torch.no_grad():
         for images, targets in loader:
@@ -243,33 +311,35 @@ def evaluate_background_shortcut(
             orig_confidences.extend(conf_orig.cpu().tolist())
             orig_correct += int((preds_orig == targets).sum().item())
 
-            # Crear imagen enmascarada
+            # Crear imagen enmascarada con negro real en espacio normalizado.
             _, _, h, w = images.shape
             h_start, h_end = int(h * 0.2), int(h * 0.8)
             w_start, w_end = int(w * 0.2), int(w * 0.8)
 
             if mask_mode == "center_occlusion":
-                # Ocluir el 60% central (tapar la lesión, dejar solo fondo/bordes)
                 masked_images = images.clone()
-                masked_images[:, :, h_start:h_end, w_start:w_end] = 0.0
+                masked_images[:, :, h_start:h_end, w_start:w_end] = black_val
             elif mask_mode in ("peripheral_occlusion", "inverse_occlusion", "center_only"):
-                # Control inverso: tapar el 40% periférico, dejando visible ÚNICAMENTE el 60% central
-                masked_images = torch.zeros_like(images)
+                masked_images = black_val.expand_as(images).clone()
                 masked_images[:, :, h_start:h_end, w_start:w_end] = images[:, :, h_start:h_end, w_start:w_end]
             elif mask_mode == "edge_only":
-                # Ocluir el 80% central dejando solo bordes extremos
                 h_edge_start, h_edge_end = int(h * 0.1), int(h * 0.9)
                 w_edge_start, w_edge_end = int(w * 0.1), int(w * 0.9)
                 masked_images = images.clone()
-                masked_images[:, :, h_edge_start:h_edge_end, w_edge_start:w_edge_end] = 0.0
+                masked_images[:, :, h_edge_start:h_edge_end, w_edge_start:w_edge_end] = black_val
             else:
                 raise ValueError(f"mask_mode '{mask_mode}' no reconocido.")
 
             # Inferencia sobre imagen enmascarada
             logits_masked = model(masked_images)
             probs_masked = torch.softmax(logits_masked, dim=-1)
-            conf_masked, preds_masked = torch.max(probs_masked, dim=-1)
-            masked_confidences.extend(conf_masked.cpu().tolist())
+
+            # Confianza sobre la MISMA clase que el modelo predijo originalmente,
+            # no sobre un nuevo argmax que puede ser de otra clase.
+            conf_masked_fixed = probs_masked.gather(1, preds_orig.unsqueeze(1)).squeeze(1)
+            masked_confidences.extend(conf_masked_fixed.cpu().tolist())
+
+            preds_masked = torch.argmax(probs_masked, dim=-1)
             masked_correct += int((preds_masked == targets).sum().item())
 
             # Contar aciertos originales que cambiaron a error (flip)
@@ -279,38 +349,41 @@ def evaluate_background_shortcut(
     mean_orig_conf = float(np.mean(orig_confidences)) if orig_confidences else 0.0
     mean_masked_conf = float(np.mean(masked_confidences)) if masked_confidences else 0.0
     confidence_drop = float(mean_orig_conf - mean_masked_conf)
-    shortcut_vulnerability_score = float(mean_masked_conf / (mean_orig_conf + 1e-6))
+    confidence_retention = float(mean_masked_conf / (mean_orig_conf + 1e-6))
 
     acc_orig = float(orig_correct / total_samples) if total_samples > 0 else 0.0
     acc_masked = float(masked_correct / total_samples) if total_samples > 0 else 0.0
     acc_drop = float(acc_orig - acc_masked)
     flip_rate = float(correct_flips / max(orig_correct, 1))
 
-    # Diagnóstico riguroso según la dirección de la oclusión:
+    # Diagnóstico según la dirección de la oclusión.
     if mask_mode == "center_occlusion":
-        # En oclusión central: si la confianza se mantiene alta (poca caída) o retiene > 75%,
-        # significa que la red clasifica por fondo/bordes -> ALERTA DE ATAJO CONFIRMADA.
-        collapse_confirmed = bool(confidence_drop > 0.40 and shortcut_vulnerability_score < 0.60)
-        shortcut_detected = bool(shortcut_vulnerability_score >= 0.75 or confidence_drop < 0.20)
+        collapse_confirmed = bool(confidence_drop > 0.40 and confidence_retention < 0.60)
+        shortcut_detected = bool(confidence_retention >= 0.75 or confidence_drop < 0.20)
         risk_level = "CRITICAL" if shortcut_detected else ("MODERATE" if confidence_drop < 0.35 else "LOW")
     elif mask_mode in ("peripheral_occlusion", "inverse_occlusion", "center_only"):
-        # En control inverso (solo centro):
-        # Si la precisión o confianza colapsa al retirar el fondo, el modelo depende del fondo.
         collapse_confirmed = bool(acc_drop > 0.25 or confidence_drop > 0.30)
         shortcut_detected = bool(acc_drop > 0.20 or confidence_drop > 0.25)
         risk_level = "CRITICAL" if shortcut_detected else ("MODERATE" if acc_drop > 0.10 else "LOW")
     else:
-        collapse_confirmed = bool(confidence_drop > 0.15 or shortcut_vulnerability_score < 0.75)
+        collapse_confirmed = bool(confidence_drop > 0.15 or confidence_retention < 0.75)
         shortcut_detected = not collapse_confirmed
         risk_level = "MODERATE"
 
     return {
         "mask_mode": mask_mode,
+        "mask_type": "geometric_rectangle",
+        "mask_note": (
+            "Máscara rectangular fija (20%-80% de cada eje). No aísla lesión ni hoja; "
+            "los resultados indican sensibilidad a regiones, no causalidad sobre el fondo."
+        ),
+        "class_fixed": True,
         "total_samples": total_samples,
         "mean_original_confidence": round(mean_orig_conf, 4),
         "mean_masked_confidence": round(mean_masked_conf, 4),
         "confidence_drop": round(confidence_drop, 4),
-        "shortcut_vulnerability_ratio": round(shortcut_vulnerability_score, 4),
+        "confidence_retention": round(confidence_retention, 4),
+        "shortcut_vulnerability_ratio": round(confidence_retention, 4),  # Alias retrocompatible
         "accuracy_original": round(acc_orig, 4),
         "accuracy_masked": round(acc_masked, 4),
         "accuracy_drop": round(acc_drop, 4),
@@ -326,10 +399,14 @@ def evaluate_dual_shortcut_audit(
     loader: DataLoader,
     device: torch.device,
 ) -> dict[str, Any]:
-    """Ejecuta una auditoría dual completa de atajos visuales:
+    """Ejecuta una auditoría dual de sensibilidad a regiones.
 
-    1. Oclusión Central: mide la retención espuria de certeza ante pérdida de la lesión.
-    2. Oclusión Periférica (Control Inverso): mide la capacidad diagnóstica sobre la lesión pura sin fondo.
+    1. Oclusión Central: mide cuánto cae la confianza en la clase original al ocultar el centro.
+    2. Oclusión Periférica (Control Inverso): mide la capacidad diagnóstica con solo el centro.
+
+    Los resultados son descriptivos (sensibilidad a regiones), no causales: la máscara
+    rectangular no aísla la lesión de la hoja, y una CNN que pierde rendimiento al
+    ocultar cualquier región no necesariamente "depende del fondo".
     """
     center_res = evaluate_background_shortcut(model, loader, device, mask_mode="center_occlusion")
     peripheral_res = evaluate_background_shortcut(model, loader, device, mask_mode="peripheral_occlusion")
@@ -337,14 +414,20 @@ def evaluate_dual_shortcut_audit(
     # Diagnóstico conjunto
     shortcut_confirmed = bool(center_res["shortcut_detected"] or peripheral_res["shortcut_detected"])
 
-    if center_res["shortcut_vulnerability_ratio"] >= 0.85:
+    if center_res["confidence_retention"] >= 0.85:
         verdict = (
-            f"VULNERABILIDAD SEVERA (Clever Hans Confirmado): El modelo retiene el "
-            f"{center_res['shortcut_vulnerability_ratio']*100:.1f}% de su confianza sin ver la lesión central. "
-            f"El {100 - center_res['confidence_drop']*100:.1f}% de su comportamiento está anclado a artefactos periféricos."
+            f"SENSIBILIDAD ELEVADA A REGIONES PERIFÉRICAS: La confianza en la clase "
+            f"original se retiene al {center_res['confidence_retention']*100:.1f}% tras "
+            f"ocultar el 60% central (máscara rectangular, no anatómica). "
+            f"Esto sugiere que el modelo utiliza información de la periferia, pero no "
+            f"permite cuantificar qué porcentaje del comportamiento depende del fondo "
+            f"sin una prueba de generalización a otro dominio."
         )
     else:
-        verdict = "Comportamiento dentro de márgenes esperados de atención foliar."
+        verdict = (
+            f"La confianza en la clase original cae al {center_res['confidence_retention']*100:.1f}% "
+            f"tras ocultar el centro. Sensibilidad dentro de márgenes esperados."
+        )
 
     return {
         "center_occlusion": center_res,

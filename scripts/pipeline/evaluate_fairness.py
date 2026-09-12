@@ -255,7 +255,7 @@ def _generate_gradcam_panel(
         # Columna 3: Superposición (Overlay)
         axes[row_idx, 2].imshow(overlay)
         status = "CORRECTO" if true_label == pred_label else "ERROR"
-        axes[row_idx, 2].set_title(f"Superposición [{status}]\nFoco en Lesión Foliar", fontsize=9, fontweight="bold", color="green" if status == "CORRECTO" else "red")
+        axes[row_idx, 2].set_title(f"Superposición [{status}]\nAtención del modelo (Pred: {pred_label})", fontsize=9, fontweight="bold", color="green" if status == "CORRECTO" else "red")
         axes[row_idx, 2].axis("off")
 
     plt.suptitle(f"Auditoría Visual Grad-CAM: Explicabilidad y Atajos Visuales ({model_name})", fontsize=13, fontweight="bold", y=1.00)
@@ -368,9 +368,12 @@ def main() -> None:
         logger.info("Subgrupo [%s] (N=%d) -> Macro F1: %.4f | Accuracy: %.4f | Precision: %.4f | Recall: %.4f", grp, m["sample_count"], m["macro_f1"], m["accuracy"], m["macro_precision"], m["macro_recall"])
 
     logger.info("=== MÉTRICAS DE DISPARIDAD Y EQUIDAD ===")
-    logger.info("Delta Macro F1 (|Real - Lab|): %.4f", disparity_metrics["delta_macro_f1"])
-    logger.info("Delta Accuracy (|Real - Lab|): %.4f", disparity_metrics["delta_accuracy"])
-    logger.info("Disparate Impact Ratio (DIR): %.4f (Regla 80%% cumplida: %s)", disparity_metrics["disparate_impact_ratio"], disparity_metrics["four_fifths_rule_passed"])
+    if disparity_metrics.get("evaluable", True):
+        logger.info("Delta Macro F1 (|Real - Lab|): %.4f", disparity_metrics["delta_macro_f1"])
+        logger.info("Delta Accuracy (|Real - Lab|): %.4f", disparity_metrics["delta_accuracy"])
+        logger.info("Disparate Impact Ratio (DIR, %s): %.4f (Regla 80%% cumplida: %s)", disparity_metrics.get("dir_metric", "macro_f1"), disparity_metrics["disparate_impact_ratio"], disparity_metrics["four_fifths_rule_passed"])
+    else:
+        logger.info("Métricas de disparidad no evaluables: %s", disparity_metrics.get("note", "Menos de 2 subgrupos"))
 
     # 2. Control Negativo y Control Inverso contra Atajos Visuales (Clever Hans Audit)
     dual_shortcut_results: dict[str, Any] = {}
@@ -386,7 +389,7 @@ def main() -> None:
 
         logger.info("=== RESULTADOS TEST DE CONTROL NEGATIVO (OCLUSIÓN CENTRAL 60%%) ===")
         logger.info("Confianza Original Media: %.4f -> Confianza sin Centro: %.4f (Caída: %.4f)", c_res["mean_original_confidence"], c_res["mean_masked_confidence"], c_res["confidence_drop"])
-        logger.info("Ratio de Retención de Certeza en Fondo: %.4f (Atajo detectado: %s, Riesgo: %s)", c_res["shortcut_vulnerability_ratio"], c_res["shortcut_detected"], c_res["risk_level"])
+        logger.info("Retención de Confianza en Clase Original: %.4f (Atajo detectado: %s, Riesgo: %s)", c_res["confidence_retention"], c_res["shortcut_detected"], c_res["risk_level"])
         logger.info("Exactitud Original: %.4f -> Exactitud sin Centro: %.4f (Caída Acc: %.4f, Flips: %.4f)", c_res["accuracy_original"], c_res["accuracy_masked"], c_res["accuracy_drop"], c_res["flip_rate"])
 
         logger.info("=== RESULTADOS CONTROL INVERSO (OCLUSIÓN PERIFÉRICA 40%% - SOLO CENTRO) ===")

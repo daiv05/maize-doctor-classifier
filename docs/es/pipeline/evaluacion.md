@@ -36,30 +36,30 @@ Para auditar este sesgo algorítmico, el conjunto de prueba se evaluó de forma 
 
 ### Métricas Desagregadas por Subgrupo:
 
-| Subgrupo de Entorno | Muestras ($N$) | Macro $F_1$ | Exactitud (Accuracy) | Macro Precision | Macro Recall |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Campo Real (`real`)** | **4,483** | **0.9298 (92.98%)** | **0.9842 (98.42%)** | 0.9466 | 0.9164 |
-| **Laboratorio (`lab`)** | **532** | **0.2955 (29.55%)** | **0.9417 (94.17%)** | 0.3093 | 0.2904 |
-| **Global (Test Set)** | **5,015** | **0.9483 (94.83%)** | **0.9797 (97.97%)** | 0.9589 | 0.9400 |
+| Subgrupo de Entorno | Muestras ($N$) | Macro $F_1$ (evaluable) | Macro $F_1$ (9 clases) | Exactitud (Accuracy) | Macro Precision | Macro Recall |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Campo Real (`real`)** | **4,483** | **0.9298 (92.98%)** | **0.9298 (92.98%)** | **0.9842 (98.42%)** | 0.9466 | 0.9164 |
+| **Laboratorio (`lab`)** | **532** | **0.8865 (88.65%)\*** | **0.2955 (29.55%)\*** | **0.9417 (94.17%)** | 0.9279 | 0.8712 |
+| **Global (Test Set)** | **5,015** | **0.9483 (94.83%)** | **0.9483 (94.83%)** | **0.9797 (97.97%)** | 0.9589 | 0.9400 |
 
 ### Análisis Crítico de la Disparidad Aritmética vs. Desempeño Real
 
-Al analizar el reporte cuantitativo, surge una aparente disparidad en Macro $F_1$ ($\Delta F_1 = 0.6343$). Sin embargo, la inspección detallada de la distribución del dataset revela una causa estructural del corpus:
+Al analizar el reporte cuantitativo original, surge una aparente disparidad en Macro $F_1$ ($\Delta F_1 = 0.6343$). Sin embargo, la inspección detallada de la distribución del dataset revela una causa estructural del corpus:
 
 ::: info Hallazgo Demográfico en el Dataset
 En el conjunto de prueba, **únicamente 3 de las 9 clases** disponen de muestras en laboratorio (*common_rust*, *gray_leaf_spot* y *northern_corn_leaf_blight*). Las 6 clases restantes (*fall_armyworm*, *healthy*, *lethal_necrosis*, *nitrogen_deficiency*, *phosphorus_deficiency*, *potassium_deficiency*) provienen 100% de tomas directas en campo real.
 :::
 
-Al calcular el Macro $F_1$ sobre el subgrupo de laboratorio dividiendo entre $C=9$, las 6 clases con 0 muestras asignan un score de $0.0$, deprimiendo aritméticamente el promedio global del subgrupo:
+Al calcular el Macro $F_1$ no ajustado sobre el subgrupo de laboratorio dividiendo entre $C=9$, las 6 clases con 0 muestras asignan un score de $0.0$, deprimiendo aritméticamente el promedio global del subgrupo:
 
-$$\text{Macro } F_{1, \text{lab}} = \frac{F_{1, \text{rust}} + F_{1, \text{gls}} + F_{1, \text{nclb}} + 0 + 0 + 0 + 0 + 0 + 0}{9} \approx 0.2955$$
+$$\text{Macro } F_{1, \text{lab, no ajustado}} = \frac{F_{1, \text{rust}} + F_{1, \text{gls}} + F_{1, \text{nclb}} + 0 + 0 + 0 + 0 + 0 + 0}{9} \approx 0.2955$$
 
-Si evaluamos el comportamiento real del modelo sobre las clases que **sí existen** en laboratorio:
+Si evaluamos el comportamiento real del modelo sobre las clases que **sí existen** en laboratorio (clases evaluables con soporte $N > 0$):
 1. **Roya Común (*common_rust*, $N=322$):** Tasa de falsos negativos **$FNR = 0.0\%$** (Recall perfecto del 100%).
 2. **Tizón Foliar (*northern_corn_leaf_blight*, $N=133$):** Tasa de falsos negativos **$FNR = 2.25\%$** (Recall del 97.75%).
 3. **Mancha Gris (*gray_leaf_spot*, $N=77$):** Tasa de falsos negativos **$FNR = 36.36\%$** (Recall del 63.64%).
 
-La **Exactitud en laboratorio se mantiene en un sobresaliente 94.17%**, con una disparidad de exactitud frente a campo real de apenas **$\Delta \text{Acc} = 4.24\%$**. Esto certifica que la red neuronal generaliza con alta robustez a fondos limpios de laboratorio y a entornos complejos con suelo y follaje natural.
+El **Macro $F_1$ evaluable en laboratorio alcanza 0.8865** y la **Exactitud se sitúa en 94.17%**, con una disparidad de exactitud frente a campo real de apenas **$\Delta \text{Acc} = 4.24\%$** y un $DIR_{F_1} = 0.9534 \ge 0.80$ sobre clases evaluables. No obstante, como se analiza en la sección 4, la ausencia de 6 clases en laboratorio y la sensibilidad a regiones perimetrales aconsejan interpretar estas métricas con prudencia técnica y respaldarlas con segmentación previa en producción.
 
 ![Comparativa de Disparidad por Subgrupo](/fairness/fairness_disparity.png)
 
@@ -76,29 +76,30 @@ La comparación directa de las matrices de confusión normalizadas confirma que 
 
 ---
 
-## 4. Control Negativo contra Atajos Visuales (*Clever Hans Effect*) y Control Inverso
+## 4. Control Negativo de Sensibilidad Espacial (*Clever Hans Check*) y Control Inverso
 
-Uno de los mayores peligros en visión por computadora para fitopatología es el **Efecto Clever Hans (*Shortcut Learning*)**: cuando la red aprende correlaciones espurias del fondo (color del suelo, iluminación de estudio, bordes de macetas o ruido de sensor) en vez de aprender las lesiones patológicas de la planta.
+Para auditar si la red convolucional depende de regiones centrales de la lámina frente a información periférica (que en algunas tomas incluye suelo, mesa o bordes foliares), se diseñó una **auditoría de ablación dual** sobre el conjunto de prueba independiente ($N = 5,015$ muestras):
 
-Para evaluar de forma cuantitativa y concluyente este sesgo, se ejecutó una **auditoría de ablación dual** sobre el conjunto de prueba independiente ($N = 5,015$ muestras):
+1. **Control Negativo (Oclusión Central 60%):** Se aplica una máscara rectangular que cubre del 20% al 80% de cada dimensión espacial. La máscara inyecta **negro real en espacio normalizado ImageNet** (`(-mean)/std`) y mide la retención de probabilidad sobre la **misma clase predicha originalmente**.
+2. **Control Inverso (Oclusión Periférica 40% - Solo Región Central):** Se oculta la periferia y se deja visible el 60% central con el objetivo de evaluar si la región central preserva capacidad diagnóstica por sí sola.
 
-1. **Control Negativo (Oclusión Central 60%):** Se aplica una máscara opaca sobre el 60% central de la imagen (donde se ubica la lesión foliar principal), dejando visible únicamente el 40% periférico exterior (fondo, suelo, mesa de laboratorio y bordes).
-2. **Control Inverso (Oclusión Periférica 40% - Solo Lesión Central):** Se aplica una máscara inversa que elimina por completo el 40% perimetral y deja visible **únicamente el 60% central** (la lesión foliar pura aislada de cualquier contexto exterior).
+> [!NOTE]
+> **Delimitación Metodológica:** La máscara empleada es geométrica rectangular, no una segmentación biológica fina de la patología. Describe patrones de sensibilidad a zonas de la imagen y no causalidad estricta sobre el fondo exterior.
 
-### Resultados de la Auditoría de Ablación Dual:
+### Resultados de la Auditoría de Sensibilidad Dual:
 
-| Condición de Inferencia | Confianza Media | $\Delta$ Confianza | Exactitud ($Acc$) | $\Delta Acc$ | Ratio de Certeza Retenida | Tasa de Error Inducido (*Flip Rate*) |
+| Condición de Inferencia | Confianza Media | $\Delta$ Confianza | Exactitud ($Acc$) | $\Delta Acc$ | Retención de Confianza (Clase Original) | Tasa de Error Inducido (*Flip Rate*) |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Inferencia Original (Test Base)** | **84.29%** | — | **97.97%** | — | 100.0% | 0.0% |
-| **Oclusión Central (Sin Lesión)** | **77.95%** | `-6.34 pp` | **80.46%** | `-17.51 pp` | **`92.47%`** | 18.60% |
-| **Control Inverso (Solo Lesión Pura)** | **70.60%** | `-13.69 pp` | **71.76%** | **`-26.20 pp`** | 83.76% | **27.58%** |
+| **Oclusión Central 60% (Máscara Rectangular)** | **77.95%** | `-6.34 pp` | **80.46%** | `-17.51 pp` | **`92.47%`** | 18.60% |
+| **Control Inverso (Solo Centro 60%)** | **70.60%** | `-13.69 pp` | **71.76%** | **`-26.20 pp`** | 83.76% | **27.58%** |
 
-::: danger Alerta Crítica: Presencia Confirmada de Atajo Visual (Clever Hans Effect)
-**Inconsistencia Técnica Corregida:** Una caída de apenas **`-6.34 pp`** (de 84.29% a 77.95%) tras tapar el 60% central de la imagen **no demuestra robustez biológica**. Por el contrario, demuestra que el **`92.47%` de la certeza del modelo** y un **`80.46%` de su exactitud diagnóstica** dependen exclusivamente del 40% periférico exterior (fondo, entorno de captura y ruido de sensor), donde **no** está la patología foliar.
+::: warning Alerta Técnica: Sensibilidad Relevante a la Periferia de la Imagen
+La retención de un **92.47% de confianza** en la clase original y un **80.46% de exactitud** tras ocultar el 60% central revela que el clasificador extrae señales discriminantes significativas de las regiones exteriores de la imagen.
 
-El **Control Inverso (Oclusión Periférica)** ratifica de forma definitiva esta dependencia espuria: al obligar a la red a clasificar observando únicamente la lesión central pura sin las pistas del fondo, la exactitud se desploma **26.20 puntos porcentuales** (de 97.97% a 71.76%) y el **27.58% de las predicciones correctas mutan a falsos diagnósticos**.
+Al retirar el contexto periférico en el **Control Inverso**, la exactitud se reduce **26.20 puntos porcentuales** (de 97.97% a 71.76%) y un **27.58% de las predicciones correctas mutan a clasificaciones erróneas**. 
 
-**Dictamen Ético y Técnico:** El modelo en su estado actual presenta una vulnerabilidad severa a sesgos de contexto ambiental. El clasificador **no debe ser desplegado directamente sobre tomas en bruto de cámara** sin una fase previa de desacople de fondo o preprocesamiento específico.
+**Directriz Técnica y de Despliegue:** Aunque la máscara rectangular no aísla el fondo del tejido foliar perimetral, esta marcada sensibilidad aconseja **no desplegar directamente sobre tomas fotográficas sin filtrar**, recomendando la integración frontal del modelo de segmentación (`maize-doctor-segmenter`) para aislar exclusivamente la hoja de maíz antes de clasificar.
 :::
 
 ### Evaluación de Mitigaciones Necesarias antes del Despliegue

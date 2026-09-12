@@ -20,16 +20,23 @@ Esta auditoría evalúa formalmente la equidad matemática del modelo principal 
 
 ### 2.1. Rendimiento Desagregado por Entorno de Captura (5,015 Muestras de Test)
 
-| Entorno de Captura | Muestras ($N$) | Macro $F_1$ | Accuracy | Macro Precision | Macro Recall |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Campo Agrícola Real (`real`)** | **4,483** | **0.9298** | **0.9842** | 0.9466 | 0.9164 |
-| **Laboratorio Controlado (`lab`)** | **532** | **0.2955\*** | **0.9417** | 0.3093 | 0.2904 |
-| **Global (Test Set Independiente)** | **5,015** | **0.9483** | **0.9797** | 0.9589 | 0.9400 |
+| Entorno de Captura | Muestras ($N$) | Macro $F_1$ (evaluable) | Macro $F_1$ (9 clases) | Accuracy | Macro Precision | Macro Recall |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Campo Agrícola Real (`real`)** | **4,483** | **0.9298** | **0.9298** | **0.9842** | 0.9466 | 0.9164 |
+| **Laboratorio Controlado (`lab`)** | **532** | **0.8865\*** | **0.2955\*** | **0.9417** | 0.9279 | 0.8712 |
+| **Global (Test Set Independiente)** | **5,015** | **0.9483** | **0.9483** | **0.9797** | 0.9589 | 0.9400 |
 
-\* *Nota Demográfica:* La reducción aritmética en el Macro $F_1$ de laboratorio se debe a que el dataset de prueba únicamente contiene 3 patologías en banco de trabajo (*common_rust*, *gray_leaf_spot*, *northern_corn_leaf_blight*); las otras 6 patologías tienen 0 muestras, asignando $0.0$ al promedio. En las clases presentes, el modelo alcanza un Recall del 100% en Roya y 97.75% en Tizón, con una exactitud global en laboratorio del 94.17%.
+\* *Nota de Soporte y Clases Evaluables:* El Macro $F_1$ no ajustado de 0.2955 en laboratorio promedia sobre las 9 clases completas del dataset; sin embargo, el subgrupo de laboratorio **únicamente contiene 3 patologías** en banco de trabajo (*common_rust*, *gray_leaf_spot*, *northern_corn_leaf_blight*). Las 6 patologías ausentes ($N=0$) aportan ceros al promedio global ($0.2955 \approx (F_{1, \text{rust}} + F_{1, \text{gls}} + F_{1, \text{nclb}})/9$). Al promediar **exclusivamente sobre las 3 clases con soporte real ($N > 0$)**, el Macro $F_1$ evaluable asciende a **0.8865**, reflejando fielmente el comportamiento del modelo (Recall del 100% en Roya y 97.75% en Tizón, con Exactitud global del 94.17%).
 
 ### 2.2. Brechas de Disparidad e Impacto Dispar
 
+Para mantener consistencia matemática y evitar veredictos divergentes entre métricas, se reporta el impacto dispar tanto en Macro $F_1$ (métrica primaria del proyecto y calculada en `fairness_metrics.json`) como en Exactitud:
+
+* **Disparidad de Macro $F_1$ ($\Delta F_1$, clases evaluables):**
+  $$\Delta F_1 = |F_{1, \text{real}} - F_{1, \text{lab}}| = |0.9298 - 0.8865| = \mathbf{0.0433} \quad (4.33\%)$$
+* **Disparate Impact Ratio en Macro $F_1$ ($DIR_{F_1}$, clases evaluables):**
+  $$DIR_{F_1} = \frac{\min(F_{1, \text{real}}, F_{1, \text{lab}})}{\max(F_{1, \text{real}}, F_{1, \text{lab}})} = \frac{0.8865}{0.9298} = \mathbf{0.9534} \ge 0.80 \quad (\text{Cumple Regla 80\%})$$
+  *(Nota técnica: si se calcula sobre las 9 clases sin excluir las clases ausentes, $DIR = 0.2955 / 0.9298 \approx 0.3178$. Esta disparidad es un artefacto de las 6 clases con $N=0$ en laboratorio y no una degradación funcional).*
 * **Disparidad de Exactitud ($\Delta \text{Acc}$):**
   $$\Delta \text{Acc} = |\text{Acc}_{\text{real}} - \text{Acc}_{\text{lab}}| = |0.9842 - 0.9417| = \mathbf{0.0424} \quad (4.24\% \implies \text{Rango Seguro})$$
 * **Disparate Impact Ratio en Exactitud ($DIR_{\text{Acc}}$):**
@@ -37,37 +44,42 @@ Esta auditoría evalúa formalmente la equidad matemática del modelo principal 
 
 ---
 
-## 3. Auditoría de Atajos Visuales (*Shortcut Learning / Clever Hans Effect*)
+## 3. Auditoría de Sensibilidad a Regiones y Atajos Visuales (*Shortcut Learning*)
 
 ### 3.1. Metodología de la Auditoría de Ablación Dual
-Para certificar si la red aprende la morfología fitopatológica genuina o memoriza correlaciones espurias de fondo (suelo, sombras, reflectancia o sensor), se ejecutó un protocolo dual de ablación:
-1. **Control Negativo (Oclusión Central 60%):** Se enmascara la lesión foliar central. Si la red dependiera de la patología biológica, su confianza debería colapsar drásticamente.
-2. **Control Inverso (Oclusión Periférica 40%):** Se enmascara el fondo y bordes perimetrales, dejando **únicamente la lesión foliar central pura** sin pistas de entorno. Si la red aprende la patología genuina, debe mantener alta exactitud diagnóstica.
+Para evaluar en qué medida la red depende de regiones centrales frente a perimetrales de la imagen, se implementó un protocolo dual de ablación:
+1. **Control Negativo (Oclusión Central 60%):** Se enmascara la región central (20% a 80% en ambos ejes). La máscara utiliza **negro real en espacio normalizado ImageNet** (`(-mean)/std`), evitando inyectar el valor medio grisáceo (`0.0`). La confianza retenida se evalúa sobre la **misma clase predicha originalmente**, evitando sesgos por reasignación de argmax a clases espurias.
+2. **Control Inverso (Oclusión Periférica 40%):** Se enmascaran los bordes exteriores dejando visible únicamente el 60% central.
 
-### 3.2. Resultados Cuantitativos de la Auditoría de Atajos
+> [!NOTE]
+> **Alcance y Limitación Metodológica de la Máscara:**  
+> La máscara empleada es **geométrica rectangular**, no una segmentación anatómica de la lámina foliar ni de las pústulas patológicas. Por consiguiente, los resultados miden **sensibilidad a regiones espaciales**, no causalidad biológica estricta sobre "el fondo" versus "la lesión".
+
+### 3.2. Resultados Cuantitativos de la Auditoría de Sensibilidad
 
 ```
 [Inferencia Original]:
-  • Confianza Media:        0.8429 (84.29%)
-  • Exactitud (Accuracy):   0.9797 (97.97%)
+  • Confianza Media:              0.8429 (84.29%)
+  • Exactitud (Accuracy):         0.9797 (97.97%)
 
-[Control Negativo - Oclusión Central 60% (Sin Lesión)]:
-  • Confianza con Oclusión: 0.7795 (77.95%)
-  • Caída de Confianza:     -0.0634 (-6.34 pp)
-  • Ratio de Retención:     92.47% de certeza anclada al fondo
-  • Exactitud sin Lesión:   0.8046 (80.46%)  [Atajo Espurio Activo: Retiene >80% Acc]
-  • Tasa de Inestabilidad:  18.60% de aciertos mutan a error
+[Control Negativo - Oclusión Central 60% (Máscara Geométrica Rectangular)]:
+  • Confianza con Oclusión:       0.7795 (77.95%) [en la clase original]
+  • Caída de Confianza:           -0.0634 (-6.34 pp)
+  • Retención de Confianza:       92.47% de confianza retenida en la clase original
+  • Exactitud con Oclusión:       0.8046 (80.46%)
+  • Tasa de Inestabilidad:        18.60% de aciertos mutan a error
 
-[Control Inverso - Oclusión Periférica 40% (Solo Lesión Pura)]:
-  • Confianza solo Centro:  0.7060 (70.60%)
-  • Caída de Confianza:     -0.1369 (-13.69 pp)
-  • Exactitud solo Centro:  0.7176 (71.76%)
-  • Desplome de Exactitud:  -26.20 pp (Colapso del rendimiento al retirar el fondo)
-  • Tasa de Inestabilidad:  27.58% de predicciones correctas mutan a error
+[Control Inverso - Oclusión Periférica 40% (Solo Centro)]:
+  • Confianza solo Centro:        0.7060 (70.60%) [en la clase original]
+  • Caída de Confianza:           -0.1369 (-13.69 pp)
+  • Exactitud solo Centro:        0.7176 (71.76%)
+  • Desplome de Exactitud:        -26.20 pp
+  • Tasa de Inestabilidad:        27.58% de predicciones correctas mutan a error
 ```
 
-> [!CAUTION]
-> **Vulnerabilidad Crítica Confirmada (Clever Hans):** La red retiene el 92.47% de su confianza y acierta el 80.46% de las veces sin ver el centro de la hoja. Al aislar la lesión pura sin entorno de captura, la exactitud colapsa 26.20 puntos porcentuales. Esto demuestra empíricamente una dependencia severa de artefactos perimetrales de fondo y sensor. Se prohíbe el despliegue directo en campo sin una etapa previa de desacople de fondo.
+> [!WARNING]
+> **Sensibilidad Relevante a Regiones Periféricas:**  
+> La red retiene el 92.47% de su confianza en la clase original y acierta el 80.46% de las muestras tras ocluir el 60% central. Al ocultar la periferia, la exactitud se reduce 26.20 puntos porcentuales. Aunque la máscara rectangular no aísla anatómicamente el fondo de la hoja, esta alta sensibilidad perimetral aconseja aplicar segmentación foliar previa para desacoplar el entorno y asegurar que los filtros convolucionales se concentren en el tejido vegetal.
 
 ### 3.3. Evidencia Visual con Grad-CAM
 Mediante `src/explainability/gradcam.py` sobre la última capa convolucional (`features.-1` en EfficientNet-B0), se analizó el comportamiento cualitativo:
