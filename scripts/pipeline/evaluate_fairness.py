@@ -23,13 +23,17 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.metrics import f1_score
 import torch
 import torch.nn as nn
 import yaml
 from PIL import Image
 from torch.utils.data import DataLoader
 
+from collections import Counter
+
 from src.analysis.predictions import write_per_image_predictions
+from src.data.provenance import source_from_path
 from src.analysis.fairness import (
     compute_disparity_metrics,
     compute_subgroup_metrics,
@@ -110,6 +114,13 @@ def _parse_args() -> argparse.Namespace:
         type=int,
         default=42,
         help="Semilla para reproducibilidad.",
+    )
+    parser.add_argument(
+        "--subgroup-column",
+        default="environment",
+        dest="subgroup_column",
+        help="Columna que define los subgrupos de la auditoria. 'source_id' se deriva de "
+             "la ruta si no esta en el manifiesto.",
     )
     parser.add_argument(
         "--num-workers",
@@ -358,7 +369,16 @@ def main() -> None:
     # Inferencia completa
     y_true: list[int] = []
     y_pred: list[int] = []
-    subgroups: list[str] = test_df["environment"].tolist()
+    if args.subgroup_column not in test_df.columns:
+        if args.subgroup_column == "source_id":
+            test_df["source_id"] = test_df["image_path"].map(source_from_path)
+        else:
+            raise SystemExit(
+                f"El manifiesto no tiene la columna '{args.subgroup_column}' y no se sabe "
+                "derivarla. Columnas disponibles: " + ", ".join(test_df.columns)
+            )
+    subgroups: list[str] = test_df[args.subgroup_column].astype(str).tolist()
+    logger.info("Subgrupos por '%s': %d distintos", args.subgroup_column, len(set(subgroups)))
 
     with torch.no_grad():
         for images, targets in test_loader:
@@ -412,8 +432,12 @@ def main() -> None:
         output_path=output_dir / "fairness_disparity.png",
     )
 
-    mask_lab = np.array(subgroups) == "lab"
-    mask_real = np.array(subgroups) == "real"
+    # Las dos matrices comparan los dos subgrupos con mas soporte, en lugar de exigir
+    # que se llamen lab y real: con subgrupos por fuente esos nombres no existen.
+    conteo = Counter(subgroups)
+    mayores = [nombre for nombre, _ in conteo.most_common(2)]
+    mask_lab = np.array(subgroups) == (mayores[0] if mayores else "")
+    mask_real = np.array(subgroups) == (mayores[1] if len(mayores) > 1 else "")
     if np.any(mask_lab) and np.any(mask_real):
         plot_disaggregated_confusion_matrices(
             y_true_lab=np.array(y_true)[mask_lab],
@@ -455,12 +479,45 @@ def main() -> None:
 
     df_disparity = pd.DataFrame(disparity_rows)
     df_disparity.to_csv(output_dir / "fairness_disparity.csv", index=False)
-    write_per_image_predictions(
+    destino_pred = write_per_image_predictions(
         destination=output_dir / "fairness_predictions.csv",
         image_paths=test_df["image_path"].tolist(),
         y_true=y_true,
         y_pred=y_pred,
         idx_to_class=dict(enumerate(class_names)),
+    )
+
+    # Desglose por procedencia, siempre, sea cual sea el subgrupo auditado: sale del CSV
+    # por imagen sin repetir inferencia, y es el eje con mas varianza del corpus.
+    predicciones = pd.read_csv(destino_pred)
+    por_fuente = []
+    for fuente, grupo in predicciones.groupby("source_id"):
+        con_soporte = sorted(grupo.y_true.unique())
+        mayoritaria = grupo.y_true.value_counts().iloc[0] / len(grupo)
+        por_fuente.append({
+            "source_id": fuente,
+            "n": len(grupo),
+            "clases_con_soporte": len(con_soporte),
+            "accuracy": float((grupo.y_true == grupo.y_pred).mean()),
+            "accuracy_clase_mayoritaria": float(mayoritaria),
+            "macro_f1_evaluable": float(
+                f1_score(grupo.y_true, grupo.y_pred, average="macro",
+                         labels=con_soporte, zero_division=0)
+            ),
+        })
+    tabla_fuente = pd.DataFrame(por_fuente).sort_values("n", ascending=False)
+    tabla_fuente.to_csv(output_dir / "fairness_by_source.csv", index=False)
+    logger.info(
+        "Desglose por procedencia: %d fuentes | accuracy min %.4f max %.4f",
+        len(tabla_fuente), tabla_fuente.accuracy.min(), tabla_fuente.accuracy.max(),
+    )
+
+    # Control nulo de la ablacion: sin el, el acierto sobre imagenes ocluidas no se puede
+    # interpretar, porque un modelo colapsado sobre la clase mayoritaria lo alcanza solo.
+    referencia_nula = float(predicciones.y_true.value_counts().iloc[0] / len(predicciones))
+    logger.info(
+        "Control nulo (predictor constante de la clase mayoritaria): accuracy %.4f",
+        referencia_nula,
     )
 
     full_report_data = {
@@ -470,6 +527,9 @@ def main() -> None:
         "disparity_analysis": disparity_metrics,
         "shortcut_learning_test": dual_shortcut_results.get("center_occlusion", {}),
         "shortcut_learning_audit": dual_shortcut_results,
+        "subgroup_column": args.subgroup_column,
+        "control_nulo_clase_mayoritaria": referencia_nula,
+        "por_procedencia": tabla_fuente.to_dict(orient="records"),
     }
 
     with open(output_dir / "fairness_metrics.json", "w", encoding="utf-8") as f:
