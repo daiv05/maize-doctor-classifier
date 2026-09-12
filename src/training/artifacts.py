@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
+from src.data.provenance import provenance_from_path
 from src.training.evaluation import (
     compute_calibration_metrics,
     compute_environment_metrics,
@@ -86,6 +87,9 @@ def write_predictions_csv(
     )
     if "environment" in test_dataset.data_frame.columns:
         frame["environment"] = test_dataset.data_frame["environment"].tolist()
+    frame["source_id"] = [
+        provenance_from_path(path) for path in test_dataset.data_frame["image_path"]
+    ]
     frame.to_csv(run_dir / "predictions.csv", index=False)
     return frame
 
@@ -110,6 +114,14 @@ def write_extended_metrics(
     if "environment" in predictions_df.columns:
         compute_environment_metrics(predictions_df).to_csv(
             run_dir / "test_by_environment.csv", index=False
+        )
+
+    # La media agregada oculta que una fuente de laboratorio pueda dar 0.99 mientras
+    # una de campo da 0.58. Para un destino movil la cifra que importa es la peor
+    # fuente, no el promedio.
+    if "source_id" in predictions_df.columns:
+        compute_environment_metrics(predictions_df, group_column="source_id").to_csv(
+            run_dir / "test_by_source.csv", index=False
         )
 
     grouped = compute_grouped_metrics(predictions_df, npk_groups)

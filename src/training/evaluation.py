@@ -87,7 +87,9 @@ def compute_calibration_metrics(
     }
 
 
-def compute_environment_metrics(predictions_df: pd.DataFrame) -> pd.DataFrame:
+def compute_environment_metrics(
+    predictions_df: pd.DataFrame, group_column: str = "environment"
+) -> pd.DataFrame:
     """
     Desglosa accuracy, macro-F1 y F1 por clase por entorno de captura.
 
@@ -98,14 +100,15 @@ def compute_environment_metrics(predictions_df: pd.DataFrame) -> pd.DataFrame:
     visible porque algunas son muy pequenas (~16 imagenes reales de `common_rust`)
     y su F1 es indicativo, no concluyente.
 
-    @param {pd.DataFrame} predictions_df Debe incluir la columna environment.
-    @returns {pd.DataFrame} Filas (environment, class) con n, accuracy, macro_f1 y f1.
+    @param {pd.DataFrame} predictions_df Debe incluir la columna de agrupacion.
+    @param {str} group_column Columna por la que desglosar; environment por defecto.
+    @returns {pd.DataFrame} Filas (grupo, class) con n, accuracy, macro_f1 y f1.
     """
     rows = []
-    for environment, group in predictions_df.groupby("environment"):
+    for environment, group in predictions_df.groupby(group_column):
         rows.append(
             {
-                "environment": environment,
+                group_column: environment,
                 "class": AGGREGATE_ROW_LABEL,
                 "n": len(group),
                 "accuracy": accuracy_score(group["label"], group["pred_label"]),
@@ -128,7 +131,7 @@ def compute_environment_metrics(predictions_df: pd.DataFrame) -> pd.DataFrame:
             support = group["label"] == class_name
             rows.append(
                 {
-                    "environment": environment,
+                    group_column: environment,
                     "class": class_name,
                     "n": int(support.sum()),
                     "accuracy": float("nan"),

@@ -12,7 +12,9 @@ from PIL import Image
 from tqdm import tqdm
 
 from src.config import get_dataset_root, get_output_root
-from src.data.splitter import HierarchicalStratifiedSplitter
+from src.data.deduplicate import drop_near_duplicates
+from src.data.provenance import provenance_from_path
+from src.data.splitter import HierarchicalStratifiedSplitter, SourceGroupedSplitter
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -102,6 +104,10 @@ def run_data_preparation_pipeline(
     classes: list[str] | None = None,
     max_per_class: int | None = None,
     no_cap: bool = False,
+    group_by_source: bool = False,
+    deduplicate: bool = False,
+    dedup_distance: int = 0,
+    allow_incomplete: bool = False,
 ) -> None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -229,8 +235,30 @@ def run_data_preparation_pipeline(
             "excluye esas clases (--classes)."
         )
 
-    logger.info("Ejecutando división jerárquica estratificada (70% Train, 15% Val, 15% Test)...")
-    splitter = HierarchicalStratifiedSplitter(seed=seed)
+    if deduplicate:
+        logger.info("Eliminando casi-duplicados antes de particionar...")
+        df_manifest, dropped = drop_near_duplicates(
+            df_manifest, get_dataset_root(), max_distance=dedup_distance
+        )
+        logger.info("Casi-duplicados descartados: %d", dropped)
+
+    if group_by_source:
+        df_manifest = df_manifest.copy()
+        df_manifest["source_id"] = df_manifest["image_path"].map(provenance_from_path)
+        unresolved = int(df_manifest["source_id"].isna().sum())
+        if unresolved:
+            raise SystemExit(
+                f"{unresolved} imágenes sin fuente identificable; el reparto por fuente "
+                "necesita que todas la tengan."
+            )
+        logger.info("Repartiendo por fuente de origen (70% Train, 15% Val, 15% Test)...")
+        splitter = SourceGroupedSplitter(seed=seed, allow_incomplete=allow_incomplete)
+    else:
+        logger.info(
+            "Ejecutando división jerárquica estratificada (70% Train, 15% Val, 15% Test)..."
+        )
+        splitter = HierarchicalStratifiedSplitter(seed=seed)
+
     train_df, val_df, test_df = splitter.split(
         df_manifest, train_size=0.70, val_size=0.15, test_size=0.15
     )
@@ -294,6 +322,34 @@ if __name__ == "__main__":
         help="Ignora baseline.max_images_per_class: usa el 100%% de las imágenes disponibles "
         "por clase. Solo tiene efecto junto con --baseline (sin --baseline nunca hay cap).",
     )
+    parser.add_argument(
+        "--group-by-source",
+        action="store_true",
+        dest="group_by_source",
+        help="Reparte fuentes de origen enteras en lugar de estratificar por clase y entorno. "
+        "El test pasa a medir generalización a un dominio no visto, a costa de que una clase "
+        "con menos de tres fuentes no pueda estar en las tres particiones.",
+    )
+    parser.add_argument(
+        "--deduplicate",
+        action="store_true",
+        help="Elimina casi-duplicados por hash perceptual antes de particionar, conservando "
+        "un representante. Agrupar por fuente sin esto deja la misma foto a ambos lados.",
+    )
+    parser.add_argument(
+        "--dedup-distance",
+        type=int,
+        default=0,
+        dest="dedup_distance",
+        help="Distancia de Hamming máxima entre hashes para considerarlos duplicados "
+        "(default: 0, hash idéntico). Valores altos elevan los falsos positivos.",
+    )
+    parser.add_argument(
+        "--allow-incomplete-splits",
+        action="store_true",
+        dest="allow_incomplete",
+        help="Continúa aunque alguna clase quede fuera de val o test al agrupar por fuente.",
+    )
     args = parser.parse_args()
     run_data_preparation_pipeline(
         config_path=args.config,
@@ -301,4 +357,8 @@ if __name__ == "__main__":
         classes=args.classes,
         max_per_class=args.max_per_class,
         no_cap=args.no_cap,
+        group_by_source=args.group_by_source,
+        deduplicate=args.deduplicate,
+        dedup_distance=args.dedup_distance,
+        allow_incomplete=args.allow_incomplete,
     )
