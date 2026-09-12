@@ -17,7 +17,26 @@ def test_hyperparameter_space_defaults():
     assert space.lr_max == 1e-3
     assert 32 in space.batch_sizes
     assert "sqrt_inverse" in space.class_weights_options
-    assert space.allow_clahe is True
+    assert space.allow_clahe is False
+
+
+@pytest.mark.parametrize(
+    ("permitido", "esperado_en_la_busqueda"), [(False, False), (True, True)]
+)
+def test_clahe_solo_se_muestrea_cuando_se_pide(permitido, esperado_en_la_busqueda):
+    """CLAHE duplica el coste de un trial, asi que no entra en la busqueda por defecto."""
+    objetivo = TuningObjective.__new__(TuningObjective)
+    objetivo.space = HyperparameterSpace(allow_clahe=permitido)
+    trial = optuna.create_study(direction="maximize").ask()
+
+    parametros = objetivo.sample_parameters(trial)
+
+    # Con la busqueda abierta el valor muestreado puede ser cualquiera de los dos; lo que
+    # se comprueba es si el parametro llego a formar parte del espacio.
+    assert ("clahe" in trial.params) is esperado_en_la_busqueda
+    assert isinstance(parametros["clahe"], bool)
+    if not permitido:
+        assert parametros["clahe"] is False
 
 
 def test_sample_parameters():
