@@ -60,6 +60,7 @@ class CornDataset(Dataset):
         minority_classes: set[str] | None = None,
         max_per_class: int | None = None,
         seed: int = 42,
+        image_cache=None,
     ):
         """
         Args:
@@ -77,6 +78,9 @@ class CornDataset(Dataset):
                            clases minoritarias, de modo que reduce volumen sin alterar que
                            clases reciben augmentation agresivo. None o 0 desactiva el tope.
             seed: Semilla del submuestreo por clase.
+            image_cache: ImageCache opcional con las imagenes ya decodificadas. Evita
+                         releer y redimensionar JPEG de varios megapixeles en cada
+                         epoca, que es el cuello de botella medido del DataLoader.
             minority_classes: Conjunto de clases que reciben augmentation agresivo. Si None,
                               se deriva de la distribución real del split (ver
                               `compute_minority_classes` y `augmentation.minority_ratio_threshold`).
@@ -84,6 +88,7 @@ class CornDataset(Dataset):
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"No se encontró el archivo de manifiesto: {csv_path}")
 
+        self.image_cache = image_cache
         self.transform = transform
         self.minority_transform = minority_transform
         self.dataset_root = get_dataset_root()
@@ -151,9 +156,13 @@ class CornDataset(Dataset):
         last_error: Exception | None = None
         for attempt in range(_MAX_FALLBACK_ATTEMPTS):
             row = self.data_frame.iloc[(idx + attempt) % len(self)]
-            img_path = self.dataset_root / row["image_path"]
+            relative = row["image_path"]
+            img_path = self.dataset_root / relative
             try:
-                image = load_and_normalize_image(img_path)
+                if self.image_cache is not None and relative in self.image_cache:
+                    image = self.image_cache.get(relative)
+                else:
+                    image = load_and_normalize_image(img_path)
                 class_name = row["label"]
                 break
             except (FileNotFoundError, RuntimeError) as e:

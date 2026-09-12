@@ -37,6 +37,7 @@ from torch.utils.data import DataLoader
 from scripts.experiments.leave_one_source_out import build_folds, deduplicate
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
 from src.data.dataset import CornDataset
+from src.data.image_cache import ImageCache
 from src.data.provenance import provenance_from_path
 from src.data.transforms import CornTransformFactory
 from src.models import build_model
@@ -83,6 +84,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--label-smoothing", type=float, default=0.1)
     parser.add_argument("--clip-grad-norm", type=float, default=1.0)
     parser.add_argument("--clahe", action="store_true")
+    parser.add_argument("--image-cache", type=Path, default=None)
     parser.add_argument("--train-cap", type=int, default=1500)
     parser.add_argument("--val-cap", type=int, default=0)
     parser.add_argument("--ring-fraction", type=float, default=0.10)
@@ -181,7 +183,7 @@ def evaluate(model, loader, device) -> tuple[np.ndarray, np.ndarray]:
     return np.concatenate(trues), np.concatenate(preds)
 
 
-def run_fold(fold, manifest, args, factory, device, workdir: Path) -> dict[str, object]:
+def run_fold(fold, manifest, args, factory, device, workdir: Path, cache=None) -> dict[str, object]:
     """Entrena un pliegue con los componentes del pipeline principal y evalúa ambos brazos."""
     if args.split_mode == "random":
         train = manifest[manifest.split == "train"]
@@ -209,12 +211,13 @@ def run_fold(fold, manifest, args, factory, device, workdir: Path) -> dict[str, 
     train_dataset = CornDataset(
         csv_path=str(csvs["train"]), config_path=CONFIG_PATH,
         transform=standard, minority_transform=minority,
-        max_per_class=args.train_cap or None, seed=args.seed,
+        max_per_class=args.train_cap or None, seed=args.seed, image_cache=cache,
     )
     class_to_idx = train_dataset.class_to_idx
     val_dataset = CornDataset(
         csv_path=str(csvs["val"]), config_path=CONFIG_PATH,
         transform=factory.get_pipeline("val"), class_to_idx=class_to_idx,
+        image_cache=cache,
     )
 
     loader_kwargs = dict(num_workers=args.num_workers, worker_init_fn=worker_init_fn,
@@ -270,7 +273,8 @@ def run_fold(fold, manifest, args, factory, device, workdir: Path) -> dict[str, 
             steps.insert(1, BlackOutCentre(args.ring_fraction))
             pipeline = T.Compose(steps)
         dataset = CornDataset(csv_path=str(csvs["test"]), config_path=CONFIG_PATH,
-                              transform=pipeline, class_to_idx=class_to_idx)
+                              transform=pipeline, class_to_idx=class_to_idx,
+                              image_cache=cache)
         loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, **loader_kwargs)
         trues, preds = evaluate(model, loader, device)
         result["arms"][eval_arm] = {"accuracy": float((trues == preds).mean()),
@@ -316,6 +320,10 @@ def main() -> None:
         folds = [f for f in folds if f["test_group"] in wanted]
 
     factory = CornTransformFactory(config_path=CONFIG_PATH, clahe=args.clahe)
+    cache = ImageCache(args.image_cache) if args.image_cache else None
+    if cache is not None:
+        print(f"[*] cache de imagenes: lado {cache.side}, "
+              f"{len(cache.index)} entradas", flush=True)
     device = select_device()
     print(f"[*] brazo={args.arm} pliegues={len(folds)} clases={len(classes)} device={device}",
           flush=True)
@@ -336,7 +344,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="loso_folds_") as tmp:
         workdir = Path(tmp)
         for fold in folds:
-            results.append(run_fold(fold, manifest, args, factory, device, workdir))
+            results.append(run_fold(fold, manifest, args, factory, device, workdir, cache))
             output.write_text(json.dumps(
                 {"arm": args.arm, "classes": classes, "duplicates_dropped": dropped,
                  "folds": results}, indent=2, ensure_ascii=False), encoding="utf-8")
