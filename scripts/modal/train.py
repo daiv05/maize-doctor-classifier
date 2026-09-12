@@ -305,6 +305,7 @@ def tune_main(
     baseline_macro_f1: float = 0.9468,
     splits_dir: str = "",
     num_workers: int = 32,
+    study_name_prefix: str = "tune",
 ) -> None:
     """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).
 
@@ -329,6 +330,8 @@ def tune_main(
         str(baseline_macro_f1),
         "--num-workers",
         str(num_workers),
+        "--study-name-prefix",
+        study_name_prefix,
     ]
     if timeout:
         command += ["--timeout", str(timeout)]
