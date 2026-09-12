@@ -20,7 +20,11 @@ from src.config import PROJECT_ROOT, get_output_root, set_global_seed
 from src.models import list_models
 from src.models.registry import MODEL_REGISTRY
 from src.training.common import resolve_model_names, select_device
-from src.training.tuning import TuningObjective, export_tuning_artifacts
+from src.training.tuning import (
+    HyperparameterSpace,
+    TuningObjective,
+    export_tuning_artifacts,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -96,6 +100,13 @@ def _parse_args() -> argparse.Namespace:
         help="Macro F1 del baseline de referencia para calcular delta de mejora.",
     )
     parser.add_argument(
+        "--search-clahe",
+        action="store_true",
+        dest="search_clahe",
+        help="Incluye CLAHE en el espacio de busqueda. Duplica el coste de los trials "
+             "que lo activen.",
+    )
+    parser.add_argument(
         "--num-workers",
         type=int,
         default=2,
@@ -168,6 +179,7 @@ def main() -> None:
         )
 
         objective = TuningObjective(
+            space=HyperparameterSpace(allow_clahe=args.search_clahe),
             model_name=model_name,
             splits_dir=splits_dir,
             config_path=config_path,

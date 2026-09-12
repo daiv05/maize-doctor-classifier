@@ -52,7 +52,11 @@ class HyperparameterSpace:
     label_smoothing_max: float = 0.15
     warmup_epochs_min: int = 1
     warmup_epochs_max: int = 5
-    allow_clahe: bool = True
+    # Medido sobre el pipeline real: CLAHE baja el transform de 107,5 a 40,6 img/s
+    # (9,3 -> 24,7 ms por imagen). En un regimen limitado por CPU eso duplica el
+    # coste de cada trial que lo active, para decidir una sola opcion binaria de
+    # preprocesado que se contesta mejor con un A/B de dos corridas.
+    allow_clahe: bool = False
 
 
 class TuningObjective:
