@@ -1,0 +1,4 @@
+brazo,pliegues,n,macro_f1,marco,dependencia_%,verifica
+baseline,11,33268,0.6388,0.21,32.9,True
+colour_strong,11,33268,0.6294,0.2493,39.6,True
+crop_all,11,33268,0.5932,0.2481,41.8,True

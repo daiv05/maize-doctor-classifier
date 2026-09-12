@@ -1,0 +1,307 @@
+{
+  "arm": "colour_strong",
+  "classes": [
+    "common_rust",
+    "fall_armyworm",
+    "gray_leaf_spot",
+    "healthy",
+    "lethal_necrosis",
+    "nitrogen_deficiency",
+    "northern_corn_leaf_blight",
+    "phosphorus_deficiency",
+    "potassium_deficiency"
+  ],
+  "duplicates_dropped": 165,
+  "pooled": {
+    "original": {
+      "n": 33268,
+      "macro_f1": 0.6293891304731664,
+      "accuracy": 0.7860706985691956,
+      "per_class_f1": {
+        "common_rust": 0.8655990269612812,
+        "fall_armyworm": 0.7403486924034869,
+        "gray_leaf_spot": 0.335625,
+        "healthy": 0.9064240419079129,
+        "lethal_necrosis": 0.8792481329193589,
+        "nitrogen_deficiency": 0.5893837705918242,
+        "northern_corn_leaf_blight": 0.7888264979742696,
+        "phosphorus_deficiency": 0.248790601243953,
+        "potassium_deficiency": 0.31025641025641026
+      }
+    },
+    "border_ring": {
+      "n": 33268,
+      "macro_f1": 0.2493185465491584,
+      "accuracy": 0.4074786581700132,
+      "per_class_f1": {
+        "common_rust": 0.6074419881916793,
+        "fall_armyworm": 0.4009543285616905,
+        "gray_leaf_spot": 0.16224899598393575,
+        "healthy": 0.5377238691596969,
+        "lethal_necrosis": 0.47187060478199716,
+        "nitrogen_deficiency": 0.0078064012490242,
+        "northern_corn_leaf_blight": 0.006562990440861749,
+        "phosphorus_deficiency": 0.0012172854534388314,
+        "potassium_deficiency": 0.04804045512010114
+      }
+    },
+    "frame_dependence": 0.39612782375463657
+  },
+  "folds": [
+    {
+      "arm": "colour_strong",
+      "test_group": "corn-leaf-diseases-classification-roboflow",
+      "val_group": "corn-leaf-roboflow",
+      "n_train": 10220,
+      "n_val": 2000,
+      "n_test": 476,
+      "minority_classes": [
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.36302345203386405,
+      "arms": {
+        "original": {
+          "accuracy": 0.40336134453781514
+        },
+        "border_ring": {
+          "accuracy": 0.296218487394958
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "corn-leaf-roboflow",
+      "val_group": "cropdg-unified-multidomain",
+      "n_train": 10183,
+      "n_val": 2000,
+      "n_test": 2919,
+      "minority_classes": [
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.15671052419921147,
+      "arms": {
+        "original": {
+          "accuracy": 0.329222336416581
+        },
+        "border_ring": {
+          "accuracy": 0.20863309352517986
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "cropdg-unified-multidomain",
+      "val_group": "maize-2-roboflow",
+      "n_train": 10471,
+      "n_val": 845,
+      "n_test": 2560,
+      "minority_classes": [
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.17165698580896818,
+      "arms": {
+        "original": {
+          "accuracy": 0.49140625
+        },
+        "border_ring": {
+          "accuracy": 0.41484375
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "maize-2-roboflow",
+      "val_group": "maize-beans-tomatoes-africa",
+      "n_train": 10558,
+      "n_val": 2000,
+      "n_test": 845,
+      "minority_classes": [
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.45134273238095146,
+      "arms": {
+        "original": {
+          "accuracy": 0.48757396449704143
+        },
+        "border_ring": {
+          "accuracy": 0.005917159763313609
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "maize-beans-tomatoes-africa",
+      "val_group": "maize-deficiency-scanner-roboflow",
+      "n_train": 11245,
+      "n_val": 158,
+      "n_test": 12112,
+      "minority_classes": [
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.3898528236234542,
+      "arms": {
+        "original": {
+          "accuracy": 0.9152080581241744
+        },
+        "border_ring": {
+          "accuracy": 0.35468956406869223
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "maize-deficiency-scanner-roboflow",
+      "val_group": "maize-diseases",
+      "n_train": 10802,
+      "n_val": 2000,
+      "n_test": 158,
+      "minority_classes": [
+        "common_rust",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.5984976006376462,
+      "arms": {
+        "original": {
+          "accuracy": 0.8860759493670886
+        },
+        "border_ring": {
+          "accuracy": 0.0
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "maize-diseases",
+      "val_group": "maize-in-field-dataset",
+      "n_train": 10674,
+      "n_val": 851,
+      "n_test": 6970,
+      "minority_classes": [
+        "common_rust",
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.15710261451785115,
+      "arms": {
+        "original": {
+          "accuracy": 0.9787661406025825
+        },
+        "border_ring": {
+          "accuracy": 0.6220946915351506
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "maize-in-field-dataset",
+      "val_group": "maize-leaf-roboflow",
+      "n_train": 10892,
+      "n_val": 331,
+      "n_test": 851,
+      "minority_classes": [
+        "common_rust",
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.120090067550663,
+      "arms": {
+        "original": {
+          "accuracy": 0.40540540540540543
+        },
+        "border_ring": {
+          "accuracy": 0.12338425381903642
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "maize-leaf-roboflow",
+      "val_group": "maize-nutrient-deficiency",
+      "n_train": 11136,
+      "n_val": 337,
+      "n_test": 331,
+      "minority_classes": [
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.08593669704780815,
+      "arms": {
+        "original": {
+          "accuracy": 0.19939577039274925
+        },
+        "border_ring": {
+          "accuracy": 0.1782477341389728
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "maize-nutrient-deficiency",
+      "val_group": "multicrop-disease-maiz",
+      "n_train": 10928,
+      "n_val": 2000,
+      "n_test": 337,
+      "minority_classes": [
+        "common_rust",
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.29879604387896924,
+      "arms": {
+        "original": {
+          "accuracy": 0.24629080118694363
+        },
+        "border_ring": {
+          "accuracy": 0.21364985163204747
+        }
+      }
+    },
+    {
+      "arm": "colour_strong",
+      "test_group": "multicrop-disease-maiz",
+      "val_group": "corn-leaf-diseases-classification-roboflow",
+      "n_train": 11145,
+      "n_val": 476,
+      "n_test": 5709,
+      "minority_classes": [
+        "common_rust",
+        "gray_leaf_spot",
+        "nitrogen_deficiency",
+        "phosphorus_deficiency",
+        "potassium_deficiency"
+      ],
+      "val_macro_f1": 0.15683269476372924,
+      "arms": {
+        "original": {
+          "accuracy": 0.838500613067087
+        },
+        "border_ring": {
+          "accuracy": 0.5028901734104047
+        }
+      }
+    }
+  ]
+}
