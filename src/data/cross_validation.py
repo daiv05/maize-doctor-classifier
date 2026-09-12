@@ -135,3 +135,58 @@ def plot_kfold_boxplot(
 
     fig.savefig(output_path, dpi=160)
     plt.close(fig)
+
+
+class SourceGroupedKFoldSplitter:
+    """K-Folds donde ninguna fuente aparece a ambos lados de un pliegue.
+
+    ``HierarchicalKFoldSplitter`` reparte imágenes, no procedencias, así que las 14 fuentes
+    del corpus quedan en todos los pliegues y la validación mide rendimiento sobre datasets
+    ya vistos. Aquí la unidad de partición es la fuente.
+
+    La cobertura de clases no puede garantizarse: ``lethal_necrosis`` tiene dos fuentes, así
+    que a lo sumo aparece en la validación de dos pliegues. Las métricas deben reportarse
+    sobre las clases con soporte además de sobre las nueve.
+    """
+
+    def __init__(self, n_splits: int = 5, seed: int = 42) -> None:
+        if n_splits < 2:
+            raise ValueError("n_splits debe ser al menos 2.")
+        self.n_splits = n_splits
+        self.seed = seed
+
+    def split(self, data_df: pd.DataFrame) -> list[KFoldSplit]:
+        """Divide agrupando por ``source_id``, derivado de la ruta si no existe la columna.
+
+        @param {pd.DataFrame} data_df Manifiesto con columnas label e image_path.
+        @returns {list[KFoldSplit]} Pliegues con fuentes disjuntas.
+        """
+        from sklearn.model_selection import StratifiedGroupKFold
+
+        from src.data.provenance import source_from_path
+
+        if "label" not in data_df.columns:
+            raise ValueError("El DataFrame debe contener la columna 'label'.")
+
+        frame = data_df.copy()
+        if "source_id" not in frame.columns:
+            frame["source_id"] = frame["image_path"].map(source_from_path)
+
+        splitter = StratifiedGroupKFold(
+            n_splits=self.n_splits, shuffle=True, random_state=self.seed
+        )
+        splits: list[KFoldSplit] = []
+        for fold_idx, (train_idx, val_idx) in enumerate(
+            splitter.split(frame, frame["label"], groups=frame["source_id"])
+        ):
+            train_df = frame.iloc[train_idx].copy().reset_index(drop=True)
+            val_df = frame.iloc[val_idx].copy().reset_index(drop=True)
+            solapan = set(train_df.source_id) & set(val_df.source_id)
+            if solapan:
+                raise RuntimeError(
+                    f"El pliegue {fold_idx + 1} comparte fuentes entre train y val: "
+                    f"{sorted(solapan)}"
+                )
+            splits.append(KFoldSplit(fold_index=fold_idx + 1, train_df=train_df, val_df=val_df))
+
+        return splits

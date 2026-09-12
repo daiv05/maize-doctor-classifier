@@ -41,10 +41,16 @@ def _calc_metrics_macro(y_t, y_p, num_classes=9):
         ps.append(p)
         rs.append(r)
         f1s.append(f1)
+    # Bajo particion agrupada un pliegue puede no contener todas las clases: promediar
+    # sobre las nueve mete ceros de clases sin soporte y hunde el macro por artefacto.
+    # Se reporta tambien el promedio sobre las clases realmente evaluables.
+    con_soporte = [c for c in range(num_classes) if np.any(y_t == c)]
     return {
         "macro_precision": float(np.mean(ps)) if ps else 0.0,
         "macro_recall": float(np.mean(rs)) if rs else 0.0,
         "macro_f1": float(np.mean(f1s)) if f1s else 0.0,
+        "macro_f1_evaluable": float(np.mean([f1s[c] for c in con_soporte])) if con_soporte else 0.0,
+        "clases_con_soporte": len(con_soporte),
     }
 
 def _calc_cm_np(y_t, y_p, num_classes=9, normalize=False):
@@ -61,6 +67,7 @@ from torch.utils.data import DataLoader
 from src.config import PROJECT_ROOT, get_output_root, set_global_seed
 from src.data.cross_validation import (
     HierarchicalKFoldSplitter,
+    SourceGroupedKFoldSplitter,
     compute_aggregate_statistics,
     plot_kfold_boxplot,
 )
@@ -159,6 +166,13 @@ def _parse_args() -> argparse.Namespace:
         "--config",
         default=str(PROJECT_ROOT / "config" / "dataset.yaml"),
         help="Ruta al archivo dataset.yaml.",
+    )
+    parser.add_argument(
+        "--group-by-source",
+        action="store_true",
+        dest="group_by_source",
+        help="Particiona por procedencia en lugar de por imagen, de modo que ninguna "
+             "fuente aparezca a ambos lados de un pliegue.",
     )
     parser.add_argument(
         "--num-workers",
@@ -285,7 +299,15 @@ def main() -> None:
     logger.info("Hiperparámetros: lr=%.2e, wd=%.2e, batch_size=%d, loss_weight='%s', clahe=%s", lr, wd, bs, cw, use_clahe)
 
     # 2. Generar K Folds Estratificados
-    splitter = HierarchicalKFoldSplitter(n_splits=args.k_folds, seed=seed)
+    splitter = (
+        SourceGroupedKFoldSplitter(n_splits=args.k_folds, seed=seed)
+        if args.group_by_source
+        else HierarchicalKFoldSplitter(n_splits=args.k_folds, seed=seed)
+    )
+    logger.info(
+        "Particion: %s",
+        "agrupada por fuente" if args.group_by_source else "estratificada",
+    )
     splits = splitter.split(dev_df)
 
     factory = CornTransformFactory(config_path=str(config_path), target_size=target_size, clahe=use_clahe)
