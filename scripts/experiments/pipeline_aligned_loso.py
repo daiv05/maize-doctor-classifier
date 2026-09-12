@@ -306,7 +306,19 @@ def main() -> None:
     print(f"[*] brazo={args.arm} pliegues={len(folds)} clases={len(classes)} device={device}",
           flush=True)
 
+    # Reanudacion: el JSON se reescribe tras cada pliegue, asi que una corrida interrumpida
+    # deja utilizable todo lo anterior. Un fallo de autenticacion a mitad costaba la corrida
+    # entera antes de esto.
     results = []
+    if output.exists():
+        previous = json.loads(output.read_text(encoding="utf-8"))
+        if previous.get("arm") == args.arm and "pooled" not in previous:
+            results = previous.get("folds", [])
+            done = {r["test_group"] for r in results}
+            folds = [f for f in folds if f["test_group"] not in done]
+            print(f"[*] reanudando: {len(results)} pliegues ya hechos, faltan {len(folds)}",
+                  flush=True)
+
     with tempfile.TemporaryDirectory(prefix="loso_folds_") as tmp:
         workdir = Path(tmp)
         for fold in folds:
