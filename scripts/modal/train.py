@@ -379,6 +379,7 @@ def evaluate_ensemble_modal(
     splits_dir: str = "",
     output_dir: str = "",
     num_workers: int = 32,
+    checkpoints: str = "",
 ) -> None:
     """Evalúa el Soft Voting Ensemble en GPU de Modal sobre el conjunto de test."""
     dataset_vol.reload()
@@ -396,6 +397,9 @@ def evaluate_ensemble_modal(
         command += ["--splits-dir", splits_dir]
     if output_dir:
         command += ["--output-dir", output_dir]
+
+    if checkpoints:
+        command += ["--checkpoints", *checkpoints.split()]
 
     run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
