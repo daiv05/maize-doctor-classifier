@@ -201,9 +201,27 @@ entre los que cumplan por magnitud de la segunda.
 efecto: agrupar por `source_id` y deduplicar casi-duplicados antes de particionar. Cambia todas
 las métricas del proyecto, y las cambia a la baja, pero las hace reales.
 
-### Coste estimado
+### Coste medido y dónde está el cuello
 
-Los brazos alineados son mucho más caros que los anteriores: sin tope de entrenamiento y con
-hasta 60 épocas, cada pliegue procesa el split completo. Once pliegues por brazo, cuatro
-brazos, y después tres semillas de los que sobrevivan. Conviene correr primero `baseline` sola
-para medir el coste real por pliegue antes de comprometer el resto.
+El coste ya no es una estimación. Sobre la corrida en vuelo de `minimal_colour`, con A10 y
+ocho núcleos: **225 imágenes por segundo, 55,5 s por época y la GPU al 2 %**. El cómputo no es
+el límite. El límite es decodificar JPEG de varios megapíxeles para quedarse con 224 píxeles de
+lado: unos 36 ms por imagen repartidos entre ocho procesos de carga. Una GPU mayor no cambiaría
+nada, porque la que hay está parada el 98 % del tiempo.
+
+De ahí dos correcciones, ambas aplicadas:
+
+| Cambio | Efecto |
+| --- | --- |
+| `cpu=32.0` y `--num-workers 32` en el wrapper de Modal | cuadruplica los procesos de carga |
+| Caché de imágenes predecodificadas (`src/data/image_cache.py`) | 57 → 842 img/s en la ruta de carga, medido en local |
+
+La caché guarda el corpus ya corregido por EXIF y reescalado a 256 píxeles de lado sobre un
+memmap: 33 433 imágenes, 6,6 GB, construidas una sola vez. Es opcional y las corridas que la
+usan deben declararlo con `--image-cache`, porque el reescalado pasa a ocurrir en dos pasos
+—original a 256, luego 256 a 224— en lugar de uno.
+
+Esa diferencia impide introducirla a mitad de un barrido. `baseline`, `colour_strong` y
+`crop_all` están medidos sin caché, así que `minimal_colour` también debe terminar sin ella
+para que la comparación siga siendo válida. La caché entra en el siguiente barrido completo, no
+en éste.
