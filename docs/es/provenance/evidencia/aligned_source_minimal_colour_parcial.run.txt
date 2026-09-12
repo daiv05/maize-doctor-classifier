@@ -1,0 +1,230 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/daiv05/main/ap-xH1v4MCD5vyFq34DpLJp0T
+✓ Created objects.
+├── 🔨 Created mount 
+│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\pipeline_align
+│   ed_loso.py
+├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
+├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+├── 🔨 Created function build_image_cache.
+└── 🔨 Created function run_aligned_loso.
+[*] casi-duplicados eliminados: 165 de 33433
+[*] brazo=minimal_colour pliegues=11 clases=9 device=cuda
+[*] reanudando: 3 pliegues ya hechos, faltan 8
+    [maize-2-roboflow] epoca 1 val_macro_f1=0.2999
+    [maize-2-roboflow] epoca 2 val_macro_f1=0.3602
+    [maize-2-roboflow] epoca 3 val_macro_f1=0.3674
+    [maize-2-roboflow] epoca 4 val_macro_f1=0.3907
+    [maize-2-roboflow] epoca 5 val_macro_f1=0.3871
+    [maize-2-roboflow] epoca 6 val_macro_f1=0.3952
+    [maize-2-roboflow] epoca 7 val_macro_f1=0.3984
+    [maize-2-roboflow] epoca 8 val_macro_f1=0.3899
+    [maize-2-roboflow] epoca 9 val_macro_f1=0.3827
+    [maize-2-roboflow] epoca 10 val_macro_f1=0.4005
+    [maize-2-roboflow] epoca 11 val_macro_f1=0.3916
+    [maize-2-roboflow] epoca 12 val_macro_f1=0.3822
+    [maize-2-roboflow] epoca 13 val_macro_f1=0.3937
+    [maize-2-roboflow] epoca 14 val_macro_f1=0.4013
+    [maize-2-roboflow] epoca 15 val_macro_f1=0.3916
+    [maize-2-roboflow] epoca 16 val_macro_f1=0.3960
+    [maize-2-roboflow] epoca 17 val_macro_f1=0.3930
+    [maize-2-roboflow] epoca 18 val_macro_f1=0.3946
+    [maize-2-roboflow] epoca 19 val_macro_f1=0.4022
+    [maize-2-roboflow] epoca 20 val_macro_f1=0.3980
+    [maize-2-roboflow] epoca 21 val_macro_f1=0.4002
+    [maize-2-roboflow] epoca 22 val_macro_f1=0.3802
+    [maize-2-roboflow] epoca 23 val_macro_f1=0.4588
+    [maize-2-roboflow] epoca 24 val_macro_f1=0.3995
+    [maize-2-roboflow] epoca 25 val_macro_f1=0.4028
+    [maize-2-roboflow] epoca 26 val_macro_f1=0.3969
+    [maize-2-roboflow] epoca 27 val_macro_f1=0.4022
+    [maize-2-roboflow] epoca 28 val_macro_f1=0.3904
+    [maize-2-roboflow] original: acierto 0.4024
+    [maize-2-roboflow] border_ring: acierto 0.0012
+    [maize-beans-tomatoes-africa] epoca 1 val_macro_f1=0.1604
+    [maize-beans-tomatoes-africa] epoca 2 val_macro_f1=0.2365
+    [maize-beans-tomatoes-africa] epoca 3 val_macro_f1=0.2839
+    [maize-beans-tomatoes-africa] epoca 4 val_macro_f1=0.3416
+    [maize-beans-tomatoes-africa] epoca 5 val_macro_f1=0.3413
+    [maize-beans-tomatoes-africa] epoca 6 val_macro_f1=0.4049
+    [maize-beans-tomatoes-africa] epoca 7 val_macro_f1=0.4096
+    [maize-beans-tomatoes-africa] epoca 8 val_macro_f1=0.4955
+    [maize-beans-tomatoes-africa] epoca 9 val_macro_f1=0.3665
+    [maize-beans-tomatoes-africa] epoca 10 val_macro_f1=0.4900
+    [maize-beans-tomatoes-africa] epoca 11 val_macro_f1=0.4390
+    [maize-beans-tomatoes-africa] epoca 12 val_macro_f1=0.5482
+    [maize-beans-tomatoes-africa] epoca 13 val_macro_f1=0.4431
+    [maize-beans-tomatoes-africa] epoca 14 val_macro_f1=0.3753
+    [maize-beans-tomatoes-africa] epoca 15 val_macro_f1=0.5134
+    [maize-beans-tomatoes-africa] epoca 16 val_macro_f1=0.4510
+    [maize-beans-tomatoes-africa] epoca 17 val_macro_f1=0.3708
+    [maize-beans-tomatoes-africa] original: acierto 0.8896
+    [maize-beans-tomatoes-africa] border_ring: acierto 0.2966
+    [maize-deficiency-scanner-roboflow] epoca 1 val_macro_f1=0.2298
+    [maize-deficiency-scanner-roboflow] epoca 2 val_macro_f1=0.2826
+    [maize-deficiency-scanner-roboflow] epoca 3 val_macro_f1=0.3054
+    [maize-deficiency-scanner-roboflow] epoca 4 val_macro_f1=0.3094
+    [maize-deficiency-scanner-roboflow] epoca 5 val_macro_f1=0.3172
+    [maize-deficiency-scanner-roboflow] epoca 6 val_macro_f1=0.3269
+    [maize-deficiency-scanner-roboflow] epoca 7 val_macro_f1=0.3205
+    [maize-deficiency-scanner-roboflow] epoca 8 val_macro_f1=0.3620
+    [maize-deficiency-scanner-roboflow] epoca 9 val_macro_f1=0.3241
+    [maize-deficiency-scanner-roboflow] epoca 10 val_macro_f1=0.3687
+    [maize-deficiency-scanner-roboflow] epoca 11 val_macro_f1=0.3686
+    [maize-deficiency-scanner-roboflow] epoca 12 val_macro_f1=0.4899
+    [maize-deficiency-scanner-roboflow] epoca 13 val_macro_f1=0.4190
+    [maize-deficiency-scanner-roboflow] epoca 14 val_macro_f1=0.4214
+    [maize-deficiency-scanner-roboflow] epoca 15 val_macro_f1=0.4225
+    [maize-deficiency-scanner-roboflow] epoca 16 val_macro_f1=0.4233
+    [maize-deficiency-scanner-roboflow] epoca 17 val_macro_f1=0.4910
+    [maize-deficiency-scanner-roboflow] epoca 18 val_macro_f1=0.4221
+    [maize-deficiency-scanner-roboflow] epoca 19 val_macro_f1=0.4215
+    [maize-deficiency-scanner-roboflow] epoca 20 val_macro_f1=0.4194
+    [maize-deficiency-scanner-roboflow] epoca 21 val_macro_f1=0.4227
+    [maize-deficiency-scanner-roboflow] epoca 22 val_macro_f1=0.4216
+    [maize-deficiency-scanner-roboflow] original: acierto 0.8987
+    [maize-deficiency-scanner-roboflow] border_ring: acierto 0.3861
+    [maize-diseases] epoca 1 val_macro_f1=0.0813
+    [maize-diseases] epoca 2 val_macro_f1=0.1021
+    [maize-diseases] epoca 3 val_macro_f1=0.1127
+    [maize-diseases] epoca 4 val_macro_f1=0.1242
+    [maize-diseases] epoca 5 val_macro_f1=0.1226
+    [maize-diseases] epoca 6 val_macro_f1=0.1331
+    [maize-diseases] epoca 7 val_macro_f1=0.1245
+    [maize-diseases] epoca 8 val_macro_f1=0.1367
+    [maize-diseases] epoca 9 val_macro_f1=0.1277
+    [maize-diseases] epoca 10 val_macro_f1=0.1295
+    [maize-diseases] epoca 11 val_macro_f1=0.1318
+    [maize-diseases] epoca 12 val_macro_f1=0.1277
+    [maize-diseases] epoca 13 val_macro_f1=0.1377
+    [maize-diseases] epoca 14 val_macro_f1=0.1326
+    [maize-diseases] epoca 15 val_macro_f1=0.1397
+    [maize-diseases] epoca 16 val_macro_f1=0.1439
+    [maize-diseases] epoca 17 val_macro_f1=0.1443
+    [maize-diseases] epoca 18 val_macro_f1=0.1388
+    [maize-diseases] epoca 19 val_macro_f1=0.1409
+    [maize-diseases] epoca 20 val_macro_f1=0.1367
+    [maize-diseases] epoca 21 val_macro_f1=0.1348
+    [maize-diseases] epoca 22 val_macro_f1=0.1361
+    [maize-diseases] original: acierto 0.9865
+    [maize-diseases] border_ring: acierto 0.8303
+    [maize-in-field-dataset] epoca 1 val_macro_f1=0.0797
+    [maize-in-field-dataset] epoca 2 val_macro_f1=0.0868
+    [maize-in-field-dataset] epoca 3 val_macro_f1=0.0987
+    [maize-in-field-dataset] epoca 4 val_macro_f1=0.1076
+    [maize-in-field-dataset] epoca 5 val_macro_f1=0.0990
+    [maize-in-field-dataset] epoca 6 val_macro_f1=0.0920
+    [maize-in-field-dataset] epoca 7 val_macro_f1=0.0958
+    [maize-in-field-dataset] epoca 8 val_macro_f1=0.1058
+    [maize-in-field-dataset] epoca 9 val_macro_f1=0.1097
+    [maize-in-field-dataset] epoca 10 val_macro_f1=0.1105
+    [maize-in-field-dataset] epoca 11 val_macro_f1=0.1327
+    [maize-in-field-dataset] epoca 12 val_macro_f1=0.1154
+    [maize-in-field-dataset] epoca 13 val_macro_f1=0.1314
+    [maize-in-field-dataset] epoca 14 val_macro_f1=0.1317
+    [maize-in-field-dataset] epoca 15 val_macro_f1=0.1278
+    [maize-in-field-dataset] epoca 16 val_macro_f1=0.1265
+    [maize-in-field-dataset] original: acierto 0.5253
+    [maize-in-field-dataset] border_ring: acierto 0.0270
+    [maize-leaf-roboflow] epoca 1 val_macro_f1=0.0757
+    [maize-leaf-roboflow] epoca 2 val_macro_f1=0.0878
+    [maize-leaf-roboflow] epoca 3 val_macro_f1=0.0957
+    [maize-leaf-roboflow] epoca 4 val_macro_f1=0.0867
+    [maize-leaf-roboflow] epoca 5 val_macro_f1=0.0875
+    [maize-leaf-roboflow] epoca 6 val_macro_f1=0.1171
+    [maize-leaf-roboflow] epoca 7 val_macro_f1=0.0925
+    [maize-leaf-roboflow] epoca 8 val_macro_f1=0.0994
+    [maize-leaf-roboflow] epoca 9 val_macro_f1=0.1177
+    [maize-leaf-roboflow] epoca 10 val_macro_f1=0.1321
+    [maize-leaf-roboflow] epoca 11 val_macro_f1=0.1122
+    [maize-leaf-roboflow] epoca 12 val_macro_f1=0.0975
+Stopping app - user stopped from CLI.
+Exception ignored in: <function close_session at 0x2b9376d1b380>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 394, in close_session
+    client.close()
+  File "/usr/local/lib/python3.11/site-packages/httpx/_client.py", line 1271, in close
+    for transport in self._mounts.values():
+                     ^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt: 
+Exception ignored in: <bound method Random.seed of <random.Random object at 0x55fdf50ef4c0>>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/random.py", line 128, in seed
+    def seed(self, a=None, version=2):
+
+KeyboardInterrupt: 
+Traceback (most recent call last):
+  File "/root/scripts/experiments/pipeline_aligned_loso.py", line 374, in <module>
+    main()
+  File "/root/scripts/experiments/pipeline_aligned_loso.py", line 347, in main
+    results.append(run_fold(fold, manifest, args, factory, device, workdir, cache))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/scripts/experiments/pipeline_aligned_loso.py", line 254, in run_fold
+    trues, preds = evaluate(model, val_loader, device)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/scripts/experiments/pipeline_aligned_loso.py", line 180, in evaluate
+    for images, targets in loader:
+  File "/usr/local/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 498, in __iter__
+    return self._get_iterator()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 431, in _get_iterator
+    return _MultiProcessingDataLoaderIter(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1169, in __init__
+    w.start()
+  File "/usr/local/lib/python3.11/multiprocessing/process.py", line 121, in start
+    self._popen = self._Popen(self)
+                  ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/multiprocessing/context.py", line 224, in _Popen
+    return _default_context.get_context().Process._Popen(process_obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/multiprocessing/context.py", line 281, in _Popen
+    return Popen(process_obj)
+           ^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+Runner terminated.
+┌───────────────────── Traceback (most recent call last) ─────────────────────┐
+│ C:\Users\david\Desktop\maize-doctor-classifier\scripts/modal/pipeline_align │
+│ ed_loso.py:134 in main                                                      │
+│                                                                             │
+│   133 │   │   build_image_cache.remote()                                    │
+│ > 134 │   run_aligned_loso.remote(                                          │
+│   135 │   │   arm=arm, split_mode=split_mode, model=model, epochs=epochs,   │
+│                                                                             │
+│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ \_object.py:46 in wrapped                                                   │
+│                                                                             │
+│    45 │   │   await self.hydrate()                                          │
+│ >  46 │   │   return await method(self, *args, **kwargs)                    │
+│    47                                                                       │
+│                                                                             │
+│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ \_functions.py:1841 in remote                                               │
+│                                                                             │
+│   1840 │   │                                                                │
+│ > 1841 │   │   return await self._call_function(args, kwargs)               │
+│   1842                                                                      │
+│                                                                             │
+│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ \_functions.py:1778 in _call_function                                       │
+│                                                                             │
+│   1777 │   │                                                                │
+│ > 1778 │   │   return await invocation.run_function()                       │
+│   1779                                                                      │
+│                                                                             │
+│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ \_functions.py:483 in run_function                                          │
+│                                                                             │
+│    482 │   │   │   if await_response.output.result.status in TERMINAL_STATU │
+│ >  483 │   │   │   │   return await _process_result(                        │
+│    484 │   │   │   │   │   await_response.output.result, await_response.out │
+│                                                                             │
+│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ \_utils\function_utils.py:574 in _process_result                            │
+│                                                                             │
+│   573 │   │                                                                 │
+│ > 574 │   │   raise RemoteError(result.exception)                           │
+│   575                                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+RemoteError
