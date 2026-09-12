@@ -8,6 +8,7 @@ sin `replacement=True` cada epoca ve el 100% de las imagenes unicas en vez del ~
 """
 
 import argparse
+import json
 import logging
 from pathlib import Path
 
@@ -123,6 +124,30 @@ def _parse_args() -> argparse.Namespace:
         help="Cuantizacion al exportar: 'int8' o 'none' (default: none / FP32).",
     )
     parser.add_argument("--config", default=str(PROJECT_ROOT / "config" / "dataset.yaml"))
+    parser.add_argument(
+        "--best-params",
+        type=str,
+        default="",
+        help="JSON con hiperparametros (best_params.json de Optuna). Fija los defaults "
+             "del parser, de modo que cualquier bandera explicita lo sobrescribe.",
+    )
+
+    # Los defaults se fijan antes del parseo final para que una bandera explicita gane
+    # sobre el JSON. Enumerar los parametros en cada llamador es lo que hizo que dos de
+    # los seis hiperparametros afinados se perdieran en silencio.
+    previo, _ = parser.parse_known_args()
+    if previo.best_params:
+        with open(previo.best_params, "r", encoding="utf-8") as fichero:
+            contenido = json.load(fichero)
+        valores = contenido.get("best_params", contenido)
+        admitidos = {accion.dest for accion in parser._actions}
+        aplicados = {k: v for k, v in valores.items() if k in admitidos}
+        ignorados = sorted(set(valores) - set(aplicados))
+        parser.set_defaults(**aplicados)
+        print(f"[*] hiperparametros desde {previo.best_params}: {aplicados}", flush=True)
+        if ignorados:
+            print(f"[!] claves del JSON sin equivalente en el CLI: {ignorados}", flush=True)
+
     return parser.parse_args()
 
 
