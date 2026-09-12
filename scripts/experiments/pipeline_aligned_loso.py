@@ -143,6 +143,20 @@ def build_arm_transforms(arm: str, factory: CornTransformFactory):
     if arm == "minority_for_all":
         return minority, minority
 
+    if arm == "minimal_colour":
+        # Reproduce el paquete de transformaciones del arnes minimo, que con color fuerte
+        # alcanzo 0.6349 fuera de fuente. Todo lo demas -EXIF, warmup, recorte de gradiente,
+        # tope y epocas- es ya el del pipeline real, asi que la corrida aisla si lo que
+        # importaba era el paquete o el resto del montaje.
+        package = T.Compose([
+            T.Resize(size),
+            T.RandomHorizontalFlip(p=0.5),
+            T.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+            T.ToTensor(),
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+        return package, package
+
     raise ValueError(f"brazo desconocido: {arm!r}")
 
 
