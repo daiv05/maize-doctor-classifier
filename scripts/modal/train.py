@@ -35,6 +35,7 @@ from scripts.modal._common import (
     dataset_vol,
     image,
     outputs_vol,
+    run_with_periodic_commit,
     segmented_dataset_vol,
 )
 
@@ -66,7 +67,7 @@ def seed_dataset(force: bool = False) -> None:
     if force:
         command.append("--force")
 
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     dataset_vol.commit()
 
 
@@ -98,7 +99,7 @@ def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int
         elif max_per_class:
             command += ["--max-per-class", str(max_per_class)]
 
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
 
 
@@ -334,7 +335,7 @@ def tune_main(
     if splits_dir:
         command += ["--splits-dir", splits_dir]
 
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
 
 
@@ -390,7 +391,7 @@ def evaluate_ensemble_modal(
     if output_dir:
         command += ["--output-dir", output_dir]
 
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
 
 
@@ -443,7 +444,7 @@ def cross_validate_modal(
     if output_dir:
         command += ["--output-dir", output_dir]
 
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
 
 
@@ -483,7 +484,7 @@ def fairness_report_modal(
     if output_dir:
         command += ["--output-dir", output_dir]
 
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR)
+    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
 
 
