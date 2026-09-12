@@ -7,6 +7,7 @@ exactamente al loop de baselines de la Tabla 6.2 del reporte.
 
 from __future__ import annotations
 
+import copy
 import logging
 from pathlib import Path
 from time import perf_counter
@@ -151,6 +152,8 @@ def fit(
     """
     history: list[dict] = []
     best_val_macro_f1 = -1.0
+    best_state_dict: dict | None = None
+    best_epoch = 0
 
     for epoch in range(1, epochs + 1):
         started = perf_counter()
@@ -190,8 +193,10 @@ def fit(
         if val_metrics["macro_f1"] > best_val_macro_f1:
             best_val_macro_f1 = val_metrics["macro_f1"]
             row["is_best"] = True
+            best_epoch = epoch
+            best_state_dict = copy.deepcopy(model.state_dict())
             if run_dir is not None:
-                torch.save(model.state_dict(), run_dir / "best.pth")
+                torch.save(best_state_dict, run_dir / "best.pth")
         history.append(row)
         if run_dir is not None:
             torch.save(model.state_dict(), run_dir / "last.pth")
@@ -210,5 +215,14 @@ def fit(
         if early_stopping is not None and early_stopping.step(val_metrics["macro_f1"]):
             logger.info("[%s] Early stopping en la epoca %s", model_name, epoch)
             break
+
+    # Restaurar el mejor estado del modelo al terminar el entrenamiento
+    if best_state_dict is not None:
+        model.load_state_dict(best_state_dict)
+        logger.info(
+            "[%s] Restaurado mejor estado (época %d, val_f1=%.4f)",
+            model_name, best_epoch, best_val_macro_f1,
+        )
+        del best_state_dict  # Liberar memoria
 
     return history

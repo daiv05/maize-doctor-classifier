@@ -9,6 +9,7 @@ import src.models.baselines.fastvit  # noqa: F401 - registers models
 import src.models.baselines.ghostnet  # noqa: F401 - registers models
 import src.models.baselines.mobilenet  # noqa: F401 - registers models
 import src.models.baselines.shufflenet  # noqa: F401 - registers models
+from src.models.ensemble import SoftVotingEnsemble
 from src.models.input_sizes import MODEL_INPUT_SIZES, resolve_input_size
 from src.models.registry import MODEL_REGISTRY, ModelEntry, ModelRegistry
 
@@ -26,7 +27,9 @@ __all__ = [
     "MODEL_REGISTRY",
     "ModelEntry",
     "ModelRegistry",
+    "SoftVotingEnsemble",
     "build_model",
     "list_models",
     "resolve_input_size",
 ]
+

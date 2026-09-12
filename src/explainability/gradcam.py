@@ -56,7 +56,8 @@ class GradCAM:
 
     def _save_activations(self, module, inp, out):
         self._activations = out
-        out.register_hook(self._save_gradients)
+        if out.requires_grad:
+            out.register_hook(self._save_gradients)
 
     def _save_gradients(self, grad: torch.Tensor) -> None:
         self._gradients = grad.detach()

@@ -116,7 +116,9 @@ const esDatasetSidebar = [
         text: "Principal",
         items: [
           { text: "Preprocesado", link: "/es/pipeline/preprocessed" },
+          { text: "Optimización (Optuna)", link: "/es/pipeline/optimizacion" },
           { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
+          { text: "Ensamble Multimodelo", link: "/es/pipeline/ensamble" },
           { text: "Evaluación", link: "/es/pipeline/evaluacion" },
           { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
           { text: "Experimentos", link: "/es/pipeline/experimentos" },
@@ -221,7 +223,9 @@ export default defineConfig({
                 text: "Pipeline · Principal",
                 items: [
                   { text: "Preprocesado", link: "/es/pipeline/preprocessed" },
+                  { text: "Optimización", link: "/es/pipeline/optimizacion" },
                   { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
+                  { text: "Ensamble", link: "/es/pipeline/ensamble" },
                   { text: "Evaluación", link: "/es/pipeline/evaluacion" },
                   { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
                   { text: "Experimentos", link: "/es/pipeline/experimentos" },
