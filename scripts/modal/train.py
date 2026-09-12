@@ -303,6 +303,7 @@ def tune_main(
     # El 0.9146 que habia aqui no corresponde a ninguna corrida archivada.
     baseline_macro_f1: float = 0.9468,
     splits_dir: str = "",
+    num_workers: int = 32,
 ) -> None:
     """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).
 
@@ -311,6 +312,7 @@ def tune_main(
     gráficos en el Volume corn-outputs (/outputs/tuning/<model>/).
     """
     dataset_vol.reload()
+    outputs_vol.reload()
     command = [
         sys.executable,
         "scripts/pipeline/tune.py",
@@ -324,6 +326,8 @@ def tune_main(
         pruner,
         "--baseline-f1",
         str(baseline_macro_f1),
+        "--num-workers",
+        str(num_workers),
     ]
     if timeout:
         command += ["--timeout", str(timeout)]
@@ -367,6 +371,7 @@ def evaluate_ensemble_modal(
     batch_size: int = 64,
     splits_dir: str = "",
     output_dir: str = "",
+    num_workers: int = 32,
 ) -> None:
     """Evalúa el Soft Voting Ensemble en GPU de Modal sobre el conjunto de test."""
     dataset_vol.reload()
@@ -374,6 +379,7 @@ def evaluate_ensemble_modal(
     command = [
         sys.executable,
         "scripts/pipeline/evaluate_ensemble.py",
+        "--num-workers", str(num_workers),
         "--models",
         *models.split(),
         "--batch-size",
@@ -406,6 +412,7 @@ def cross_validate_modal(
     best_params: str = "",
     splits_dir: str = "",
     output_dir: str = "",
+    num_workers: int = 32,
 ) -> None:
     """Ejecuta Validación Cruzada Estratificada K-Fold (K=5) en GPU de Modal."""
     dataset_vol.reload()
@@ -413,6 +420,7 @@ def cross_validate_modal(
     command = [
         sys.executable,
         "scripts/pipeline/cross_validate.py",
+        "--num-workers", str(num_workers),
         "--model",
         model,
         "--k-folds",
@@ -452,6 +460,7 @@ def fairness_report_modal(
     batch_size: int = 64,
     splits_dir: str = "",
     output_dir: str = "",
+    num_workers: int = 32,
 ) -> None:
     """Ejecuta la Auditoría de Equidad (Fairness Report) en GPU de Modal."""
     dataset_vol.reload()
@@ -459,6 +468,7 @@ def fairness_report_modal(
     command = [
         sys.executable,
         "scripts/pipeline/evaluate_fairness.py",
+        "--num-workers", str(num_workers),
         "--model",
         model,
         "--batch-size",
