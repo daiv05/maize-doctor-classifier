@@ -64,6 +64,7 @@ from src.data.cross_validation import (
     compute_aggregate_statistics,
     plot_kfold_boxplot,
 )
+from src.analysis.predictions import write_per_image_predictions
 from src.data.dataset import CornDataset
 from src.data.transforms import CornTransformFactory
 from src.models import build_model, list_models, resolve_input_size
@@ -416,8 +417,12 @@ def main() -> None:
         # Guardar historial y predicciones del fold
         with open(fold_dir / "history.json", "w", encoding="utf-8") as f:
             json.dump(history, f, indent=2)
-        pd.DataFrame({"y_true": y_true, "y_pred": y_pred}).to_csv(
-            fold_dir / "predictions.csv", index=False,
+        write_per_image_predictions(
+            destination=fold_dir / "predictions.csv",
+            image_paths=val_dataset.data_frame["image_path"].tolist(),
+            y_true=y_true,
+            y_pred=y_pred,
+            idx_to_class=idx_to_class,
         )
 
         # Mover modelo a CPU para liberar VRAM antes del siguiente fold

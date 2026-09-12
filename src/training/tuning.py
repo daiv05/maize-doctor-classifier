@@ -296,7 +296,7 @@ def export_tuning_artifacts(
     study: optuna.Study,
     output_dir: Path,
     model_name: str,
-    baseline_macro_f1: float = 0.9146,
+    baseline_macro_f1: float,
 ) -> dict[str, Any]:
     """Genera best_params.json, trials.csv y comparison_vs_baseline.csv."""
     output_dir.mkdir(parents=True, exist_ok=True)

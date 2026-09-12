@@ -211,7 +211,7 @@ tune:
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(TIMEOUT),--timeout $(TIMEOUT),) \
 		$(if $(PRUNER),--pruner $(PRUNER),) \
-		$(if $(BASELINE_F1),--baseline-f1 $(BASELINE_F1),) \
+		--baseline-f1 $(or $(BASELINE_F1),0.9468) \
 		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
 		$(if $(NO_PRETRAINED),--no-pretrained,)
 

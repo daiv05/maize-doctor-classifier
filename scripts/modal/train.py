@@ -299,7 +299,9 @@ def tune_main(
     epochs: int = 15,
     timeout: int = 0,
     pruner: str = "median",
-    baseline_macro_f1: float = 0.9146,
+    # 0.9468 es el macro-F1 medido de efficientnet_lite0 sobre splits/seed_42.
+    # El 0.9146 que habia aqui no corresponde a ninguna corrida archivada.
+    baseline_macro_f1: float = 0.9468,
     splits_dir: str = "",
 ) -> None:
     """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).

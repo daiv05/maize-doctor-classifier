@@ -26,6 +26,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precisio
 from torch.utils.data import DataLoader
 
 from src.config import PROJECT_ROOT, get_output_root, set_global_seed
+from src.analysis.predictions import write_per_image_predictions
 from src.data.dataset import CornDataset
 from src.data.transforms import CornTransformFactory
 from src.models import build_model
@@ -368,6 +369,18 @@ def main() -> None:
     # 7. Guardar Artefactos
     df_comparison = pd.DataFrame(comparison_table)
     df_comparison.to_csv(output_dir / "ensemble_comparison.csv", index=False)
+    destino_predicciones = write_per_image_predictions(
+        destination=output_dir / "ensemble_predictions.csv",
+        image_paths=test_dataset.data_frame["image_path"].tolist(),
+        y_true=all_targets,
+        y_pred=ensemble_predictions,
+        idx_to_class=dict(enumerate(class_names)),
+        confidence=[max(fila) for fila in ensemble_probs_list],
+    )
+    predicciones = pd.read_csv(destino_predicciones)
+    for model_name in model_names:
+        predicciones[f"pred_{model_name}"] = individual_predictions[model_name]
+    predicciones.to_csv(destino_predicciones, index=False)
 
     summary = {
         "models_included": model_names,

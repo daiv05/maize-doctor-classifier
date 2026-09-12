@@ -29,6 +29,7 @@ import yaml
 from PIL import Image
 from torch.utils.data import DataLoader
 
+from src.analysis.predictions import write_per_image_predictions
 from src.analysis.fairness import (
     compute_disparity_metrics,
     compute_subgroup_metrics,
@@ -454,6 +455,13 @@ def main() -> None:
 
     df_disparity = pd.DataFrame(disparity_rows)
     df_disparity.to_csv(output_dir / "fairness_disparity.csv", index=False)
+    write_per_image_predictions(
+        destination=output_dir / "fairness_predictions.csv",
+        image_paths=test_df["image_path"].tolist(),
+        y_true=y_true,
+        y_pred=y_pred,
+        idx_to_class=dict(enumerate(class_names)),
+    )
 
     full_report_data = {
         "model_name": args.model,

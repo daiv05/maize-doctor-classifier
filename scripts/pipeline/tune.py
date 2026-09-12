@@ -91,7 +91,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--baseline-f1",
         type=float,
-        default=0.9146,
+        required=True,
         dest="baseline_f1",
         help="Macro F1 del baseline de referencia para calcular delta de mejora.",
     )
