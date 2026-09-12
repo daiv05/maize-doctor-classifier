@@ -417,8 +417,13 @@ def cross_validate_modal(
     splits_dir: str = "",
     output_dir: str = "",
     num_workers: int = 32,
+    group_by_source: bool = False,
 ) -> None:
-    """Ejecuta Validación Cruzada Estratificada K-Fold (K=5) en GPU de Modal."""
+    """Ejecuta validación cruzada K-Fold en GPU de Modal.
+
+    @param {bool} group_by_source Particiona por procedencia en vez de por imagen, de modo
+                                  que ninguna fuente aparezca a ambos lados de un pliegue.
+    """
     dataset_vol.reload()
     outputs_vol.reload()
     command = [
@@ -434,6 +439,8 @@ def cross_validate_modal(
         "--batch-size",
         str(batch_size),
     ]
+    if group_by_source:
+        command += ["--group-by-source"]
     if learning_rate > 0:
         command += ["--learning-rate", str(learning_rate)]
     if weight_decay > 0:
@@ -465,13 +472,18 @@ def fairness_report_modal(
     splits_dir: str = "",
     output_dir: str = "",
     num_workers: int = 32,
+    subgroup_column: str = "environment",
 ) -> None:
-    """Ejecuta la Auditoría de Equidad (Fairness Report) en GPU de Modal."""
+    """Ejecuta la auditoría de equidad en GPU de Modal.
+
+    @param {str} subgroup_column Eje de desagregación: environment o source_id.
+    """
     dataset_vol.reload()
     outputs_vol.reload()
     command = [
         sys.executable,
         "scripts/pipeline/evaluate_fairness.py",
+        "--subgroup-column", subgroup_column,
         "--num-workers", str(num_workers),
         "--model",
         model,
