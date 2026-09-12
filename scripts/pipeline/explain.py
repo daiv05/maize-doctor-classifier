@@ -32,13 +32,14 @@ import src.models.baselines.mobilenet  # noqa: F401 - registra modelos
 import src.models.baselines.shufflenet  # noqa: F401 - registra modelos
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
 from src.data.loader import load_and_normalize_image
+from src.export.data import resolve_split_csv
 from src.models.registry import MODEL_REGISTRY
 from src.training.common import (
-    load_run_metadata,
     resolve_model_names,
     resolve_run_dir,
     select_device,
 )
+from src.training.runs import load_run
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ class RunContext:
     target_size: tuple[int, int]
     splits_dir: Path
     device: torch.device
+    preprocessing: dict | None = None
 
 
 def load_config() -> dict:
@@ -123,6 +125,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Explica una imagen puntual en vez del muestreo balanceado del test set.",
     )
+    visual.add_argument("--segmenter-checkpoint", type=Path, default=None)
     visual.add_argument(
         "--output",
         default=None,
@@ -224,46 +227,21 @@ def iter_run_contexts(
     @returns {Iterator[RunContext]} Un contexto por modelo resoluble; el resto se omite.
     """
     output_dir = Path(args.output_dir) if args.output_dir else _DEFAULT_OUTPUT_DIR
-    splits_fallback = _fallback_splits_dir(cfg, args.baseline)
-
     for model_name in resolve_model_names(args.models, MODEL_REGISTRY):
-        try:
-            run_dir = resolve_run_dir(output_dir, model_name, args.run)
-        except SystemExit as error:
-            logger.warning(f"[{model_name}] {error}. Se omite.")
-            continue
-
-        if not (run_dir / "best.pth").exists():
-            logger.warning(f"[{model_name}] Run {run_dir.name} sin checkpoint, se omite.")
-            continue
-        if require_predictions and not (run_dir / "predictions.csv").exists():
-            logger.warning(
-                f"[{model_name}] Falta {run_dir / 'predictions.csv'}. Corre "
-                "`make train-baselines` (o re-entrena) para generarlo. Se omite."
-            )
-            continue
-
-        splits_dir, _, idx_to_class, target_size = load_run_metadata(
-            run_dir=run_dir,
-            fallback_splits_dir=splits_fallback,
-            fallback_classes=cfg["dataset"]["classes"],
-            fallback_target_size=tuple(cfg["dataset"]["target_size"]),
-        )
-
-        model = MODEL_REGISTRY.build(
-            model_name, num_classes=len(idx_to_class), pretrained=False
-        ).to(device)
-        model.load_state_dict(torch.load(run_dir / "best.pth", map_location=device))
-        model.eval()
-
+        run_dir = resolve_run_dir(output_dir, model_name, args.run)
+        run = load_run(run_dir / "best.pth", model_name, device)
+        if require_predictions and not (run_dir / "predictions.csv").is_file():
+            raise FileNotFoundError(f"Faltan predicciones identificadas en {run_dir}")
+        splits_dir = resolve_split_csv(run_dir, None, "val").parent
         yield RunContext(
             model_name=model_name,
             run_dir=run_dir,
-            model=model,
-            idx_to_class=idx_to_class,
-            target_size=target_size,
+            model=run.model,
+            idx_to_class={idx: name for name, idx in run.class_to_idx.items()},
+            target_size=tuple(run.factory.target_size),
             splits_dir=splits_dir,
             device=device,
+            preprocessing=run.summary["preprocessing"],
         )
 
 
@@ -307,30 +285,32 @@ def cmd_visual(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
     if args.output is not None and (args.image is None or len(resolved_models) != 1):
         raise SystemExit("--output solo es valido junto con --image y un unico modelo.")
 
-    splits_fallback = _fallback_splits_dir(cfg, args.baseline)
-    if not splits_fallback.exists():
-        raise SystemExit(
-            f"El directorio de splits no existe: {splits_fallback}\n"
-            "Genera los splits primero con: make splits  (o make splits-baseline)"
-        )
-
     explain_model_visual, render_visual_explanation = _load_visual_report_functions()
 
     for context in iter_run_contexts(args, cfg, device, require_predictions=False):
         gradcam_name = context.model_name if gradcam_enabled else None
 
         if args.image is not None:
+            from src.data.segmented import prepare_segmented_inference
+
             image_path = Path(args.image)
+            input_image, _ = prepare_segmented_inference(
+                load_and_normalize_image(image_path),
+                context.preprocessing.get("segmentation"),
+                getattr(args, "segmenter_checkpoint", None),
+                device,
+            )
             output_path = (
                 Path(args.output)
                 if args.output is not None
                 else context.run_dir / "explain_visual" / f"{image_path.stem}.png"
             )
             result = render_visual_explanation(
-                image=load_and_normalize_image(image_path),
+                image=input_image,
                 model=context.model,
                 idx_to_class=context.idx_to_class,
                 target_size=context.target_size,
+                preprocessing=context.preprocessing,
                 output_path=output_path,
                 num_samples=lime_cfg["num_samples"],
                 num_features=lime_cfg["num_features"],
@@ -351,6 +331,7 @@ def cmd_visual(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
             dataset_root=get_dataset_root(),
             idx_to_class=context.idx_to_class,
             target_size=context.target_size,
+            preprocessing=context.preprocessing,
             output_dir=context.run_dir,
             images_per_class=lime_cfg["images_per_class"],
             num_features=lime_cfg["num_features"],
@@ -401,6 +382,7 @@ def _explain_subset(
             model=context.model,
             idx_to_class=context.idx_to_class,
             target_size=context.target_size,
+            preprocessing=context.preprocessing,
             output_path=output_path,
             num_samples=num_samples,
             num_features=lime_cfg["num_features"],
@@ -564,6 +546,7 @@ def cmd_compare(args: argparse.Namespace, cfg: dict, device: torch.device) -> No
                 model_name=context.model_name if gradcam_enabled else None,
                 idx_to_class=context.idx_to_class,
                 target_size=context.target_size,
+                preprocessing=context.preprocessing,
                 output_path=panel_dir / f"{image_path.stem}__true-{row['label']}.png",
                 lime_cfg=lime_cfg,
                 shap_cfg=shap_cfg,

@@ -10,8 +10,9 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
+from src.data.transforms import CornTransformFactory
 from src.export.parity import ParityResult, validate_onnx_parity, validate_tflite_parity
-from src.models import build_model
+from src.provenance import atomic_json, contract_hash
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ class ExportFormatResult:
     succeeded: bool
     parity: ParityResult | None = None
     error: str | None = None
+    feature_parity: dict | None = None
 
 
 @dataclass
@@ -121,12 +123,12 @@ def load_checkpoint_for_export(
     @param {torch.device} device Dispositivo destino del modelo.
     @returns {torch.nn.Module} Modelo cargado, en modo eval().
     """
-    if not checkpoint_path.exists():
-        raise SystemExit(f"No existe el checkpoint: {checkpoint_path}")
-    model = build_model(model_name, num_classes=len(class_to_idx), pretrained=False).to(device)
-    model.load_state_dict(_load_state_dict(checkpoint_path, device))
-    model.eval()
-    return model
+    from src.training.runs import load_run
+
+    run = load_run(checkpoint_path, model_name, device)
+    if run.class_to_idx != class_to_idx:
+        raise ValueError("Export class order differs from checkpoint contract")
+    return run.model
 
 
 def resolve_export_inputs(
@@ -148,11 +150,18 @@ def resolve_export_inputs(
             f"con summary.json (modelo '{model_name}')."
         )
     summary = json.loads(summary_path.read_text())
+    if summary.get("model") != model_name:
+        raise ValueError("Export architecture differs from training contract")
+    CornTransformFactory.from_contract(summary["preprocessing"])
     class_to_idx = {str(name): int(idx) for name, idx in summary["class_to_idx"].items()}
     idx_to_class = {idx: name for name, idx in class_to_idx.items()}
+    if sorted(class_to_idx.values()) != list(range(len(class_to_idx))):
+        raise ValueError("Invalid export class order")
     image_size = summary.get("image_size")
     if not (isinstance(image_size, list) and len(image_size) == 2):
         raise SystemExit(f"summary.json en {run_dir} no tiene 'image_size' valido.")
+    if image_size != summary["preprocessing"]["target_size"]:
+        raise ValueError("Export image size differs from preprocessing contract")
     return class_to_idx, idx_to_class, (int(image_size[0]), int(image_size[1]))
 
 
@@ -175,9 +184,9 @@ def _library_versions(formats: list[str]) -> dict[str, str]:
         try:
             import litert_torch
 
-            versions["litert_torch"] = getattr(
-                litert_torch, "__version__", None
-            ) or getattr(litert_torch.version, "__version__", "desconocida")
+            versions["litert_torch"] = getattr(litert_torch, "__version__", None) or getattr(
+                litert_torch.version, "__version__", "desconocida"
+            )
         except (ImportError, AttributeError):
             pass
         try:
@@ -242,7 +251,12 @@ def _export_single_format(
             format_name,
             reason,
         )
-        return ExportFormatResult(format=format_name, output_path=output_path, succeeded=True)
+        return ExportFormatResult(
+            format=format_name,
+            output_path=output_path,
+            succeeded=False,
+            error=f"Unvalidated artifact: {reason}",
+        )
 
     try:
         parity = _VALIDATE_PARITY[format_name](
@@ -254,10 +268,10 @@ def _export_single_format(
             tolerance,
             min_agreement_rate,
         )
-    except ExportDependencyError as e:
+    except Exception as e:
         logger.error("Validacion de paridad %s fallo: %s", format_name, e)
         return ExportFormatResult(
-            format=format_name, output_path=output_path, succeeded=True, error=str(e)
+            format=format_name, output_path=output_path, succeeded=False, error=str(e)
         )
 
     if not parity.passed:
@@ -271,8 +285,41 @@ def _export_single_format(
             parity.min_agreement_rate,
         )
 
+    feature_parity = None
+    try:
+        import numpy as np
+
+        from src.export.runtime import load_exported_runner
+
+        images, _ = next(iter(test_loader))
+        images = images[:parity_sample_size].to(device)
+        with torch.no_grad():
+            reference = model(images)
+        if isinstance(reference, (tuple, list)) and len(reference) > 1:
+            runner = load_exported_runner(output_path, format_name)
+            outputs = runner.all_outputs(images.cpu().numpy())
+            expected = reference[1].detach().cpu().numpy()
+            actual = outputs[1]
+            passed = (
+                expected.shape == actual.shape
+                and np.isfinite(actual).all()
+                and np.allclose(expected, actual, atol=tolerance, rtol=tolerance)
+            )
+            feature_parity = {
+                "passed": bool(passed),
+                "n_samples": len(images),
+                "feature_dim": int(expected.shape[-1]),
+                "tolerance": tolerance,
+                "kind": "pooled_pre_head",
+            }
+    except Exception as error:
+        feature_parity = {"passed": False, "error": str(error)}
     return ExportFormatResult(
-        format=format_name, output_path=output_path, succeeded=True, parity=parity
+        format=format_name,
+        output_path=output_path,
+        succeeded=parity.passed,
+        parity=parity,
+        feature_parity=feature_parity,
     )
 
 
@@ -312,7 +359,14 @@ def write_labels_json(
         "labels": labels,
     }
     output_path = export_dir / "labels.json"
-    output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
+    atomic_json(output_path, payload)
+    summary_path = run_dir / "summary.json"
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text())
+        if summary.get("class_to_idx") != class_to_idx or summary.get("model") != model_name:
+            raise ValueError("Export labels differ from training contract")
+        factory = CornTransformFactory.from_contract(summary["preprocessing"])
+        atomic_json(export_dir / "preprocessing.json", factory.to_contract())
     return output_path
 
 
@@ -423,6 +477,7 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
     export_dir.mkdir(parents=True, exist_ok=True)
 
     payload = {
+        "schema_version": 2,
         "run_id": run_dir.name,
         "model": report.model_name,
         "exported_at": report.exported_at,
@@ -431,11 +486,17 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
         "formats": [
             {
                 "format": f.format,
-                "output_path": (
-                    str(f.output_path.relative_to(run_dir)) if f.output_path else None
-                ),
-                "succeeded": f.succeeded,
+                "output_path": (str(f.output_path.relative_to(run_dir)) if f.output_path else None),
+                "created": f.output_path is not None and f.output_path.is_file(),
+                "succeeded": bool(f.succeeded and f.parity and f.parity.passed),
+                "validation_status": "validated"
+                if f.succeeded and f.parity and f.parity.passed
+                else "failed"
+                if f.parity
+                else "unvalidated",
+                "deliverable": False,  # Full-split evaluation + bundle preflight remain mandatory.
                 "error": f.error,
+                "feature_parity": f.feature_parity,
                 "sha256": _sha256_file(f.output_path) if f.output_path else None,
                 "parity": (
                     None
@@ -457,11 +518,23 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
             for f in report.formats
         ],
     }
+    training_path = run_dir / "summary.json"
+    if training_path.exists():
+        training = json.loads(training_path.read_text())
+        payload["checkpoint_sha256"] = training.get("checkpoint_sha256")
+        payload["preprocessing_id"] = contract_hash(training["preprocessing"])
+        payload["class_to_idx"] = training["class_to_idx"]
+        payload["training_summary_sha256"] = _sha256_file(training_path)
+    payload["asset_hashes"] = {
+        name: _sha256_file(export_dir / name)
+        for name in ("labels.json", "preprocessing.json")
+        if (export_dir / name).is_file()
+    }
     name = (
         "export_summary.json"
         if report.quantize is None
         else f"export_summary_{report.quantize}.json"
     )
     summary_path = export_dir / name
-    summary_path.write_text(json.dumps(payload, indent=2))
+    atomic_json(summary_path, payload)
     return summary_path

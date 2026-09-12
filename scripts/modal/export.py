@@ -25,6 +25,7 @@ from scripts.modal._common import (
     REPO_ANCHOR,
     SEGMENTED_DATASET_MOUNT,
     dataset_vol,
+    export_image,
     image,
     outputs_vol,
     segmented_dataset_vol,
@@ -48,6 +49,7 @@ def _segmented_env(segmented: bool) -> dict:
 
 
 @app.function(
+    image=export_image,
     volumes=_VOLUMES,
     secrets=[modal.Secret.from_name("hf")],
     timeout=3600,
@@ -117,6 +119,7 @@ def export_main(
 
 
 @app.function(
+    image=export_image,
     volumes=_VOLUMES,
     secrets=[modal.Secret.from_name("hf")],
     timeout=7200,

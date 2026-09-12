@@ -1,0 +1,1053 @@
+{
+  "schema_version": 1,
+  "mode": "saved_artifact_audit_no_image_inference",
+  "bundle": "/home/desarrolloab/Documentos/ML/Clasificador/maize-doctor-classifier/outputs/outputs-11092026",
+  "runs": [
+    {
+      "model": "efficientnet_b0",
+      "run_id": "20260910_170120",
+      "recomputed": {
+        "accuracy": 0.9796610169491525,
+        "macro_precision": 0.9589224304317059,
+        "macro_recall": 0.9399906226501789,
+        "macro_f1": 0.9483330101876505,
+        "errors": 102
+      },
+      "declared": {
+        "pipeline": "main",
+        "model": "efficientnet_b0",
+        "run_id": "20260910_170120",
+        "num_classes": 9,
+        "class_to_idx": {
+          "common_rust": 0,
+          "fall_armyworm": 1,
+          "gray_leaf_spot": 2,
+          "healthy": 3,
+          "lethal_necrosis": 4,
+          "nitrogen_deficiency": 5,
+          "northern_corn_leaf_blight": 6,
+          "phosphorus_deficiency": 7,
+          "potassium_deficiency": 8
+        },
+        "image_size": [
+          224,
+          224
+        ],
+        "splits_dir": "/outputs/splits/seed_42",
+        "epochs_requested": 35,
+        "epochs_run": 35,
+        "batch_size": 64,
+        "learning_rate": 0.0004548,
+        "weight_decay": 0.0001,
+        "scheduler": "cosine",
+        "warmup_epochs": 3,
+        "min_lr": 1e-06,
+        "patience": 8,
+        "class_weights": "sqrt_inverse",
+        "label_smoothing": 0.1,
+        "clip_grad_norm": 1.0,
+        "clahe": false,
+        "sampler": null,
+        "pretrained": true,
+        "best_epoch": 28,
+        "best_val_macro_f1": 0.9609821587082761,
+        "test": {
+          "loss": 0.7677091861008304,
+          "accuracy": 0.9796610169491525,
+          "macro_f1": 0.9483330101876505
+        }
+      },
+      "history_best_epoch": 28,
+      "history_best_macro_f1": 0.960982158708276,
+      "history_epochs": 35,
+      "training_minutes": 103.02501417944994,
+      "matrix_matches_predictions": true,
+      "summary_metrics_match": true,
+      "checkpoint_strict_load": true,
+      "structural_output_shape": [
+        1,
+        9
+      ],
+      "checkpoint_sha256": "0e367a5318c068c9bcc90a6bec0d17a0b029251ca5f98400034bd09de7524fdb",
+      "summary_sha256": "d125bd11b6a6f1fcfe01bc6ec66fa0bab672c9f4853cee440dd2d1971a374afd",
+      "predictions_sha256": "f11f2b075f70de123119b8969a3ca4991e4acbef121f51a87669d0f3025a4386",
+      "best_and_last_differ": true,
+      "hpo_differences": {
+        "learning_rate": {
+          "hpo": 0.0004548490396244796,
+          "run": 0.0004548
+        },
+        "weight_decay": {
+          "hpo": 1.5731194601419433e-05,
+          "run": 0.0001
+        },
+        "label_smoothing": {
+          "hpo": 0.10012457623772764,
+          "run": 0.1
+        },
+        "warmup_epochs": {
+          "hpo": 2,
+          "run": 3
+        }
+      },
+      "subgroups_recomputed": {
+        "schema_version": 2,
+        "overall": {
+          "sample_count": 5015,
+          "accuracy": 0.9796610169491525,
+          "accuracy_ci95": [
+            0.9753714110000489,
+            0.9832163506325866
+          ],
+          "macro_precision": 0.9589224304317059,
+          "macro_recall": 0.9399906226501789,
+          "macro_f1": 0.9483330101876505,
+          "macro_policy": "true-supported classes",
+          "averaged_classes": [
+            "common_rust",
+            "fall_armyworm",
+            "gray_leaf_spot",
+            "healthy",
+            "lethal_necrosis",
+            "nitrogen_deficiency",
+            "northern_corn_leaf_blight",
+            "phosphorus_deficiency",
+            "potassium_deficiency"
+          ],
+          "class_support": {
+            "common_rust": 338,
+            "fall_armyworm": 728,
+            "gray_leaf_spot": 290,
+            "healthy": 1311,
+            "lethal_necrosis": 963,
+            "nitrogen_deficiency": 127,
+            "northern_corn_leaf_blight": 1025,
+            "phosphorus_deficiency": 140,
+            "potassium_deficiency": 93
+          },
+          "class_fnr": {
+            "common_rust": 0.014792899408283988,
+            "fall_armyworm": 0.008241758241758212,
+            "gray_leaf_spot": 0.1344827586206897,
+            "healthy": 0.0030511060259343914,
+            "lethal_necrosis": 0.0,
+            "nitrogen_deficiency": 0.07086614173228345,
+            "northern_corn_leaf_blight": 0.007804878048780495,
+            "phosphorus_deficiency": 0.06428571428571428,
+            "potassium_deficiency": 0.23655913978494625
+          },
+          "class_recall_ci95": {
+            "common_rust": [
+              0.9658438874088828,
+              0.9936652403942654
+            ],
+            "fall_armyworm": [
+              0.9821365630169514,
+              0.9962174115635247
+            ],
+            "gray_leaf_spot": [
+              0.8214383487121443,
+              0.9000391475228752
+            ],
+            "healthy": [
+              0.9921811382598927,
+              0.9988128642936053
+            ],
+            "lethal_necrosis": [
+              0.9960267955147687,
+              1.0
+            ],
+            "nitrogen_deficiency": [
+              0.8707973400720659,
+              0.9622719407387987
+            ],
+            "northern_corn_leaf_blight": [
+              0.9846748179893299,
+              0.9960399377676576
+            ],
+            "phosphorus_deficiency": [
+              0.8823423857613151,
+              0.9658136396310537
+            ],
+            "potassium_deficiency": [
+              0.6677082816194321,
+              0.8382733567894386
+            ]
+          }
+        },
+        "common_classes": [
+          "common_rust",
+          "gray_leaf_spot",
+          "northern_corn_leaf_blight"
+        ],
+        "subgroups": {
+          "lab": {
+            "sample_count": 532,
+            "accuracy": 0.9417293233082706,
+            "accuracy_ci95": [
+              0.9184769913100223,
+              0.9586481214694159
+            ],
+            "macro_precision": 0.9278563746173575,
+            "macro_recall": 0.8712690817953975,
+            "macro_f1": 0.8863652634593356,
+            "macro_policy": "true-supported classes",
+            "averaged_classes": [
+              "common_rust",
+              "gray_leaf_spot",
+              "northern_corn_leaf_blight"
+            ],
+            "class_support": {
+              "common_rust": 322,
+              "fall_armyworm": 0,
+              "gray_leaf_spot": 77,
+              "healthy": 0,
+              "lethal_necrosis": 0,
+              "nitrogen_deficiency": 0,
+              "northern_corn_leaf_blight": 133,
+              "phosphorus_deficiency": 0,
+              "potassium_deficiency": 0
+            },
+            "class_fnr": {
+              "common_rust": 0.0,
+              "fall_armyworm": null,
+              "gray_leaf_spot": 0.36363636363636365,
+              "healthy": null,
+              "lethal_necrosis": null,
+              "nitrogen_deficiency": null,
+              "northern_corn_leaf_blight": 0.022556390977443663,
+              "phosphorus_deficiency": null,
+              "potassium_deficiency": null
+            },
+            "class_recall_ci95": {
+              "common_rust": [
+                0.9882106505581045,
+                1.0
+              ],
+              "fall_armyworm": null,
+              "gray_leaf_spot": [
+                0.5248220271273843,
+                0.7349456750683153
+              ],
+              "healthy": null,
+              "lethal_necrosis": null,
+              "nitrogen_deficiency": null,
+              "northern_corn_leaf_blight": [
+                0.9357817301552714,
+                0.9922995771801787
+              ],
+              "phosphorus_deficiency": null,
+              "potassium_deficiency": null
+            },
+            "comparable_metrics": {
+              "sample_count": 532,
+              "accuracy": 0.9417293233082706,
+              "accuracy_ci95": [
+                0.9184769913100223,
+                0.9586481214694159
+              ],
+              "macro_precision": 0.9278563746173575,
+              "macro_recall": 0.8712690817953975,
+              "macro_f1": 0.8863652634593356,
+              "macro_policy": "common true-supported classes",
+              "averaged_classes": [
+                "common_rust",
+                "gray_leaf_spot",
+                "northern_corn_leaf_blight"
+              ],
+              "class_support": {
+                "common_rust": 322,
+                "fall_armyworm": 0,
+                "gray_leaf_spot": 77,
+                "healthy": 0,
+                "lethal_necrosis": 0,
+                "nitrogen_deficiency": 0,
+                "northern_corn_leaf_blight": 133,
+                "phosphorus_deficiency": 0,
+                "potassium_deficiency": 0
+              },
+              "class_fnr": {
+                "common_rust": 0.0,
+                "fall_armyworm": null,
+                "gray_leaf_spot": 0.36363636363636365,
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": 0.022556390977443663,
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              },
+              "class_recall_ci95": {
+                "common_rust": [
+                  0.9882106505581045,
+                  1.0
+                ],
+                "fall_armyworm": null,
+                "gray_leaf_spot": [
+                  0.5248220271273843,
+                  0.7349456750683153
+                ],
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": [
+                  0.9357817301552714,
+                  0.9922995771801787
+                ],
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              }
+            }
+          },
+          "real": {
+            "sample_count": 4483,
+            "accuracy": 0.9841623912558555,
+            "accuracy_ci95": [
+              0.9800713746189986,
+              0.987424365946119
+            ],
+            "macro_precision": 0.946562147778053,
+            "macro_recall": 0.9163608406972423,
+            "macro_f1": 0.9297946872871794,
+            "macro_policy": "true-supported classes",
+            "averaged_classes": [
+              "common_rust",
+              "fall_armyworm",
+              "gray_leaf_spot",
+              "healthy",
+              "lethal_necrosis",
+              "nitrogen_deficiency",
+              "northern_corn_leaf_blight",
+              "phosphorus_deficiency",
+              "potassium_deficiency"
+            ],
+            "class_support": {
+              "common_rust": 16,
+              "fall_armyworm": 728,
+              "gray_leaf_spot": 213,
+              "healthy": 1311,
+              "lethal_necrosis": 963,
+              "nitrogen_deficiency": 127,
+              "northern_corn_leaf_blight": 892,
+              "phosphorus_deficiency": 140,
+              "potassium_deficiency": 93
+            },
+            "class_fnr": {
+              "common_rust": 0.3125,
+              "fall_armyworm": 0.008241758241758212,
+              "gray_leaf_spot": 0.05164319248826288,
+              "healthy": 0.0030511060259343914,
+              "lethal_necrosis": 0.0,
+              "nitrogen_deficiency": 0.07086614173228345,
+              "northern_corn_leaf_blight": 0.005605381165919243,
+              "phosphorus_deficiency": 0.06428571428571428,
+              "potassium_deficiency": 0.23655913978494625
+            },
+            "class_recall_ci95": {
+              "common_rust": [
+                0.44404355834740666,
+                0.8583535614521796
+              ],
+              "fall_armyworm": [
+                0.9821365630169514,
+                0.9962174115635247
+              ],
+              "gray_leaf_spot": [
+                0.9099061070477201,
+                0.9709217615654386
+              ],
+              "healthy": [
+                0.9921811382598927,
+                0.9988128642936053
+              ],
+              "lethal_necrosis": [
+                0.9960267955147687,
+                1.0
+              ],
+              "nitrogen_deficiency": [
+                0.8707973400720659,
+                0.9622719407387987
+              ],
+              "northern_corn_leaf_blight": [
+                0.9869457991701164,
+                0.9976034101967785
+              ],
+              "phosphorus_deficiency": [
+                0.8823423857613151,
+                0.9658136396310537
+              ],
+              "potassium_deficiency": [
+                0.6677082816194321,
+                0.8382733567894386
+              ]
+            },
+            "comparable_metrics": {
+              "sample_count": 1121,
+              "accuracy": 0.9812667261373773,
+              "accuracy_ci95": [
+                0.9715312318651966,
+                0.9877150615024436
+              ],
+              "macro_precision": 0.9432103332044047,
+              "macro_recall": 0.8767504754486058,
+              "macro_f1": 0.9070943882390465,
+              "macro_policy": "common true-supported classes",
+              "averaged_classes": [
+                "common_rust",
+                "gray_leaf_spot",
+                "northern_corn_leaf_blight"
+              ],
+              "class_support": {
+                "common_rust": 16,
+                "fall_armyworm": 0,
+                "gray_leaf_spot": 213,
+                "healthy": 0,
+                "lethal_necrosis": 0,
+                "nitrogen_deficiency": 0,
+                "northern_corn_leaf_blight": 892,
+                "phosphorus_deficiency": 0,
+                "potassium_deficiency": 0
+              },
+              "class_fnr": {
+                "common_rust": 0.3125,
+                "fall_armyworm": null,
+                "gray_leaf_spot": 0.05164319248826288,
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": 0.005605381165919243,
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              },
+              "class_recall_ci95": {
+                "common_rust": [
+                  0.44404355834740666,
+                  0.8583535614521796
+                ],
+                "fall_armyworm": null,
+                "gray_leaf_spot": [
+                  0.9099061070477201,
+                  0.9709217615654386
+                ],
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": [
+                  0.9869457991701164,
+                  0.9976034101967785
+                ],
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              }
+            }
+          }
+        }
+      },
+      "disparity_recomputed": {
+        "status": "descriptive",
+        "metric_name": "common_class_macro_f1_ratio",
+        "ratio": 0.9771477753048913,
+        "delta_macro_f1": 0.020729124779710895,
+        "delta_accuracy": 0.03953740282910667,
+        "common_classes": [
+          "common_rust",
+          "gray_leaf_spot",
+          "northern_corn_leaf_blight"
+        ],
+        "fnr_disparity_by_class": {
+          "common_rust": 0.3125,
+          "gray_leaf_spot": 0.31199317114810077,
+          "northern_corn_leaf_blight": 0.01695100981152442
+        },
+        "threshold": null,
+        "conclusion": "Descriptive performance on common classes; not a fairness certification.",
+        "group_a": "lab",
+        "group_b": "real",
+        "comparison_support": {
+          "lab": 532,
+          "real": 1121
+        }
+      },
+      "legacy_limitations": [
+        "no original byte hashes in splits",
+        "no serialized preprocessing or training code revision",
+        "saved path alignment cannot exclude historical image substitution",
+        "best checkpoint epoch cannot be proved from bare state_dict"
+      ]
+    },
+    {
+      "model": "shufflenet_v2_x1_0",
+      "run_id": "20260910_184521",
+      "recomputed": {
+        "accuracy": 0.9730807577268196,
+        "macro_precision": 0.9387607935319665,
+        "macro_recall": 0.9297624383894549,
+        "macro_f1": 0.9329803745633506,
+        "errors": 135
+      },
+      "declared": {
+        "pipeline": "main",
+        "model": "shufflenet_v2_x1_0",
+        "run_id": "20260910_184521",
+        "num_classes": 9,
+        "class_to_idx": {
+          "common_rust": 0,
+          "fall_armyworm": 1,
+          "gray_leaf_spot": 2,
+          "healthy": 3,
+          "lethal_necrosis": 4,
+          "nitrogen_deficiency": 5,
+          "northern_corn_leaf_blight": 6,
+          "phosphorus_deficiency": 7,
+          "potassium_deficiency": 8
+        },
+        "image_size": [
+          224,
+          224
+        ],
+        "splits_dir": "/outputs/splits/seed_42",
+        "epochs_requested": 35,
+        "epochs_run": 31,
+        "batch_size": 64,
+        "learning_rate": 0.0004548,
+        "weight_decay": 0.0001,
+        "scheduler": "cosine",
+        "warmup_epochs": 3,
+        "min_lr": 1e-06,
+        "patience": 8,
+        "class_weights": "sqrt_inverse",
+        "label_smoothing": 0.1,
+        "clip_grad_norm": 1.0,
+        "clahe": false,
+        "sampler": null,
+        "pretrained": true,
+        "best_epoch": 23,
+        "best_val_macro_f1": 0.9502494685021711,
+        "test": {
+          "loss": 0.7700573788166679,
+          "accuracy": 0.9730807577268196,
+          "macro_f1": 0.9329803745633506
+        }
+      },
+      "history_best_epoch": 23,
+      "history_best_macro_f1": 0.9502494685021712,
+      "history_epochs": 31,
+      "training_minutes": 89.40470048908337,
+      "matrix_matches_predictions": true,
+      "summary_metrics_match": true,
+      "checkpoint_strict_load": true,
+      "structural_output_shape": [
+        1,
+        9
+      ],
+      "checkpoint_sha256": "b681a3fd5fffaa5d078802369dff04b46c91cbfed7b333ea80c9d6965fd82c9e",
+      "summary_sha256": "2c20e614bae62425cad30446efad517270809bdfa6b2e5347d387a13b09fa7b0",
+      "predictions_sha256": "c534a0506205c01890e1a96e9ef61f373564f9b8032d8739c983c2eef99c7738",
+      "best_and_last_differ": true,
+      "hpo_differences": {
+        "learning_rate": {
+          "hpo": 0.0004548490396244796,
+          "run": 0.0004548
+        },
+        "weight_decay": {
+          "hpo": 1.5731194601419433e-05,
+          "run": 0.0001
+        },
+        "label_smoothing": {
+          "hpo": 0.10012457623772764,
+          "run": 0.1
+        },
+        "warmup_epochs": {
+          "hpo": 2,
+          "run": 3
+        }
+      },
+      "subgroups_recomputed": {
+        "schema_version": 2,
+        "overall": {
+          "sample_count": 5015,
+          "accuracy": 0.9730807577268196,
+          "accuracy_ci95": [
+            0.9682263696194712,
+            0.9772109467278279
+          ],
+          "macro_precision": 0.9387607935319665,
+          "macro_recall": 0.9297624383894549,
+          "macro_f1": 0.9329803745633506,
+          "macro_policy": "true-supported classes",
+          "averaged_classes": [
+            "common_rust",
+            "fall_armyworm",
+            "gray_leaf_spot",
+            "healthy",
+            "lethal_necrosis",
+            "nitrogen_deficiency",
+            "northern_corn_leaf_blight",
+            "phosphorus_deficiency",
+            "potassium_deficiency"
+          ],
+          "class_support": {
+            "common_rust": 338,
+            "fall_armyworm": 728,
+            "gray_leaf_spot": 290,
+            "healthy": 1311,
+            "lethal_necrosis": 963,
+            "nitrogen_deficiency": 127,
+            "northern_corn_leaf_blight": 1025,
+            "phosphorus_deficiency": 140,
+            "potassium_deficiency": 93
+          },
+          "class_fnr": {
+            "common_rust": 0.014792899408283988,
+            "fall_armyworm": 0.013736263736263687,
+            "gray_leaf_spot": 0.12413793103448278,
+            "healthy": 0.009153318077803174,
+            "lethal_necrosis": 0.0,
+            "nitrogen_deficiency": 0.07086614173228345,
+            "northern_corn_leaf_blight": 0.023414634146341484,
+            "phosphorus_deficiency": 0.08571428571428574,
+            "potassium_deficiency": 0.29032258064516125
+          },
+          "class_recall_ci95": {
+            "common_rust": [
+              0.9658438874088828,
+              0.9936652403942654
+            ],
+            "fall_armyworm": [
+              0.9749007334140805,
+              0.9925219118414743
+            ],
+            "gray_leaf_spot": [
+              0.8329277125345751,
+              0.9089689581221903
+            ],
+            "healthy": [
+              0.9840690028421806,
+              0.9947562322202537
+            ],
+            "lethal_necrosis": [
+              0.9960267955147687,
+              1.0
+            ],
+            "nitrogen_deficiency": [
+              0.8707973400720659,
+              0.9622719407387987
+            ],
+            "northern_corn_leaf_blight": [
+              0.9653961042789212,
+              0.9842157058049013
+            ],
+            "phosphorus_deficiency": [
+              0.8561546785666259,
+              0.9502887554130033
+            ],
+            "potassium_deficiency": [
+              0.6105740949932597,
+              0.7921459845566579
+            ]
+          }
+        },
+        "common_classes": [
+          "common_rust",
+          "gray_leaf_spot",
+          "northern_corn_leaf_blight"
+        ],
+        "subgroups": {
+          "lab": {
+            "sample_count": 532,
+            "accuracy": 0.9511278195488722,
+            "accuracy_ci95": [
+              0.9293544659083055,
+              0.9664328833132483
+            ],
+            "macro_precision": 0.9292126563649742,
+            "macro_recall": 0.898030649746897,
+            "macro_f1": 0.9081379141490636,
+            "macro_policy": "true-supported classes",
+            "averaged_classes": [
+              "common_rust",
+              "gray_leaf_spot",
+              "northern_corn_leaf_blight"
+            ],
+            "class_support": {
+              "common_rust": 322,
+              "fall_armyworm": 0,
+              "gray_leaf_spot": 77,
+              "healthy": 0,
+              "lethal_necrosis": 0,
+              "nitrogen_deficiency": 0,
+              "northern_corn_leaf_blight": 133,
+              "phosphorus_deficiency": 0,
+              "potassium_deficiency": 0
+            },
+            "class_fnr": {
+              "common_rust": 0.0031055900621117516,
+              "fall_armyworm": null,
+              "gray_leaf_spot": 0.2727272727272727,
+              "healthy": null,
+              "lethal_necrosis": null,
+              "nitrogen_deficiency": null,
+              "northern_corn_leaf_blight": 0.03007518796992481,
+              "phosphorus_deficiency": null,
+              "potassium_deficiency": null
+            },
+            "class_recall_ci95": {
+              "common_rust": [
+                0.9826211196272577,
+                0.9994515765795543
+              ],
+              "fall_armyworm": null,
+              "gray_leaf_spot": [
+                0.6187910782504654,
+                0.8141550920757009
+              ],
+              "healthy": null,
+              "lethal_necrosis": null,
+              "nitrogen_deficiency": null,
+              "northern_corn_leaf_blight": [
+                0.9252223795903031,
+                0.9882434740863212
+              ],
+              "phosphorus_deficiency": null,
+              "potassium_deficiency": null
+            },
+            "comparable_metrics": {
+              "sample_count": 532,
+              "accuracy": 0.9511278195488722,
+              "accuracy_ci95": [
+                0.9293544659083055,
+                0.9664328833132483
+              ],
+              "macro_precision": 0.9292126563649742,
+              "macro_recall": 0.898030649746897,
+              "macro_f1": 0.9081379141490636,
+              "macro_policy": "common true-supported classes",
+              "averaged_classes": [
+                "common_rust",
+                "gray_leaf_spot",
+                "northern_corn_leaf_blight"
+              ],
+              "class_support": {
+                "common_rust": 322,
+                "fall_armyworm": 0,
+                "gray_leaf_spot": 77,
+                "healthy": 0,
+                "lethal_necrosis": 0,
+                "nitrogen_deficiency": 0,
+                "northern_corn_leaf_blight": 133,
+                "phosphorus_deficiency": 0,
+                "potassium_deficiency": 0
+              },
+              "class_fnr": {
+                "common_rust": 0.0031055900621117516,
+                "fall_armyworm": null,
+                "gray_leaf_spot": 0.2727272727272727,
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": 0.03007518796992481,
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              },
+              "class_recall_ci95": {
+                "common_rust": [
+                  0.9826211196272577,
+                  0.9994515765795543
+                ],
+                "fall_armyworm": null,
+                "gray_leaf_spot": [
+                  0.6187910782504654,
+                  0.8141550920757009
+                ],
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": [
+                  0.9252223795903031,
+                  0.9882434740863212
+                ],
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              }
+            }
+          },
+          "real": {
+            "sample_count": 4483,
+            "accuracy": 0.9756859246040598,
+            "accuracy_ci95": [
+              0.9707535655685282,
+              0.9798037561338968
+            ],
+            "macro_precision": 0.915063035774346,
+            "macro_recall": 0.9097070389132509,
+            "macro_f1": 0.9112538967290829,
+            "macro_policy": "true-supported classes",
+            "averaged_classes": [
+              "common_rust",
+              "fall_armyworm",
+              "gray_leaf_spot",
+              "healthy",
+              "lethal_necrosis",
+              "nitrogen_deficiency",
+              "northern_corn_leaf_blight",
+              "phosphorus_deficiency",
+              "potassium_deficiency"
+            ],
+            "class_support": {
+              "common_rust": 16,
+              "fall_armyworm": 728,
+              "gray_leaf_spot": 213,
+              "healthy": 1311,
+              "lethal_necrosis": 963,
+              "nitrogen_deficiency": 127,
+              "northern_corn_leaf_blight": 892,
+              "phosphorus_deficiency": 140,
+              "potassium_deficiency": 93
+            },
+            "class_fnr": {
+              "common_rust": 0.25,
+              "fall_armyworm": 0.013736263736263687,
+              "gray_leaf_spot": 0.07042253521126762,
+              "healthy": 0.009153318077803174,
+              "lethal_necrosis": 0.0,
+              "nitrogen_deficiency": 0.07086614173228345,
+              "northern_corn_leaf_blight": 0.022421524663677084,
+              "phosphorus_deficiency": 0.08571428571428574,
+              "potassium_deficiency": 0.29032258064516125
+            },
+            "class_recall_ci95": {
+              "common_rust": [
+                0.5050168346449122,
+                0.8981793250878696
+              ],
+              "fall_armyworm": [
+                0.9749007334140805,
+                0.9925219118414743
+              ],
+              "gray_leaf_spot": [
+                0.8870727291215519,
+                0.9568618256229928
+              ],
+              "healthy": [
+                0.9840690028421806,
+                0.9947562322202537
+              ],
+              "lethal_necrosis": [
+                0.9960267955147687,
+                1.0
+              ],
+              "nitrogen_deficiency": [
+                0.8707973400720659,
+                0.9622719407387987
+              ],
+              "northern_corn_leaf_blight": [
+                0.9656217892550127,
+                0.9854393517660693
+              ],
+              "phosphorus_deficiency": [
+                0.8561546785666259,
+                0.9502887554130033
+              ],
+              "potassium_deficiency": [
+                0.6105740949932597,
+                0.7921459845566579
+              ]
+            },
+            "comparable_metrics": {
+              "sample_count": 1121,
+              "accuracy": 0.9652096342551294,
+              "accuracy_ci95": [
+                0.9527948336821808,
+                0.9744469494340833
+              ],
+              "macro_precision": 0.9026300211807579,
+              "macro_recall": 0.8857186467083519,
+              "macro_f1": 0.8940409323704518,
+              "macro_policy": "common true-supported classes",
+              "averaged_classes": [
+                "common_rust",
+                "gray_leaf_spot",
+                "northern_corn_leaf_blight"
+              ],
+              "class_support": {
+                "common_rust": 16,
+                "fall_armyworm": 0,
+                "gray_leaf_spot": 213,
+                "healthy": 0,
+                "lethal_necrosis": 0,
+                "nitrogen_deficiency": 0,
+                "northern_corn_leaf_blight": 892,
+                "phosphorus_deficiency": 0,
+                "potassium_deficiency": 0
+              },
+              "class_fnr": {
+                "common_rust": 0.25,
+                "fall_armyworm": null,
+                "gray_leaf_spot": 0.07042253521126762,
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": 0.022421524663677084,
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              },
+              "class_recall_ci95": {
+                "common_rust": [
+                  0.5050168346449122,
+                  0.8981793250878696
+                ],
+                "fall_armyworm": null,
+                "gray_leaf_spot": [
+                  0.8870727291215519,
+                  0.9568618256229928
+                ],
+                "healthy": null,
+                "lethal_necrosis": null,
+                "nitrogen_deficiency": null,
+                "northern_corn_leaf_blight": [
+                  0.9656217892550127,
+                  0.9854393517660693
+                ],
+                "phosphorus_deficiency": null,
+                "potassium_deficiency": null
+              }
+            }
+          }
+        }
+      },
+      "disparity_recomputed": {
+        "status": "descriptive",
+        "metric_name": "common_class_macro_f1_ratio",
+        "ratio": 0.9844770474187052,
+        "delta_macro_f1": 0.01409698177861185,
+        "delta_accuracy": 0.014081814706257245,
+        "common_classes": [
+          "common_rust",
+          "gray_leaf_spot",
+          "northern_corn_leaf_blight"
+        ],
+        "fnr_disparity_by_class": {
+          "common_rust": 0.24689440993788825,
+          "gray_leaf_spot": 0.20230473751600508,
+          "northern_corn_leaf_blight": 0.007653663306247727
+        },
+        "threshold": null,
+        "conclusion": "Descriptive performance on common classes; not a fairness certification.",
+        "group_a": "lab",
+        "group_b": "real",
+        "comparison_support": {
+          "lab": 532,
+          "real": 1121
+        }
+      },
+      "legacy_limitations": [
+        "no original byte hashes in splits",
+        "no serialized preprocessing or training code revision",
+        "saved path alignment cannot exclude historical image substitution",
+        "best checkpoint epoch cannot be proved from bare state_dict"
+      ]
+    }
+  ],
+  "split_sha256": {
+    "train": "36323390a642d96eeaf0a49b2cd413509c218fc9fa8d68a787a43e61522d9606",
+    "val": "581f652d08e3bcbc2e96c020c916df9a2643f15e0a30349c4cce4aae3b963b6f",
+    "test": "2aa77330747bfbb8fcb5d62a0e8b64a91d0db2b9e4d43e3c9c27bc2346d07111"
+  },
+  "split_counts": {
+    "train": 23403,
+    "val": 5015,
+    "test": 5015
+  },
+  "within_pipeline_path_overlap": {
+    "train/val": 0,
+    "train/test": 0,
+    "val/test": 0
+  },
+  "hpo": {
+    "declared": {
+      "study_name": "tune_efficientnet_b0",
+      "model_name": "efficientnet_b0",
+      "best_trial_number": 12,
+      "best_val_macro_f1": 0.9553,
+      "baseline_macro_f1": 0.9146,
+      "improvement_delta": 0.0407,
+      "improvement_pct": 4.45,
+      "best_params": {
+        "learning_rate": 0.0004548490396244796,
+        "weight_decay": 1.5731194601419433e-05,
+        "batch_size": 64,
+        "class_weights": "sqrt_inverse",
+        "label_smoothing": 0.10012457623772764,
+        "warmup_epochs": 2,
+        "clahe": false
+      },
+      "total_trials": 15,
+      "pruned_trials": 7,
+      "complete_trials": 6
+    },
+    "trial_states": {
+      "PRUNED": 7,
+      "COMPLETE": 6,
+      "FAIL": 1,
+      "RUNNING": 1
+    }
+  },
+  "stage2": {
+    "n": 5015,
+    "macro_f1": 0.9035196006000957,
+    "macro_precision": 0.901217168980573,
+    "macro_recall": 0.9092077334876701,
+    "accuracy": 0.9537387836490528,
+    "matrix_matches": true,
+    "predictions_sha256": "df3b0ed883edb077493d6ce28c126ec8322114cfbe807e8581c3657dcded511e"
+  },
+  "cross_experiment_overlap": {
+    "stage2_holdout_vs_main": {
+      "train": 3482,
+      "val": 760,
+      "test": 773
+    },
+    "same_holdout": false,
+    "interpretation": "Different protocols; cross-experiment overlap alone is not within-run leakage"
+  },
+  "ensemble": {
+    "declared": {
+      "models_included": [
+        "efficientnet_b0",
+        "shufflenet_v2_x1_0"
+      ],
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "metrics_per_model": {
+        "efficientnet_b0": {
+          "macro_f1": 0.9483330101876505,
+          "weighted_f1": 0.9793178664307708,
+          "accuracy": 0.9796610169491525,
+          "macro_precision": 0.9589224304317059,
+          "macro_recall": 0.9399906226501789
+        },
+        "shufflenet_v2_x1_0": {
+          "macro_f1": 0.9329803745633506,
+          "weighted_f1": 0.9728385860778975,
+          "accuracy": 0.9730807577268196,
+          "macro_precision": 0.9387607935319665,
+          "macro_recall": 0.9297624383894549
+        },
+        "soft_voting_ensemble": {
+          "macro_f1": 0.9506764701459071,
+          "weighted_f1": 0.9795650258980669,
+          "accuracy": 0.9798604187437687,
+          "macro_precision": 0.958194814763855,
+          "macro_recall": 0.9445084220161833
+        }
+      },
+      "best_individual_macro_f1": 0.9483,
+      "ensemble_macro_f1": 0.9507,
+      "ensemble_gain_delta": 0.0023,
+      "total_test_samples": 5015
+    },
+    "recalculation": "unavailable: full per-class probabilities and ensemble predictions missing"
+  }
+}

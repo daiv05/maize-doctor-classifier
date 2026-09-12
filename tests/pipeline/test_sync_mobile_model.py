@@ -5,6 +5,8 @@ from pathlib import Path
 import pytest
 
 from scripts.pipeline.sync_mobile_model import sync_mobile_model
+from src.data.transforms import CornTransformFactory
+from src.provenance import atomic_json, contract_hash, sha256_file
 
 
 def _make_run_dir(tmp_path: Path) -> Path:
@@ -35,11 +37,62 @@ def _make_run_dir(tmp_path: Path) -> Path:
                 "succeeded": True,
                 "error": None,
                 "sha256": hashlib.sha256(model_bytes).hexdigest(),
-                "parity": None,
+                "parity": {"passed": True, "n_samples": 30},
+                "feature_parity": {"passed": True, "feature_dim": 16, "kind": "pooled_pre_head"},
             }
         ],
     }
-    (export_dir / "export_summary_int8.json").write_text(json.dumps(summary_payload))
+    (run_dir / "best.pth").write_bytes(b"fake checkpoint for bundle contract unit tests")
+    preproc = CornTransformFactory(target_size=(224, 224)).to_contract()
+    atomic_json(export_dir / "preprocessing.json", preproc)
+    checkpoint_hash = sha256_file(run_dir / "best.pth")
+    training = {
+        "model": "shufflenet_v2_x1_0",
+        "class_to_idx": {"common_rust": 0, "healthy": 1},
+        "preprocessing": preproc,
+        "checkpoint_sha256": checkpoint_hash,
+        "split_sha256": {"test": "test-manifest-fixture-hash"},
+    }
+    atomic_json(run_dir / "summary.json", training)
+    summary_payload.update(
+        {
+            "checkpoint_sha256": checkpoint_hash,
+            "preprocessing_id": contract_hash(preproc),
+            "training_summary_sha256": sha256_file(run_dir / "summary.json"),
+            "asset_hashes": {
+                name: sha256_file(export_dir / name)
+                for name in ("labels.json", "preprocessing.json")
+            },
+        }
+    )
+    atomic_json(export_dir / "export_summary_int8.json", summary_payload)
+    (export_dir / "eval_tflite_int8_predictions.csv").write_text("sample_id,pred\na,0\nb,1\n")
+    atomic_json(
+        export_dir / "eval_tflite_int8.json",
+        {
+            "run_id": run_dir.name,
+            "macro_f1_delta": -0.005,
+            "n_samples": 2,
+            "expected_samples": 2,
+            "sample_ids_hash": contract_hash(["a", "b"]),
+            "evaluated_split_sha256": training["split_sha256"]["test"],
+            "model_sha256": summary_payload["formats"][0]["sha256"],
+            "checkpoint_sha256": checkpoint_hash,
+            "preprocessing_id": contract_hash(preproc),
+            "predictions_sha256": sha256_file(export_dir / "eval_tflite_int8_predictions.csv"),
+        },
+    )
+    atomic_json(
+        export_dir / "ood_stats.json",
+        {
+            "run_id": run_dir.name,
+            "checkpoint_sha256": checkpoint_hash,
+            "preprocessing_id": contract_hash(preproc),
+            "labels": labels_payload["labels"],
+            "feature_dim": 16,
+            "l2_normalized": True,
+        },
+    )
     return run_dir
 
 
@@ -77,3 +130,55 @@ def test_sync_mobile_model_formato_ausente_en_summary(tmp_path):
 
     with pytest.raises(ValueError, match="No se encontro"):
         sync_mobile_model(run_dir, dest_dir, fmt="onnx", quantize="int8")
+
+
+@pytest.mark.parametrize("case", ["parity", "drop", "missing_ood", "stale_ood", "labels"])
+def test_preflight_preserves_previous_bundle(tmp_path, case):
+    run = _make_run_dir(tmp_path)
+    dest = tmp_path / "assets"
+    dest.mkdir()
+    (dest / "previous.tflite").write_bytes(b"previous")
+    export = run / "export"
+    if case == "parity":
+        path = export / "export_summary_int8.json"
+        data = json.loads(path.read_text())
+        data["formats"][0]["parity"] = None
+        atomic_json(path, data)
+    elif case == "drop":
+        path = export / "eval_tflite_int8.json"
+        data = json.loads(path.read_text())
+        data["macro_f1_delta"] = -0.011
+        atomic_json(path, data)
+    elif case == "missing_ood":
+        (export / "ood_stats.json").unlink()
+    elif case == "stale_ood":
+        path = export / "ood_stats.json"
+        data = json.loads(path.read_text())
+        data["run_id"] = "old"
+        atomic_json(path, data)
+    else:
+        (export / "labels.json").write_text("{}")
+    with pytest.raises(ValueError):
+        sync_mobile_model(run, dest)
+    assert list(dest.iterdir()) == [dest / "previous.tflite"]
+    assert (dest / "previous.tflite").read_bytes() == b"previous"
+
+
+def test_commit_failure_rolls_back(tmp_path, monkeypatch):
+    import os
+
+    run = _make_run_dir(tmp_path)
+    dest = tmp_path / "assets"
+    dest.mkdir()
+    (dest / "previous").write_text("keep")
+    replace = os.replace
+
+    def failing_replace(source, target):
+        if "-stage-" in Path(source).name and Path(target) == dest:
+            raise OSError("simulated activation failure")
+        return replace(source, target)
+
+    monkeypatch.setattr("scripts.pipeline.sync_mobile_model.os.replace", failing_replace)
+    with pytest.raises(OSError, match="activation"):
+        sync_mobile_model(run, dest)
+    assert (dest / "previous").read_text() == "keep"

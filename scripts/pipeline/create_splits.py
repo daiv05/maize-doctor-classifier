@@ -12,7 +12,9 @@ from PIL import Image
 from tqdm import tqdm
 
 from src.config import get_dataset_root, get_output_root
+from src.data.identity import ensure_sample_ids, sample_id_for_path
 from src.data.splitter import HierarchicalStratifiedSplitter
+from src.provenance import atomic_json, sha256_file
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -102,6 +104,9 @@ def run_data_preparation_pipeline(
     classes: list[str] | None = None,
     max_per_class: int | None = None,
     no_cap: bool = False,
+    output_dir: Path | None = None,
+    group_manifest: Path | None = None,
+    exclusions: Path | None = None,
 ) -> None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -123,9 +128,15 @@ def run_data_preparation_pipeline(
 
     clean_dir = dataset_root / config["paths"]["raw_dir"]
     base_output_dir = get_output_root() / config["paths"]["split_output_dir"]
-    output_dir = _split_output_dir(base_output_dir, suffix="baseline" if baseline else None)
+    output_dir = (
+        Path(output_dir)
+        if output_dir
+        else _split_output_dir(base_output_dir, suffix="baseline" if baseline else None)
+    )
     seed = config["dataset"]["seed"]
 
+    if output_dir.exists() and any(output_dir.iterdir()):
+        raise ValueError("Splits inmutables: use --output-dir con una versión nueva.")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Escaneando directorios para calcular la carga de trabajo...")
@@ -153,9 +164,26 @@ def run_data_preparation_pipeline(
 
     if not raw_image_paths:
         raise ValueError(f"El pipeline no pudo indexar ninguna imagen válida en '{clean_dir}'.")
+    excluded_paths = {}
+    if exclusions:
+        excluded = pd.read_csv(exclusions, dtype=str)
+        required = ["image_path", "sha256", "reason"]
+        if not set(required).issubset(excluded.columns):
+            raise ValueError("Exclusiones requieren image_path, sha256 y reason")
+        if (
+            excluded[required].isna().any().any()
+            or excluded[required].apply(lambda column: column.str.strip().eq("")).any().any()
+            or excluded.image_path.duplicated().any()
+        ):
+            raise ValueError("Exclusiones incompletas o duplicadas")
+        excluded_paths = excluded.set_index("image_path").to_dict("index")
+        if not set(excluded_paths).issubset({record[3] for record in raw_image_paths}):
+            raise ValueError("Exclusiones contienen rutas ajenas a esta versión de datos")
 
     all_records: list[dict] = []
-    seen_hashes: set[str] = set()
+    seen_hashes: dict[str, dict] = {}
+    audit_records = []
+    conflicts = []
     duplicates_found = 0
     corrupt_found = 0
 
@@ -183,20 +211,88 @@ def run_data_preparation_pipeline(
     # digests ya calculados, conservar la primera copia vista sigue siendo reproducible entre
     # máquinas, idéntico al comportamiento previo - solo que ahora sin el cuello de botella serial.
     for (class_name, environment, abs_path, rel_path), (ok, value) in zip(raw_image_paths, results):
+        if rel_path in excluded_paths:
+            exclusion = excluded_paths[rel_path]
+            if not ok or value != exclusion["sha256"]:
+                raise ValueError(f"Contenido de exclusión cambió: {rel_path}")
+            audit_records.append(
+                {
+                    "image_path": rel_path,
+                    "status": "explicit_exclusion",
+                    "sha256": value,
+                    "reason": exclusion["reason"],
+                }
+            )
+            continue
         if not ok:
             tqdm.write(f"Imagen corrupta o ilegible, omitida: {rel_path} - {value}")
             corrupt_found += 1
+            audit_records.append({"image_path": rel_path, "status": "corrupt", "reason": value})
             continue
         if value in seen_hashes:
+            previous = seen_hashes[value]
+            if previous["label"] != class_name:
+                conflicts.append(
+                    {
+                        "image_path": rel_path,
+                        "label": class_name,
+                        "sha256": value,
+                        "other": previous,
+                    }
+                )
+            audit_records.append(
+                {
+                    "image_path": rel_path,
+                    "status": "duplicate",
+                    "sha256": value,
+                    "kept": previous["image_path"],
+                }
+            )
             logger.warning(f"Duplicado exacto detectado y omitido: {rel_path}")
             duplicates_found += 1
             continue
-        seen_hashes.add(value)
-        all_records.append(
-            {"image_path": rel_path, "label": class_name, "environment": environment}
-        )
+        record = {
+            "image_path": rel_path,
+            "label": class_name,
+            "environment": environment,
+            "sha256": value,
+        }
+        seen_hashes[value] = record
+        all_records.append(record)
 
-    df_manifest = pd.DataFrame(all_records)
+    atomic_json(
+        output_dir / "preparation_audit.json",
+        {
+            "excluded": audit_records,
+            "label_conflicts": conflicts,
+            "exclusions_manifest_sha256": sha256_file(exclusions) if exclusions else None,
+        },
+    )
+    if conflicts:
+        raise ValueError(
+            "Contenido idéntico con etiquetas conflictivas; ver preparation_audit.json"
+        )
+    if not all_records:
+        raise ValueError("No quedaron imágenes válidas después de verificar integridad.")
+    df_manifest = ensure_sample_ids(pd.DataFrame(all_records))
+    if group_manifest:
+        groups = pd.read_csv(group_manifest, dtype=str)
+        if "sample_id" not in groups and "image_path" in groups:
+            groups["sample_id"] = groups.image_path.map(sample_id_for_path)
+        required = ["sample_id", "group_id"]
+        if not set(required).issubset(groups.columns):
+            raise ValueError("Grupos requieren sample_id o image_path, y group_id")
+        if (
+            groups[required].isna().any().any()
+            or groups[required].apply(lambda column: column.str.strip().eq("")).any().any()
+            or groups.sample_id.duplicated().any()
+        ):
+            raise ValueError("Manifiesto de grupos incompleto o con IDs duplicados")
+        df_manifest = df_manifest.merge(
+            groups[["sample_id", "group_id"]], on="sample_id", how="left", validate="one_to_one"
+        )
+        if df_manifest["group_id"].isna().any():
+            raise ValueError("El manifiesto de grupos no cubre todas las muestras.")
     logger.info(
         f"Manifiesto construido: {len(df_manifest)} imágenes válidas "
         f"(duplicados exactos omitidos: {duplicates_found} | corruptas omitidas: {corrupt_found})"
@@ -238,6 +334,28 @@ def run_data_preparation_pipeline(
     train_df.to_csv(output_dir / "train.csv", index=False)
     val_df.to_csv(output_dir / "val.csv", index=False)
     test_df.to_csv(output_dir / "test.csv", index=False)
+    df_manifest.to_csv(output_dir / "master_manifest.csv", index=False)
+    atomic_json(
+        output_dir / "manifest.lock.json",
+        {
+            "schema_version": 1,
+            "seed": seed,
+            "config_sha256": sha256_file(Path(config_path)),
+            "master_sha256": sha256_file(output_dir / "master_manifest.csv"),
+            "split_sha256": {
+                s: sha256_file(output_dir / f"{s}.csv") for s in ("train", "val", "test")
+            },
+            "grouping": "group_id" if group_manifest else "exact_content_dedup_only",
+            "group_manifest_sha256": sha256_file(group_manifest) if group_manifest else None,
+            "exclusions_manifest_sha256": sha256_file(exclusions) if exclusions else None,
+            "group_leakage_limitation": (
+                "Only supplied groups are protected; completeness of source/plant/session "
+                "relationships requires independent review"
+                if group_manifest
+                else "No source/plant/session metadata supplied"
+            ),
+        },
+    )
 
     logger.info(f"Pipeline finalizado. Splits guardados en {output_dir}")
     logger.info(
@@ -294,6 +412,17 @@ if __name__ == "__main__":
         help="Ignora baseline.max_images_per_class: usa el 100%% de las imágenes disponibles "
         "por clase. Solo tiene efecto junto con --baseline (sin --baseline nunca hay cap).",
     )
+    parser.add_argument("--output-dir", type=Path, help="Nueva versión inmutable de splits.")
+    parser.add_argument(
+        "--exclusions",
+        type=Path,
+        help="CSV image_path,sha256,reason de exclusiones explícitas y trazables",
+    )
+    parser.add_argument(
+        "--group-manifest",
+        type=Path,
+        help="CSV sample_id,group_id de planta/fuente/sesión; no se infieren grupos.",
+    )
     args = parser.parse_args()
     run_data_preparation_pipeline(
         config_path=args.config,
@@ -301,4 +430,7 @@ if __name__ == "__main__":
         classes=args.classes,
         max_per_class=args.max_per_class,
         no_cap=args.no_cap,
+        output_dir=args.output_dir,
+        group_manifest=args.group_manifest,
+        exclusions=args.exclusions,
     )

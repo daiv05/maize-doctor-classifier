@@ -81,9 +81,7 @@ def test_export_model_formato_desconocido_no_bloquea_los_demas(
     def _fail_tflite(*args, **kwargs):
         raise ExportDependencyError("dependencia ausente simulada")
 
-    monkeypatch.setattr(
-        "src.export.tflite_export.export_to_tflite", _fail_tflite, raising=False
-    )
+    monkeypatch.setattr("src.export.tflite_export.export_to_tflite", _fail_tflite, raising=False)
 
     run_dir = tmp_path / "run"
     run_dir.mkdir()
@@ -131,5 +129,7 @@ def test_export_model_sin_test_loader_omite_paridad(tmp_path, tmp_splits_dir, fa
         device=torch.device("cpu"),
     )
 
-    assert report.formats[0].succeeded
+    assert not report.formats[0].succeeded
+    assert report.formats[0].output_path.is_file()
     assert report.formats[0].parity is None
+    assert "Unvalidated" in report.formats[0].error

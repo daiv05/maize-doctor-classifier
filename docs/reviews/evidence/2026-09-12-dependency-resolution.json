@@ -1,0 +1,708 @@
+{
+  "environment": {
+    "implementation_name": "cpython",
+    "implementation_version": "3.12.3",
+    "os_name": "posix",
+    "platform_machine": "x86_64",
+    "platform_release": "7.0.0-31-generic",
+    "platform_system": "Linux",
+    "platform_version": "#31~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Aug 10 09:38:02 UTC 2",
+    "python_full_version": "3.12.3",
+    "platform_python_implementation": "CPython",
+    "python_version": "3.12",
+    "sys_platform": "linux"
+  },
+  "packages": [
+    {
+      "name": "maize-doctor-classifier",
+      "version": "0.1.0",
+      "hashes": {}
+    },
+    {
+      "name": "lime",
+      "version": "0.2.0.1",
+      "hashes": {
+        "sha256": "76960e4f055feb53e89b5022383bafc87b63f25bac6265984b0a333d1a57f781"
+      }
+    },
+    {
+      "name": "matplotlib",
+      "version": "3.11.1",
+      "hashes": {
+        "sha256": "ba8f811b8ddfac493734d6af0b2dff96919d0c28ca0d641858dab4262777c6ea"
+      }
+    },
+    {
+      "name": "onnx",
+      "version": "1.22.0",
+      "hashes": {
+        "sha256": "955e02e1f6d385b53d52f9cd7b9cdf5caf417c300bcfe3c64c6d542be763845b"
+      }
+    },
+    {
+      "name": "onnxruntime",
+      "version": "1.28.0",
+      "hashes": {
+        "sha256": "0a83bdb70d143cede762b677789bf2a7acca54b3fb82565601d5c30695aa933c"
+      }
+    },
+    {
+      "name": "onnxscript",
+      "version": "0.7.2",
+      "hashes": {
+        "sha256": "d0e7121c6a1eefd608058928e111cbdb76709f70d269ff0d07aee493bd1d13c9"
+      }
+    },
+    {
+      "name": "opencv-python-headless",
+      "version": "4.13.0.92",
+      "hashes": {
+        "sha256": "0bd48544f77c68b2941392fcdf9bcd2b9cdf00e98cb8c29b2455d194763cf99e"
+      }
+    },
+    {
+      "name": "optuna",
+      "version": "4.9.0",
+      "hashes": {
+        "sha256": "f52f3be6148654850c92a5860d398fd88ec6b2c84ab68d9c3d07dcff02e7afee"
+      }
+    },
+    {
+      "name": "pandas",
+      "version": "2.3.3",
+      "hashes": {
+        "sha256": "b3d11d2fda7eb164ef27ffc14b4fcab16a80e1ce67e9f57e19ec0afaf715ba89"
+      }
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0",
+      "hashes": {
+        "sha256": "78cb2c6865a35ab8ff8b75fd122f6033b92a62c82801110e48ddd6c936a45d91"
+      }
+    },
+    {
+      "name": "pytest",
+      "version": "9.1.1",
+      "hashes": {
+        "sha256": "37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c"
+      }
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.2",
+      "hashes": {
+        "sha256": "1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a"
+      }
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "hashes": {
+        "sha256": "ba1cc08a7ccde2d2ec775841541641e4548226580ab850948cbfda66a1befcdc"
+      }
+    },
+    {
+      "name": "scikit-image",
+      "version": "0.26.0",
+      "hashes": {
+        "sha256": "7df650e79031634ac90b11e64a9eedaf5a5e06fcd09bcd03a34be01745744466"
+      }
+    },
+    {
+      "name": "scikit-learn",
+      "version": "1.9.0",
+      "hashes": {
+        "sha256": "056c92bb67ad4c28463c2f2653d9701449201e7e7a9e94e321be0f71c4fef2b8"
+      }
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.0",
+      "hashes": {
+        "sha256": "1f55797419e16e7f30cf88ffb3113ce0467f00cfe3f70d5c281730b21769bfc2"
+      }
+    },
+    {
+      "name": "shap",
+      "version": "0.52.0",
+      "hashes": {
+        "sha256": "20b3d09fdff3e94e418abec1f6033522189e4ca554f1014a2b320f80b5454ad2"
+      }
+    },
+    {
+      "name": "slicer",
+      "version": "0.0.8",
+      "hashes": {
+        "sha256": "6c206258543aecd010d497dc2eca9d2805860a0b3758673903456b7df7934dc3"
+      }
+    },
+    {
+      "name": "timm",
+      "version": "1.0.28",
+      "hashes": {
+        "sha256": "e577b88da96b3a722ea5e2f042455ce6f715d398304d8e63b17d126ed7d89968"
+      }
+    },
+    {
+      "name": "torch",
+      "version": "2.12.1",
+      "hashes": {
+        "sha256": "649e4ced014ba646f76f8cb9c9726735a6323eb321b7919f942790a923f90921"
+      }
+    },
+    {
+      "name": "cuda-toolkit",
+      "version": "13.0.2",
+      "hashes": {
+        "sha256": "b198824cf2f54003f50d64ada3a0f184b42ca0846c1c94192fa269ecd97a66eb"
+      }
+    },
+    {
+      "name": "nvidia-cudnn-cu13",
+      "version": "9.20.0.48",
+      "hashes": {
+        "sha256": "0c45dd8eeb50b603f07995b1b300c62ffe6a1980482b82b3bcf94a4ca9d49304"
+      }
+    },
+    {
+      "name": "nvidia-cusparselt-cu13",
+      "version": "0.8.1",
+      "hashes": {
+        "sha256": "786ce87568c303fadb5afcc7102d454cd3040d75f6f8626f5db460d1871f4dd0"
+      }
+    },
+    {
+      "name": "nvidia-nccl-cu13",
+      "version": "2.29.7",
+      "hashes": {
+        "sha256": "edd81538446786ec3b73972543e53bb43bcaf0bfc8ef76cb679fcc390ffe136d"
+      }
+    },
+    {
+      "name": "nvidia-nvshmem-cu13",
+      "version": "3.4.5",
+      "hashes": {
+        "sha256": "290f0a2ee94c9f3687a02502f3b9299a9f9fe826e6d0287ee18482e78d495b80"
+      }
+    },
+    {
+      "name": "triton",
+      "version": "3.7.1",
+      "hashes": {
+        "sha256": "7e40869937a68206ec70d7f25bb7ec6433cb083f9135e1f36dbd318dc449a728"
+      }
+    },
+    {
+      "name": "nvidia-cuda-cupti",
+      "version": "13.0.85",
+      "hashes": {
+        "sha256": "4eb01c08e859bf924d222250d2e8f8b8ff6d3db4721288cf35d14252a4d933c8"
+      }
+    },
+    {
+      "name": "nvidia-cuda-nvrtc",
+      "version": "13.0.88",
+      "hashes": {
+        "sha256": "ad9b6d2ead2435f11cbb6868809d2adeeee302e9bb94bcf0539c7a40d80e8575"
+      }
+    },
+    {
+      "name": "nvidia-cuda-runtime",
+      "version": "13.0.96",
+      "hashes": {
+        "sha256": "7f82250d7782aa23b6cfe765ecc7db554bd3c2870c43f3d1821f1d18aebf0548"
+      }
+    },
+    {
+      "name": "nvidia-cufft",
+      "version": "12.0.0.61",
+      "hashes": {
+        "sha256": "6c44f692dce8fd5ffd3e3df134b6cdb9c2f72d99cf40b62c32dde45eea9ddad3"
+      }
+    },
+    {
+      "name": "nvidia-cufile",
+      "version": "1.15.1.6",
+      "hashes": {
+        "sha256": "08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"
+      }
+    },
+    {
+      "name": "nvidia-curand",
+      "version": "10.4.0.35",
+      "hashes": {
+        "sha256": "1aee33a5da6e1db083fe2b90082def8915f30f3248d5896bcec36a579d941bfc"
+      }
+    },
+    {
+      "name": "nvidia-cusolver",
+      "version": "12.0.4.66",
+      "hashes": {
+        "sha256": "0a759da5dea5c0ea10fd307de75cdeb59e7ea4fcb8add0924859b944babf1112"
+      }
+    },
+    {
+      "name": "nvidia-cusparse",
+      "version": "12.6.3.3",
+      "hashes": {
+        "sha256": "2b3c89c88d01ee0e477cb7f82ef60a11a4bcd57b6b87c33f789350b59759360b"
+      }
+    },
+    {
+      "name": "nvidia-nvjitlink",
+      "version": "13.0.88",
+      "hashes": {
+        "sha256": "13a74f429e23b921c1109976abefacc69835f2f433ebd323d3946e11d804e47b"
+      }
+    },
+    {
+      "name": "nvidia-nvtx",
+      "version": "13.0.85",
+      "hashes": {
+        "sha256": "4936d1d6780fbe68db454f5e72a42ff64d1fd6397df9f363ae786930fd5c1cd4"
+      }
+    },
+    {
+      "name": "torchvision",
+      "version": "0.27.1",
+      "hashes": {
+        "sha256": "ae3d49e57c4abc8eafc1a1971f80fc4948a6268fa69340737ca4466936def080"
+      }
+    },
+    {
+      "name": "tqdm",
+      "version": "4.68.4",
+      "hashes": {
+        "sha256": "5168118b2368f48c561afda8020fd79195b1bdb0bdf8086b88442c267a315dc2"
+      }
+    },
+    {
+      "name": "ruff",
+      "version": "0.16.0",
+      "hashes": {
+        "sha256": "4f11a8d11010301d0a398a2fdef67691feca7294da6aef55e2150e8fa2cd520b"
+      }
+    },
+    {
+      "name": "alembic",
+      "version": "1.20.0",
+      "hashes": {
+        "sha256": "77eb101048d95f982c0353e9233404889dcd7a6fc244c107836c0e2fc9cf7d9d"
+      }
+    },
+    {
+      "name": "contourpy",
+      "version": "1.3.3",
+      "hashes": {
+        "sha256": "4d00e655fcef08aba35ec9610536bfe90267d7ab5ba944f7032549c55a146da1"
+      }
+    },
+    {
+      "name": "cuda-bindings",
+      "version": "13.4.1",
+      "hashes": {
+        "sha256": "f444d7e488cbc47e79b7be0d1cfe97201f3e1f186a18ee10f2e4da3265975b16"
+      }
+    },
+    {
+      "name": "cycler",
+      "version": "0.12.1",
+      "hashes": {
+        "sha256": "85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30"
+      }
+    },
+    {
+      "name": "fonttools",
+      "version": "4.63.0",
+      "hashes": {
+        "sha256": "58dc6bb86a78d782f00f9190ca02c119cf5bbe2807536e361e18d42019f877d8"
+      }
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.6.0",
+      "hashes": {
+        "sha256": "02e0b71817df9b2169dc30a16832045764def1191b43dcff5bb85bdee212d2a1"
+      }
+    },
+    {
+      "name": "ImageIO",
+      "version": "2.37.4",
+      "hashes": {
+        "sha256": "1ab2e22c8debf700f24c3ac43e8f95f3b3a8110c83b93411e97b4b0b2cd1c7e6"
+      }
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.0",
+      "hashes": {
+        "sha256": "f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12"
+      }
+    },
+    {
+      "name": "joblib",
+      "version": "1.5.3",
+      "hashes": {
+        "sha256": "5fc3c5039fc5ca8c0276333a188bbd59d6b7ab37fe6632daa76bc7f9ec18e713"
+      }
+    },
+    {
+      "name": "kiwisolver",
+      "version": "1.5.0",
+      "hashes": {
+        "sha256": "bb5136fb5352d3f422df33f0c879a1b0c204004324150cc3b5e3c4f310c9049f"
+      }
+    },
+    {
+      "name": "lazy-loader",
+      "version": "0.5",
+      "hashes": {
+        "sha256": "ab0ea149e9c554d4ffeeb21105ac60bed7f3b4fd69b1d2360a4add51b170b005"
+      }
+    },
+    {
+      "name": "ml_dtypes",
+      "version": "0.6.0",
+      "hashes": {
+        "sha256": "3b4a480aa8fd54a1805b8ac10f3f91763926a74f73c0c364c10f9231854f4170"
+      }
+    },
+    {
+      "name": "narwhals",
+      "version": "2.26.0",
+      "hashes": {
+        "sha256": "29326d74f107c347fd1009bd58e38d9f7c7c5b51e6de97bc93dbc325d9038b54"
+      }
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "hashes": {
+        "sha256": "d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762"
+      }
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.1",
+      "hashes": {
+        "sha256": "59fda5e192b570217ec2580c96f00e9a7e12ef6866a900eb089b62c1a32545ca"
+      }
+    },
+    {
+      "name": "nvidia-cublas",
+      "version": "13.1.1.3",
+      "hashes": {
+        "sha256": "37936a16db8fe4ac1f065c2139360608a543a09275cb1a1af612e08cfa065436"
+      }
+    },
+    {
+      "name": "onnx-ir",
+      "version": "1.0.0",
+      "hashes": {
+        "sha256": "e578f0d608d3062866b48223616eb2d10a6d6d01f8b8faac596129034f483cc7"
+      }
+    },
+    {
+      "name": "packaging",
+      "version": "26.2",
+      "hashes": {
+        "sha256": "5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e"
+      }
+    },
+    {
+      "name": "pluggy",
+      "version": "1.6.0",
+      "hashes": {
+        "sha256": "e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746"
+      }
+    },
+    {
+      "name": "protobuf",
+      "version": "7.36.1",
+      "hashes": {
+        "sha256": "97198b77e369a0abd8e262b8f6c7266c55ddb796a3a12c76d7b8881188ed83aa"
+      }
+    },
+    {
+      "name": "Pygments",
+      "version": "2.20.0",
+      "hashes": {
+        "sha256": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"
+      }
+    },
+    {
+      "name": "pyparsing",
+      "version": "3.3.2",
+      "hashes": {
+        "sha256": "850ba148bd908d7e2411587e247a1e4f0327839c40e2e5e6d05a007ecc69911d"
+      }
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "hashes": {
+        "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+      }
+    },
+    {
+      "name": "pytz",
+      "version": "2026.3.post1",
+      "hashes": {
+        "sha256": "dd95840dd199baea12d9cc096a1d452caa6596a1c1e4b5f3dbd1541855d5e815"
+      }
+    },
+    {
+      "name": "setuptools",
+      "version": "81.0.0",
+      "hashes": {
+        "sha256": "fdd925d5c5d9f62e4b74b30d6dd7828ce236fd6ed998a08d81de62ce5a6310d6"
+      }
+    },
+    {
+      "name": "SQLAlchemy",
+      "version": "2.0.52",
+      "hashes": {
+        "sha256": "8738008376d22f30f411ea3efecf39b51110b6996d80bb73786f30bcfdd5fd3b"
+      }
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "hashes": {
+        "sha256": "e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5"
+      }
+    },
+    {
+      "name": "threadpoolctl",
+      "version": "3.6.0",
+      "hashes": {
+        "sha256": "43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb"
+      }
+    },
+    {
+      "name": "tifffile",
+      "version": "2026.9.9",
+      "hashes": {
+        "sha256": "f7e48417d8e83a559349f8fe6c1e302afd57e564276124bab84111129f43925a"
+      }
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "hashes": {
+        "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+      }
+    },
+    {
+      "name": "tzdata",
+      "version": "2026.3",
+      "hashes": {
+        "sha256": "dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931"
+      }
+    },
+    {
+      "name": "cloudpickle",
+      "version": "3.1.2",
+      "hashes": {
+        "sha256": "9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a"
+      }
+    },
+    {
+      "name": "colorlog",
+      "version": "6.12.0",
+      "hashes": {
+        "sha256": "30d392604e9110045a2c2aeefc27d7a017abbab63f3a8aee594eac0801df784e"
+      }
+    },
+    {
+      "name": "filelock",
+      "version": "3.32.0",
+      "hashes": {
+        "sha256": "d396bea984af47333ef05e50eae7eff88c84256de6112aea0ec48a233c064fe3"
+      }
+    },
+    {
+      "name": "flatbuffers",
+      "version": "25.12.19",
+      "hashes": {
+        "sha256": "7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4"
+      }
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "1.21.0",
+      "hashes": {
+        "sha256": "eadaa3678c512c82aea69e8675d90a184861e68de32f1105668628b4dce0e7cd"
+      }
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.6",
+      "hashes": {
+        "sha256": "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"
+      }
+    },
+    {
+      "name": "llvmlite",
+      "version": "0.49.0",
+      "hashes": {
+        "sha256": "6acba646d88abbc87d5c113a3d62c1fbf8b8fee11c6493f516803e30f21ae870"
+      }
+    },
+    {
+      "name": "numba",
+      "version": "0.67.0",
+      "hashes": {
+        "sha256": "f63d43db06b4756424d6d2484737c902e0ae944a0eec3e8b0b4de2c695b15caa"
+      }
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "hashes": {
+        "sha256": "fd6f3f93c9a0a7cc2788ee63fb763353d4bd2e89b0751bc78fcf7dda00bea774"
+      }
+    },
+    {
+      "name": "click",
+      "version": "8.4.2",
+      "hashes": {
+        "sha256": "e6f9f66136c816745b9d65817da91d61d957fb16e02e4dcd0552553c5a197b76"
+      }
+    },
+    {
+      "name": "cuda-pathfinder",
+      "version": "1.8.1",
+      "hashes": {
+        "sha256": "ae0137ff9e56ea97499bcbf54f5f2778ec25f3266715ac86da192a795af982a8"
+      }
+    },
+    {
+      "name": "greenlet",
+      "version": "3.5.5",
+      "hashes": {
+        "sha256": "147b25a42e5ca5be3d42356e8f608b37af715a1c196e9bf9d1627f3341adfe1d"
+      }
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.5.2",
+      "hashes": {
+        "sha256": "db78c39c83d6279daddc98e2238f373ab8980685556d42472b4ec51abcf03e8c"
+      }
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "hashes": {
+        "sha256": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"
+      }
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "hashes": {
+        "sha256": "2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55"
+      }
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.3",
+      "hashes": {
+        "sha256": "d6dd0be5b5b189d31db7cda48b91d7e0a9795f31430b7f271219ab30f1d3ac9d"
+      }
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "hashes": {
+        "sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"
+      }
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "hashes": {
+        "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+      }
+    },
+    {
+      "name": "typer",
+      "version": "0.25.1",
+      "hashes": {
+        "sha256": "75caa44ed46a03fb2dab8808753ffacdbfea88495e74c85a28c5eefcf5f39c89"
+      }
+    },
+    {
+      "name": "Mako",
+      "version": "1.4.1",
+      "hashes": {
+        "sha256": "a359d9a94a541213958742b2698d0a7757bb83551767bc468a74b9905aba9617"
+      }
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5",
+      "hashes": {
+        "sha256": "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101"
+      }
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "hashes": {
+        "sha256": "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"
+      }
+    },
+    {
+      "name": "shellingham",
+      "version": "1.5.4",
+      "hashes": {
+        "sha256": "7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"
+      }
+    },
+    {
+      "name": "anyio",
+      "version": "4.14.2",
+      "hashes": {
+        "sha256": "9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494"
+      }
+    },
+    {
+      "name": "idna",
+      "version": "3.18",
+      "hashes": {
+        "sha256": "7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2"
+      }
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "hashes": {
+        "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+      }
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "hashes": {
+        "sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86"
+      }
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "hashes": {
+        "sha256": "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
+      }
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "hashes": {
+        "sha256": "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+      }
+    }
+  ]
+}

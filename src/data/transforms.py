@@ -159,6 +159,12 @@ class CornTransformFactory:
         self.target_size = target_size
 
         clahe_config = config.get("clahe", {})
+        self.clahe_config = {
+            "enabled": bool(clahe),
+            "clip_limit": float(clahe_config.get("clip_limit", 2.0)),
+            "tile_grid": int(clahe_config.get("tile_grid", 8)),
+        }
+        self.segmentation_contract = config.get("segmentation_input")
         self.clahe_transform = (
             CornCLAHETransform(
                 clip_limit=float(clahe_config.get("clip_limit", 2.0)),
@@ -167,6 +173,52 @@ class CornTransformFactory:
             if clahe
             else None
         )
+
+    def to_contract(self) -> dict:
+        return {
+            "schema_version": 1,
+            "exif_transpose": True,
+            "color_mode": "RGB",
+            "target_size": list(self.target_size),
+            "resize": "stretch",
+            "interpolation": "bilinear",
+            "antialias": True,
+            "mean": [0.485, 0.456, 0.406],
+            "std": [0.229, 0.224, 0.225],
+            "clahe": dict(self.clahe_config),
+            "segmentation": self.segmentation_contract,
+        }
+
+    @classmethod
+    def from_contract(cls, contract: dict, config_path=None):
+        import math
+
+        size = contract.get("target_size", [])
+        clahe = contract.get("clahe", {})
+        if (
+            len(size) != 2
+            or any(type(x) is not int or x <= 0 for x in size)
+            or type(clahe.get("enabled")) is not bool
+            or type(clahe.get("tile_grid")) is not int
+            or clahe["tile_grid"] <= 0
+            or type(clahe.get("clip_limit")) not in (int, float)
+            or not math.isfinite(clahe["clip_limit"])
+            or clahe["clip_limit"] <= 0
+        ):
+            raise ValueError("Invalid preprocessing dimensions or CLAHE parameters")
+        factory = cls(
+            config_path=config_path or _DEFAULT_CONFIG, target_size=tuple(contract["target_size"])
+        )
+        factory.clahe_config = dict(contract["clahe"])
+        factory.segmentation_contract = contract.get("segmentation")
+        if factory.to_contract() != contract:
+            raise ValueError("Unsupported preprocessing contract")
+        if factory.clahe_config["enabled"]:
+            factory.clahe_transform = CornCLAHETransform(
+                clip_limit=factory.clahe_config["clip_limit"],
+                tile_grid=factory.clahe_config["tile_grid"],
+            )
+        return factory
 
     def get_pipeline(self, stage: str) -> T.Compose:
         """Retorna el pipeline de transformación correspondiente a la etapa."""

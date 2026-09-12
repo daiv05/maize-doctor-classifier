@@ -48,13 +48,13 @@ def select_device() -> torch.device:
 
 def generate_run_id() -> str:
     """Identificador de run basado en timestamp (YYYYMMDD_HHMMSS)."""
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+    return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 
 def build_run_dir(output_dir: Path, model_name: str, run_id: str) -> Path:
     """Crea y devuelve <output_dir>/<model_name>/<run_id>/."""
     run_dir = output_dir / model_name / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
+    run_dir.mkdir(parents=True, exist_ok=False)
     return run_dir
 
 
@@ -62,7 +62,9 @@ def update_latest_pointer(output_dir: Path, model_name: str, run_id: str) -> Non
     """Escribe <output_dir>/<model_name>/latest.json. Llamar solo tras un run exitoso
     (summary.json ya escrito), para no apuntar a runs a medias."""
     latest_path = output_dir / model_name / "latest.json"
-    latest_path.write_text(json.dumps({"run_id": run_id}, indent=2))
+    from src.provenance import atomic_json
+
+    atomic_json(latest_path, {"run_id": run_id})
 
 
 def resolve_run_dir(output_dir: Path, model_name: str, run_id: str | None = None) -> Path:
@@ -77,6 +79,8 @@ def resolve_run_dir(output_dir: Path, model_name: str, run_id: str | None = None
                 "Entrena primero con: make train-baselines"
             )
         run_id = json.loads(latest_path.read_text())["run_id"]
+    if Path(run_id).name != run_id or run_id in {".", ".."}:
+        raise ValueError("Invalid run ID")
     run_dir = model_dir / run_id
     if not run_dir.exists():
         raise SystemExit(f"No se encontró el run '{run_id}' para '{model_name}' en {model_dir}")

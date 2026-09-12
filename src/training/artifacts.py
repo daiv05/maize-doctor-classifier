@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
+from src.data.identity import align_predictions
 from src.training.evaluation import (
     compute_calibration_metrics,
     compute_environment_metrics,
@@ -65,6 +66,7 @@ def write_predictions_csv(
     idx_to_class: dict[int, str],
     predictions: list[int],
     probs: list[float],
+    sample_ids: list[str] | None = None,
 ) -> pd.DataFrame:
     """
     Escribe predictions.csv con una fila por imagen de test.
@@ -76,16 +78,23 @@ def write_predictions_csv(
     @param {list[float]} probs Confianza de la clase predicha.
     @returns {pd.DataFrame} El propio dataframe escrito.
     """
+    ids = sample_ids if sample_ids is not None else getattr(predictions, "sample_ids", None)
+    if ids is None or len(ids) != len(predictions) or len(probs) != len(predictions):
+        raise ValueError(
+            "Predictions must carry sample_ids from inference and matching probabilities"
+        )
+    metadata = align_predictions(test_dataset.data_frame, ids)
     frame = pd.DataFrame(
         {
-            "image_path": test_dataset.data_frame["image_path"].tolist(),
-            "label": test_dataset.data_frame["label"].tolist(),
+            "sample_id": metadata["sample_id"].tolist(),
+            "image_path": metadata["image_path"].tolist(),
+            "label": metadata["label"].tolist(),
             "pred_label": [idx_to_class[p] for p in predictions],
             "pred_prob": probs,
         }
     )
-    if "environment" in test_dataset.data_frame.columns:
-        frame["environment"] = test_dataset.data_frame["environment"].tolist()
+    if "environment" in metadata.columns:
+        frame["environment"] = metadata["environment"].tolist()
     frame.to_csv(run_dir / "predictions.csv", index=False)
     return frame
 
@@ -123,4 +132,25 @@ def write_summary(run_dir: Path, payload: dict) -> None:
     @param {Path} run_dir Directorio del run.
     @param {dict} payload Configuracion y metricas del run.
     """
-    (run_dir / "summary.json").write_text(json.dumps(payload, indent=2, default=str))
+    from src.data.transforms import CornTransformFactory
+    from src.provenance import atomic_json, sha256_file
+
+    payload = dict(payload)
+    if "image_size" in payload:
+        factory_kwargs = {
+            "target_size": tuple(payload["image_size"]),
+            "clahe": payload.get("clahe", False),
+        }
+        if payload.get("config_path"):
+            factory_kwargs["config_path"] = str(payload["config_path"])
+        payload.setdefault("preprocessing", CornTransformFactory(**factory_kwargs).to_contract())
+    if (run_dir / "best.pth").is_file():
+        payload["checkpoint_sha256"] = sha256_file(run_dir / "best.pth")
+    splits_dir = payload.get("splits_dir")
+    if splits_dir:
+        payload["split_sha256"] = {
+            name: sha256_file(Path(splits_dir) / f"{name}.csv")
+            for name in ("train", "val", "test")
+            if (Path(splits_dir) / f"{name}.csv").is_file()
+        }
+    atomic_json(run_dir / "summary.json", json.loads(json.dumps(payload, default=str)))

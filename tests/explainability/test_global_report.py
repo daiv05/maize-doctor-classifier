@@ -146,7 +146,9 @@ def test_write_global_report_emits_maps_and_summary(tmp_path):
 
     write_global_report(accumulator, tmp_path)
 
-    assert (tmp_path / "healthy_attribution_map.png").exists()
+    assert (tmp_path / "framing_diagnostics/healthy_framing.png").exists()
+    assert (tmp_path / "class_profile.png").exists()
+    assert (tmp_path / "mask_audit.png").exists()
     assert (tmp_path / "global_summary.csv").exists()
     payload = json.loads((tmp_path / "global_summary.json").read_text(encoding="utf-8"))
     assert payload[0]["label"] == "healthy"

@@ -15,6 +15,7 @@ from PIL import Image
 from skimage.segmentation import mark_boundaries
 
 from src.data.loader import load_and_normalize_image
+from src.data.transforms import CornTransformFactory
 from src.explainability.gradcam import GradCAM, build_gradcam_overlay, get_target_layer
 
 logger = logging.getLogger(__name__)
@@ -82,19 +83,24 @@ def _diagnosis_color(class_name: str) -> str:
     return _COLOR_DISEASE
 
 
-def build_validation_transform(target_size: tuple[int, int]) -> T.Compose:
+def build_validation_transform(
+    target_size: tuple[int, int], preprocessing: dict | None = None
+) -> T.Compose:
     """Resize + normalize deterministas de validación, compartidos entre `predict_fn`
     (LIME) y la construcción del tensor de entrada para Grad-CAM."""
-    return T.Compose(
-        [
-            T.Resize(target_size),
-            T.ToTensor(),
-            T.Normalize(mean=_IMAGENET_MEAN, std=_IMAGENET_STD),
-        ]
+    factory = (
+        CornTransformFactory.from_contract(preprocessing)
+        if preprocessing
+        else CornTransformFactory(target_size=target_size)
     )
+    if tuple(factory.target_size) != tuple(target_size):
+        raise ValueError("XAI input size differs from preprocessing contract")
+    return factory.get_pipeline("inference")
 
 
-def prepare_lime_image(image: Image.Image, target_size: tuple[int, int]) -> np.ndarray:
+def prepare_lime_image(
+    image: Image.Image, target_size: tuple[int, int], preprocessing: dict | None = None
+) -> np.ndarray:
     """Lleva la imagen al tamaño de entrada como array HWC uint8 para LimeImageExplainer.
 
     Usa la misma `T.Resize` que `_build_validation_transform`, no `PIL.Image.resize`: el
@@ -109,18 +115,25 @@ def prepare_lime_image(image: Image.Image, target_size: tuple[int, int]) -> np.n
     @param {tuple[int, int]} target_size Tamaño de entrada del checkpoint, (alto, ancho).
     @returns {np.ndarray} Array HWC uint8 con la imagen reescalada.
     """
+    if preprocessing:
+        factory = CornTransformFactory.from_contract(preprocessing)
+        if factory.clahe_transform is not None:
+            image = factory.clahe_transform(image)
     return np.array(T.Resize(target_size)(image))
 
 
 def build_predict_fn(
-    model: nn.Module, device: torch.device, target_size: tuple[int, int]
+    model: nn.Module,
+    device: torch.device,
+    target_size: tuple[int, int],
+    preprocessing: dict | None = None,
 ) -> Callable[[np.ndarray], np.ndarray]:
     """
     Envuelve `model` en la función predict_fn que espera `LimeImageExplainer`: recibe
     un batch de imágenes HWC uint8 y devuelve las probabilidades softmax por clase,
     aplicando las mismas transforms deterministas de validación (resize + normalize).
     """
-    validation_transform = build_validation_transform(target_size)
+    validation_transform = build_validation_transform(target_size, preprocessing)
 
     @torch.no_grad()
     def predict_fn(images: np.ndarray) -> np.ndarray:
@@ -223,6 +236,7 @@ def render_visual_explanation(
     device: torch.device | None = None,
     model_name: str | None = None,
     segments: np.ndarray | None = None,
+    preprocessing: dict | None = None,
 ) -> dict:
     """
     Genera el reporte visual (original / regiones positivas / heatmap de importancia
@@ -245,9 +259,10 @@ def render_visual_explanation(
     device = device or torch.device("cpu")
     model.eval()
 
-    image_np = prepare_lime_image(image, target_size)
+    image_np = prepare_lime_image(image, target_size, preprocessing)
     image_rgb01 = image_np.astype(float) / 255.0
 
+    # Perturb already CLAHE-processed pixels; do not apply nonlinear CLAHE twice.
     predict_fn = build_predict_fn(model, device, target_size)
     explanation = run_lime_explanation(
         image_np,
@@ -278,7 +293,11 @@ def render_visual_explanation(
     if model_name is not None:
         try:
             target_layer = get_target_layer(model, model_name)
-            input_tensor = build_validation_transform(target_size)(image).unsqueeze(0).to(device)
+            input_tensor = (
+                build_validation_transform(target_size, preprocessing)(image)
+                .unsqueeze(0)
+                .to(device)
+            )
             with GradCAM(model, target_layer) as cam:
                 heatmap = cam(input_tensor, class_idx=pred_idx)
             gradcam_panel = build_gradcam_overlay(image_rgb01, heatmap, target_size)
@@ -423,6 +442,7 @@ def explain_model_visual(
     seed: int,
     device: torch.device,
     enable_gradcam: bool = True,
+    preprocessing: dict | None = None,
 ) -> None:
     """
     Genera el reporte visual (3 paneles LIME, 4 si `enable_gradcam`) para una muestra
@@ -452,6 +472,7 @@ def explain_model_visual(
             model=model,
             idx_to_class=idx_to_class,
             target_size=target_size,
+            preprocessing=preprocessing,
             output_path=output_path,
             num_samples=num_samples,
             num_features=num_features,

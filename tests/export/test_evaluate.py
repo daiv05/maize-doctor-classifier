@@ -76,16 +76,25 @@ def test_desglose_por_entorno(tmp_path, patched_loader):
     labels = [0, 1, 2, 0]
     patched_loader(labels)
     environments = pd.Series(["lab", "lab", "real", "real"])
-    evaluation, frame = evaluate_exported_model(
-        tmp_path / "model.onnx",
-        "onnx",
-        _loader(labels),
-        IDX_TO_CLASS,
-        environments=environments,
-    )
-    assert set(evaluation.by_environment) == {"lab", "real"}
-    assert evaluation.by_environment["lab"]["n"] == 2
-    assert "environment" in frame.columns
+    with pytest.raises(ValueError, match="sample IDs"):
+        evaluate_exported_model(
+            tmp_path / "model.onnx",
+            "onnx",
+            _loader(labels),
+            IDX_TO_CLASS,
+            environments=environments,
+        )
+
+
+def test_environment_macro_f1_does_not_add_absent_predicted_class():
+    from src.export.evaluate import _environment_breakdown
+
+    frame = pd.DataFrame({"label_idx": [0, 0], "pred_idx": [0, 1], "environment": ["lab", "lab"]})
+    result = _environment_breakdown(frame, IDX_TO_CLASS)["lab"]
+    assert result["macro_f1"] == pytest.approx(2 / 3)
+    assert result["accuracy"] == 0.5
+    assert result["supported_classes"] == ["healthy"]
+    assert result["per_class_support"]["common_rust"] == 0
 
 
 def test_degradacion_vs_torch_queda_registrada(tmp_path, patched_loader):

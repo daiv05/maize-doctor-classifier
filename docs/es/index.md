@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "DoctorMaiz"
   text: "Enfermedades, Plagas y Deficiencias en Maíz"
-  tagline: "Sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales para pequeños productores de maíz en El Salvador, con inferencia completamente offline en dispositivos Android de gama media/baja."
+  tagline: "Proyecto de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en maíz. Prototipo orientado a inferencia offline en Android; validación de campo y dispositivo pendiente."
   image:
     src: /logo.svg
     alt: DoctorMaiz
@@ -22,7 +22,7 @@ features:
   - title: "Edge AI Offline"
     details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite con cuantización Int8, con objetivo ≤ 20 MB y latencia ≤ 300 ms en CPU Snapdragon serie 6xx o equivalente."
   - title: "Orientado al Campo"
-    details: "Evaluación priorizada sobre imágenes reales de campo. El conjunto de prueba es independiente y de dominio real para garantizar robustez agrícola."
+    details: "Evaluación desagregada por clase y entorno. Los splits históricos mezclan laboratorio y campo; no constituyen una garantía de robustez agrícola."
   - title: "Meta Macro F1 ≥ 0.85"
     details: "Criterio de viabilidad con análisis de matriz de confusión y curvas Precision-Recall por clase, priorizando Recall para minimizar falsos negativos."
 ---
@@ -87,7 +87,7 @@ El proyecto avanza en fases iterativas siguiendo **CRISP-DM**:
 3. **Preparación de los datos**: limpieza, estandarización a 224 x 224 px y data augmentation
 4. **Modelado**: transfer learning en PyTorch con modelos preentrenados en ImageNet
 5. **Evaluación**: Macro F1 ≥ 0.85 sobre conjunto de prueba independiente compuesto por imágenes de campo
-6. **Despliegue**: exportación del modelo PyTorch a TFLite (Int8) y PWA con inferencia offline + módulo opcional de sincronización
+6. **Entrega experimental**: exportación ONNX/TFLite con controles de paridad y evaluación; inferencia Android offline es un objetivo pendiente de validación en dispositivo, no una PWA certificada por este repositorio.
 
 ### Arquitectura del Sistema
 

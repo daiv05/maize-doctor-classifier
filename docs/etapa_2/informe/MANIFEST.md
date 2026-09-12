@@ -6,9 +6,22 @@ y separa fuentes editables de activos generados.
 ## Documento raíz
 
 - `main.tex`: formato A4, portada UES, índices, orden modular y bibliografía.
-- `main.pdf`: entrega compilada y revisada, 36 páginas.
+- `main.pdf`: entrega histórica del 9 de septiembre, declarada de 36 páginas.
+  Las correcciones fuente del 11 de septiembre requieren recompilación; no se presenta
+  el PDF anterior como evidencia de ese nuevo código.
 - `referencias.bib`: nueve fuentes citadas en el texto.
-- `MANIFEST.generated.json`: hashes y rutas de tablas y figuras generadas.
+- `MANIFEST.generated.json`: el archivo histórico contiene listas de rutas y una huella
+  global del dataset, no hashes individuales de figuras/tablas. El generador corregido
+  escribe `schema_version=2`, `asset_sha256`, `input_sha256` y hash del script al ejecutarse.
+  No se atribuyen retroactivamente esos hashes al archivo histórico.
+
+Regeneración ejecutada el 12/09/2026 en
+`outputs/repair-20260912/report-assets-etapa2`: **13 figuras y 11 tablas**, con los 24
+hashes comprobados. Su `MANIFEST.generated.json` registra las entradas y el generador.
+Se verificó el hash de la imagen de demostración antes de resolver su antigua ruta local
+contra el dataset descargado. No se sustituyeron silenciosamente los activos históricos
+ni se recompiló el PDF: faltan herramientas TeX. La puntuación 96/100 sigue siendo
+autoevaluación fechada, no calificación externa.
 
 ## Secciones incluidas
 
@@ -50,8 +63,9 @@ holdout final; no se reciclaron mapas históricos como evidencia nueva.
 ## Evidencia complementaria
 
 - `docs/etapa_2/11_trazabilidad_rubrica.md`: criterio, puntaje y ruta.
-- `docs/etapa_2/rubrica_final.json`: suma auditable de 96/100.
-- `docs/etapa_2/02_prototipo_verificado.md`: inspección y pruebas de la app.
+- `docs/etapa_2/rubrica_final.json`: autoevaluación histórica de 96/100, no calificación externa.
+- `docs/etapa_2/02_prototipo_verificado.md`: antecedente fechado de inspección/pruebas;
+  no comprueba disponibilidad actual de API/APK ni rendimiento Android.
 - `scripts/etapa_2/stage2_experiments.py`: protocolo experimental completo.
 - `tests/etapa_2/test_stage2_experiments.py`: pruebas unitarias y portabilidad
   del clasificador numérico.

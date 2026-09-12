@@ -20,18 +20,15 @@ dataset_vol = modal.Volume.from_name("corn-clean", create_if_missing=True)
 segmented_dataset_vol = modal.Volume.from_name("corn-clean-segmented", create_if_missing=True)
 outputs_vol = modal.Volume.from_name("corn-outputs", create_if_missing=True)
 
-image = (
-    modal.Image.debian_slim(python_version="3.11")
+base_image = (
+    modal.Image.debian_slim(python_version="3.12")
     .pip_install(
         "torch==2.12.1",
         "torchvision==0.27.1",
-        index_url="https://download.pytorch.org/whl/cu126",
     )
-    .pip_install_from_pyproject("pyproject.toml", optional_dependencies=["cloud", "xai", "export", "tuning"])
-    # Explicito ademas del extra 'export': alli van con marcador sys_platform == 'linux'
-    # (litert-torch no existe para Windows/macOS) y no queremos depender de como Modal
-    # resuelva ese marcador al construir la imagen. El contenedor siempre es Linux.
-    .pip_install("litert-torch>=0.9,<0.10", "ai-edge-litert>=2.1,<3")
+    .pip_install_from_pyproject(
+        "pyproject.toml", optional_dependencies=["cloud", "xai", "onnx", "tuning"]
+    )
     .env(
         {
             "DATASET_ROOT": DATASET_MOUNT,
@@ -41,5 +38,10 @@ image = (
         }
     )
     .add_local_dir("config", f"{REPO_ANCHOR}/config", copy=True)
-    .add_local_python_source("src", "scripts")
 )
+
+# LiteRT resolution is isolated from training. No remote build/device validation claimed.
+image = base_image.add_local_python_source("src", "scripts")
+export_image = base_image.pip_install(
+    "litert-torch>=0.9,<0.10", "ai-edge-litert>=2.1,<3"
+).add_local_python_source("src", "scripts")

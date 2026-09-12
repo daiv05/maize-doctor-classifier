@@ -1,0 +1,2 @@
+sample_id_a,sample_id_b,same_source,reviewer,reason
+7288765b9b48b283f04ebd9a8ad94601d7064d1a13de7a87728e423b5c5c04c1,eb6afd6c114fc8056c1e1e0cc1b2c10a085607eab7e21b5407dece5f6d9cd815,true,assistant_visual_inspection,same capture at different resolutions; matching hole and lesions and background

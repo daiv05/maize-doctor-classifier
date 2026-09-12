@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 import torch
 
+from src.data.transforms import CornTransformFactory
 from src.export.common import (
     ExportDependencyError,
     ExportFormatResult,
@@ -48,6 +49,8 @@ def test_resolve_export_inputs_sin_summary(tmp_path):
 
 def test_resolve_export_inputs_lee_summary(tmp_path):
     summary = {
+        "model": "shufflenet_v2_x1_0",
+        "preprocessing": CornTransformFactory(target_size=(224, 224)).to_contract(),
         "class_to_idx": {"healthy": 0, "common_rust": 1},
         "image_size": [224, 224],
     }

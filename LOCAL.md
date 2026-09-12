@@ -2,6 +2,29 @@
 
 Guía paso a paso para dejar el proyecto corriendo en tu máquina: entorno virtual, variables de entorno, dependencias y descarga del dataset.
 
+Para reproducir la reparación comprobada en Linux/Python 3.12, seguir primero la
+[guía de entornos separados, constraints y migración](docs/reviews/2026-09-11-reproducibilidad.md).
+El dataset HF actual requiere tratar conflictos de etiquetas antes de generar splits;
+no sobrescribir las particiones históricas ni asumir que `make splits` los resolverá solo.
+
+## Qué compartir con el equipo
+
+Git conserva código, pruebas, configuraciones, `package-lock.json`, `constraints/`,
+instrucciones del proyecto y documentación, incluidas las evidencias pequeñas y los CSV
+de exclusiones/revisión de duplicados. No excluir esas carpetas para reducir el número
+de archivos pendientes: forman parte de la reparación y su trazabilidad.
+
+`.gitignore` excluye entornos virtuales, secretos `.env`, cachés, builds, temporales,
+datos, `outputs/` y paquetes locales. Las plantillas `.env.example` sí se comparten.
+Ignorar no borra archivos ni retira los que Git ya tiene versionados.
+
+Para continuar una corrida concreta, compartir por almacenamiento externo los checkpoints,
+summaries, manifests, locks y splits exactos que referencia la documentación, con hashes
+y permisos para el equipo. No basta con clonar el repo: `outputs/` no se incluye y usar
+la misma semilla no garantiza reconstruir sus particiones históricas. El dataset HF se
+descarga fijando la revisión indicada en la guía; `/tmp/doctor-maiz-hf-20260911-JjlLG8`
+es una ruta temporal de esta máquina, no una ubicación compartida ni permanente.
+
 ## Requisitos previos
 
 - Python >= 3.11
@@ -144,7 +167,7 @@ make train-baselines                          # Entrena baselines sobre el perfi
 make train-baselines MODELS=efficientnet_b0   # Solo un modelo
 make train-baselines NO_CAP=1                 # Mismas 9 clases, sin tope de imágenes
 make train-baselines MAX_PER_CLASS=1000       # Mismas 9 clases, tope custom
-make train                                    # Pipeline principal (loop de entrenamiento aún pendiente)
+make train                                    # Principal: desarrollo train/val, sin abrir test
 ```
 
 ## Resumen rápido (happy path)

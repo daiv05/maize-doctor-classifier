@@ -76,6 +76,13 @@ def mask_coverage(mask: np.ndarray) -> float:
     return float(mask.mean())
 
 
+def is_coverage_degenerate(
+    coverage: float, low: float = _COVERAGE_LOW, high: float = _COVERAGE_HIGH
+) -> bool:
+    """Compatibilidad pública; NaN/infinito también invalida la cobertura."""
+    return not np.isfinite(coverage) or coverage < low or coverage > high
+
+
 def is_mask_unreliable(
     coverage: float,
     fragmentation: float,
@@ -97,4 +104,8 @@ def is_mask_unreliable(
     @param {float} max_fragmentation Fragmentacion maxima aceptable.
     @returns {bool} True si la mascara no es utilizable.
     """
-    return coverage < low or coverage > high or fragmentation > max_fragmentation
+    return (
+        is_coverage_degenerate(coverage, low, high)
+        or not np.isfinite(fragmentation)
+        or fragmentation > max_fragmentation
+    )

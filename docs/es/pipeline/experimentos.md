@@ -2,4 +2,4 @@
 
 Con la arquitectura ya acotada a unos pocos candidatos, los experimentos del pipeline principal dejarán de comparar modelos y pasarán a comparar decisiones de entrenamiento. 
 
-El espacio de experimentos se reorientará hacia las decisiones introducidas en [preprocesado](./preprocessed) y [entrenamiento](./entrenamiento). Se compararán la estrategia de balanceo (sampler solo frente a sampler más pérdida ponderada, y con qué intensidad), el efecto de la regularización (label smoothing, mixup y cutmix) sobre el sobreajuste y la calibración, el schedule de learning rate (cosine frente a plateau, con y sin warmup), el fine-tuning en dos fases frente al completo, y el rendimiento con datos completos frente al régimen topado.
+El protocolo de reparación empieza con un piloto pareado original/segmentado en desarrollo, conservando identidades y particiones, arquitectura y presupuesto, con varias semillas. Main mantiene pérdida ponderada sin sampler. Cualquier variación de fondo, regularización o cambio de balanceo requiere un protocolo separado; no se seleccionan variantes repitiendo test. Ver el [registro de reparación](../../reviews/2026-09-11-reparacion-integral).

@@ -1,0 +1,408 @@
+{
+  "purpose": "Conversion regression on historical exposed test, not new model selection",
+  "exports": [
+    {
+      "model": "efficientnet_b0",
+      "variant": "fp32",
+      "size_bytes": 16241884,
+      "export_summary_sha256": "190ce09d7a615b1d5b16cd2fecd375af5b8df8f1005e999f98a2e3a17945dbfc",
+      "export": {
+        "format": "tflite",
+        "output_path": "export/model.tflite",
+        "created": true,
+        "succeeded": true,
+        "validation_status": "validated",
+        "deliverable": false,
+        "error": null,
+        "feature_parity": {
+          "passed": true,
+          "n_samples": 8,
+          "feature_dim": 1280,
+          "tolerance": 0.001,
+          "kind": "pooled_pre_head"
+        },
+        "sha256": "5913033454602dddc7946fbf1a3e7e76191185d058d7d93b7dbee77d67d75768",
+        "parity": {
+          "n_samples": 30,
+          "torch_top1_accuracy": 0.9666666666666667,
+          "exported_top1_accuracy": 0.9666666666666667,
+          "agreement_rate": 1.0,
+          "max_abs_prob_diff": 5.364418029785156e-07,
+          "mean_abs_prob_diff": 3.745641308228187e-08,
+          "tolerance": 0.001,
+          "min_agreement_rate": 1.0,
+          "passed": true,
+          "warnings": []
+        }
+      },
+      "evaluation": {
+        "n_samples": 5015,
+        "accuracy": 0.9796610169491525,
+        "macro_f1": 0.9483330101876505,
+        "torch_macro_f1": 0.9483330101876505,
+        "macro_f1_delta": 0.0,
+        "agreement_rate": 1.0,
+        "by_environment": {
+          "lab": {
+            "n": 532,
+            "accuracy": 0.9417293233082706,
+            "macro_f1": 0.8863652634593356,
+            "macro_f1_policy": "supported_true_classes",
+            "supported_classes": [
+              "common_rust",
+              "gray_leaf_spot",
+              "northern_corn_leaf_blight"
+            ],
+            "per_class_support": {
+              "common_rust": 322,
+              "fall_armyworm": 0,
+              "gray_leaf_spot": 77,
+              "healthy": 0,
+              "lethal_necrosis": 0,
+              "nitrogen_deficiency": 0,
+              "northern_corn_leaf_blight": 133,
+              "phosphorus_deficiency": 0,
+              "potassium_deficiency": 0
+            }
+          },
+          "real": {
+            "n": 4483,
+            "accuracy": 0.9841623912558555,
+            "macro_f1": 0.9297946872871794,
+            "macro_f1_policy": "supported_true_classes",
+            "supported_classes": [
+              "common_rust",
+              "fall_armyworm",
+              "gray_leaf_spot",
+              "healthy",
+              "lethal_necrosis",
+              "nitrogen_deficiency",
+              "northern_corn_leaf_blight",
+              "phosphorus_deficiency",
+              "potassium_deficiency"
+            ],
+            "per_class_support": {
+              "common_rust": 16,
+              "fall_armyworm": 728,
+              "gray_leaf_spot": 213,
+              "healthy": 1311,
+              "lethal_necrosis": 963,
+              "nitrogen_deficiency": 127,
+              "northern_corn_leaf_blight": 892,
+              "phosphorus_deficiency": 140,
+              "potassium_deficiency": 93
+            }
+          }
+        },
+        "predictions_sha256": "e048763518891de44d6c4f3ff572cfe07b451732a3af8f9dacf6dcba8fc6a88e",
+        "sample_ids_hash": "2453f3469fee52e905a01e7ded846f71857a7fa5d0242df0edb5b3d92c0ad59a",
+        "evaluated_split_sha256": "3c25c19e60b10ed605639e2641d99087000d277c7f49103f1d2463bd9bc0cea5",
+        "corrected_report": "outputs/repair-20260912/reconstructed/efficientnet_b0/r1/export/eval_tflite_environment_v2.json",
+        "corrected_report_sha256": "791af6ee6f9032eef9dea82e804fea9f5a3f2cba31b93ac71ed205d1c108f7bb"
+      },
+      "identities_counts_labels_metrics_hashes_verified": true
+    },
+    {
+      "model": "efficientnet_b0",
+      "variant": "int8",
+      "size_bytes": 4660272,
+      "export_summary_sha256": "9d5dcd19fc5cc266a66adaa56a9a29e0ef2a4717baf244cffd0629744f644a5d",
+      "export": {
+        "format": "tflite",
+        "output_path": "export/model_int8.tflite",
+        "created": true,
+        "succeeded": false,
+        "validation_status": "failed",
+        "deliverable": false,
+        "error": null,
+        "feature_parity": {
+          "passed": false,
+          "n_samples": 8,
+          "feature_dim": 1280,
+          "tolerance": 0.15,
+          "kind": "pooled_pre_head"
+        },
+        "sha256": "61c91743e61cd50798119162163cade3097f7c3ba5e98d5229c53f857b4cf0b5",
+        "parity": {
+          "n_samples": 30,
+          "torch_top1_accuracy": 0.9666666666666667,
+          "exported_top1_accuracy": 0.9666666666666667,
+          "agreement_rate": 1.0,
+          "max_abs_prob_diff": 0.2646580934524536,
+          "mean_abs_prob_diff": 0.006464461330324411,
+          "tolerance": 0.15,
+          "min_agreement_rate": 0.95,
+          "passed": false,
+          "warnings": []
+        }
+      }
+    },
+    {
+      "model": "shufflenet_v2_x1_0",
+      "variant": "fp32",
+      "size_bytes": 5175552,
+      "export_summary_sha256": "cf050318a994275fa10b6870d8740dccd5536a2deca9926c912e1d1d846c5e5f",
+      "export": {
+        "format": "tflite",
+        "output_path": "export/model.tflite",
+        "created": true,
+        "succeeded": true,
+        "validation_status": "validated",
+        "deliverable": false,
+        "error": null,
+        "feature_parity": {
+          "passed": true,
+          "n_samples": 8,
+          "feature_dim": 1024,
+          "tolerance": 0.001,
+          "kind": "pooled_pre_head"
+        },
+        "sha256": "42e3981624bcec234690da09d5c98d045de7b4828e674e5389bb4d3ed2ac565c",
+        "parity": {
+          "n_samples": 30,
+          "torch_top1_accuracy": 0.9666666666666667,
+          "exported_top1_accuracy": 0.9666666666666667,
+          "agreement_rate": 1.0,
+          "max_abs_prob_diff": 8.940696716308594e-07,
+          "mean_abs_prob_diff": 2.939875010099513e-08,
+          "tolerance": 0.001,
+          "min_agreement_rate": 1.0,
+          "passed": true,
+          "warnings": []
+        }
+      },
+      "evaluation": {
+        "n_samples": 5015,
+        "accuracy": 0.9730807577268196,
+        "macro_f1": 0.9329803745633506,
+        "torch_macro_f1": 0.9329803745633506,
+        "macro_f1_delta": 0.0,
+        "agreement_rate": 1.0,
+        "by_environment": {
+          "lab": {
+            "n": 532,
+            "accuracy": 0.9511278195488722,
+            "macro_f1": 0.9081379141490636,
+            "macro_f1_policy": "supported_true_classes",
+            "supported_classes": [
+              "common_rust",
+              "gray_leaf_spot",
+              "northern_corn_leaf_blight"
+            ],
+            "per_class_support": {
+              "common_rust": 322,
+              "fall_armyworm": 0,
+              "gray_leaf_spot": 77,
+              "healthy": 0,
+              "lethal_necrosis": 0,
+              "nitrogen_deficiency": 0,
+              "northern_corn_leaf_blight": 133,
+              "phosphorus_deficiency": 0,
+              "potassium_deficiency": 0
+            }
+          },
+          "real": {
+            "n": 4483,
+            "accuracy": 0.9756859246040598,
+            "macro_f1": 0.9112538967290829,
+            "macro_f1_policy": "supported_true_classes",
+            "supported_classes": [
+              "common_rust",
+              "fall_armyworm",
+              "gray_leaf_spot",
+              "healthy",
+              "lethal_necrosis",
+              "nitrogen_deficiency",
+              "northern_corn_leaf_blight",
+              "phosphorus_deficiency",
+              "potassium_deficiency"
+            ],
+            "per_class_support": {
+              "common_rust": 16,
+              "fall_armyworm": 728,
+              "gray_leaf_spot": 213,
+              "healthy": 1311,
+              "lethal_necrosis": 963,
+              "nitrogen_deficiency": 127,
+              "northern_corn_leaf_blight": 892,
+              "phosphorus_deficiency": 140,
+              "potassium_deficiency": 93
+            }
+          }
+        },
+        "predictions_sha256": "c8dae5cbd4ec6272d2fdb24e0317d518bd5a884a69e2ef38512ef29a9758c28d",
+        "sample_ids_hash": "2453f3469fee52e905a01e7ded846f71857a7fa5d0242df0edb5b3d92c0ad59a",
+        "evaluated_split_sha256": "3c25c19e60b10ed605639e2641d99087000d277c7f49103f1d2463bd9bc0cea5",
+        "corrected_report": "outputs/repair-20260912/reconstructed/shufflenet_v2_x1_0/r1/export/eval_tflite_environment_v2.json",
+        "corrected_report_sha256": "5b9d0ff5114549cdf81e0c1c235a5f6191188ae1c8e45e3ca8c2d3f777a963fc"
+      },
+      "identities_counts_labels_metrics_hashes_verified": true
+    },
+    {
+      "model": "shufflenet_v2_x1_0",
+      "variant": "int8",
+      "size_bytes": 1495808,
+      "export_summary_sha256": "55570666776b1e8b3c327c67ee9197826913d6a283203b695f81e55021bdaf56",
+      "export": {
+        "format": "tflite",
+        "output_path": "export/model_int8.tflite",
+        "created": true,
+        "succeeded": true,
+        "validation_status": "validated",
+        "deliverable": false,
+        "error": null,
+        "feature_parity": {
+          "passed": true,
+          "n_samples": 8,
+          "feature_dim": 1024,
+          "tolerance": 0.15,
+          "kind": "pooled_pre_head"
+        },
+        "sha256": "fed58fbf4b39cc944d0a3859a7de5735dd0fff95aa41e9111aa21dce61ba6362",
+        "parity": {
+          "n_samples": 30,
+          "torch_top1_accuracy": 0.9666666666666667,
+          "exported_top1_accuracy": 0.9666666666666667,
+          "agreement_rate": 1.0,
+          "max_abs_prob_diff": 0.056564390659332275,
+          "mean_abs_prob_diff": 0.002413215348497033,
+          "tolerance": 0.15,
+          "min_agreement_rate": 0.95,
+          "passed": true,
+          "warnings": []
+        }
+      },
+      "evaluation": {
+        "n_samples": 5015,
+        "accuracy": 0.9734795613160518,
+        "macro_f1": 0.9349793587288036,
+        "torch_macro_f1": 0.9329803745633506,
+        "macro_f1_delta": 0.001998984165452966,
+        "agreement_rate": 0.9964107676969093,
+        "by_environment": {
+          "lab": {
+            "n": 532,
+            "accuracy": 0.956766917293233,
+            "macro_f1": 0.91981713303199,
+            "macro_f1_policy": "supported_true_classes",
+            "supported_classes": [
+              "common_rust",
+              "gray_leaf_spot",
+              "northern_corn_leaf_blight"
+            ],
+            "per_class_support": {
+              "common_rust": 322,
+              "fall_armyworm": 0,
+              "gray_leaf_spot": 77,
+              "healthy": 0,
+              "lethal_necrosis": 0,
+              "nitrogen_deficiency": 0,
+              "northern_corn_leaf_blight": 133,
+              "phosphorus_deficiency": 0,
+              "potassium_deficiency": 0
+            }
+          },
+          "real": {
+            "n": 4483,
+            "accuracy": 0.9754628596921704,
+            "macro_f1": 0.9100109302299084,
+            "macro_f1_policy": "supported_true_classes",
+            "supported_classes": [
+              "common_rust",
+              "fall_armyworm",
+              "gray_leaf_spot",
+              "healthy",
+              "lethal_necrosis",
+              "nitrogen_deficiency",
+              "northern_corn_leaf_blight",
+              "phosphorus_deficiency",
+              "potassium_deficiency"
+            ],
+            "per_class_support": {
+              "common_rust": 16,
+              "fall_armyworm": 728,
+              "gray_leaf_spot": 213,
+              "healthy": 1311,
+              "lethal_necrosis": 963,
+              "nitrogen_deficiency": 127,
+              "northern_corn_leaf_blight": 892,
+              "phosphorus_deficiency": 140,
+              "potassium_deficiency": 93
+            }
+          }
+        },
+        "predictions_sha256": "254e5a10ab3a0dc46da535e18777c441bb32da9bcf3e2ccc9f65640702403271",
+        "sample_ids_hash": "2453f3469fee52e905a01e7ded846f71857a7fa5d0242df0edb5b3d92c0ad59a",
+        "evaluated_split_sha256": "3c25c19e60b10ed605639e2641d99087000d277c7f49103f1d2463bd9bc0cea5",
+        "corrected_report": "outputs/repair-20260912/reconstructed/shufflenet_v2_x1_0/r1/export/eval_tflite_int8_environment_v2.json",
+        "corrected_report_sha256": "58cb0c4327a4ecadb5ee1647df8d23afc5cec6b7ba0d3c7e73001de853fb548d"
+      },
+      "identities_counts_labels_metrics_hashes_verified": true
+    }
+  ],
+  "dataset": {
+    "created_at_utc": "2026-09-12T14:37:45.997198+00:00",
+    "dataset_root": "/tmp/doctor-maiz-hf-20260911-JjlLG8",
+    "images_scanned": 33429,
+    "images_valid_unique": 33429,
+    "invalid_images": 0,
+    "exact_duplicates_removed": 0,
+    "classes": [
+      "common_rust",
+      "fall_armyworm",
+      "gray_leaf_spot",
+      "healthy",
+      "lethal_necrosis",
+      "nitrogen_deficiency",
+      "northern_corn_leaf_blight",
+      "phosphorus_deficiency",
+      "potassium_deficiency"
+    ],
+    "counts_by_class": {
+      "common_rust": 2256,
+      "fall_armyworm": 4853,
+      "gray_leaf_spot": 1930,
+      "healthy": 8740,
+      "lethal_necrosis": 6415,
+      "nitrogen_deficiency": 846,
+      "northern_corn_leaf_blight": 6830,
+      "phosphorus_deficiency": 938,
+      "potassium_deficiency": 621
+    },
+    "counts_by_environment": {
+      "real": 29878,
+      "lab": 3551
+    },
+    "counts_by_split": {
+      "train": 23399,
+      "val": 5015,
+      "holdout": 5015
+    },
+    "fingerprint_sha256": "281de7a847d1e6a9f1d84d308e3d7c70b159140864971c9e72f8b41eefdf2c4c",
+    "holdout_seed": null,
+    "development_seed": null,
+    "source_splits": "outputs/repair-20260912/splits-reviewed-quarantine-v3",
+    "source_lock_sha256": "e37f0cacc9c9834be22ad2f3725e17d00ae24d5e7800866acfb2fd2821c45917",
+    "protocol": "Inherited locked partitions and groups; source test becomes frozen holdout"
+  },
+  "splits_lock": {
+    "schema_version": 1,
+    "seed": 42,
+    "config_sha256": "0fed52a365253a70a20fa802e8b6eff9d7964fc66ec3e5e7576bf938ee8b60b0",
+    "master_sha256": "149c5a2b0c4155578ce4063c9e141ff6cfbabc9c2ee622c0de8f69fadee62cff",
+    "split_sha256": {
+      "train": "5e0391c9980f7e37eefe119ce5faf7586d74c2d68178c8f5de6eedb1ec37e4eb",
+      "val": "3fd1a22dbc0e078f606250d6a3187a48245ff32037908540b619bace2d1cd68c",
+      "test": "22bdd201b167a0d4c97160ef05c5d4028a04c2b2a03753c5430fe117e0f6c8b7"
+    },
+    "grouping": "group_id",
+    "group_manifest_sha256": "fe1f0c36d00c3a4f0915e61452d76bdc883f7cf3246b4291446500996cf64847",
+    "exclusions_manifest_sha256": "5094e534a7995a9d8881320905cb6e3f99bf2501ad9bba334ddef9490996deb7",
+    "group_leakage_limitation": "Only supplied groups are protected; completeness of source/plant/session relationships requires independent review"
+  },
+  "report_assets": {
+    "count": 24,
+    "hashes_verified": true,
+    "manifest_sha256": "52bc2e5c6ef1b71f22807ee93cdf43924eadb6c107bbc72b4b782eb9f22ab87a"
+  }
+}

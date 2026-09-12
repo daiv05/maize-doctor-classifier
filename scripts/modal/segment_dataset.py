@@ -29,18 +29,19 @@ segmented_dataset_vol = modal.Volume.from_name("corn-clean-segmented", create_if
 outputs_vol = modal.Volume.from_name("corn-outputs", create_if_missing=True)
 
 image = (
-    modal.Image.debian_slim(python_version="3.11")
+    modal.Image.debian_slim(python_version="3.12")
     .apt_install("libgl1", "libglib2.0-0")
     .pip_install(
-        "torch==2.6.0",
-        "torchvision==0.21.0",
+        "torch==2.12.1",
+        "torchvision==0.27.1",
         "ultralytics==8.4.104",
-        "Pillow>=10.0,<13.0",
+        "Pillow==12.3.0",
         "tqdm>=4.66,<4.69",
         "pyyaml>=6.0,<7.0",
-        "numpy<2.0.0",
+        "numpy==2.5.1",
         "opencv-python-headless>=4.8,<5.0",
         "python-dotenv>=1.0,<1.3",
+        "pandas>=2.0,<3.0",
     )
     .env(
         {
@@ -71,26 +72,16 @@ def run_segmentation_job(
     profile: str = "crop_mask_letterbox",
     max_images: int = 0,
     max_previews: int = 50,
+    splits_dir: str = "/outputs/splits/seed_42",
+    checkpoint: str = "/segmenter/leaf_detection/models/doctor_maiz_leaf_segmenter_best.pt",
 ) -> None:
     print("[*] Recargando volúmenes de entrada...", flush=True)
     dataset_vol.reload()
     segmenter_vol.reload()
 
-    checkpoint_path = Path(
-        "/segmenter/leaf_detection/models/doctor_maiz_leaf_segmenter_best.pt"
-    )
+    checkpoint_path = Path(checkpoint)
     if not checkpoint_path.exists():
-        # Fallback a ubicación de baseline si difiere
-        alt_path = Path(
-            "/segmenter/leaf_detection/segmenter/yolo26n_seg_baseline/weights/best.pt"
-        )
-        if alt_path.exists():
-            checkpoint_path = alt_path
-        else:
-            raise FileNotFoundError(
-                f"No se encontró el checkpoint del segmentador en {checkpoint_path} "
-                f"ni en {alt_path}"
-            )
+        raise FileNotFoundError(f"Checkpoint explícito inexistente: {checkpoint_path}")
 
     print(f"[*] Checkpoint resuelto en Modal: {checkpoint_path}", flush=True)
 
@@ -98,13 +89,15 @@ def run_segmentation_job(
         sys.executable,
         "scripts/pipeline/segment_dataset.py",
         "--dataset-dir",
-        "/data/clean",
+        "/data",
         "--output-dir",
         "/data_segmented/clean",
         "--preview-dir",
         "/outputs/segmentation_previews",
         "--checkpoint",
         str(checkpoint_path),
+        "--splits-dir",
+        splits_dir,
         "--profile",
         profile,
         "--max-previews",
@@ -130,6 +123,8 @@ def main(
     profile: str = "crop_mask_letterbox",
     max_images: int = 0,
     max_previews: int = 50,
+    splits_dir: str = "/outputs/splits/seed_42",
+    checkpoint: str = "/segmenter/leaf_detection/models/doctor_maiz_leaf_segmenter_best.pt",
 ) -> None:
     print(
         f"Lanzando pre-segmentación en Modal (profile={profile}, "
@@ -139,4 +134,6 @@ def main(
         profile=profile,
         max_images=max_images,
         max_previews=max_previews,
+        splits_dir=splits_dir,
+        checkpoint=checkpoint,
     )

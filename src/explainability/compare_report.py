@@ -47,6 +47,7 @@ def render_comparison(
     lime_cfg: dict,
     shap_cfg: dict,
     device: torch.device,
+    preprocessing: dict | None = None,
 ) -> dict:
     """
     Genera el panel comparado de una imagen y persiste sus artefactos numericos.
@@ -72,7 +73,7 @@ def render_comparison(
         metricas de acuerdo por lo tanto no son comparables, ver D7).
     """
     model.eval()
-    image_np = prepare_lime_image(image, target_size)
+    image_np = prepare_lime_image(image, target_size, preprocessing)
     image_rgb01 = image_np.astype(float) / 255.0
     predict_fn = build_predict_fn(model, device, target_size)
 
@@ -129,7 +130,7 @@ def render_comparison(
         image_rgb01, segments, list(enumerate(shap_explanation.values))
     )
     gradcam_panel = _build_gradcam_panel(
-        model, model_name, image, image_rgb01, target_size, target_idx, device
+        model, model_name, image, image_rgb01, target_size, target_idx, device, preprocessing
     )
 
     predicted_label = idx_to_class.get(target_idx, str(target_idx))
@@ -187,6 +188,7 @@ def _build_gradcam_panel(
     target_size: tuple[int, int],
     target_idx: int,
     device: torch.device,
+    preprocessing: dict | None = None,
 ) -> np.ndarray | None:
     """
     Calcula el overlay de Grad-CAM, o None si la arquitectura no lo soporta.
@@ -208,7 +210,9 @@ def _build_gradcam_panel(
         logger.warning(f"Grad-CAM omitido: {error}")
         return None
 
-    input_tensor = build_validation_transform(target_size)(image).unsqueeze(0).to(device)
+    input_tensor = (
+        build_validation_transform(target_size, preprocessing)(image).unsqueeze(0).to(device)
+    )
     with GradCAM(model, target_layer) as cam:
         heatmap = cam(input_tensor, class_idx=target_idx)
     return build_gradcam_overlay(image_rgb01, heatmap, target_size)

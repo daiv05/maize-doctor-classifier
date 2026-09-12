@@ -7,15 +7,19 @@ exactamente al loop de baselines de la Tabla 6.2 del reporte.
 
 from __future__ import annotations
 
+import copy
 import logging
 from pathlib import Path
 from time import perf_counter
 from typing import Callable
 
 import torch
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from src.data.identity import IdentifiedValues, identified_batches
+from src.provenance import atomic_json
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +44,19 @@ def _loss_denominator(criterion: torch.nn.Module, labels: torch.Tensor) -> float
 
 
 def _metrics_from_predictions(
-    labels: list[int], predictions: list[int], loss: float
+    labels: list[int], predictions: list[int], loss: float, class_ids=None
 ) -> dict[str, float]:
+    if not labels:
+        raise ValueError("Cannot evaluate an empty loader")
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        labels, predictions, labels=class_ids, average="macro", zero_division=0
+    )
     return {
         "loss": loss,
         "accuracy": accuracy_score(labels, predictions),
-        "macro_f1": f1_score(labels, predictions, average="macro", zero_division=0),
+        "macro_f1": float(f1),
+        "macro_precision": float(precision),
+        "macro_recall": float(recall),
     }
 
 
@@ -81,12 +92,13 @@ def run_epoch(
     running_loss = 0.0
     running_denominator = 0.0
     labels_all: list[int] = []
-    preds_all: list[int] = []
+    preds_all = IdentifiedValues()
     probs_all: list[float] = []
 
     context = torch.enable_grad() if is_train else torch.no_grad()
     with context:
-        for images, labels in tqdm(loader, desc=desc, leave=False):
+        batches = ((x, y, None) for x, y in loader) if is_train else identified_batches(loader)
+        for images, labels, sample_ids in tqdm(batches, total=len(loader), desc=desc, leave=False):
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
 
@@ -108,10 +120,18 @@ def run_epoch(
             labels_all.extend(labels.detach().cpu().tolist())
             probs = logits.detach().softmax(dim=1)
             preds_all.extend(probs.argmax(dim=1).cpu().tolist())
+            if sample_ids is not None:
+                preds_all.sample_ids.extend(sample_ids)
             probs_all.extend(probs.max(dim=1).values.cpu().tolist())
 
     avg_loss = running_loss / running_denominator if running_denominator > 0 else 0.0
-    metrics = _metrics_from_predictions(labels_all, preds_all, avg_loss)
+    dataset = loader.dataset
+    while isinstance(dataset, torch.utils.data.Subset):
+        dataset = dataset.dataset
+    mapping = getattr(dataset, "class_to_idx", None)
+    metrics = _metrics_from_predictions(
+        labels_all, preds_all, avg_loss, sorted(mapping.values()) if mapping else None
+    )
     return metrics, labels_all, preds_all, probs_all
 
 
@@ -151,6 +171,12 @@ def fit(
     """
     history: list[dict] = []
     best_val_macro_f1 = -1.0
+    best_state = None
+    best_epoch = None
+    if epochs < 1:
+        raise ValueError("epochs must be positive")
+    if run_dir is not None:
+        run_dir.mkdir(parents=True, exist_ok=True)
 
     for epoch in range(1, epochs + 1):
         started = perf_counter()
@@ -189,6 +215,10 @@ def fit(
 
         if val_metrics["macro_f1"] > best_val_macro_f1:
             best_val_macro_f1 = val_metrics["macro_f1"]
+            best_epoch = epoch
+            best_state = copy.deepcopy(
+                {key: value.detach().cpu() for key, value in model.state_dict().items()}
+            )
             row["is_best"] = True
             if run_dir is not None:
                 torch.save(model.state_dict(), run_dir / "best.pth")
@@ -211,4 +241,18 @@ def fit(
             logger.info("[%s] Early stopping en la epoca %s", model_name, epoch)
             break
 
+    if best_state is None:
+        raise RuntimeError("Training produced no finite best validation checkpoint")
+    model.load_state_dict(best_state, strict=True)
+    if run_dir is not None:
+        atomic_json(
+            run_dir / "training_state.json",
+            {
+                "best_epoch": best_epoch,
+                "best_val_macro_f1": best_val_macro_f1,
+                "restored_best": True,
+                "epochs_executed": len(history),
+                "history": history,
+            },
+        )
     return history

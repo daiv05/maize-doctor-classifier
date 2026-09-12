@@ -1,0 +1,21 @@
+{
+  "revision": "e515ab2f1e4c5729f8447520f1a630cf14c532dc",
+  "complete": true,
+  "images": 33437,
+  "unique_hashes": 33433,
+  "duplicates_beyond_first": 4,
+  "counts_by_class": {
+    "healthy": 8744,
+    "northern_corn_leaf_blight": 6830,
+    "lethal_necrosis": 6415,
+    "fall_armyworm": 4857,
+    "common_rust": 2256,
+    "gray_leaf_spot": 1930,
+    "phosphorus_deficiency": 938,
+    "nitrogen_deficiency": 846,
+    "potassium_deficiency": 621
+  },
+  "stage2_matching_hashes": 33433,
+  "stage2_rows": 33433,
+  "manifest_sha256": "6ee45dd82940d9ee759f9b23e642dd86924fcbcef74b9605c0813cfbc3a2fcda"
+}

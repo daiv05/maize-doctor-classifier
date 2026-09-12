@@ -1,0 +1,12 @@
+# Observed test-only additions installed on top of the real LiteRT resolution.
+# Both environments passed pip check; these pins do not certify other platforms.
+matplotlib==3.11.1
+contourpy==1.4.0
+cycler==0.12.1
+fonttools==4.65.0
+kiwisolver==1.5.1
+pyparsing==3.3.2
+pytest==9.1.1
+iniconfig==2.3.0
+pluggy==1.6.0
+pygments==2.21.0

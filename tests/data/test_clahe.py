@@ -1,16 +1,25 @@
+import os
+from pathlib import Path
+
 import numpy as np
 import pytest
 from PIL import Image
 
 from src.config import PROJECT_ROOT
+from src.data.loader import load_and_normalize_image
 from src.data.transforms import CornCLAHETransform, CornTransformFactory
 
-_REAL_LEAF_IMAGE = (
-    PROJECT_ROOT
-    / "experiments"
-    / "clahe"
-    / "input"
-    / "gray_leaf_spot_maize_field_real_13749986.jpg"
+_REAL_LEAF_IMAGE = Path(
+    os.environ.get(
+        "CORN_TEST_REAL_IMAGE",
+        str(
+            PROJECT_ROOT
+            / "experiments"
+            / "clahe"
+            / "input"
+            / "gray_leaf_spot_maize_field_real_13749986.jpg"
+        ),
+    )
 )
 
 
@@ -65,7 +74,7 @@ def test_clahe_preserva_el_tono_en_imagen_real():
     es la senal diagnostica de las deficiencias nutricionales."""
     import cv2
 
-    original_image = Image.open(_REAL_LEAF_IMAGE).convert("RGB").resize((224, 224))
+    original_image = load_and_normalize_image(_REAL_LEAF_IMAGE).resize((224, 224))
     original = np.array(original_image)
     processed = np.array(CornCLAHETransform()(original_image))
 

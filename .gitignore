@@ -1,48 +1,139 @@
+# Secretos y configuración personal; las plantillas se comparten.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
+!.env.*.template
 .envrc
+.direnv/
+.claude/settings.local.json
+.codex/*.local.toml
 
-.worktrees/
-
-**.local**
-
-.temp/
-cache/
-.vite/
+# Entornos virtuales e instalaciones locales (no excluir pyproject ni constraints).
+venv
+venv-*/
+.venv
+.venv-*/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
 dist/
-node_modules/
-/data
-/outputs/
-/outputs-remote**
-/results-remote/
-**.aux
-**.log
-**.out
-**.toc
-**.fdb**
-**.fls
-**.synctex.gz
 
+# Cachés y resultados automáticos de pruebas.
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
+.ipynb_checkpoints/
+.coverage
+.coverage.*
+htmlcov/
+/coverage/
+/coverage.xml
+/junit.xml
+/test-results/
+# No ignorar *.xml: docs/reviews/evidence contiene evidencias citadas.
+
+# Dependencias y builds web; conservar package-lock.json y fuentes .vitepress.
+node_modules/
+.vite/
+.cache/
+cache/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-.DS_Store
-Thumbs.db
+# Datos y artefactos de ML: compartir fuera de Git con versión, manifest y hashes.
+/data
+/raw/
+/clean/
+/segmented/
+/datasets/
+/outputs/
+/outputs-remote*/
+/results-remote/
+/checkpoints/
+/artifacts/
+/runs/
+/wandb/
+/mlruns/
+/mlartifacts/
+/*.pt
+/*.pth
+/*.ckpt
+/*.safetensors
+/*.onnx
+/*.onnx.data
+/*.tflite
+/*.npy
+/*.npz
+# Reglas de raíz: no ocultar fixtures pequeños ni imágenes/figuras documentales.
 
-venv
+# Paquetes locales del repo y shards descargados en la raíz.
+/*.zip
+/*.7z
+/*.rar
+/*.tar
+/*.tar.gz
+/*.tgz
+/*.zip.part*
+/*.zip.0*
 
-# Python
-__pycache__/
-*.pyc
-
-/tmp/**
-
-# Experimentos: se versiona el código, no las imágenes de entrada/salida
+# Experimentos: se versiona el código, no las imágenes de entrada/salida.
 /experiments/**/input/*
 !/experiments/**/input/.gitkeep
 /experiments/**/output/
 /experiments/**/comparisons/
 
-.ruff_cache/
+# Auxiliares de LaTeX; conservar fuentes, bibliografía, figuras y PDF publicados.
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.bcf
+*.blg
+*.run.xml
+
+# Temporales, índices locales y estado personal del editor.
+.worktrees/
+.temp/
+/tmp/
+/temp/
+.codebase-memory/*.db
+.codebase-memory/*.db-wal
+.codebase-memory/*.db-shm
+# No ocultar graph.db.zst: puede compartirse intencionalmente como índice del equipo.
+.vscode/*.local.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Se comparten: src/, scripts/, tests/, config/, constraints/, docs/, public/,
+# notebooks, archivos lock, AGENTS.md, CLAUDE.md y skills/instrucciones del proyecto.
+# No añadir patrones globales para JSON, CSV, XML, imágenes o PDF.

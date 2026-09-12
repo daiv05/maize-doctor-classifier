@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
 import os
 import re
 import statistics
@@ -26,7 +25,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torch.nn.functional as torch_functional
+import yaml
 from PIL import Image, ImageOps
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import (
@@ -41,24 +40,23 @@ from sklearn.metrics import (
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import StandardScaler, normalize
 from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
 
+from src.config import PROJECT_ROOT
+from src.data.identity import ensure_sample_ids
+from src.data.loader import load_and_normalize_image
+from src.data.provenance import (
+    model_state_hash,
+    ordered_manifest_contract,
+    validate_feature_cache,
+    validate_holdout_lock,
+)
+from src.data.transforms import CornTransformFactory
 from src.models import build_model, resolve_input_size
-
+from src.provenance import atomic_json, contract_hash
 
 SEED = 42
 HOLDOUT_SEED = 4202
-CLASSES = [
-    "common_rust",
-    "fall_armyworm",
-    "gray_leaf_spot",
-    "healthy",
-    "lethal_necrosis",
-    "nitrogen_deficiency",
-    "northern_corn_leaf_blight",
-    "phosphorus_deficiency",
-    "potassium_deficiency",
-]
+CLASSES = yaml.safe_load((PROJECT_ROOT / "config/dataset.yaml").read_text())["dataset"]["classes"]
 CLASS_TO_IDX = {name: idx for idx, name in enumerate(CLASSES)}
 DEFAULT_MODELS = [
     "efficientnet_b0",
@@ -70,8 +68,7 @@ IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
 
 
 def _json_dump(path: Path, payload: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False, default=str) + "\n")
+    atomic_json(path, json.loads(json.dumps(payload, default=str)))
 
 
 def _sha256(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -110,10 +107,44 @@ def _fingerprint(frame: pd.DataFrame) -> str:
     return digest.hexdigest()
 
 
-def prepare(dataset_root: Path, output_dir: Path) -> None:
+def prepare(dataset_root: Path, output_dir: Path, source_splits: Path | None = None) -> None:
+    if (output_dir / "master_manifest.csv").exists() or (output_dir / "holdout.lock.json").exists():
+        raise FileExistsError("Experiment manifests are immutable; choose a new output directory")
     clean_dir = dataset_root / "clean"
     if not clean_dir.is_dir():
         raise SystemExit(f"No existe el dataset esperado: {clean_dir}")
+
+    inherited = None
+    source_lock_sha256 = None
+    if source_splits:
+        lock_path = source_splits / "manifest.lock.json"
+        lock = json.loads(lock_path.read_text())
+        source_lock_sha256 = _sha256(lock_path)
+        if _sha256(source_splits / "master_manifest.csv") != lock["master_sha256"]:
+            raise ValueError("Source master manifest differs from its lock")
+        parts = []
+        for split in ("train", "val", "test"):
+            path = source_splits / f"{split}.csv"
+            if _sha256(path) != lock["split_sha256"][split]:
+                raise ValueError("Source split differs from its lock")
+            part = ensure_sample_ids(pd.read_csv(path))
+            part["split"] = "holdout" if split == "test" else split
+            parts.append(part)
+        inherited = ensure_sample_ids(pd.concat(parts, ignore_index=True))
+        source_master = ensure_sample_ids(pd.read_csv(source_splits / "master_manifest.csv"))
+        columns = ["sample_id", "image_path", "label", "environment", "sha256"]
+        if "group_id" in source_master:
+            columns.append("group_id")
+        pd.testing.assert_frame_equal(
+            inherited[columns].sort_values("sample_id").reset_index(drop=True),
+            source_master[columns].sort_values("sample_id").reset_index(drop=True),
+        )
+        if "group_id" in inherited and (
+            inherited.group_id.isna().any()
+            or (inherited.groupby("group_id").split.nunique() > 1).any()
+        ):
+            raise ValueError("Source groups overlap partitions or have missing IDs")
+        allowed_paths = set(inherited.image_path)
 
     candidates: list[tuple[str, str, Path]] = []
     records: list[dict] = []
@@ -127,15 +158,27 @@ def prepare(dataset_root: Path, output_dir: Path) -> None:
                 (label, environment, path)
                 for path in sorted(env_dir.iterdir())
                 if path.suffix.lower() in IMAGE_SUFFIXES
+                and (
+                    inherited is None or path.relative_to(dataset_root).as_posix() in allowed_paths
+                )
             )
 
     workers = max(1, min(16, os.cpu_count() or 1))
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        inspected = pool.map(_inspect_image, (path for _, _, path in candidates))
+
+        def inspect_safely(path):
+            try:
+                return _inspect_image(path)
+            except Exception as error:
+                return error
+
+        inspected = pool.map(inspect_safely, (path for _, _, path in candidates))
         for index, ((label, environment, path), result) in enumerate(
             zip(candidates, inspected), start=1
         ):
             try:
+                if isinstance(result, Exception):
+                    raise result
                 width, height, blur_score, sha256 = result
             except Exception as exc:  # pragma: no cover - depends on external corpus
                 invalid.append({"image_path": str(path), "error": repr(exc)})
@@ -157,29 +200,49 @@ def prepare(dataset_root: Path, output_dir: Path) -> None:
                 }
             )
 
-    raw = pd.DataFrame(records).sort_values("image_path").reset_index(drop=True)
+    if not records:
+        raise ValueError("No valid images found")
+    raw = ensure_sample_ids(pd.DataFrame(records).sort_values("image_path"))
+    if inherited is not None:
+        columns = ["sample_id", "image_path", "label", "environment", "sha256"]
+        pd.testing.assert_frame_equal(
+            raw[columns].sort_values("sample_id").reset_index(drop=True),
+            inherited[columns].sort_values("sample_id").reset_index(drop=True),
+        )
+        if raw.sha256.duplicated().any():
+            raise ValueError("Inherited splits must be content-deduplicated before freezing")
+    conflicts = raw.groupby("sha256").label.nunique()
+    if (conflicts > 1).any():
+        output_dir.mkdir(parents=True, exist_ok=True)
+        raw[raw.sha256.isin(conflicts[conflicts > 1].index)].to_csv(
+            output_dir / "label_conflicts.csv", index=False
+        )
+        raise ValueError("Exact duplicates have conflicting labels; inspect label_conflicts.csv")
     duplicate_rows = raw[raw.duplicated("sha256", keep="first")].copy()
     master = raw.drop_duplicates("sha256", keep="first").reset_index(drop=True)
-    strata = master["label"] + "|" + master["environment"]
-    dev, holdout = train_test_split(
-        master,
-        test_size=0.15,
-        random_state=HOLDOUT_SEED,
-        stratify=strata,
-    )
-    dev_strata = dev["label"] + "|" + dev["environment"]
-    train, val = train_test_split(
-        dev,
-        test_size=0.15 / 0.85,
-        random_state=SEED,
-        stratify=dev_strata,
-    )
-
-    split_by_index = {}
-    split_by_index.update({int(idx): "train" for idx in train.index})
-    split_by_index.update({int(idx): "val" for idx in val.index})
-    split_by_index.update({int(idx): "holdout" for idx in holdout.index})
-    master["split"] = [split_by_index[int(idx)] for idx in master.index]
+    if inherited is not None:
+        columns = ["sample_id", "split"] + (["group_id"] if "group_id" in inherited else [])
+        master = master.merge(inherited[columns], on="sample_id", validate="one_to_one")
+    else:
+        strata = master["label"] + "|" + master["environment"]
+        dev, holdout = train_test_split(
+            master,
+            test_size=0.15,
+            random_state=HOLDOUT_SEED,
+            stratify=strata,
+        )
+        dev_strata = dev["label"] + "|" + dev["environment"]
+        train, val = train_test_split(
+            dev,
+            test_size=0.15 / 0.85,
+            random_state=SEED,
+            stratify=dev_strata,
+        )
+        split_by_index = {}
+        split_by_index.update({int(idx): "train" for idx in train.index})
+        split_by_index.update({int(idx): "val" for idx in val.index})
+        split_by_index.update({int(idx): "holdout" for idx in holdout.index})
+        master["split"] = [split_by_index[int(idx)] for idx in master.index]
     master = master.sort_values("image_path").reset_index(drop=True)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -205,9 +268,15 @@ def prepare(dataset_root: Path, output_dir: Path) -> None:
         "counts_by_environment": master["environment"].value_counts().to_dict(),
         "counts_by_split": master["split"].value_counts().to_dict(),
         "fingerprint_sha256": fingerprint,
-        "holdout_seed": HOLDOUT_SEED,
-        "development_seed": SEED,
-        "protocol": "70% train, 15% validation, 15% frozen holdout; stratified label+environment",
+        "holdout_seed": None if source_splits else HOLDOUT_SEED,
+        "development_seed": None if source_splits else SEED,
+        "source_splits": str(source_splits) if source_splits else None,
+        "source_lock_sha256": source_lock_sha256,
+        "protocol": (
+            "Inherited locked partitions and groups; source test becomes frozen holdout"
+            if source_splits
+            else "70% train, 15% validation, 15% frozen holdout; stratified label+environment"
+        ),
     }
     _json_dump(output_dir / "dataset_summary.json", summary)
     _json_dump(
@@ -217,6 +286,7 @@ def prepare(dataset_root: Path, output_dir: Path) -> None:
             "created_at_utc": summary["created_at_utc"],
             "dataset_fingerprint_sha256": fingerprint,
             "holdout_manifest_sha256": _sha256(output_dir / "holdout.csv"),
+            "master_manifest_sha256": _sha256(output_dir / "master_manifest.csv"),
             "rows": int((master["split"] == "holdout").sum()),
             "rule": "No usar etiquetas del holdout hasta ejecutar el subcomando final.",
         },
@@ -228,16 +298,7 @@ class ManifestDataset(Dataset):
     def __init__(self, frame: pd.DataFrame, dataset_root: Path, size: tuple[int, int]):
         self.frame = frame.reset_index(drop=True)
         self.dataset_root = dataset_root
-        self.transform = transforms.Compose(
-            [
-                transforms.Resize(size),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225],
-                ),
-            ]
-        )
+        self.transform = CornTransformFactory(target_size=size).get_pipeline("test")
 
     def __len__(self) -> int:
         return len(self.frame)
@@ -245,9 +306,7 @@ class ManifestDataset(Dataset):
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
         row = self.frame.iloc[index]
         path = self.dataset_root / row["image_path"]
-        with Image.open(path) as image:
-            image = ImageOps.exif_transpose(image).convert("RGB")
-            tensor = self.transform(image)
+        tensor = self.transform(load_and_normalize_image(path))
         return tensor, int(row["label_idx"])
 
 
@@ -274,81 +333,66 @@ def extract_features(
     manifest = pd.read_csv(output_dir / "master_manifest.csv")
     feature_dir = output_dir / "features"
     feature_dir.mkdir(parents=True, exist_ok=True)
-    torch.set_num_threads(max(1, min(16, os.cpu_count() or 1)))
-
-    pending = [model for model in models if not (feature_dir / f"{model}.npy").exists()]
-    if not pending:
-        print("[skip] todos los embeddings solicitados ya existen")
-        return
-
-    # Se decodifica cada fotografía una sola vez. FastViT consume 256 px; los demás
-    # reciben una interpolación a 224 px del mismo batch ya normalizado.
-    max_height = max(resolve_input_size(model, (224, 224))[0] for model in pending)
-    max_width = max(resolve_input_size(model, (224, 224))[1] for model in pending)
-    dataset = ManifestDataset(manifest, dataset_root, (max_height, max_width))
-    loader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=workers,
-        persistent_workers=workers > 0,
-    )
-    loaded_models = {model: _as_feature_extractor(model, pretrained=True) for model in pending}
-    chunks: dict[str, list[np.ndarray]] = {model: [] for model in pending}
-    started = time.perf_counter()
-    with torch.inference_mode():
-        for batch_index, (images, _) in enumerate(loader, start=1):
-            for model_name, model in loaded_models.items():
-                target_size = resolve_input_size(model_name, (224, 224))
-                model_images = images
-                if tuple(images.shape[-2:]) != tuple(target_size):
-                    model_images = torch_functional.interpolate(
-                        images, size=target_size, mode="bilinear", align_corners=False
-                    )
-                features = model(model_images)
-                if features.ndim > 2:
-                    features = torch.flatten(features, 1)
-                chunks[model_name].append(
-                    features.cpu().numpy().astype(np.float32, copy=False)
-                )
-            if batch_index % 50 == 0:
-                print(
-                    f"[features] {min(batch_index * batch_size, len(dataset))}/{len(dataset)}",
-                    flush=True,
-                )
-
-    total_seconds = time.perf_counter() - started
-    for model_name, model in loaded_models.items():
-        matrix = np.concatenate(chunks[model_name], axis=0)
-        np.save(feature_dir / f"{model_name}.npy", matrix)
+    data_contract = ordered_manifest_contract(manifest, dataset_root)
+    for model_name in models:
         size = resolve_input_size(model_name, (224, 224))
-        params = sum(parameter.numel() for parameter in model.parameters())
+        factory = CornTransformFactory(target_size=size)
+        model = _as_feature_extractor(model_name, pretrained=True)
+        backbone_hash = model_state_hash(model)
+        artifact = feature_dir / f"{model_name}.npy"
+        if artifact.exists():
+            validate_feature_cache(
+                output_dir,
+                model_name,
+                expected_preprocessing=factory.to_contract(),
+                expected_backbone=backbone_hash,
+            )
+            print(f"[verified cache] {model_name}")
+            continue
+        contract = {
+            "schema_version": 1,
+            "model": model_name,
+            "dataset_root": str(dataset_root.resolve()),
+            "manifest": data_contract,
+            "backbone_sha256": backbone_hash,
+            "preprocessing": factory.to_contract(),
+            "torch_version": str(torch.__version__),
+        }
+        dataset = ManifestDataset(manifest, dataset_root, size)
+        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
+        chunks, started = [], time.perf_counter()
+        with torch.inference_mode():
+            for images, _ in loader:
+                values = model(images).flatten(1).cpu().numpy().astype(np.float32)
+                chunks.append(values)
+        matrix = np.concatenate(chunks)
+        temporary = artifact.with_suffix(".npy.partial")
+        with temporary.open("wb") as stream:
+            np.save(stream, matrix, allow_pickle=False)
+        os.replace(temporary, artifact)
+        params = sum(p.numel() for p in model.parameters())
         sample = dataset[0][0].unsqueeze(0)
-        if tuple(sample.shape[-2:]) != tuple(size):
-            sample = torch_functional.interpolate(sample, size=size, mode="bilinear", align_corners=False)
         timings = []
         with torch.inference_mode():
             for _ in range(5):
-                model(sample)
-            for _ in range(30):
                 tick = time.perf_counter()
                 model(sample)
-                timings.append((time.perf_counter() - tick) * 1000.0)
+                timings.append((time.perf_counter() - tick) * 1000)
         info = {
             "model": model_name,
-            "pretrained": "ImageNet",
             "feature_dimension": int(matrix.shape[1]),
-            "rows": int(matrix.shape[0]),
-            "parameters": int(params),
-            "fp32_parameter_size_mb": params * 4 / (1024**2),
+            "rows": len(matrix),
+            "parameters": params,
+            "fp32_parameter_size_mb": params * 4 / 1024**2,
             "input_size": list(size),
             "cpu_latency_ms_median": statistics.median(timings),
-            "cpu_latency_ms_p90": float(np.percentile(timings, 90)),
-            "joint_feature_extraction_seconds": total_seconds,
-            "torch_version": torch.__version__,
+            "feature_extraction_seconds": time.perf_counter() - started,
+            "contract": contract,
+            "contract_sha256": contract_hash(contract),
+            "artifact_sha256": _sha256(artifact),
         }
-        _json_dump(feature_dir / f"{model_name}.json", info)
-        print(json.dumps(info, indent=2))
+        atomic_json(artifact.with_suffix(".json"), info)
+        del model, loader, chunks, matrix
 
 
 @dataclass
@@ -453,9 +497,7 @@ def fit_probe(
     )
     batch_size = int(params.get("batch_size", 256))
     epochs = int(params.get("epochs", 20))
-    sample_weights = _class_sample_weights(
-        train_labels, float(params.get("balance_power", 0.0))
-    )
+    sample_weights = _class_sample_weights(train_labels, float(params.get("balance_power", 0.0)))
     rng = np.random.default_rng(SEED)
     history: list[dict] = []
     all_classes = np.arange(len(CLASSES))
@@ -489,17 +531,15 @@ def _metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
         "macro_precision": float(
             precision_score(labels, predictions, average="macro", zero_division=0)
         ),
-        "macro_recall": float(
-            recall_score(labels, predictions, average="macro", zero_division=0)
-        ),
+        "macro_recall": float(recall_score(labels, predictions, average="macro", zero_division=0)),
         "macro_f1": float(f1_score(labels, predictions, average="macro", zero_division=0)),
-        "weighted_f1": float(
-            f1_score(labels, predictions, average="weighted", zero_division=0)
-        ),
+        "weighted_f1": float(f1_score(labels, predictions, average="weighted", zero_division=0)),
     }
 
 
-def _split_arrays(manifest: pd.DataFrame, matrix: np.ndarray, split: str) -> tuple[np.ndarray, np.ndarray]:
+def _split_arrays(
+    manifest: pd.DataFrame, matrix: np.ndarray, split: str
+) -> tuple[np.ndarray, np.ndarray]:
     mask = manifest["split"].eq(split).to_numpy()
     return matrix[mask], manifest.loc[mask, "label_idx"].to_numpy(dtype=int)
 
@@ -508,7 +548,7 @@ def tune(output_dir: Path, model_name: str, trials: int, epochs: int) -> None:
     import optuna
 
     manifest = pd.read_csv(output_dir / "master_manifest.csv")
-    matrix = np.load(output_dir / "features" / f"{model_name}.npy", mmap_mode="r")
+    matrix = validate_feature_cache(output_dir, model_name)
     train_x, train_y = _split_arrays(manifest, matrix, "train")
     val_x, val_y = _split_arrays(manifest, matrix, "val")
 
@@ -523,9 +563,7 @@ def tune(output_dir: Path, model_name: str, trials: int, epochs: int) -> None:
         "feature_norm": "l2",
         "epochs": epochs,
     }
-    baseline_bundle, baseline_history = fit_probe(
-        train_x, train_y, baseline_params, val_x, val_y
-    )
+    baseline_bundle, baseline_history = fit_probe(train_x, train_y, baseline_params, val_x, val_y)
     baseline_metrics = _metrics(val_y, baseline_bundle.predict_proba(val_x))
 
     def objective(trial) -> float:
@@ -544,7 +582,9 @@ def tune(output_dir: Path, model_name: str, trials: int, epochs: int) -> None:
             "epochs": epochs,
         }
         bundle, history = fit_probe(train_x, train_y, params, val_x, val_y, trial=trial)
-        trial.set_user_attr("best_epoch", max(history, key=lambda row: row["val_macro_f1"])["epoch"])
+        trial.set_user_attr(
+            "best_epoch", max(history, key=lambda row: row["val_macro_f1"])["epoch"]
+        )
         return _metrics(val_y, bundle.predict_proba(val_x))["macro_f1"]
 
     study = optuna.create_study(
@@ -554,7 +594,7 @@ def tune(output_dir: Path, model_name: str, trials: int, epochs: int) -> None:
         study_name=f"etapa2_{model_name}",
     )
     study.optimize(objective, n_trials=trials, gc_after_trial=True)
-    best_params = dict(study.best_trial.params)
+    best_params = {"schema": "sgd_probe_hpo_v1", **study.best_trial.params}
     if best_params["penalty"] == "l2":
         best_params["l1_ratio"] = 0.0
     best_params["epochs"] = epochs
@@ -596,7 +636,11 @@ def tune(output_dir: Path, model_name: str, trials: int, epochs: int) -> None:
             "best_params": best_params,
         },
     )
-    print(json.dumps({"baseline": baseline_metrics, "best": best_metrics, "params": best_params}, indent=2))
+    print(
+        json.dumps(
+            {"baseline": baseline_metrics, "best": best_metrics, "params": best_params}, indent=2
+        )
+    )
 
 
 def compare_models(output_dir: Path, models: list[str]) -> None:
@@ -611,7 +655,7 @@ def compare_models(output_dir: Path, models: list[str]) -> None:
     val_y = manifest.loc[val_mask, "label_idx"].to_numpy(dtype=int)
 
     for model_name in models:
-        matrix = np.load(output_dir / "features" / f"{model_name}.npy", mmap_mode="r")
+        matrix = validate_feature_cache(output_dir, model_name)
         bundle, _ = fit_probe(matrix[train_mask], train_y, params)
         probabilities = bundle.predict_proba(matrix[val_mask])
         metrics = _metrics(val_y, probabilities)
@@ -625,6 +669,21 @@ def compare_models(output_dir: Path, models: list[str]) -> None:
         pred_frame["pred_label"] = [CLASSES[index] for index in predictions]
         pred_frame["confidence"] = probabilities.max(axis=1)
         pred_frame.to_csv(comparison_dir / f"{model_name}_val_predictions.csv", index=False)
+        atomic_json(
+            comparison_dir / f"{model_name}_val_contract.json",
+            {
+                "schema_version": 1,
+                "manifest_sha256": _sha256(output_dir / "master_manifest.csv"),
+                "params_sha256": _sha256(output_dir / "tuning/best_params.json"),
+                "features_sha256": _sha256(output_dir / "features" / f"{model_name}.json"),
+                "sample_ids": pred_frame["sample_id"].tolist(),
+                "classes": CLASSES,
+                "probabilities_sha256": _sha256(
+                    comparison_dir / f"{model_name}_val_probabilities.npy"
+                ),
+                "predictions_sha256": _sha256(comparison_dir / f"{model_name}_val_predictions.csv"),
+            },
+        )
         rows.append(
             {
                 "model": model_name,
@@ -647,9 +706,24 @@ def ensemble(output_dir: Path, models: list[str], trials: int) -> None:
     manifest = pd.read_csv(output_dir / "master_manifest.csv")
     val_y = manifest.loc[manifest["split"].eq("val"), "label_idx"].to_numpy(dtype=int)
     comparison_dir = output_dir / "model_comparison"
-    probabilities = {
-        model: np.load(comparison_dir / f"{model}_val_probabilities.npy") for model in models
-    }
+    probabilities = {}
+    for model in models:
+        validate_feature_cache(output_dir, model)
+        cache = json.loads((comparison_dir / f"{model}_val_contract.json").read_text())
+        expected = {
+            "manifest_sha256": _sha256(output_dir / "master_manifest.csv"),
+            "params_sha256": _sha256(output_dir / "tuning/best_params.json"),
+            "features_sha256": _sha256(output_dir / "features" / f"{model}.json"),
+            "sample_ids": manifest.loc[manifest["split"].eq("val"), "sample_id"].tolist(),
+            "classes": CLASSES,
+            "probabilities_sha256": _sha256(comparison_dir / f"{model}_val_probabilities.npy"),
+            "predictions_sha256": _sha256(comparison_dir / f"{model}_val_predictions.csv"),
+        }
+        if any(cache.get(key) != value for key, value in expected.items()):
+            raise ValueError(f"Validation probability cache is incompatible: {model}")
+        probabilities[model] = np.load(
+            comparison_dir / f"{model}_val_probabilities.npy", allow_pickle=False
+        )
     model_metrics = pd.read_csv(comparison_dir / "models.csv")
     best_row = model_metrics.sort_values("macro_f1", ascending=False).iloc[0]
     uniform = np.mean(np.stack(list(probabilities.values())), axis=0)
@@ -663,9 +737,7 @@ def ensemble(output_dir: Path, models: list[str], trials: int) -> None:
         combined = sum(weights[i] * probabilities[model] for i, model in enumerate(models))
         return _metrics(val_y, combined)["macro_f1"]
 
-    study = optuna.create_study(
-        direction="maximize", sampler=optuna.samplers.TPESampler(seed=SEED)
-    )
+    study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=SEED))
     study.optimize(objective, n_trials=trials)
     raw_weights = np.array([study.best_params[f"weight_{model}"] for model in models])
     weights = raw_weights / raw_weights.sum()
@@ -714,7 +786,9 @@ def ensemble(output_dir: Path, models: list[str], trials: int) -> None:
         "models": [selected_name] if selected_type == "individual" else models,
         "weights": {model: float(weights[i]) for i, model in enumerate(models)}
         if selected_name == "weighted_soft_voting"
-        else ({model: 1.0 / len(models) for model in models} if selected_type == "ensemble" else {}),
+        else (
+            {model: 1.0 / len(models) for model in models} if selected_type == "ensemble" else {}
+        ),
         "validation_macro_f1": max(candidates, key=lambda item: item[2])[2],
         "best_individual": str(best_row["model"]),
         "best_individual_macro_f1": float(best_row["macro_f1"]),
@@ -738,7 +812,7 @@ def _selected_probabilities(
     model_probabilities = []
     weights = []
     for model_name in selection["models"]:
-        matrix = np.load(output_dir / "features" / f"{model_name}.npy", mmap_mode="r")
+        matrix = validate_feature_cache(output_dir, model_name)
         bundle, _ = fit_probe(matrix[train_indices], labels[train_indices], params)
         model_probabilities.append(bundle.predict_proba(matrix[eval_indices]))
         weights.append(selection.get("weights", {}).get(model_name, 1.0))
@@ -786,22 +860,86 @@ def cross_validate(output_dir: Path, folds: int) -> None:
             )
     folds_frame = pd.DataFrame(rows)
     summary = {
-        metric: {"mean": float(folds_frame[metric].mean()), "std": float(folds_frame[metric].std(ddof=1))}
+        metric: {
+            "mean": float(folds_frame[metric].mean()),
+            "std": float(folds_frame[metric].std(ddof=1)),
+        }
         for metric in ["accuracy", "macro_precision", "macro_recall", "macro_f1", "weighted_f1"]
     }
     cv_dir = output_dir / "cross_validation"
     cv_dir.mkdir(parents=True, exist_ok=True)
     folds_frame.to_csv(cv_dir / "folds.csv", index=False)
     pd.DataFrame(per_class_rows).to_csv(cv_dir / "per_class_folds.csv", index=False)
-    _json_dump(cv_dir / "summary.json", {"folds": folds, "selection": selection, "metrics": summary})
+    _json_dump(
+        cv_dir / "summary.json", {"folds": folds, "selection": selection, "metrics": summary}
+    )
     print(folds_frame.to_string(index=False))
     print(json.dumps(summary, indent=2))
 
 
 def final_evaluation(output_dir: Path) -> None:
+    """One frozen selection, auditable retries; completed evaluations are not rerun."""
+    import fcntl
+
+    with (output_dir / ".final.guard").open("a+") as guard:
+        fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        validate_holdout_lock(output_dir)
+        selection = json.loads((output_dir / "ensemble/selection.json").read_text())
+        sources = [
+            "master_manifest.csv",
+            "holdout.csv",
+            "holdout.lock.json",
+            "ensemble/selection.json",
+            "tuning/best_params.json",
+        ]
+        sources += [f"features/{model}.json" for model in selection["models"]]
+        frozen = {path: _sha256(output_dir / path) for path in sources}
+        receipt_path = output_dir / "final_attempt.json"
+        receipt = (
+            json.loads(receipt_path.read_text())
+            if receipt_path.exists()
+            else {"frozen": frozen, "events": [], "status": "new"}
+        )
+        if receipt["frozen"] != frozen:
+            raise ValueError(
+                "Final selection/data changed after holdout access; start no new evaluation here"
+            )
+        if receipt["status"] == "complete":
+            if any(
+                _sha256(output_dir / "final" / name) != digest
+                for name, digest in receipt["artifact_hashes"].items()
+            ):
+                raise ValueError("Completed holdout artifacts were altered")
+            print("Evaluación final ya completada; se verificaron artefactos sin inferencia.")
+            return
+        if not receipt_path.exists() and (output_dir / "final").exists():
+            raise ValueError(
+                "Legacy final artifacts have no audit receipt; do not overwrite/re-evaluate"
+            )
+        receipt["events"].append(
+            {"event": "attempt_started", "utc": pd.Timestamp.utcnow().isoformat()}
+        )
+        receipt["status"] = "running"
+        atomic_json(receipt_path, receipt)
+        try:
+            _final_evaluation_locked(output_dir)
+        except BaseException as error:
+            receipt["status"] = "interrupted"
+            receipt["events"].append({"event": "interrupted", "error": repr(error)})
+            atomic_json(receipt_path, receipt)
+            raise
+        receipt["status"] = "complete"
+        receipt["artifact_hashes"] = {
+            p.name: _sha256(p) for p in (output_dir / "final").iterdir() if p.is_file()
+        }
+        receipt["events"].append({"event": "completed", "utc": pd.Timestamp.utcnow().isoformat()})
+        atomic_json(receipt_path, receipt)
+
+
+def _final_evaluation_locked(output_dir: Path) -> None:
+    validate_holdout_lock(output_dir)
     final_dir = output_dir / "final"
-    if (final_dir / "metrics.json").exists():
-        raise SystemExit("La evaluación final ya existe; el holdout no se vuelve a abrir.")
+    final_dir.mkdir(parents=True, exist_ok=True)
     manifest = pd.read_csv(output_dir / "master_manifest.csv")
     selection = json.loads((output_dir / "ensemble" / "selection.json").read_text())
     params = json.loads((output_dir / "tuning" / "best_params.json").read_text())
@@ -812,21 +950,49 @@ def final_evaluation(output_dir: Path) -> None:
     weights = []
     bundles = {}
     for model_name in selection["models"]:
-        matrix = np.load(output_dir / "features" / f"{model_name}.npy", mmap_mode="r")
+        matrix = validate_feature_cache(output_dir, model_name)
+        member_path = final_dir / f"{model_name}_holdout.npy"
+        member_receipt = member_path.with_suffix(".json")
+        if member_receipt.exists():
+            saved = json.loads(member_receipt.read_text())
+            if _sha256(member_path) != saved["sha256"] or any(
+                _sha256(final_dir / name) != digest
+                for name, digest in saved["probe_hashes"].items()
+            ):
+                raise ValueError("Interrupted final probability artifact changed")
+            probabilities_list.append(np.load(member_path, allow_pickle=False))
+            weights.append(selection.get("weights", {}).get(model_name, 1.0))
+            continue
         bundle, _ = fit_probe(matrix[dev_indices], labels[dev_indices], params)
-        probabilities_list.append(bundle.predict_proba(matrix[holdout_indices]))
+        member_probs = bundle.predict_proba(matrix[holdout_indices])
+        joblib.dump(bundle, final_dir / f"{model_name}_probe.joblib")
+        save_numeric_probe(bundle, final_dir / f"{model_name}_probe.npz")
+        with member_path.with_suffix(".partial").open("wb") as stream:
+            np.save(stream, member_probs, allow_pickle=False)
+        os.replace(member_path.with_suffix(".partial"), member_path)
+        atomic_json(
+            member_receipt,
+            {
+                "sha256": _sha256(member_path),
+                "probe_hashes": {
+                    f"{model_name}_probe.{suffix}": _sha256(
+                        final_dir / f"{model_name}_probe.{suffix}"
+                    )
+                    for suffix in ("joblib", "npz")
+                },
+            },
+        )
+        probabilities_list.append(member_probs)
         weights.append(selection.get("weights", {}).get(model_name, 1.0))
         bundles[model_name] = bundle
     weights_array = np.asarray(weights, dtype=float)
     weights_array /= weights_array.sum()
-    probabilities = sum(
-        weight * probs for weight, probs in zip(weights_array, probabilities_list)
-    )
+    probabilities = sum(weight * probs for weight, probs in zip(weights_array, probabilities_list))
     holdout_y = labels[holdout_indices]
     predictions = probabilities.argmax(axis=1)
     metrics = _metrics(holdout_y, probabilities)
 
-    final_dir.mkdir(parents=True, exist_ok=False)
+    final_dir.mkdir(parents=True, exist_ok=True)
     for model_name, bundle in bundles.items():
         joblib.dump(bundle, final_dir / f"{model_name}_probe.joblib")
         save_numeric_probe(bundle, final_dir / f"{model_name}_probe.npz")
@@ -877,8 +1043,12 @@ def _group_metrics(frame: pd.DataFrame, dimension: str, min_support: int = 1) ->
                 "n": len(group),
                 "classes_present": len(present),
                 "accuracy": accuracy_score(true, pred),
-                "precision": precision_score(true, pred, labels=present, average="macro", zero_division=0),
-                "recall": recall_score(true, pred, labels=present, average="macro", zero_division=0),
+                "precision": precision_score(
+                    true, pred, labels=present, average="macro", zero_division=0
+                ),
+                "recall": recall_score(
+                    true, pred, labels=present, average="macro", zero_division=0
+                ),
                 "f1": f1_score(true, pred, labels=present, average="macro", zero_division=0),
             }
         )
@@ -891,7 +1061,10 @@ def fairness(output_dir: Path) -> None:
         frame["megapixels"], q=3, labels=["baja", "media", "alta"], duplicates="drop"
     )
     frame["blur_bucket"] = pd.qcut(
-        frame["blur_score"], q=3, labels=["más desenfocada", "media", "más nítida"], duplicates="drop"
+        frame["blur_score"],
+        q=3,
+        labels=["más desenfocada", "media", "más nítida"],
+        duplicates="drop",
     )
     pieces = [
         _group_metrics(frame, "environment", min_support=20),
@@ -957,9 +1130,7 @@ def fairness(output_dir: Path) -> None:
     fairness_dir.mkdir(parents=True, exist_ok=True)
     class_frame.to_csv(fairness_dir / "by_class.csv", index=False)
     group_frame.to_csv(fairness_dir / "by_group.csv", index=False)
-    environment_within_class.to_csv(
-        fairness_dir / "environment_within_class.csv", index=False
-    )
+    environment_within_class.to_csv(fairness_dir / "environment_within_class.csv", index=False)
     pd.DataFrame(gaps).rename(
         columns={"precision": "precision_gap", "recall": "recall_gap", "f1": "f1_gap"}
     ).to_csv(fairness_dir / "gaps.csv", index=False)
@@ -970,8 +1141,8 @@ def fairness(output_dir: Path) -> None:
             "lab_classes": sorted(frame.loc[frame["environment"].eq("lab"), "label"].unique()),
             "real_classes": sorted(frame.loc[frame["environment"].eq("real"), "label"].unique()),
             "interpretation": (
-                "Los gaps globales describen el corpus, pero no estiman un efecto causal del entorno. "
-                "environment_within_class.csv controla parcialmente la composición mediante recall por clase."
+                "Los gaps globales describen el corpus, no un efecto causal del entorno. "
+                "environment_within_class.csv compara recall dentro de cada clase."
             ),
             "no_location_or_farm_identifier": True,
         },
@@ -985,7 +1156,9 @@ def predict_image(output_dir: Path, image_path: Path) -> dict:
     weights = []
     timings = []
     for model_name in selection["models"]:
-        size = resolve_input_size(model_name, (224, 224))
+        metadata = json.loads((output_dir / "features" / f"{model_name}.json").read_text())
+        contract = metadata["contract"]
+        size = tuple(contract["preprocessing"]["target_size"])
         dataset = ManifestDataset(
             pd.DataFrame([{"image_path": image_path.name, "label_idx": 0}]),
             image_path.parent,
@@ -993,6 +1166,8 @@ def predict_image(output_dir: Path, image_path: Path) -> dict:
         )
         tensor, _ = dataset[0]
         model = _as_feature_extractor(model_name, pretrained=True)
+        if model_state_hash(model) != contract["backbone_sha256"]:
+            raise ValueError("Backbone weights differ from frozen feature cache")
         tick = time.perf_counter()
         with torch.inference_mode():
             features = model(tensor.unsqueeze(0)).cpu().numpy()
@@ -1034,6 +1209,9 @@ def _parse_args() -> argparse.Namespace:
 
     prepare_parser = subparsers.add_parser("prepare")
     prepare_parser.add_argument("--dataset-root", type=Path, required=True)
+    prepare_parser.add_argument(
+        "--source-splits", type=Path, help="Inherit verified, locked partitions without resplitting"
+    )
 
     extract_parser = subparsers.add_parser("extract")
     extract_parser.add_argument("--dataset-root", type=Path, required=True)
@@ -1067,7 +1245,7 @@ def main() -> None:
     args = _parse_args()
     output_dir = args.output_dir.resolve()
     if args.command == "prepare":
-        prepare(args.dataset_root.resolve(), output_dir)
+        prepare(args.dataset_root.resolve(), output_dir, args.source_splits)
     elif args.command == "extract":
         extract_features(
             args.dataset_root.resolve(), output_dir, args.models, args.batch_size, args.workers

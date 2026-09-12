@@ -1,0 +1,159 @@
+{
+  "segmentation": {
+    "uncertain": 210,
+    "rejected": 47,
+    "accepted": 31
+  },
+  "fallback_count": 257,
+  "warnings": {
+    "mask_touches_frame_edge": 204,
+    "multiple_components": 26,
+    "near_full_mask": 18,
+    "full_mask_rejected": 3,
+    "ambiguous_candidates": 1
+  },
+  "selected_near_candidate_pairs": 0,
+  "existing": [
+    {
+      "model": "efficientnet_b0",
+      "original": 0.9467538061596105,
+      "segmented": 0.8799479912879353,
+      "uncertainty": {
+        "delta_macro_f1_segmented_minus_original": -0.06817894074371142,
+        "percentile_95_ci": [
+          -0.11132858527851582,
+          -0.02782477076077896
+        ],
+        "bootstrap_iterations": 500,
+        "limitation": "paired class-stratified image bootstrap; no plant/session metadata"
+      }
+    },
+    {
+      "model": "shufflenet_v2_x1_0",
+      "original": 0.9603839761640275,
+      "segmented": 0.8846768782172508,
+      "uncertainty": {
+        "delta_macro_f1_segmented_minus_original": -0.07756992963485193,
+        "percentile_95_ci": [
+          -0.12622644015025145,
+          -0.037719631698214864
+        ],
+        "bootstrap_iterations": 500,
+        "limitation": "paired class-stratified image bootstrap; no plant/session metadata"
+      }
+    }
+  ],
+  "heads": [
+    {
+      "model": "efficientnet_b0",
+      "seed": 42,
+      "original": 0.618074188571463,
+      "segmented": 0.60803647753328,
+      "potassium_original": {
+        "precision": 0.45454545454545453,
+        "recall": 0.4166666666666667,
+        "f1": 0.43478260869565216,
+        "support": 12
+      },
+      "potassium_segmented": {
+        "precision": 0.4166666666666667,
+        "recall": 0.4166666666666667,
+        "f1": 0.4166666666666667,
+        "support": 12
+      }
+    },
+    {
+      "model": "efficientnet_b0",
+      "seed": 43,
+      "original": 0.6569435832829136,
+      "segmented": 0.5978991358563478,
+      "potassium_original": {
+        "precision": 0.5555555555555556,
+        "recall": 0.4166666666666667,
+        "f1": 0.47619047619047616,
+        "support": 12
+      },
+      "potassium_segmented": {
+        "precision": 0.3333333333333333,
+        "recall": 0.4166666666666667,
+        "f1": 0.37037037037037035,
+        "support": 12
+      }
+    },
+    {
+      "model": "efficientnet_b0",
+      "seed": 44,
+      "original": 0.6187076585986809,
+      "segmented": 0.6209846199680714,
+      "potassium_original": {
+        "precision": 0.4166666666666667,
+        "recall": 0.4166666666666667,
+        "f1": 0.4166666666666667,
+        "support": 12
+      },
+      "potassium_segmented": {
+        "precision": 0.4666666666666667,
+        "recall": 0.5833333333333334,
+        "f1": 0.5185185185185185,
+        "support": 12
+      }
+    },
+    {
+      "model": "shufflenet_v2_x1_0",
+      "seed": 42,
+      "original": 0.6532245575892356,
+      "segmented": 0.6454497461695392,
+      "potassium_original": {
+        "precision": 0.3333333333333333,
+        "recall": 0.4166666666666667,
+        "f1": 0.37037037037037035,
+        "support": 12
+      },
+      "potassium_segmented": {
+        "precision": 0.5,
+        "recall": 0.5833333333333334,
+        "f1": 0.5384615384615384,
+        "support": 12
+      }
+    },
+    {
+      "model": "shufflenet_v2_x1_0",
+      "seed": 43,
+      "original": 0.6522853199250714,
+      "segmented": 0.6451076313695006,
+      "potassium_original": {
+        "precision": 0.36363636363636365,
+        "recall": 0.3333333333333333,
+        "f1": 0.34782608695652173,
+        "support": 12
+      },
+      "potassium_segmented": {
+        "precision": 0.5384615384615384,
+        "recall": 0.5833333333333334,
+        "f1": 0.56,
+        "support": 12
+      }
+    },
+    {
+      "model": "shufflenet_v2_x1_0",
+      "seed": 44,
+      "original": 0.639056895304035,
+      "segmented": 0.6444404423215793,
+      "potassium_original": {
+        "precision": 0.38461538461538464,
+        "recall": 0.4166666666666667,
+        "f1": 0.4,
+        "support": 12
+      },
+      "potassium_segmented": {
+        "precision": 0.5,
+        "recall": 0.5833333333333334,
+        "f1": 0.5384615384615384,
+        "support": 12
+      }
+    }
+  ],
+  "manifest_sha256": "d83241d40c56aacf84086eaf88b9aa8d35a32212a93472686c9f10f0c49e9b28",
+  "results_sha256": "b9eef48f4e146e4f460680fceb9be75f269dd7b3495163d60b63872998ebf6cd",
+  "receipt_verified": true
+}

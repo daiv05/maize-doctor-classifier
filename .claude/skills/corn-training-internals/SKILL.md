@@ -7,7 +7,9 @@ description: Use when reading or editing src/training/*, scripts/pipeline/train.
 
 ## Balanceo de clases
 
-Lo hace el `WeightedRandomSampler` (+ augmentation de minoritarias, ver skill `corn-data-pipeline`); la loss NO se pondera además por frecuencia - sería doble compensación. El sampler se **desactiva automáticamente** cuando el split está balanceado (`build_weighted_sampler` devuelve `None` si no hay clases minoritarias) y el `DataLoader` usa `shuffle=True`, para no reducir la cobertura por época con `replacement=True`.
+**Baselines:** lo hace el `WeightedRandomSampler` (+ augmentation de minoritarias, ver skill `corn-data-pipeline`); la loss NO se pondera además por frecuencia - sería doble compensación. El sampler se **desactiva automáticamente** cuando el split está balanceado (`build_weighted_sampler` devuelve `None` si no hay clases minoritarias) y el `DataLoader` usa `shuffle=True`, para no reducir la cobertura por época con `replacement=True`.
+
+**Principal:** pérdida ponderada `sqrt_inverse` y sampler desactivado. No trasladar la política baseline al principal. HPO es explícito con CLI > archivo > defaults; test requiere `--evaluate-test`.
 
 ## Utilidades comunes (`src/training/common.py`)
 
@@ -17,4 +19,4 @@ Lo hace el `WeightedRandomSampler` (+ augmentation de minoritarias, ver skill `c
 
 ## Versionado de corridas
 
-Cada entrenamiento de un modelo escribe en `outputs/<pipeline>/<modelo>/<run_id>/` (`run_id` = timestamp `YYYYMMDD_HHMMSS`), nunca sobrescribe corridas previas. `outputs/<pipeline>/<modelo>/latest.json` apunta a la corrida más reciente (`resolve_run_dir` la lee cuando no se pasa `--run`).
+Cada entrenamiento de un modelo escribe en `outputs/<pipeline>/<modelo>/<run_id>/` (`run_id` = timestamp `YYYYMMDD_HHMMSS_microsegundos`), nunca sobrescribe corridas previas. `outputs/<pipeline>/<modelo>/latest.json` apunta a la corrida más reciente (`resolve_run_dir` la lee cuando no se pasa `--run`).

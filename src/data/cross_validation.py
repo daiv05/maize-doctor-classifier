@@ -7,7 +7,6 @@ estadísticamente rigurosa sin fuga de datos.
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,7 +15,8 @@ from typing import Any, Sequence
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
+from scipy.stats import t
+from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +53,19 @@ class HierarchicalKFoldSplitter:
             stratify_col = data_df["label"].astype(str)
 
         splits: list[KFoldSplit] = []
-        indices = np.arange(len(data_df))
 
-        for fold_idx, (train_idx, val_idx) in enumerate(self.skf.split(data_df, stratify_col)):
+        if "group_id" in data_df:
+            if data_df.group_id.isna().any():
+                raise ValueError("Incomplete group_id for cross-validation")
+            splitter = StratifiedGroupKFold(
+                self.n_splits,
+                shuffle=self.shuffle,
+                random_state=self.seed if self.shuffle else None,
+            )
+            iterator = splitter.split(data_df, stratify_col, data_df.group_id)
+        else:
+            iterator = self.skf.split(data_df, stratify_col)
+        for fold_idx, (train_idx, val_idx) in enumerate(iterator):
             train_df = data_df.iloc[train_idx].copy().reset_index(drop=True)
             val_df = data_df.iloc[val_idx].copy().reset_index(drop=True)
             splits.append(KFoldSplit(fold_index=fold_idx + 1, train_df=train_df, val_df=val_df))
@@ -70,7 +80,7 @@ def compute_aggregate_statistics(metrics_list: Sequence[dict[str, float]]) -> di
 
     keys = list(metrics_list[0].keys())
     k = len(metrics_list)
-    t_val = 1.96 if k >= 30 else 2.776 if k == 5 else 2.0  # Aproximación t de Student para 95% CI
+    t_val = float(t.ppf(0.975, k - 1)) if k > 1 else 0.0
 
     summary: dict[str, Any] = {}
     for key in keys:
@@ -115,7 +125,12 @@ def plot_kfold_boxplot(
         return
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    box = ax.boxplot(data, patch_artist=True, tick_labels=actual_labels, medianprops=dict(color="black", linewidth=1.5))
+    box = ax.boxplot(
+        data,
+        patch_artist=True,
+        tick_labels=actual_labels,
+        medianprops=dict(color="black", linewidth=1.5),
+    )
 
     colors = ["#3498db", "#2ecc71", "#e67e22", "#9b59b6"]
     for patch, color in zip(box["boxes"], colors):
@@ -127,7 +142,11 @@ def plot_kfold_boxplot(
         x = np.random.normal(i + 1, 0.04, size=len(vals))
         ax.plot(x, vals, "r.", alpha=0.8, markersize=8)
 
-    ax.set_title(f"Validación Cruzada ({len(metrics_list)} Folds) — {model_name}", fontsize=13, fontweight="bold")
+    ax.set_title(
+        f"Validación Cruzada ({len(metrics_list)} Folds) — {model_name}",
+        fontsize=13,
+        fontweight="bold",
+    )
     ax.set_ylabel("Puntuación (0.0 a 1.0)", fontsize=11)
     ax.set_ylim(bottom=max(0.0, min([min(v) for v in data]) - 0.05), top=1.02)
     ax.grid(True, linestyle="--", alpha=0.5, axis="y")

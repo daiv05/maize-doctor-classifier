@@ -9,6 +9,7 @@ Para medir el artefacto exportado sobre el split de test **completo**, usar desp
 """
 
 import argparse
+import json
 import logging
 from pathlib import Path
 
@@ -22,7 +23,7 @@ from src.export.common import (
     write_export_summary,
     write_labels_json,
 )
-from src.export.data import build_test_loader, resolve_test_csv
+from src.export.data import build_test_loader, resolve_split_csv
 from src.models import list_models
 from src.models.feature_exposed import FeatureExposedModel
 from src.training.common import resolve_run_dir, select_device
@@ -66,12 +67,10 @@ def _parse_args() -> argparse.Namespace:
         "--splits-dir",
         default=None,
         dest="splits_dir",
-        help="Directorio con test.csv (default: el 'splits_dir' de summary.json).",
+        help="Directorio con val.csv para paridad (default: 'splits_dir' de summary.json).",
     )
     parser.add_argument("--batch-size", type=int, default=32, dest="batch_size")
-    parser.add_argument(
-        "--parity-sample-size", type=int, default=30, dest="parity_sample_size"
-    )
+    parser.add_argument("--parity-sample-size", type=int, default=30, dest="parity_sample_size")
     parser.add_argument(
         "--tolerance",
         type=float,
@@ -126,9 +125,14 @@ def _export_one(args: argparse.Namespace, model_name: str, output_dir: Path) -> 
 
     test_loader = None
     if not args.no_parity:
-        test_csv = resolve_test_csv(run_dir, args.splits_dir)
+        test_csv = resolve_split_csv(run_dir, args.splits_dir, "val")
         test_loader, _ = build_test_loader(
-            test_csv, config_path, class_to_idx, image_size, args.batch_size
+            test_csv,
+            config_path,
+            class_to_idx,
+            image_size,
+            args.batch_size,
+            preprocessing=json.loads((run_dir / "summary.json").read_text())["preprocessing"],
         )
 
     report = export_model(

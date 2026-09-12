@@ -11,6 +11,7 @@ Uso:
 """
 
 import argparse
+import json
 import logging
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from src.export.common import (
 from src.export.data import build_test_loader, resolve_test_csv
 from src.export.evaluate import evaluate_exported_model, write_evaluation
 from src.models import list_models
+from src.provenance import sha256_file
 from src.training.common import resolve_run_dir, select_device
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -89,14 +91,17 @@ def _evaluate_one(args: argparse.Namespace, model_name: str, output_dir: Path) -
     quantize = parse_quantize(args.quantize)
 
     run_dir = resolve_run_dir(output_dir, model_name, args.run)
-    class_to_idx, idx_to_class, image_size = resolve_export_inputs(
-        run_dir, model_name, config_path
-    )
+    class_to_idx, idx_to_class, image_size = resolve_export_inputs(run_dir, model_name, config_path)
     device = select_device()
 
     test_csv = resolve_test_csv(run_dir, args.splits_dir)
     test_loader, environments = build_test_loader(
-        test_csv, config_path, class_to_idx, image_size, args.batch_size
+        test_csv,
+        config_path,
+        class_to_idx,
+        image_size,
+        args.batch_size,
+        preprocessing=json.loads((run_dir / "summary.json").read_text())["preprocessing"],
     )
 
     torch_model = None
@@ -126,6 +131,7 @@ def _evaluate_one(args: argparse.Namespace, model_name: str, output_dir: Path) -
             quantize=quantize,
             environments=environments if len(environments) else None,
         )
+        evaluation.evaluated_split_sha256 = sha256_file(test_csv)
         json_path = write_evaluation(run_dir, evaluation, frame)
 
         print(

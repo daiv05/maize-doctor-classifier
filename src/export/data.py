@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from src.config import get_output_root
 from src.data.dataset import CornDataset
 from src.data.transforms import CornTransformFactory
+from src.provenance import sha256_file
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ def resolve_split_csv(run_dir: Path, splits_dir: str | None, split_name: str) ->
     @returns {Path} Ruta a `<split_name>.csv`.
     @throws {SystemExit} Si no se encuentra en ninguna de las rutas candidatas.
     """
+    summary = json.loads((run_dir / "summary.json").read_text())
     if splits_dir:
         candidates = [Path(splits_dir)]
     else:
@@ -52,6 +54,9 @@ def resolve_split_csv(run_dir: Path, splits_dir: str | None, split_name: str) ->
     for candidate in candidates:
         split_csv = candidate / f"{split_name}.csv"
         if split_csv.exists():
+            expected = summary.get("split_sha256", {}).get(split_name)
+            if expected and sha256_file(split_csv) != expected:
+                raise ValueError(f"Split does not match the training contract: {split_csv}")
             if candidate != candidates[0]:
                 logger.warning(
                     "El splits_dir del run (%s) no existe en esta maquina; usando %s.",
@@ -79,6 +84,7 @@ def build_test_loader(
     image_size: tuple[int, int],
     batch_size: int = 32,
     num_workers: int = 0,
+    preprocessing: dict | None = None,
 ) -> tuple[DataLoader, pd.Series]:
     """
     Construye el DataLoader del split de test y la serie de entornos alineada.
@@ -94,16 +100,18 @@ def build_test_loader(
     @param {int} num_workers Workers del DataLoader.
     @returns {tuple[DataLoader, pd.Series]} Loader y entornos por imagen.
     """
-    factory = CornTransformFactory(config_path=str(config_path), target_size=image_size)
+    factory = (
+        CornTransformFactory.from_contract(preprocessing, config_path=str(config_path))
+        if preprocessing
+        else CornTransformFactory(config_path=str(config_path), target_size=image_size)
+    )
     dataset = CornDataset(
         csv_path=str(test_csv),
         config_path=str(config_path),
         transform=factory.get_pipeline("test"),
         class_to_idx=class_to_idx,
     )
-    loader = DataLoader(
-        dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
-    )
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     # Se lee del DataFrame del propio dataset, no del CSV: si algún día CornDataset
     # filtra filas, la serie sigue alineada con lo que entrega el loader.
     frame = dataset.data_frame

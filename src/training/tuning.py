@@ -10,7 +10,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,7 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from src.config import PROJECT_ROOT, set_global_seed
+from src.config import set_global_seed
 from src.data.dataset import CornDataset
 from src.data.transforms import CornTransformFactory
 from src.models import build_model, resolve_input_size
@@ -71,9 +71,7 @@ class TuningObjective:
         space: HyperparameterSpace | None = None,
     ) -> None:
         if optuna is None:
-            raise ImportError(
-                "Optuna no está instalado. Instálalo con: pip install optuna"
-            )
+            raise ImportError("Optuna no está instalado. Instálalo con: pip install optuna")
         self.model_name = model_name
         self.splits_dir = Path(splits_dir)
         self.config_path = Path(config_path)
@@ -203,7 +201,7 @@ class TuningObjective:
                 criterion=criterion,
                 device=self.device,
                 optimizer=optimizer,
-                desc=f"[Trial {trial.number} Ep {epoch+1}/{self.epochs}] Train",
+                desc=f"[Trial {trial.number} Ep {epoch + 1}/{self.epochs}] Train",
                 clip_grad_norm=1.0,
             )
 
@@ -213,7 +211,7 @@ class TuningObjective:
                 criterion=criterion,
                 device=self.device,
                 optimizer=None,
-                desc=f"[Trial {trial.number} Ep {epoch+1}/{self.epochs}] Val",
+                desc=f"[Trial {trial.number} Ep {epoch + 1}/{self.epochs}] Val",
             )
 
             current_f1 = val_metrics["macro_f1"]
@@ -227,11 +225,18 @@ class TuningObjective:
             trial.report(current_f1, epoch)
 
             if trial.should_prune():
-                logger.info("[Trial %d] Podado en época %d con Macro F1: %.4f", trial.number, epoch + 1, current_f1)
+                logger.info(
+                    "[Trial %d] Podado en época %d con Macro F1: %.4f",
+                    trial.number,
+                    epoch + 1,
+                    current_f1,
+                )
                 raise optuna.TrialPruned()
 
             if early_stopping.step(current_f1):
-                logger.info("[Trial %d] Early stopping alcanzado en época %d.", trial.number, epoch + 1)
+                logger.info(
+                    "[Trial %d] Early stopping alcanzado en época %d.", trial.number, epoch + 1
+                )
                 break
 
         return best_val_f1
@@ -243,16 +248,36 @@ def save_optimization_plots(study: optuna.Study, output_dir: Path) -> list[Path]
     saved_plots: list[Path] = []
 
     # 1. Gráfica de convergencia (Historial de optimización)
-    trials = [t for t in study.trials if t.value is not None and t.state == optuna.trial.TrialState.COMPLETE]
+    trials = [
+        t
+        for t in study.trials
+        if t.value is not None and t.state == optuna.trial.TrialState.COMPLETE
+    ]
     if trials:
         fig, ax = plt.subplots(figsize=(9, 5))
         trial_numbers = [t.number for t in trials]
         trial_values = [t.value for t in trials]
         running_best = np.maximum.accumulate(trial_values)
 
-        ax.scatter(trial_numbers, trial_values, color="#3498db", alpha=0.7, label="Trial Val Macro F1", zorder=3)
-        ax.plot(trial_numbers, running_best, color="#e74c3c", linewidth=2.2, label="Mejor Macro F1 Acumulado", zorder=4)
-        ax.set_title(f"Historial de Optimización — {study.study_name}", fontsize=13, fontweight="bold")
+        ax.scatter(
+            trial_numbers,
+            trial_values,
+            color="#3498db",
+            alpha=0.7,
+            label="Trial Val Macro F1",
+            zorder=3,
+        )
+        ax.plot(
+            trial_numbers,
+            running_best,
+            color="#e74c3c",
+            linewidth=2.2,
+            label="Mejor Macro F1 Acumulado",
+            zorder=4,
+        )
+        ax.set_title(
+            f"Historial de Optimización — {study.study_name}", fontsize=13, fontweight="bold"
+        )
         ax.set_xlabel("Número de Trial", fontsize=11)
         ax.set_ylabel("Macro F1 (Validación)", fontsize=11)
         ax.grid(True, linestyle="--", alpha=0.5)
@@ -278,7 +303,9 @@ def save_optimization_plots(study: optuna.Study, output_dir: Path) -> list[Path]
             ax.set_yticklabels(params)
             ax.invert_yaxis()
             ax.set_xlabel("Importancia Relativa", fontsize=11)
-            ax.set_title("Importancia de Hiperparámetros (f(x) = Macro F1)", fontsize=13, fontweight="bold")
+            ax.set_title(
+                "Importancia de Hiperparámetros (f(x) = Macro F1)", fontsize=13, fontweight="bold"
+            )
             ax.grid(True, linestyle="--", alpha=0.5, axis="x")
             fig.tight_layout()
 
@@ -309,7 +336,9 @@ def export_tuning_artifacts(
     best_trial = study.best_trial
     best_f1 = float(best_trial.value) if best_trial.value is not None else 0.0
     improvement_delta = best_f1 - baseline_macro_f1
-    improvement_pct = (improvement_delta / baseline_macro_f1) * 100.0 if baseline_macro_f1 > 0 else 0.0
+    improvement_pct = (
+        (improvement_delta / baseline_macro_f1) * 100.0 if baseline_macro_f1 > 0 else 0.0
+    )
 
     # 2. Resumen JSON
     best_summary = {
@@ -320,10 +349,15 @@ def export_tuning_artifacts(
         "baseline_macro_f1": round(baseline_macro_f1, 4),
         "improvement_delta": round(improvement_delta, 4),
         "improvement_pct": round(improvement_pct, 2),
+        "schema": "pytorch_hpo_v1",
         "best_params": best_trial.params,
         "total_trials": len(study.trials),
-        "pruned_trials": len([t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]),
-        "complete_trials": len([t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]),
+        "pruned_trials": len(
+            [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
+        ),
+        "complete_trials": len(
+            [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+        ),
     }
     with open(output_dir / "best_params.json", "w", encoding="utf-8") as f:
         json.dump(best_summary, f, indent=2)

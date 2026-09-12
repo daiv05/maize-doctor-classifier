@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader
 
 from src.config import PROJECT_ROOT, get_output_root, set_global_seed
 from src.data.dataset import CornDataset
+from src.data.segmented import bind_segmented_splits
 from src.data.transforms import CornTransformFactory
 from src.models import build_model, list_models, resolve_input_size
 from src.models.registry import MODEL_REGISTRY
@@ -93,7 +94,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--clip-grad-norm", type=float, default=1.0, dest="clip_grad_norm")
     parser.add_argument(
         "--clahe",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=False,
         help="Aplica CLAHE como preprocesamiento en los cuatro pipelines.",
     )
     parser.add_argument("--no-pretrained", action="store_true", dest="no_pretrained")
@@ -114,7 +116,13 @@ def _parse_args() -> argparse.Namespace:
         help="Cuantizacion al exportar: 'int8' o 'none' (default: none / FP32).",
     )
     parser.add_argument("--config", default=str(PROJECT_ROOT / "config" / "dataset.yaml"))
-    return parser.parse_args()
+    parser.add_argument("--best-params")
+    parser.add_argument(
+        "--evaluate-test", action="store_true", help="Explicit final holdout evaluation"
+    )
+    from src.training.hyperparameters import parse_with_best_params
+
+    return parse_with_best_params(parser)
 
 
 def main() -> None:
@@ -152,6 +160,7 @@ def main() -> None:
         factory = CornTransformFactory(
             config_path=str(config_path), target_size=target_size, clahe=args.clahe
         )
+        bind_segmented_splits(factory, splits_dir)
 
         train_dataset = CornDataset(
             csv_path=str(splits_dir / "train.csv"),
@@ -167,11 +176,15 @@ def main() -> None:
             transform=factory.get_pipeline("val"),
             class_to_idx=class_to_idx,
         )
-        test_dataset = CornDataset(
-            csv_path=str(splits_dir / "test.csv"),
-            config_path=str(config_path),
-            transform=factory.get_pipeline("test"),
-            class_to_idx=class_to_idx,
+        test_dataset = (
+            CornDataset(
+                csv_path=str(splits_dir / "test.csv"),
+                config_path=str(config_path),
+                transform=factory.get_pipeline("test"),
+                class_to_idx=class_to_idx,
+            )
+            if args.evaluate_test
+            else None
         )
 
         pin_memory = device.type == "cuda"
@@ -190,12 +203,16 @@ def main() -> None:
             num_workers=args.num_workers,
             pin_memory=pin_memory,
         )
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.num_workers,
-            pin_memory=pin_memory,
+        test_loader = (
+            DataLoader(
+                test_dataset,
+                batch_size=args.batch_size,
+                shuffle=False,
+                num_workers=args.num_workers,
+                pin_memory=pin_memory,
+            )
+            if test_dataset is not None
+            else None
         )
 
         run_id = generate_run_id()
@@ -261,18 +278,23 @@ def main() -> None:
         if best_path.exists():
             model.load_state_dict(torch.load(best_path, map_location=device))
 
-        test_metrics, labels, predictions, probs = run_epoch(
-            model, test_loader, criterion, device, desc=f"{model_name} test"
-        )
-        write_test_outputs(run_dir, idx_to_class, labels, predictions)
-        predictions_df = write_predictions_csv(
-            run_dir, test_dataset, idx_to_class, predictions, probs
-        )
-        write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
+        test_metrics = None
+        if args.evaluate_test:
+            test_metrics, labels, predictions, probs = run_epoch(
+                model, test_loader, criterion, device, desc=f"{model_name} test"
+            )
+            write_test_outputs(run_dir, idx_to_class, labels, predictions)
+            predictions_df = write_predictions_csv(
+                run_dir, test_dataset, idx_to_class, predictions, probs
+            )
+            write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
         write_summary(
             run_dir,
             {
                 "pipeline": "main",
+                "config_path": str(config_path),
+                "preprocessing": factory.to_contract(),
+                "effective_args": vars(args),
                 "model": model_name,
                 "run_id": run_id,
                 "num_classes": len(class_to_idx),
@@ -300,7 +322,7 @@ def main() -> None:
             },
         )
         update_latest_pointer(output_dir, model_name, run_id)
-        logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
+        logger.info("[%s] Holdout evaluated: %s", model_name, args.evaluate_test)
 
         if args.export_formats:
             from src.export.common import (
@@ -320,14 +342,13 @@ def main() -> None:
                     class_to_idx=class_to_idx,
                     image_size=target_size,
                     formats=formats,
-                    test_loader=test_loader,
+                    test_loader=val_loader,
                     device=device,
                     quantize=quantize,
                 )
                 summary_path = write_export_summary(run_dir, report)
                 if any(
-                    not f.succeeded or (f.parity and not f.parity.passed)
-                    for f in report.formats
+                    not f.succeeded or (f.parity and not f.parity.passed) for f in report.formats
                 ):
                     logger.warning(
                         "[%s] Exportacion con problemas, ver %s", model_name, summary_path

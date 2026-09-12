@@ -29,8 +29,7 @@ def _load_onnx_runner(model_path: Path) -> ExportedRunner:
         from src.export.common import ExportDependencyError
 
         raise ExportDependencyError(
-            "Evaluar un modelo ONNX requiere 'onnxruntime'. "
-            "Instala con: pip install -e '.[export]'"
+            "Evaluar un modelo ONNX requiere 'onnxruntime'. Instala con: pip install -e '.[export]'"
         ) from e
 
     session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
@@ -39,6 +38,7 @@ def _load_onnx_runner(model_path: Path) -> ExportedRunner:
     def run(batch: np.ndarray) -> np.ndarray:
         return session.run(None, {input_name: batch.astype(np.float32)})[0]
 
+    run.all_outputs = lambda batch: session.run(None, {input_name: batch.astype(np.float32)})
     return run
 
 
@@ -63,7 +63,8 @@ def _load_tflite_runner(model_path: Path) -> ExportedRunner:
     interpreter = interpreter_cls(model_path=str(model_path))
     interpreter.allocate_tensors()
     input_detail = interpreter.get_input_details()[0]
-    output_detail = interpreter.get_output_details()[0]
+    output_details = interpreter.get_output_details()
+    output_detail = output_details[0]
     n_classes = int(output_detail["shape"][-1])
 
     def run(batch: np.ndarray) -> np.ndarray:
@@ -77,6 +78,16 @@ def _load_tflite_runner(model_path: Path) -> ExportedRunner:
             logits[i] = interpreter.get_tensor(output_detail["index"])[0]
         return logits
 
+    def all_outputs(batch):
+        outputs = [[] for _ in output_details]
+        for item in batch:
+            interpreter.set_tensor(input_detail["index"], item[None].astype(input_detail["dtype"]))
+            interpreter.invoke()
+            for values, detail in zip(outputs, output_details):
+                values.append(interpreter.get_tensor(detail["index"]).copy())
+        return [np.concatenate(values) for values in outputs]
+
+    run.all_outputs = all_outputs
     return run
 
 
@@ -98,12 +109,10 @@ def load_exported_runner(model_path: Path, format_name: str) -> ExportedRunner:
     """
     if format_name not in _LOADERS:
         raise SystemExit(
-            f"Formato desconocido para evaluacion: '{format_name}'. "
-            f"Soportados: {sorted(_LOADERS)}"
+            f"Formato desconocido para evaluacion: '{format_name}'. Soportados: {sorted(_LOADERS)}"
         )
     if not model_path.exists():
         raise SystemExit(
-            f"No existe el modelo exportado: {model_path}. "
-            "Corre primero 'make export-main'."
+            f"No existe el modelo exportado: {model_path}. Corre primero 'make export-main'."
         )
     return _LOADERS[format_name](model_path)

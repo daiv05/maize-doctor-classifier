@@ -28,7 +28,6 @@ from pathlib import Path
 import modal
 
 from scripts.modal._common import (
-    DATASET_MOUNT,
     DEFAULT_MODELS,
     REPO_ANCHOR,
     SEGMENTED_DATASET_MOUNT,
@@ -47,24 +46,13 @@ app = modal.App("corn-leaf-baselines", image=image)
     secrets=[modal.Secret.from_name("hf")],
     timeout=3600,
 )
-def seed_dataset(force: bool = False) -> None:
-    """Descarga el dataset limpio al Volume corn-clean. Idempotente: download_dataset.py
-    salta si /data/clean ya tiene contenido.
-
-    `force` borra /data/clean antes de descargar. Es necesario para *actualizar*: los shards
-    se extraen sobre el árbol existente y `snapshot_download` no elimina lo que ya no está en
-    el repo, así que un archivo renombrado aguas arriba sobreviviría con sus dos nombres.
-
-    @param {bool} force Vacía el Volume y vuelve a descargar. Destructivo.
-    """
-    clean_dir = Path(DATASET_MOUNT) / "clean"
-    if force and clean_dir.exists():
-        print(f"--force: eliminando {clean_dir} antes de re-descargar...", flush=True)
-        shutil.rmtree(clean_dir, ignore_errors=True)
-
+def seed_dataset(force: bool = False, revision: str = "") -> None:
+    """Descarga validada en staging; force conserva clean anterior como backup."""
     command = [sys.executable, "scripts/dataset/download_dataset.py"]
     if force:
         command.append("--force")
+    if revision:
+        command += ["--revision", revision]
 
     subprocess.run(command, check=True, cwd=REPO_ANCHOR)
     dataset_vol.commit()
@@ -115,14 +103,29 @@ def make_splits_segmented() -> None:
     /data_segmented/clean está vacío).
     """
     segmented_dataset_vol.reload()
-    command = [
-        sys.executable,
-        "scripts/pipeline/create_splits.py",
-        "--config",
-        "config/dataset.segmented.yaml",
-    ]
-    env = dict(os.environ, DATASET_ROOT=SEGMENTED_DATASET_MOUNT)
-    subprocess.run(command, check=True, cwd=REPO_ANCHOR, env=env)
+    import json
+
+    from src.provenance import sha256_file
+
+    source = Path(SEGMENTED_DATASET_MOUNT) / "clean/.segmentation/splits"
+    contract = json.loads((source / "segmentation.json").read_text())
+    if not contract.get("complete"):
+        raise ValueError("La segmentación está incompleta.")
+    for split, digest in contract["split_hashes"].items():
+        if sha256_file(source / f"{split}.csv") != digest:
+            raise ValueError(f"Split segmentado alterado: {split}")
+    destination = Path("/outputs/splits/seed_42_segmented")
+    if destination.exists():
+        if (
+            not (destination / "segmentation.json").exists()
+            or json.loads((destination / "segmentation.json").read_text()) != contract
+        ):
+            raise ValueError("Splits antiguos/incompatibles: use una versión nueva.")
+    else:
+        shutil.copytree(source, destination)
+    for split, digest in contract["split_hashes"].items():
+        if sha256_file(destination / f"{split}.csv") != digest:
+            raise ValueError(f"Split segmentado de destino alterado: {split}")
     outputs_vol.commit()
 
 
@@ -221,6 +224,10 @@ def train_main(
     num_workers: int = 0,
     segmented: bool = False,
     splits_dir: str = "",
+    config: str = "",
+    best_params: str = "",
+    evaluate_test: bool = False,
+    no_clahe: bool = False,
 ) -> None:
     """
     Entrena el pipeline principal en GPU, persistiendo en el Volume corn-outputs.
@@ -264,16 +271,26 @@ def train_main(
         command += ["--num-workers", str(num_workers)]
     if clahe:
         command.append("--clahe")
+    if no_clahe:
+        if clahe:
+            raise ValueError("clahe y no_clahe son mutuamente excluyentes")
+        command.append("--no-clahe")
+    if best_params:
+        command += ["--best-params", best_params]
+    if evaluate_test:
+        command.append("--evaluate-test")
     if no_pretrained:
         command.append("--no-pretrained")
 
     env = dict(os.environ)
     if segmented:
         env["DATASET_ROOT"] = SEGMENTED_DATASET_MOUNT
-        command += ["--config", "config/dataset.segmented.yaml"]
+        command += ["--config", config or "config/dataset.segmented.yaml"]
         command += ["--splits-dir", splits_dir or str(Path("/outputs/splits/seed_42_segmented"))]
     elif splits_dir:
         command += ["--splits-dir", splits_dir]
+    if config and not segmented:
+        command += ["--config", config]
 
     subprocess.run(command, check=True, cwd=REPO_ANCHOR, env=env)
     outputs_vol.commit()
@@ -300,8 +317,8 @@ def tune_main(
 ) -> None:
     """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).
 
-    Soporta uno o múltiples modelos separados por espacio (ej. 'efficientnet_b0 shufflenet_v2_x1_0').
-    Persiste best_params.json, trials.csv y gráficos en el Volume corn-outputs (/outputs/tuning/<model>/).
+    Soporta múltiples modelos separados por espacio.
+    Persiste best_params.json, trials.csv y gráficos en /outputs/tuning/<model>/.
     """
     dataset_vol.reload()
     command = [
@@ -340,12 +357,16 @@ def optuna_dashboard_modal():
     outputs_vol.reload()
     db_path = Path("/outputs/tuning/optuna_study.db")
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.Popen([
-        "optuna-dashboard",
-        f"sqlite:///{db_path}",
-        "--port", "8080",
-        "--host", "0.0.0.0",
-    ])
+    subprocess.Popen(
+        [
+            "optuna-dashboard",
+            f"sqlite:///{db_path}",
+            "--port",
+            "8080",
+            "--host",
+            "0.0.0.0",
+        ]
+    )
 
 
 @app.function(

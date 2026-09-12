@@ -6,7 +6,20 @@
 
 ## Descripción
 
-DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que opera completamente offline.
+DoctorMaiz investiga la clasificación de enfermedades foliares, plagas y deficiencias nutricionales en maíz, con el objetivo de apoyar a pequeños agricultores sin conectividad. Este repositorio implementa entrenamiento, evaluación y exportación; la aplicación Android offline es un objetivo de producto y un antecedente de prototipo, no una entrega actual validada.
+
+## Estado verificado: 12 de septiembre de 2026
+
+Ver el [registro integral](docs/reviews/2026-09-11-reparacion-integral.md),
+las [dos corridas recibidas](docs/reviews/2026-09-11-corridas-recibidas.md),
+el [piloto y la revisión del dataset](docs/reviews/2026-09-12-piloto-y-dataset.md)
+y la [guía de entorno limpio y migración](docs/reviews/2026-09-11-reproducibilidad.md).
+La [exportación TFLite real](docs/reviews/2026-09-12-exportacion-real.md) verifica FP32
+de ambos modelos y ShuffleNet INT8; B0 INT8 falló paridad y no debe entregarse.
+El piloto de tres semillas no mostró mejora global con el perfil segmentado actual.
+Hay ocho entradas con etiquetas conflictivas excluidas provisionalmente de los nuevos
+splits y un par duplicado visualmente confirmado agrupado; la revisión restante sigue abierta.
+Los checkpoints y cachés antiguos sin contrato no son automáticamente compatibles.
 
 ### Problema
 
@@ -34,7 +47,7 @@ La idea es sencilla: una aplicación móvil que, dada una fotografía de hoja de
 | Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | 513 | 1 417 | 1 930 |
 | Necrosis letal *(MLN)* | Complejo viral (MCMV + potyvirus) | Rayado clorótico, necrosis progresiva y muerte de la planta | 0 | 6 415 | 6 415 |
 | Hoja sana *(Healthy)* | - | Sin síntomas visibles | 0 | 8 744 | 8 744 |
-| Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | 0 | 4 858 | 4 858 |
+| Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | 0 | 4 857 | 4 857 |
 
 > `aphids_pest` (áfidos) se evaluó pero se descartó del alcance: solo ~77 imágenes disponibles, insuficientes para augmentation viable.
 
@@ -48,11 +61,11 @@ La idea es sencilla: una aplicación móvil que, dada una fotografía de hoja de
 
 > "(escasa)" señala clases con pocas imágenes disponibles, candidatas prioritarias a data augmentation.
 
-> **Actualización agosto 2026 (posterior a la primera entrega).** Los conteos de estas tablas
-> corresponden al corpus ampliado: **33 438 imágenes** (3 551 lab + 29 887 campo real), tras
-> incorporar cuatro datasets Roboflow dirigidos a GLS y a las tres deficiencias nutricionales
-> (+1 815 netas) y deduplicar con PHash. El desbalance máximo bajó de 32.9x a **14.1x**.
-> Las corridas de baselines documentadas en `docs/` son previas a esta ampliación.
+> Conteos verificados en HF revisión `e515ab2f1e4c5729f8447520f1a630cf14c532dc`:
+> **33 437 imágenes** (3 551 lab + 29 886 campo). Los splits históricos tienen 33 433
+> tras conservar una copia de cada hash; la nueva versión tiene 33 429 tras excluir
+> ambas copias de cuatro conflictos de etiqueta. No se acredita deduplicación cercana
+> completa. Las corridas baseline previas corresponden a otra versión del corpus.
 
 
 ---
@@ -102,7 +115,8 @@ El proyecto avanza en fases iterativas siguiendo el marco **CRISP-DM**:
 3. **Preparación**: limpieza, estandarización (224x224 px), deduplicación, augmentation
 4. **Modelado**: fine-tuning de 3 arquitecturas baseline para comparar rápido y barato
 5. **Evaluación**: Macro F1 ≥ 0.85 en conjunto independiente de imágenes de campo real
-6. **Despliegue**: PWA offline con TFLite Int8 + sincronización opcional
+6. **Prototipo móvil**: artefactos TFLite Int8 para inferencia offline; la entrega exige
+   validar el bundle. La prueba en dispositivo es una evidencia independiente.
 
 ---
 
@@ -115,8 +129,13 @@ Sobre el mismo dataset limpio (`clean/`) conviven dos pipelines paralelos:
   sobre el perfil `baseline` (`config/dataset.yaml -> baseline:`, 9 clases, cap de 1 500
   imágenes por clase) con 3 arquitecturas canónicas (`efficientnet_b0`, `shufflenet_v2_x1_0`,
   `efficientnet_lite0`) pensadas para comparar rápido y barato; ver [Baselines](docs/es/baselines/index.md).
-- **Pipeline principal** (`scripts/pipeline/train.py`): comparte toda la infraestructura de
-  datos y modelos con baselines; el loop de entrenamiento está pendiente de implementar.
+- **Pipeline principal** (`scripts/pipeline/train.py`): funcional, con pérdida ponderada,
+  scheduler, early stopping y restauración del mejor checkpoint. Baselines conserva sampler;
+  el principal no combina sampler con pérdida ponderada. Ambos dejan test fuera por defecto.
+
+La [reparación integral del 11 de septiembre](docs/reviews/2026-09-11-reparacion-integral.md)
+documenta contratos, regresiones y límites experimentales. Los runs y cachés históricos sin
+contrato no se migran automáticamente ni se reinterpretan como resultados nuevos.
 
 Guía de instalación local (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md).
 
@@ -143,7 +162,7 @@ make upload-dataset STAGE_DIR=<dir>  # empaqueta clean/ en shards .tar y publica
 make splits                          # splits completos (9 clases) -> outputs/splits/seed_42/
 make splits-baseline [NO_CAP=1 | MAX_PER_CLASS=<n>]   # perfil baseline -> outputs/splits/seed_42_baseline/
 
-make clean-outputs                   # borra outputs/ (splits, runs, reportes - todo regenerable)
+# No ejecutar clean-outputs sobre las corridas/evidencias recibidas: no todo es recuperable.
 make summary / make test-loader / make lint / make fmt
 ```
 
@@ -236,7 +255,7 @@ en `http://localhost:5173`).
 - [x] Data augmentation para clases minoritarias (pipeline extendido por clase en `transforms.py`)
 - [x] Baselines sobre 9 clases (EfficientNet-B0, ShuffleNetV2-x1.0, EfficientNet-Lite0; cap 1 500/clase) + entrenamiento en GPU de Modal
 - [x] Explicabilidad post-hoc (LIME + Grad-CAM, análisis de errores y fidelidad agregada)
-- [ ] Loop de entrenamiento del pipeline principal (`scripts/pipeline/train.py`)
+- [x] Loop principal con restauración de mejor época y test opt-in (`scripts/pipeline/train.py`)
 - [ ] Evaluación exhaustiva y selección de modelo final
 - [ ] Aplicación Android con TensorFlow Lite
 

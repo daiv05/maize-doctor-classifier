@@ -1,0 +1,12 @@
+{
+  "purpose": "Frozen conversion regression audit, not model selection or an independent accuracy estimate",
+  "source": "reconstructed copies of the two runs received on 2026-09-11",
+  "dataset_revision": "e515ab2f1e4c5729f8447520f1a630cf14c532dc",
+  "split": "original main test, 5015 images, already evaluated historically",
+  "variants": ["efficientnet_b0 FP32 TFLite", "shufflenet_v2_x1_0 FP32 TFLite", "shufflenet_v2_x1_0 INT8 TFLite"],
+  "excluded_variant": "efficientnet_b0 INT8 failed development parity (0.264658 > 0.15)",
+  "maximum_macro_f1_drop": 0.01,
+  "retuning_from_test": false,
+  "android_sync": false,
+  "independence_limitation": "Historical split has confirmed train/validation same-capture leakage; remaining near duplicates are unresolved"
+}

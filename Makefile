@@ -74,9 +74,21 @@ NUM_SAMPLES ?=
 SAMPLE_SIZE ?=
 NSAMPLES ?=
 MODEL ?= efficientnet_b0
+PREDICT_MODEL ?= $(if $(filter command line environment,$(origin MODEL)),$(MODEL),ensemble)
+TUNE_MODELS ?= $(MAIN_MODELS)
+BEST_PARAMS ?=
+EVALUATE_TEST ?=
+ENSEMBLE_MANIFEST ?=
+CHECKPOINTS ?=
+INFERENCE_PIPELINE ?= main
+CONFIG ?= config/dataset.yaml
+SPLIT ?= val
+RUN_GRADCAM ?=
+RUN_SHORTCUT ?= 1
 IMAGE ?=
 OUTPUT ?=
 CHECKPOINT ?=
+SEGMENTER_CHECKPOINT ?=
 RUN ?=
 TOP_K ?=
 STABILITY_RUNS ?=
@@ -109,7 +121,7 @@ help:
 	@echo ""
 	@echo "Modal - infraestructura:"
 	@echo "  modal-seed modal-splits modal-clean-outputs modal-pull"
-	@echo "    modal-seed FORCE=1 vacía el Volume y re-descarga (para actualizar el dataset)"
+	@echo "    modal-seed FORCE=1 descarga en staging y conserva un backup de clean previo"
 	@echo ""
 	@echo "Modal - dataset pre-segmentado (corn-clean-segmented):"
 	@echo "  modal-segment-dataset modal-splits-segmented"
@@ -149,7 +161,7 @@ upload-dataset:
 	$(PYTHON) scripts/dataset/upload_to_hf.py --stage-dir $(STAGE_DIR) $(if $(DRY_RUN),--dry-run,) $(if $(KEEP_STAGE),--keep-stage,)
 
 splits:
-	$(PYTHON) scripts/pipeline/create_splits.py
+	$(PYTHON) scripts/pipeline/create_splits.py --config "$(CONFIG)" $(if $(SPLITS_DIR),--output-dir "$(SPLITS_DIR)",)
 
 splits-baseline:
 	$(PYTHON) scripts/pipeline/create_splits.py --baseline $(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),)
@@ -169,6 +181,7 @@ test-loader:
 # Baselines: comparación rápida de arquitecturas. Runs en outputs/baselines/<modelo>/.
 train-baselines:
 	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) --baseline \
+		$(if $(filter 1 true,$(EVALUATE_TEST)),--evaluate-test,) \
 		$(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),) \
 		$(if $(REGEN_SPLITS),--regenerate-splits,) \
 		--epochs $(EPOCHS) \
@@ -183,6 +196,9 @@ train-baselines:
 # Pipeline principal. Runs en outputs/main/<modelo>/.
 train:
 	$(PYTHON) scripts/pipeline/train.py --models $(MAIN_MODELS) \
+		--config "$(CONFIG)" \
+		$(if $(BEST_PARAMS),--best-params "$(BEST_PARAMS)",) \
+		$(if $(filter 1 true,$(EVALUATE_TEST)),--evaluate-test,) \
 		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
@@ -190,7 +206,7 @@ train:
 		$(if $(WEIGHT_DECAY),--weight-decay $(WEIGHT_DECAY),) \
 		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
 		$(if $(CLASS_WEIGHTS),--class-weights $(CLASS_WEIGHTS),) \
-		$(if $(CLAHE),--clahe,) \
+		$(if $(filter 1 true,$(CLAHE)),--clahe,$(if $(filter 0 false,$(CLAHE)),--no-clahe,)) \
 		$(if $(NO_PRETRAINED),--no-pretrained,) \
 		$(if $(EXPORT_FORMATS),--export $(EXPORT_FORMATS),)
 
@@ -218,6 +234,9 @@ tune-dashboard:
 .PHONY: evaluate-ensemble ensemble
 evaluate-ensemble:
 	$(PYTHON) scripts/pipeline/evaluate_ensemble.py \
+		--config "$(CONFIG)" --split $(SPLIT) --pipeline $(INFERENCE_PIPELINE) \
+		$(if $(RUN),--run "$(RUN)",) \
+		$(if $(CHECKPOINTS),--checkpoints $(CHECKPOINTS),) \
 		$(if $(MODELS),--models $(MODELS),) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),) \
@@ -229,6 +248,9 @@ ensemble: evaluate-ensemble
 .PHONY: cross-validate kfold kfold-main
 cross-validate:
 	$(PYTHON) scripts/pipeline/cross_validate.py \
+		--config "$(CONFIG)" \
+		$(if $(BEST_PARAMS),--best-params "$(BEST_PARAMS)",) \
+		$(if $(filter 1 true,$(EVALUATE_TEST)),--evaluate-test,) \
 		$(if $(MODEL),--model $(MODEL),) \
 		$(if $(K_FOLDS),--k-folds $(K_FOLDS),) \
 		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
@@ -243,12 +265,15 @@ kfold: cross-validate
 .PHONY: fairness-report fairness
 fairness-report:
 	$(PYTHON) scripts/pipeline/evaluate_fairness.py \
+		--config "$(CONFIG)" --split $(SPLIT) --pipeline $(INFERENCE_PIPELINE) \
+		$(if $(RUN),--run "$(RUN)",) \
 		$(if $(MODEL),--model $(MODEL),) \
 		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
-		--run-gradcam --run-shortcut-test
+		$(if $(filter 1 true,$(RUN_GRADCAM)),--run-gradcam,--no-run-gradcam) \
+		$(if $(filter 1 true,$(RUN_SHORTCUT)),--run-shortcut-test,--no-run-shortcut-test)
 
 fairness: fairness-report
 
@@ -325,6 +350,7 @@ sync-mobile-model:
 
 explain-visual:
 	$(PYTHON) scripts/pipeline/explain.py visual --models $(MODELS) \
+		$(if $(SEGMENTER_CHECKPOINT),--segmenter-checkpoint "$(SEGMENTER_CHECKPOINT)",) \
 		$(if $(RUN),--run $(RUN),) $(if $(IMAGE),--image $(IMAGE),) \
 		$(if $(OUTPUT),--output $(OUTPUT),) $(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
 
@@ -390,13 +416,18 @@ explain-global-main:
 # Uso: make predict IMAGE=experiments/clahe/input [MODEL=ensemble TOP_K=4]
 predict:
 	$(PYTHON) scripts/pipeline/predict.py \
-		$(if $(MODEL),--model $(MODEL),--model ensemble) \
-		--image $(IMAGE) \
+		--model $(PREDICT_MODEL) --config "$(CONFIG)" --pipeline $(INFERENCE_PIPELINE) \
+		--image "$(IMAGE)" \
+		$(if $(SEGMENTER_CHECKPOINT),--segmenter-checkpoint "$(SEGMENTER_CHECKPOINT)",) \
+		$(if $(ENSEMBLE_MANIFEST),--ensemble-manifest "$(ENSEMBLE_MANIFEST)",) \
+		$(if $(RUN),--run "$(RUN)",) \
 		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
 		$(if $(TOP_K),--top-k $(TOP_K),)
 
 inference:
 	$(PYTHON) scripts/pipeline/inference_report.py --model $(MODEL) --image $(IMAGE) \
+		--pipeline "$(INFERENCE_PIPELINE)" --config "$(CONFIG)" \
+		$(if $(SEGMENTER_CHECKPOINT),--segmenter-checkpoint "$(SEGMENTER_CHECKPOINT)",) \
 		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
 		$(if $(RUN),--run $(RUN),) \
 		$(if $(STABILITY_RUNS),--stability-runs $(STABILITY_RUNS),) \
@@ -408,8 +439,7 @@ inference:
 
 .PHONY: modal-seed modal-splits modal-clean-outputs modal-pull
 
-# FORCE=1 vacía el Volume corn-clean antes de descargar: necesario para actualizar el dataset,
-# ya que la extracción de shards no elimina archivos renombrados o borrados aguas arriba.
+# FORCE=1 descarga en staging, valida y conserva clean anterior como backup.
 modal-seed:
 	$(MODAL) run scripts/modal/train.py::seed_dataset $(if $(FORCE),--force,)
 
@@ -467,12 +497,15 @@ modal-train-baselines:
 # modal-segment-dataset y modal-splits-segmented corridos antes).
 modal-train:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
+		$(if $(BEST_PARAMS),--best-params "$(BEST_PARAMS)",) \
+		$(if $(filter 1 true,$(EVALUATE_TEST)),--evaluate-test,) \
+		$(if $(filter 0 false,$(CLAHE)),--no-clahe,) \
 		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
 		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
 		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
 		$(if $(CLASS_WEIGHTS),--class-weights "$(CLASS_WEIGHTS)",) \
 		$(if $(NUM_WORKERS),--num-workers "$(NUM_WORKERS)",) \
-		$(if $(CLAHE),--clahe,) \
+		$(if $(filter 1 true,$(CLAHE)),--clahe,) \
 		$(if $(NO_PRETRAINED),--no-pretrained,) \
 		$(if $(SEGMENTED),--segmented,) \
 		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",)
@@ -482,7 +515,7 @@ modal-train-main: modal-train
 .PHONY: modal-tune modal-tune-dashboard
 modal-tune:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::tune_main \
-		$(if $(MODEL),--models "$(MODEL)",--models "$(MODELS)") \
+		--models "$(TUNE_MODELS)" \
 		$(if $(N_TRIALS),--n-trials "$(N_TRIALS)",) \
 		$(if $(EPOCHS),--epochs "$(EPOCHS)",) \
 		$(if $(TIMEOUT),--timeout "$(TIMEOUT)",) \

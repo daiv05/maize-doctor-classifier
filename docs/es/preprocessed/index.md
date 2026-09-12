@@ -58,15 +58,12 @@ Antes de llegar a la estrategia actual se evaluaron otras alternativas más simp
 - **Oversampling físico (crear más copias físicas en disco):** se descartó (de momento) porque con técnicas como `WeightedRandomSampler` se logra el mismo efecto en memoria, es reversible y se combina con la augmentation en caliente.
 - **Focal Loss:** se contempla como opción para el pipeline principal si los resultados no mejoran en las clases minoritarias.
 
-### Estrategia planeada: 2 capas complementarias
+### Política vigente por pipeline
 
-Para el pipeline principal se plantea una estrategia de balanceo de **dos capas**:
-
-**Capa 1: `WeightedRandomSampler`.** Cada muestra recibe un peso `1 / count_of_its_class`. El sampler repite muestras minoritarias dentro de cada epoch sin inflar su tamaño (`num_samples` = tamaño original). Combinado con augmentation en caliente, cada repetición recibe transformaciones distintas.
-
-**Capa 2: `CrossEntropyLoss` ponderada.** Peso por clase `w_i = total / (num_clases x count_i)`. Reforzaría el gradiente de clases minoritarias incluso cuando aparecen en menor proporción dentro de un batch, complementando al sampler que actúa sobre la frecuencia de aparición.
-
-> El **pipeline de baselines** implementa por ahora solo la Capa 1 (sampler) con una `CrossEntropyLoss` estándar sin ponderar, para mantener las corridas simples y comparables entre arquitecturas.
+El principal usa `CrossEntropyLoss` ponderada (`sqrt_inverse`) y **no** sampler ponderado.
+Los baselines usan `WeightedRandomSampler` cuando hay clases minoritarias, con pérdida
+no ponderada. No se combinan ambas compensaciones automáticamente. La propuesta histórica
+de «dos capas complementarias» no describe el código vigente ni las corridas revisadas.
 
 ## Data Augmentation
 

@@ -1,32 +1,55 @@
 import argparse
+import json
 import logging
 import os
 import shutil
 import tarfile
+import tempfile
 from pathlib import Path
+from uuid import uuid4
 
 import yaml
 
 from src.config import PROJECT_ROOT, get_dataset_root
+from src.data.loader import load_and_normalize_image
+from src.provenance import atomic_json, sha256_file
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def _clean_dir_has_content(clean_dir: Path) -> bool:
-    """True solo si existe al menos un directorio de clase del YAML con archivos
-    (así una descarga interrumpida no bloquea el reintento automático).
-
-    Un .tar pendiente cuenta como descarga incompleta: el proceso se cortó entre bajar los
-    shards y extraerlos, dejando el árbol a medias. El reintento es idempotente.
-    """
-    if not clean_dir.is_dir():
+    """Verify complete class coverage and the exact hashed image inventory, not directories."""
+    if not clean_dir.is_dir() or not (clean_dir / "download_manifest.json").is_file():
         return False
     if any(clean_dir.rglob("*.tar")):
         return False
     with open(PROJECT_ROOT / "config" / "dataset.yaml") as f:
         classes = yaml.safe_load(f)["dataset"]["classes"]
-    return any((clean_dir / c).is_dir() and any((clean_dir / c).iterdir()) for c in classes)
+    try:
+        manifest = json.loads((clean_dir / "download_manifest.json").read_text())
+        rows = manifest["files"]
+        actual = {
+            p.relative_to(clean_dir).as_posix()
+            for p in clean_dir.rglob("*")
+            if p.is_file() and p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+        }
+        return (
+            manifest.get("complete") is True
+            and actual == {r["path"] for r in rows}
+            and all(
+                (clean_dir / r["path"]).resolve().is_relative_to(clean_dir.resolve()) for r in rows
+            )
+            and set(classes) <= {r["label"] for r in rows}
+            and all(
+                (clean_dir / r["path"]).is_file()
+                and sha256_file(clean_dir / r["path"]) == r["sha256"]
+                for r in rows
+            )
+        )
+    except (ValueError, KeyError, OSError):
+        return False
 
 
 def _extract_and_remove_tars(clean_dir: Path) -> None:
@@ -40,18 +63,29 @@ def _extract_and_remove_tars(clean_dir: Path) -> None:
         logger.info(f"{tar_path.name} extraído y eliminado.")
 
 
-def _download_from_hf(repo_id: str, clean_dir: Path, token: str | None) -> None:
-    from huggingface_hub import snapshot_download
+def _download_from_hf(
+    repo_id: str, clean_dir: Path, token: str | None, revision: str | None = None
+) -> str:
+    from huggingface_hub import HfApi, snapshot_download
+
+    resolved_revision = HfApi(token=token).dataset_info(repo_id, revision=revision).sha
 
     logger.info(f"Descargando desde Hugging Face Datasets Hub: {repo_id}")
     clean_dir.mkdir(parents=True, exist_ok=True)
+    identity = {"source": "hf", "repo": repo_id, "revision": resolved_revision}
+    marker = clean_dir / ".download_source.json"
+    if marker.exists() and json.loads(marker.read_text()) != identity:
+        raise ValueError("Download staging belongs to another source revision")
+    atomic_json(marker, identity)
     # La metadata solo existe para que HF reconozca el repo como dataset de imágenes; el
     # pipeline saca label/environment del árbol extraído, así que no se descarga.
     snapshot_download(
         repo_id=repo_id,
         repo_type="dataset",
+        revision=resolved_revision,
         local_dir=str(clean_dir),
         token=token,
+        max_workers=int(os.getenv("HF_DOWNLOAD_WORKERS", "4")),
         ignore_patterns=[
             ".gitattributes",
             "README.md",
@@ -63,6 +97,7 @@ def _download_from_hf(repo_id: str, clean_dir: Path, token: str | None) -> None:
     # Elimina los metadatos de descarga que snapshot_download deja en clean/.cache/
     shutil.rmtree(clean_dir / ".cache", ignore_errors=True)
     logger.info(f"Dataset descargado en {clean_dir}")
+    return resolved_revision
 
 
 def _download_from_gdrive(gdrive_id: str, clean_dir: Path) -> None:
@@ -81,11 +116,23 @@ def download_clean_dataset(
     hf_token: str | None = None,
     gdrive_id: str | None = None,
     dry_run: bool = False,
+    revision: str | None = None,
+    resume_staging: Path | None = None,
 ) -> None:
     clean_dir = get_dataset_root() / "clean"
     hf_repo = hf_repo or os.getenv("HF_DATASET_REPO")
     hf_token = hf_token or os.getenv("HF_TOKEN")
     gdrive_id = gdrive_id or os.getenv("GDRIVE_DATASET_ID")
+    if resume_staging is not None:
+        resume_staging = Path(resume_staging).resolve()
+        if (
+            source != "hf"
+            or not revision
+            or resume_staging.parent != clean_dir.parent.resolve()
+            or not resume_staging.name.startswith(".clean-download-")
+            or not (resume_staging / ".download_source.json").is_file()
+        ):
+            raise ValueError("Resume requires a pinned HF staging directory with a source marker")
 
     if not force and _clean_dir_has_content(clean_dir) and not dry_run:
         logger.info(
@@ -108,24 +155,72 @@ def download_clean_dataset(
         logger.info(f"[dry-run] Resolución de fuente válida: {plan}")
         return
 
-    if source == "hf":
-        _download_from_hf(hf_repo, clean_dir, token=hf_token)
-        return
-    if source == "gdrive":
-        _download_from_gdrive(gdrive_id, clean_dir)
-        return
-
-    # auto: intenta HF primero, cae a Google Drive
-    if hf_repo:
+    sources = ["hf", "gdrive"] if source == "auto" else [source]
+    failures = []
+    for candidate in sources:
+        if (candidate == "hf" and not hf_repo) or (candidate == "gdrive" and not gdrive_id):
+            continue
+        staging = resume_staging or Path(
+            tempfile.mkdtemp(prefix=".clean-download-", dir=clean_dir.parent)
+        )
         try:
-            _download_from_hf(hf_repo, clean_dir, token=hf_token)
+            resolved = None
+            if candidate == "hf":
+                resolved = _download_from_hf(hf_repo, staging, token=hf_token, revision=revision)
+            else:
+                _download_from_gdrive(gdrive_id, staging)
+            with open(PROJECT_ROOT / "config/dataset.yaml") as handle:
+                classes = yaml.safe_load(handle)["dataset"]["classes"]
+            files = []
+            for label in classes:
+                paths = sorted(
+                    p
+                    for p in (staging / label).rglob("*")
+                    if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+                )
+                if not paths:
+                    raise ValueError(f"Descarga incompleta: clase vacía {label}")
+                for path in paths:
+                    load_and_normalize_image(str(path))
+                    files.append(
+                        {
+                            "path": path.relative_to(staging).as_posix(),
+                            "label": label,
+                            "sha256": sha256_file(path),
+                        }
+                    )
+                    if len(files) % 1000 == 0:
+                        logger.info("Validadas %s imágenes", len(files))
+            atomic_json(
+                staging / "download_manifest.json",
+                {
+                    "schema_version": 1,
+                    "complete": True,
+                    "source": candidate,
+                    "repo": hf_repo if candidate == "hf" else gdrive_id,
+                    "revision": resolved,
+                    "files": files,
+                    "source_versioning": "pinned_commit" if resolved else "content_snapshot_only",
+                },
+            )
+            backup = clean_dir.with_name(f"clean.backup-{uuid4().hex}")
+            if clean_dir.exists():
+                os.replace(clean_dir, backup)
+            try:
+                os.replace(staging, clean_dir)
+            except BaseException:
+                if backup.exists():
+                    os.replace(backup, clean_dir)
+                raise
+            if backup.exists():
+                logger.info("Dataset previo conservado en %s", backup)
             return
         except Exception as e:
-            logger.warning(f"Descarga desde Hugging Face falló ({e}); probando Google Drive.")
-    if gdrive_id:
-        _download_from_gdrive(gdrive_id, clean_dir)
-        return
-    raise SystemExit("Descarga desde Hugging Face falló y no hay GDRIVE_DATASET_ID de fallback.")
+            failures.append(f"{candidate}: {e}")
+            logger.warning(
+                "Fuente %s falló; staging conservado para auditoría: %s", candidate, staging
+            )
+    raise RuntimeError("Ninguna descarga fue validada: " + "; ".join(failures))
 
 
 def main() -> None:
@@ -153,6 +248,15 @@ def main() -> None:
         action="store_true",
         help="Solo valida qué fuente se usaría, sin descargar nada.",
     )
+    parser.add_argument(
+        "--revision", default=None, help="Commit/tag HF; se registra el SHA resuelto."
+    )
+    parser.add_argument(
+        "--resume-staging",
+        type=Path,
+        default=None,
+        help="Reanuda un staging HF compatible; requiere --source hf y --revision",
+    )
     args = parser.parse_args()
 
     download_clean_dataset(
@@ -162,6 +266,8 @@ def main() -> None:
         hf_token=args.hf_token,
         gdrive_id=args.gdrive_id,
         dry_run=args.dry_run,
+        revision=args.revision,
+        resume_staging=args.resume_staging,
     )
 
 

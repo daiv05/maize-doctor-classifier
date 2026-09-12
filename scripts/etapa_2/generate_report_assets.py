@@ -8,11 +8,11 @@ import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
-from PIL import Image, ImageOps
 
+from src.data.loader import load_and_normalize_image
+from src.provenance import sha256_file
 
 CLASS_LABELS = {
     "common_rust": "Roya común",
@@ -110,8 +110,15 @@ def generate(output_dir: Path, report_dir: Path, dataset_root: Path) -> None:
     complete["best_so_far"] = complete["value"].cummax()
     fig, ax = plt.subplots(figsize=(8.5, 4.5))
     ax.scatter(complete["number"] + 1, complete["value"], color="#4c78a8", label="Trial completo")
-    ax.plot(complete["number"] + 1, complete["best_so_far"], color="#e45756", label="Mejor acumulado")
-    ax.axhline(tuning_summary["baseline_metrics"]["macro_f1"], color="#777777", linestyle="--", label="Baseline")
+    ax.plot(
+        complete["number"] + 1, complete["best_so_far"], color="#e45756", label="Mejor acumulado"
+    )
+    ax.axhline(
+        tuning_summary["baseline_metrics"]["macro_f1"],
+        color="#777777",
+        linestyle="--",
+        label="Baseline",
+    )
     ax.set_xlabel("Trial")
     ax.set_ylabel("Macro-F1 de validación")
     ax.set_title("Historial de optimización con Optuna")
@@ -140,7 +147,13 @@ def generate(output_dir: Path, report_dir: Path, dataset_root: Path) -> None:
         cmap="viridis_r",
     )
     for row in models.itertuples():
-        ax.annotate(MODEL_LABELS.get(row.model, row.model), (row.fp32_parameter_size_mb, row.macro_f1), xytext=(5, 4), textcoords="offset points", fontsize=8)
+        ax.annotate(
+            MODEL_LABELS.get(row.model, row.model),
+            (row.fp32_parameter_size_mb, row.macro_f1),
+            xytext=(5, 4),
+            textcoords="offset points",
+            fontsize=8,
+        )
     ax.set_xlabel("Tamaño FP32 estimado por parámetros (MB)")
     ax.set_ylabel("Macro-F1 de validación")
     ax.set_title("Calidad y costo de los backbones evaluados")
@@ -149,7 +162,9 @@ def generate(output_dir: Path, report_dir: Path, dataset_root: Path) -> None:
     plt.close()
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
-    method_labels = [MODEL_LABELS.get(value, value.replace("_", " ")) for value in methods["method"]]
+    method_labels = [
+        MODEL_LABELS.get(value, value.replace("_", " ")) for value in methods["method"]
+    ]
     colors = ["#4c78a8" if value == "best_individual" else "#f28e2b" for value in methods["type"]]
     ax.bar(method_labels, methods["macro_f1"], color=colors)
     ax.set_ylabel("Macro-F1 de validación")
@@ -233,16 +248,40 @@ def generate(output_dir: Path, report_dir: Path, dataset_root: Path) -> None:
 
     # Captura reproducible del prototipo: foto real y salida JSON generada por inferencia.
     demo = load_json(output_dir / "prototype" / "demo_result.json")
-    with Image.open(Path(demo["image"])) as image:
-        image = ImageOps.exif_transpose(image).convert("RGB")
-        fig, axes = plt.subplots(1, 2, figsize=(10.5, 5.2), gridspec_kw={"width_ratios": [1.1, 1.4]})
-        axes[0].imshow(image)
+    # Rebind only the documented clean-relative path, not an arbitrary missing filename.
+    historical_image = Path(demo["image"])
+    parts = historical_image.parts
+    if "clean" not in parts:
+        raise ValueError("Prototype image lacks a clean-relative source path")
+    image_path = dataset_root.joinpath(*parts[parts.index("clean") :])
+    source_row = manifest.loc[
+        manifest.image_path.eq(image_path.relative_to(dataset_root).as_posix())
+    ]
+    if len(source_row) != 1 or sha256_file(image_path) != source_row.iloc[0]["sha256"]:
+        raise ValueError("Prototype image differs from the archived manifest")
+    image = load_and_normalize_image(image_path)
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 5.2), gridspec_kw={"width_ratios": [1.1, 1.4]})
+    axes[0].imshow(image)
     axes[0].axis("off")
     axes[0].set_title("Entrada")
     axes[1].axis("off")
-    lines = ["DOCTOR MAÍZ — INFERENCIA LOCAL", "", f"Modelo: {demo['model']}", f"Latencia CPU: {demo['latency_ms']:.1f} ms", "", "Top-3:"]
+    lines = [
+        "DOCTOR MAÍZ — INFERENCIA LOCAL",
+        "",
+        f"Modelo: {demo['model']}",
+        f"Latencia CPU: {demo['latency_ms']:.1f} ms",
+        "",
+        "Top-3:",
+    ]
     lines.extend(f"  {item['class']}: {item['probability']:.1%}" for item in demo["top_k"])
-    lines.extend(["", "Advertencia de baja confianza: " + ("sí" if demo["low_confidence_warning"] else "no"), "", demo["disclaimer"]])
+    lines.extend(
+        [
+            "",
+            "Advertencia de baja confianza: " + ("sí" if demo["low_confidence_warning"] else "no"),
+            "",
+            demo["disclaimer"],
+        ]
+    )
     axes[1].text(0.02, 0.98, "\n".join(lines), va="top", family="monospace", fontsize=10, wrap=True)
     axes[1].set_title("Salida real del prototipo")
     plt.tight_layout()
@@ -273,47 +312,198 @@ def generate(output_dir: Path, report_dir: Path, dataset_root: Path) -> None:
     dataset_rows = []
     for class_name in CLASS_LABELS:
         dataset_rows.append(
-            [CLASS_LABELS[class_name], f"{e1_counts[class_name]:,}".replace(",", "~"), f"{current_counts[class_name]:,}".replace(",", "~"), f"{current_counts[class_name] - e1_counts[class_name]:+d}"]
+            [
+                CLASS_LABELS[class_name],
+                f"{e1_counts[class_name]:,}".replace(",", "~"),
+                f"{current_counts[class_name]:,}".replace(",", "~"),
+                f"{current_counts[class_name] - e1_counts[class_name]:+d}",
+            ]
         )
-    dataset_rows.append(["Total", "31~622", f"{len(manifest):,}".replace(",", "~"), f"{len(manifest) - 31622:+d}"])
-    write_table(tables / "dataset_etapa1_vs_etapa2.tex", ["Clase", "Etapa 1", "Etapa 2", "Cambio"], dataset_rows, "lrrr")
+    dataset_rows.append(
+        ["Total", "31~622", f"{len(manifest):,}".replace(",", "~"), f"{len(manifest) - 31622:+d}"]
+    )
+    write_table(
+        tables / "dataset_etapa1_vs_etapa2.tex",
+        ["Clase", "Etapa 1", "Etapa 2", "Cambio"],
+        dataset_rows,
+        "lrrr",
+    )
 
     baseline_params = load_json(output_dir / "tuning" / "baseline_params.json")
     best_params = load_json(output_dir / "tuning" / "best_params.json")
     param_rows = []
-    for key in ["alpha", "eta0", "penalty", "l1_ratio", "batch_size", "balance_power", "average", "feature_norm", "epochs"]:
+    for key in [
+        "alpha",
+        "eta0",
+        "penalty",
+        "l1_ratio",
+        "batch_size",
+        "balance_power",
+        "average",
+        "feature_norm",
+        "epochs",
+    ]:
         param_rows.append([key, baseline_params.get(key, "--"), best_params.get(key, "--")])
-    write_table(tables / "tuning_configuration.tex", ["Hiperparámetro", "Baseline", "Mejor valor"], param_rows, "lcc")
+    write_table(
+        tables / "tuning_configuration.tex",
+        ["Hiperparámetro", "Baseline", "Mejor valor"],
+        param_rows,
+        "lcc",
+    )
 
     top_trials = complete.nlargest(5, "value")
-    trial_rows = [[int(row.number) + 1, metric(row.value), row.state] for row in top_trials.itertuples()]
+    trial_rows = [
+        [int(row.number) + 1, metric(row.value), row.state] for row in top_trials.itertuples()
+    ]
     write_table(tables / "top_trials.tex", ["Trial", "Macro-F1 val.", "Estado"], trial_rows, "rrl")
 
     baseline_vs = pd.read_csv(output_dir / "tuning" / "baseline_vs_tuned.csv")
-    write_table(tables / "baseline_vs_tuned.tex", ["Configuración", "Accuracy", "Macro-F1", "F1 ponderado"], [[row.configuration.replace("_", " "), metric(row.accuracy), metric(row.macro_f1), metric(row.weighted_f1)] for row in baseline_vs.itertuples()], "lrrr")
+    write_table(
+        tables / "baseline_vs_tuned.tex",
+        ["Configuración", "Accuracy", "Macro-F1", "F1 ponderado"],
+        [
+            [
+                row.configuration.replace("_", " "),
+                metric(row.accuracy),
+                metric(row.macro_f1),
+                metric(row.weighted_f1),
+            ]
+            for row in baseline_vs.itertuples()
+        ],
+        "lrrr",
+    )
 
     model_rows = []
     for row in models.itertuples():
-        model_rows.append([MODEL_LABELS.get(row.model, row.model), f"{row.parameters / 1e6:.2f} M", f"{row.fp32_parameter_size_mb:.1f}", f"{row.cpu_latency_ms_median:.1f}", metric(row.accuracy), metric(row.macro_precision), metric(row.macro_recall), metric(row.macro_f1)])
-    write_table(tables / "model_comparison.tex", ["Modelo", "Parám.", "MB", "ms", "Acc.", "P-macro", "R-macro", "F1-macro"], model_rows, "lrrrrrrr")
+        model_rows.append(
+            [
+                MODEL_LABELS.get(row.model, row.model),
+                f"{row.parameters / 1e6:.2f} M",
+                f"{row.fp32_parameter_size_mb:.1f}",
+                f"{row.cpu_latency_ms_median:.1f}",
+                metric(row.accuracy),
+                metric(row.macro_precision),
+                metric(row.macro_recall),
+                metric(row.macro_f1),
+            ]
+        )
+    write_table(
+        tables / "model_comparison.tex",
+        ["Modelo", "Parám.", "MB", "ms", "Acc.", "P-macro", "R-macro", "F1-macro"],
+        model_rows,
+        "lrrrrrrr",
+    )
 
-    write_table(tables / "ensemble.tex", ["Método", "Accuracy", "P-macro", "R-macro", "F1-macro", "F1 pond."], [[MODEL_LABELS.get(str(row.method), str(row.method).replace("_", " ")), metric(row.accuracy), metric(row.macro_precision), metric(row.macro_recall), metric(row.macro_f1), metric(row.weighted_f1)] for row in methods.itertuples()], "lrrrrr")
+    write_table(
+        tables / "ensemble.tex",
+        ["Método", "Accuracy", "P-macro", "R-macro", "F1-macro", "F1 pond."],
+        [
+            [
+                MODEL_LABELS.get(str(row.method), str(row.method).replace("_", " ")),
+                metric(row.accuracy),
+                metric(row.macro_precision),
+                metric(row.macro_recall),
+                metric(row.macro_f1),
+                metric(row.weighted_f1),
+            ]
+            for row in methods.itertuples()
+        ],
+        "lrrrrr",
+    )
 
-    cv_rows = [[int(row.fold), metric(row.accuracy), metric(row.macro_precision), metric(row.macro_recall), metric(row.macro_f1), metric(row.weighted_f1)] for row in cv.itertuples()]
-    cv_rows.append(["Media", *[metric(cv_summary["metrics"][name]["mean"]) for name in ["accuracy", "macro_precision", "macro_recall", "macro_f1", "weighted_f1"]]])
-    cv_rows.append(["Desv.", *[metric(cv_summary["metrics"][name]["std"]) for name in ["accuracy", "macro_precision", "macro_recall", "macro_f1", "weighted_f1"]]])
-    write_table(tables / "cross_validation.tex", ["Fold", "Accuracy", "P-macro", "R-macro", "F1-macro", "F1 pond."], cv_rows, "lrrrrr")
+    cv_rows = [
+        [
+            int(row.fold),
+            metric(row.accuracy),
+            metric(row.macro_precision),
+            metric(row.macro_recall),
+            metric(row.macro_f1),
+            metric(row.weighted_f1),
+        ]
+        for row in cv.itertuples()
+    ]
+    cv_rows.append(
+        [
+            "Media",
+            *[
+                metric(cv_summary["metrics"][name]["mean"])
+                for name in [
+                    "accuracy",
+                    "macro_precision",
+                    "macro_recall",
+                    "macro_f1",
+                    "weighted_f1",
+                ]
+            ],
+        ]
+    )
+    cv_rows.append(
+        [
+            "Desv.",
+            *[
+                metric(cv_summary["metrics"][name]["std"])
+                for name in [
+                    "accuracy",
+                    "macro_precision",
+                    "macro_recall",
+                    "macro_f1",
+                    "weighted_f1",
+                ]
+            ],
+        ]
+    )
+    write_table(
+        tables / "cross_validation.tex",
+        ["Fold", "Accuracy", "P-macro", "R-macro", "F1-macro", "F1 pond."],
+        cv_rows,
+        "lrrrrr",
+    )
 
-    write_table(tables / "final_metrics.tex", ["Accuracy", "P-macro", "R-macro", "F1-macro", "F1 pond.", "N"], [[metric(final_metrics["accuracy"]), metric(final_metrics["macro_precision"]), metric(final_metrics["macro_recall"]), metric(final_metrics["macro_f1"]), metric(final_metrics["weighted_f1"]), final_metrics["n"]]], "rrrrrr")
+    write_table(
+        tables / "final_metrics.tex",
+        ["Accuracy", "P-macro", "R-macro", "F1-macro", "F1 pond.", "N"],
+        [
+            [
+                metric(final_metrics["accuracy"]),
+                metric(final_metrics["macro_precision"]),
+                metric(final_metrics["macro_recall"]),
+                metric(final_metrics["macro_f1"]),
+                metric(final_metrics["weighted_f1"]),
+                final_metrics["n"],
+            ]
+        ],
+        "rrrrrr",
+    )
 
     per_class_rows = []
     for class_name in CLASS_LABELS:
         row = report.loc[class_name]
-        per_class_rows.append([CLASS_LABELS[class_name], int(row["support"]), metric(row["precision"]), metric(row["recall"]), metric(row["f1-score"])])
-    write_table(tables / "final_per_class.tex", ["Clase", "Soporte", "Precision", "Recall", "F1"], per_class_rows, "lrrrr")
+        per_class_rows.append(
+            [
+                CLASS_LABELS[class_name],
+                int(row["support"]),
+                metric(row["precision"]),
+                metric(row["recall"]),
+                metric(row["f1-score"]),
+            ]
+        )
+    write_table(
+        tables / "final_per_class.tex",
+        ["Clase", "Soporte", "Precision", "Recall", "F1"],
+        per_class_rows,
+        "lrrrr",
+    )
 
-    gap_rows = [[row.dimension, metric(row.precision_gap), metric(row.recall_gap), metric(row.f1_gap)] for row in fairness_gaps.itertuples()]
-    write_table(tables / "fairness_gaps.tex", ["Dimensión", "Gap precision", "Gap recall", "Gap F1"], gap_rows, "lrrr")
+    gap_rows = [
+        [row.dimension, metric(row.precision_gap), metric(row.recall_gap), metric(row.f1_gap)]
+        for row in fairness_gaps.itertuples()
+    ]
+    write_table(
+        tables / "fairness_gaps.tex",
+        ["Dimensión", "Gap precision", "Gap recall", "Gap F1"],
+        gap_rows,
+        "lrrr",
+    )
 
     potassium = report.loc["potassium_deficiency"]
     stage_rows = [
@@ -321,15 +511,31 @@ def generate(output_dir: Path, report_dir: Path, dataset_root: Path) -> None:
         ["Macro-F1", "0.9146", metric(final_metrics["macro_f1"]), "Corpus y protocolo distintos"],
         ["Recall potasio", "--", metric(potassium["recall"]), "No comparable"],
         ["F1 potasio", "0.62", metric(potassium["f1-score"]), "Referencia B0 histórica"],
-        ["Imágenes potasio", "266", str(current_counts["potassium_deficiency"]), f"+{current_counts['potassium_deficiency'] - 266}"],
+        [
+            "Imágenes potasio",
+            "266",
+            str(current_counts["potassium_deficiency"]),
+            f"+{current_counts['potassium_deficiency'] - 266}",
+        ],
     ]
-    write_table(tables / "etapa1_vs_etapa2.tex", ["Métrica", "Etapa 1", "Etapa 2", "Lectura"], stage_rows, "lrrl")
+    write_table(
+        tables / "etapa1_vs_etapa2.tex",
+        ["Métrica", "Etapa 1", "Etapa 2", "Lectura"],
+        stage_rows,
+        "lrrl",
+    )
 
     rubric_path = report_dir.parent / "rubrica_final.json"
     if rubric_path.exists():
         rubric = load_json(rubric_path)
-        lines = [r"\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X r l >{\raggedright\arraybackslash}X}", r"\toprule"]
-        lines.append(r"\textbf{Criterio} & \textbf{Puntos} & \textbf{Estado} & \textbf{Evidencia} \\")
+        lines = [
+            r"\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X r l "
+            r">{\raggedright\arraybackslash}X}",
+            r"\toprule",
+        ]
+        lines.append(
+            r"\textbf{Criterio} & \textbf{Puntos} & \textbf{Estado} & \textbf{Evidencia} \\"
+        )
         lines.append(r"\midrule")
         for row in rubric["criteria"]:
             lines.append(
@@ -362,13 +568,28 @@ def generate(output_dir: Path, report_dir: Path, dataset_root: Path) -> None:
         (tables / "rubric.tex").write_text("\n".join(lines) + "\n")
 
     manifest_payload = {
+        "schema_version": 2,
         "generated_at_utc": pd.Timestamp.utcnow().isoformat(),
         "dataset_fingerprint": dataset_summary["fingerprint_sha256"],
         "selected_model": selection["selected_name"],
         "figures": sorted(path.name for path in figures.iterdir() if path.is_file()),
         "tables": sorted(path.name for path in tables.iterdir() if path.is_file()),
+        "generator_sha256": sha256_file(Path(__file__)),
+        "asset_sha256": {
+            path.relative_to(report_dir).as_posix(): sha256_file(path)
+            for directory in (figures, tables)
+            for path in directory.iterdir()
+            if path.is_file()
+        },
+        "input_sha256": {
+            path.relative_to(output_dir).as_posix(): sha256_file(path)
+            for path in output_dir.rglob("*")
+            if path.is_file() and path.suffix in {".csv", ".json"}
+        },
     }
-    (report_dir / "MANIFEST.generated.json").write_text(json.dumps(manifest_payload, indent=2, ensure_ascii=False) + "\n")
+    (report_dir / "MANIFEST.generated.json").write_text(
+        json.dumps(manifest_payload, indent=2, ensure_ascii=False) + "\n"
+    )
 
 
 def main() -> None:

@@ -1,6 +1,5 @@
-import json
 from pathlib import Path
-import numpy as np
+
 import pytest
 import torch
 import torch.nn as nn
@@ -32,40 +31,31 @@ def test_compute_subgroup_metrics_exact():
     assert results["subgroups"]["real"]["accuracy"] == pytest.approx(1.0)
     assert results["subgroups"]["lab"]["accuracy"] == pytest.approx(0.50)
 
-    # Verificar FNR de blight (clase 2) en lab: 2 muestras de clase 2, ambas predichas como 0 -> recall 0.0 -> FNR 1.0
+    # Dos muestras blight en lab, ambas predichas como 0: recall=0, FNR=1.
     assert results["subgroups"]["lab"]["class_fnr"]["blight"] == pytest.approx(1.0)
     assert results["subgroups"]["real"]["class_fnr"]["blight"] == pytest.approx(0.0)
 
 
 def test_compute_disparity_metrics_perfect_and_disparate():
-    # Caso 1: Paridad perfecta
-    subgroup_res_perfect = {
-        "subgroups": {
-            "lab": {"macro_f1": 0.92, "accuracy": 0.94, "class_fnr": {"healthy": 0.05}},
-            "real": {"macro_f1": 0.92, "accuracy": 0.94, "class_fnr": {"healthy": 0.05}},
-        }
-    }
-    disp_perf = compute_disparity_metrics(subgroup_res_perfect)
-    assert disp_perf["delta_macro_f1"] == pytest.approx(0.0)
-    assert disp_perf["disparate_impact_ratio"] == pytest.approx(1.0)
-    assert disp_perf["four_fifths_rule_passed"] is True
-
-    # Caso 2: Disparidad notable (lab 0.90 vs real 0.60)
-    subgroup_res_disp = {
-        "subgroups": {
-            "lab": {"macro_f1": 0.90, "accuracy": 0.92, "class_fnr": {"healthy": 0.05}},
-            "real": {"macro_f1": 0.60, "accuracy": 0.65, "class_fnr": {"healthy": 0.35}},
-        }
-    }
-    disp = compute_disparity_metrics(subgroup_res_disp)
-    assert disp["delta_macro_f1"] == pytest.approx(0.30)
-    assert disp["disparate_impact_ratio"] == pytest.approx(0.60 / 0.90, abs=1e-3)
-    assert disp["four_fifths_rule_passed"] is False
-    assert disp["fnr_disparity_by_class"]["healthy"] == pytest.approx(0.30)
+    result = compute_subgroup_metrics(
+        [0, 1, 0, 1], [0, 1, 0, 1], ["lab", "lab", "real", "real"], ["a", "b"]
+    )
+    disparity = compute_disparity_metrics(result)
+    assert disparity["status"] == "descriptive"
+    assert disparity["ratio"] == pytest.approx(1.0)
+    assert disparity["threshold"] is None
+    result = compute_subgroup_metrics(
+        [0, 1, 0, 1], [0, 1, 0, 0], ["lab", "lab", "real", "real"], ["a", "b"]
+    )
+    disparity = compute_disparity_metrics(result)
+    assert disparity["ratio"] == pytest.approx(1 / 3)
+    assert disparity["delta_macro_f1"] == pytest.approx(2 / 3)
+    assert disparity["fnr_disparity_by_class"]["b"] == pytest.approx(1.0)
 
 
 class DummyModel(nn.Module):
     """Modelo dummy que atiende al centro y predice la clase según el tensor."""
+
     def __init__(self):
         super().__init__()
         self.conv = nn.Conv2d(3, 4, kernel_size=3, padding=1)
@@ -99,13 +89,13 @@ def test_evaluate_background_shortcut():
     assert "mean_original_confidence" in res_center
     assert "mean_masked_confidence" in res_center
     assert "confidence_drop" in res_center
-    assert "shortcut_vulnerability_ratio" in res_center
+    assert "confidence_retention_ratio" in res_center
     assert "accuracy_original" in res_center
     assert "accuracy_masked" in res_center
     assert "flip_rate" in res_center
-    assert "shortcut_detected" in res_center
-    assert "risk_level" in res_center
-    assert isinstance(res_center["collapse_confirmed"], bool)
+    assert res_center["status"] == "sensitivity_only"
+    assert "risk_level" not in res_center
+    assert res_center["fixed_class"] == "original_prediction"
 
     # 2. Test oclusión periférica (control inverso)
     res_periph = evaluate_background_shortcut(
@@ -117,7 +107,7 @@ def test_evaluate_background_shortcut():
 
     assert res_periph["mask_mode"] == "peripheral_occlusion"
     assert "accuracy_drop" in res_periph
-    assert isinstance(res_periph["shortcut_detected"], bool)
+    assert res_periph["status"] == "sensitivity_only"
 
     # 3. Test auditoría dual completa
     res_dual = evaluate_dual_shortcut_audit(
@@ -128,8 +118,8 @@ def test_evaluate_background_shortcut():
 
     assert "center_occlusion" in res_dual
     assert "peripheral_occlusion" in res_dual
-    assert "shortcut_confirmed" in res_dual
-    assert "overall_risk_level" in res_dual
+    assert res_dual["status"] == "sensitivity_only"
+    assert "random_occlusion" in res_dual
     assert "diagnostic_summary" in res_dual
 
 

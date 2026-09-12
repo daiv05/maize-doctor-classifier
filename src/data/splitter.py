@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit, train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,26 @@ class HierarchicalStratifiedSplitter(DatasetSplitter):
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if not abs((train_size + val_size + test_size) - 1.0) < 1e-9:
             raise ValueError("Las proporciones de train, val y test deben sumar exactamente 1.0")
+        if min(train_size, val_size, test_size) <= 0:
+            raise ValueError("Las tres proporciones deben ser positivas.")
+        if "group_id" in data_manifest:
+            if data_manifest["group_id"].isna().any():
+                raise ValueError("group_id incompleto")
+            # Group membership takes precedence over approximate row proportions.
+            outer = GroupShuffleSplit(n_splits=1, train_size=train_size, random_state=self.seed)
+            train, rest = next(outer.split(data_manifest, groups=data_manifest["group_id"]))
+            temporary = data_manifest.iloc[rest]
+            inner = GroupShuffleSplit(
+                n_splits=1, test_size=test_size / (val_size + test_size), random_state=self.seed
+            )
+            val, test = next(inner.split(temporary, groups=temporary["group_id"]))
+            parts = (data_manifest.iloc[train], temporary.iloc[val], temporary.iloc[test])
+            for part in parts:
+                if set(part["label"]) != set(data_manifest["label"]):
+                    raise ValueError(
+                        "Grupos insuficientes para cubrir todas las clases en cada split."
+                    )
+            return parts
 
         # Generar súper-etiqueta temporal que fusiona la patología y el entorno de captura
         # Ejemplo: 'common_rust_real' o 'common_rust_lab'

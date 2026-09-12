@@ -1,6 +1,5 @@
 import argparse
 import logging
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +11,7 @@ from torch.utils.data import DataLoader
 
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
 from src.data.dataset import CornDataset, build_weighted_sampler
+from src.data.segmented import bind_segmented_splits
 from src.data.transforms import CornTransformFactory
 from src.explainability.augmentation_preview import save_augmentation_evidence
 from src.models import MODEL_REGISTRY, build_model, list_models, resolve_input_size
@@ -73,10 +73,12 @@ def _build_dataloaders(
     num_workers: int,
     seed: int,
     device: torch.device,
+    evaluate_test: bool = False,
 ) -> tuple[
     DataLoader, DataLoader, DataLoader, dict[str, int], dict[int, str], CornTransformFactory
 ]:
     factory = CornTransformFactory(config_path=str(config_path), target_size=target_size)
+    bind_segmented_splits(factory, splits_dir)
 
     train_dataset = CornDataset(
         csv_path=str(splits_dir / "train.csv"),
@@ -93,11 +95,15 @@ def _build_dataloaders(
         transform=factory.get_pipeline("val"),
         class_to_idx=class_to_idx,
     )
-    test_dataset = CornDataset(
-        csv_path=str(splits_dir / "test.csv"),
-        config_path=str(config_path),
-        transform=factory.get_pipeline("test"),
-        class_to_idx=class_to_idx,
+    test_dataset = (
+        CornDataset(
+            csv_path=str(splits_dir / "test.csv"),
+            config_path=str(config_path),
+            transform=factory.get_pipeline("test"),
+            class_to_idx=class_to_idx,
+        )
+        if evaluate_test
+        else None
     )
 
     sampler = build_weighted_sampler(train_dataset, seed=seed)
@@ -119,13 +125,18 @@ def _build_dataloaders(
         num_workers=num_workers,
         pin_memory=pin_memory,
     )
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=pin_memory,
+    test_loader = (
+        DataLoader(
+            test_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+        )
+        if test_dataset is not None
+        else None
     )
+
     return train_loader, val_loader, test_loader, class_to_idx, idx_to_class, factory
 
 
@@ -198,23 +209,25 @@ def _train_model(
     if best_path.exists():
         model.load_state_dict(torch.load(best_path, map_location=device))
 
-    test_metrics, labels, predictions, test_probs = run_epoch(
-        model,
-        test_loader,
-        criterion,
-        device,
-        desc=f"{model_name} test",
-    )
-    write_test_outputs(run_dir, idx_to_class, labels, predictions)
+    test_metrics = None
+    if getattr(args, "evaluate_test", False):
+        test_metrics, labels, predictions, test_probs = run_epoch(
+            model,
+            test_loader,
+            criterion,
+            device,
+            desc=f"{model_name} test",
+        )
+        write_test_outputs(run_dir, idx_to_class, labels, predictions)
 
-    test_dataset = test_loader.dataset
-    predictions_df = write_predictions_csv(
-        run_dir, test_dataset, idx_to_class, predictions, test_probs
-    )
-    logger.info(
-        "[%s] Predicciones de test guardadas en %s", model_name, run_dir / "predictions.csv"
-    )
-    write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
+        test_dataset = test_loader.dataset
+        predictions_df = write_predictions_csv(
+            run_dir, test_dataset, idx_to_class, predictions, test_probs
+        )
+        logger.info(
+            "[%s] Predicciones de test guardadas en %s", model_name, run_dir / "predictions.csv"
+        )
+        write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
 
     write_summary(
         run_dir,
@@ -224,6 +237,9 @@ def _train_model(
             "num_classes": len(class_to_idx),
             "class_to_idx": class_to_idx,
             "image_size": list(target_size),
+            "preprocessing": (
+                factory or CornTransformFactory(target_size=target_size)
+            ).to_contract(),
             "splits_dir": str(splits_dir),
             "epochs": args.epochs,
             "batch_size": batch_size,
@@ -236,7 +252,7 @@ def _train_model(
         },
     )
     update_latest_pointer(output_dir, model_name, run_id)
-    logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
+    logger.info("[%s] Holdout evaluated: %s", model_name, test_metrics is not None)
     logger.info("[%s] Run completado en %s", model_name, run_dir)
     return run_dir
 
@@ -358,6 +374,11 @@ def main() -> None:
         "--config",
         default=str(PROJECT_ROOT / "config" / "dataset.yaml"),
     )
+    parser.add_argument(
+        "--evaluate-test",
+        action="store_true",
+        help="Evaluación final explícita, no durante selección.",
+    )
     args = parser.parse_args()
 
     if args.epochs < 1:
@@ -381,8 +402,9 @@ def main() -> None:
                 "--regenerate-splits solo aplica al path baseline (seed_42_baseline). Para "
                 f"regenerar {splits_dir} usa: make splits"
             )
-        logger.info("--regenerate-splits: eliminando %s para regenerarlo", splits_dir)
-        shutil.rmtree(splits_dir)
+        raise ValueError(
+            "No se sobrescriben splits históricos; use --splits-dir con una versión nueva."
+        )
 
     if not splits_dir.exists():
         if not args.baseline:
@@ -394,6 +416,8 @@ def main() -> None:
             "--baseline",
             "--config",
             str(config_path),
+            "--output-dir",
+            str(splits_dir),
         ]
         if args.no_cap:
             create_splits_args.append("--no-cap")
@@ -437,6 +461,7 @@ def main() -> None:
                 num_workers=args.num_workers,
                 seed=seed,
                 device=device,
+                evaluate_test=args.evaluate_test,
             )
         train_loader, val_loader, test_loader, class_to_idx, idx_to_class, factory = loader_cache[
             cache_key

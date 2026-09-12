@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import math
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -11,6 +11,25 @@ from PIL import Image, ImageDraw
 
 from src.segmentation.geometry import mask_bbox
 from src.segmentation.leaf_processor import LeafInstance
+
+
+def segmentation_runtime_contract() -> dict:
+    """Explicit detector defaults and code versions used by batch and raw inference."""
+    from src.provenance import sha256_file
+
+    try:
+        runtime = version("ultralytics")
+    except PackageNotFoundError:
+        runtime = None  # Actual inference still raises; useful for structural test doubles.
+    return {
+        "confidence_threshold": 0.25,
+        "iou_threshold": 0.70,
+        "image_size": 640,
+        "retina_masks": True,
+        "ultralytics_version": runtime,
+        "detector_source_sha256": sha256_file(Path(__file__)),
+        "geometry_source_sha256": sha256_file(Path(__file__).with_name("geometry.py")),
+    }
 
 
 def _rasterize_polygon(polygon: np.ndarray, image_size: tuple[int, int]) -> Image.Image:
@@ -106,4 +125,3 @@ class MaizeLeafSegmenter:
             )
 
         return tuple(instances)
-

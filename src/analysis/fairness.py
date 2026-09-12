@@ -1,12 +1,4 @@
-"""Módulo de Equidad Algorítmica y Análisis de Sesgos (Criterio 4 - Rúbrica Etapa 2).
-
-Proporciona funciones para:
-1. Evaluación desagregada de métricas por subgrupos (Entorno de Laboratorio vs Campo Real).
-2. Cálculo de métricas de disparidad (Δ_F1, Disparate Impact Ratio DIR, Error Rate Ratio).
-3. Análisis de Falsos Negativos (FNR = 1 - Recall) por clase (mayoritarias vs minoritarias).
-4. Test de control negativo contra atajos visuales (Shortcut Learning / Efecto Clever Hans).
-5. Visualización de matrices de confusión desagregadas y gráficos de disparidad.
-"""
+"""Descriptive domain performance and spatial sensitivity, without causal certification."""
 
 from __future__ import annotations
 
@@ -16,342 +8,259 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
+
+from src.data.identity import identified_batches
 
 logger = logging.getLogger(__name__)
 
 
-def _compute_confusion_matrix_np(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    num_classes: int,
-    normalize: bool = False,
-) -> np.ndarray:
-    """Calcula la matriz de confusión en NumPy puro sin depender de scipy/sklearn DLLs."""
-    cm = np.zeros((num_classes, num_classes), dtype=np.float64)
-    for t, p in zip(y_true, y_pred):
-        if 0 <= t < num_classes and 0 <= p < num_classes:
-            cm[int(t), int(p)] += 1.0
-
+def _compute_confusion_matrix_np(y_true, y_pred, num_classes, normalize=False):
+    cm = confusion_matrix(y_true, y_pred, labels=list(range(num_classes))).astype(float)
     if normalize:
-        row_sums = cm.sum(axis=1, keepdims=True)
-        cm = np.divide(cm, row_sums, out=np.zeros_like(cm), where=row_sums > 0)
+        sums = cm.sum(axis=1, keepdims=True)
+        cm = np.divide(cm, sums, out=np.zeros_like(cm), where=sums > 0)
     return cm
 
 
-def _compute_classification_metrics_np(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    num_classes: int,
-) -> tuple[float, float, float, float, list[float]]:
-    """Calcula Accuracy, Macro F1, Macro Precision, Macro Recall y Recall por clase en NumPy puro."""
-    if len(y_true) == 0:
-        return 0.0, 0.0, 0.0, 0.0, [0.0] * num_classes
-
-    acc = float(np.mean(y_true == y_pred))
-
-    precisions = []
-    recalls = []
-    f1s = []
-
-    for c in range(num_classes):
-        tp = float(np.sum((y_true == c) & (y_pred == c)))
-        fp = float(np.sum((y_true != c) & (y_pred == c)))
-        fn = float(np.sum((y_true == c) & (y_pred != c)))
-
-        p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
-
-        precisions.append(p)
-        recalls.append(r)
-        f1s.append(f)
-
-    macro_prec = float(np.mean(precisions))
-    macro_rec = float(np.mean(recalls))
-    macro_f1 = float(np.mean(f1s))
-
-    return acc, macro_f1, macro_prec, macro_rec, recalls
+def wilson_interval(successes, total):
+    """95% binomial interval; undefined when there are no observations."""
+    if total == 0:
+        return None
+    z = 1.959963984540054
+    p = successes / total
+    denominator = 1 + z * z / total
+    center = (p + z * z / (2 * total)) / denominator
+    radius = z * np.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / denominator
+    return [float(max(0, center - radius)), float(min(1, center + radius))]
 
 
-def compute_subgroup_metrics(
-    y_true: list[int] | np.ndarray,
-    y_pred: list[int] | np.ndarray,
-    subgroups: list[str] | np.ndarray,
-    class_names: list[str],
-) -> dict[str, Any]:
-    """Calcula métricas de rendimiento desagregadas por subgrupo (p.ej. 'lab' vs 'real')
-
-    y la tasa de falsos negativos (FNR) por clase dentro de cada subgrupo.
-
-    Returns:
-        dict con métricas desagregadas por subgrupo y métricas globales.
-    """
-    y_true_arr = np.asarray(y_true, dtype=int)
-    y_pred_arr = np.asarray(y_pred, dtype=int)
-    subgroups_arr = np.asarray(subgroups)
-    num_classes = len(class_names)
-
-    unique_subgroups = sorted(list(set(subgroups_arr)))
-
-    # Global
-    g_acc, g_f1, g_prec, g_rec, g_recalls = _compute_classification_metrics_np(
-        y_true_arr, y_pred_arr, num_classes
+def _metrics(y_true, y_pred, class_names, average_ids=None):
+    n = len(class_names)
+    cm = _compute_confusion_matrix_np(y_true, y_pred, n)
+    support = cm.sum(axis=1).astype(int)
+    p, r, f, _ = precision_recall_fscore_support(
+        y_true, y_pred, labels=list(range(n)), zero_division=0
     )
-
-    results: dict[str, Any] = {
-        "subgroups": {},
-        "overall": {
-            "macro_f1": g_f1,
-            "accuracy": g_acc,
-            "macro_precision": g_prec,
-            "macro_recall": g_rec,
-            "sample_count": int(len(y_true_arr)),
-            "class_fnr": {
-                cls: float(1.0 - g_recalls[i]) for i, cls in enumerate(class_names)
-            },
+    ids = list(np.flatnonzero(support)) if average_ids is None else list(average_ids)
+    total = len(y_true)
+    return {
+        "sample_count": total,
+        "accuracy": float(np.mean(y_true == y_pred)) if total else None,
+        "accuracy_ci95": wilson_interval(int(np.trace(cm)), total),
+        "macro_precision": float(np.mean(p[ids])) if ids else None,
+        "macro_recall": float(np.mean(r[ids])) if ids else None,
+        "macro_f1": float(np.mean(f[ids])) if ids else None,
+        "macro_policy": "true-supported classes"
+        if average_ids is None
+        else "common true-supported classes",
+        "averaged_classes": [class_names[i] for i in ids],
+        "class_support": {name: int(support[i]) for i, name in enumerate(class_names)},
+        "class_fnr": {
+            name: float(1 - r[i]) if support[i] else None for i, name in enumerate(class_names)
+        },
+        "class_recall_ci95": {
+            name: wilson_interval(int(cm[i, i]), int(support[i]))
+            for i, name in enumerate(class_names)
         },
     }
 
-    for group in unique_subgroups:
-        mask = subgroups_arr == group
-        if not np.any(mask):
-            continue
 
-        yt_g = y_true_arr[mask]
-        yp_g = y_pred_arr[mask]
+def _compute_classification_metrics_np(y_true, y_pred, num_classes):
+    metrics = _metrics(
+        np.asarray(y_true),
+        np.asarray(y_pred),
+        [str(i) for i in range(num_classes)],
+        list(range(num_classes)),
+    )
+    recalls = [
+        None if metrics["class_fnr"][str(i)] is None else 1 - metrics["class_fnr"][str(i)]
+        for i in range(num_classes)
+    ]
+    return (
+        metrics["accuracy"],
+        metrics["macro_f1"],
+        metrics["macro_precision"],
+        metrics["macro_recall"],
+        recalls,
+    )
 
-        acc_g, f1_g, prec_g, rec_g, recalls_g = _compute_classification_metrics_np(
-            yt_g, yp_g, num_classes
+
+def compute_subgroup_metrics(y_true, y_pred, subgroups, class_names):
+    yt, yp, groups = (
+        np.asarray(y_true, dtype=int),
+        np.asarray(y_pred, dtype=int),
+        np.asarray(subgroups, dtype=str),
+    )
+    if not (len(yt) == len(yp) == len(groups)):
+        raise ValueError("Predictions, targets and subgroup identities must have matching lengths")
+    if len(class_names) != len(set(class_names)) or not class_names:
+        raise ValueError("Class names must be unique and nonempty")
+    if (
+        np.any(yt < 0)
+        or np.any(yp < 0)
+        or np.any(yt >= len(class_names))
+        or np.any(yp >= len(class_names))
+    ):
+        raise ValueError("Prediction or target outside class contract")
+    unique = sorted(set(groups))
+    supported = [set(yt[groups == group]) for group in unique]
+    common = sorted(set.intersection(*supported)) if supported else []
+    results = {
+        "schema_version": 2,
+        "overall": _metrics(yt, yp, class_names),
+        "common_classes": [class_names[i] for i in common],
+        "subgroups": {},
+    }
+    for group in unique:
+        mask = groups == group
+        metrics = _metrics(yt[mask], yp[mask], class_names)
+        comparable = mask & np.isin(yt, common)
+        metrics["comparable_metrics"] = _metrics(
+            yt[comparable], yp[comparable], class_names, common
         )
-
-        fnr_by_class = {
-            cls: float(1.0 - recalls_g[i]) for i, cls in enumerate(class_names)
-        }
-
-        results["subgroups"][str(group)] = {
-            "sample_count": int(np.sum(mask)),
-            "macro_f1": f1_g,
-            "accuracy": acc_g,
-            "macro_precision": prec_g,
-            "macro_recall": rec_g,
-            "class_fnr": fnr_by_class,
-        }
-
+        results["subgroups"][group] = metrics
     return results
 
 
-def compute_disparity_metrics(subgroup_results: dict[str, Any]) -> dict[str, Any]:
-    """Calcula las brechas de paridad matemática entre subgrupos (especialmente 'lab' vs 'real').
+def compute_disparity_metrics(subgroup_results):
+    groups = subgroup_results.get("subgroups", {})
+    keys = ["lab", "real"] if {"lab", "real"} <= set(groups) else sorted(groups)
+    result = {
+        "status": "insufficient",
+        "metric_name": "common_class_macro_f1_ratio",
+        "ratio": None,
+        "delta_macro_f1": None,
+        "delta_accuracy": None,
+        "common_classes": subgroup_results.get("common_classes", []),
+        "fnr_disparity_by_class": {},
+        "threshold": None,
+        "conclusion": "Insufficient groups or common-class support; no parity conclusion.",
+    }
+    if len(keys) != 2 or not result["common_classes"]:
+        return result
+    a, b = (groups[key].get("comparable_metrics") for key in keys)
+    if not a or not b or not a["sample_count"] or not b["sample_count"]:
+        return result
+    maximum = max(a["macro_f1"], b["macro_f1"])
+    result.update(
+        status="descriptive",
+        group_a=keys[0],
+        group_b=keys[1],
+        ratio=float(min(a["macro_f1"], b["macro_f1"]) / maximum) if maximum else None,
+        delta_macro_f1=abs(a["macro_f1"] - b["macro_f1"]),
+        delta_accuracy=abs(a["accuracy"] - b["accuracy"]),
+        comparison_support={key: groups[key]["comparable_metrics"]["sample_count"] for key in keys},
+        conclusion="Descriptive performance on common classes; not a fairness certification.",
+    )
+    result["fnr_disparity_by_class"] = {
+        name: abs(a["class_fnr"][name] - b["class_fnr"][name]) for name in result["common_classes"]
+    }
+    return result
 
-    Métricas calculadas:
-    - delta_macro_f1: |F1_real - F1_lab|
-    - delta_accuracy: |Acc_real - Acc_lab|
-    - disparate_impact_ratio: min(F1_1, F1_2) / max(F1_1, F1_2)
-    - four_fifths_rule_passed: True si DIR >= 0.80
-    - max_fnr_disparity_by_class: Máxima diferencia de FNR entre subgrupos por cada patología
-    """
-    subgroups = subgroup_results.get("subgroups", {})
-    if "lab" not in subgroups or "real" not in subgroups:
-        keys = list(subgroups.keys())
-        if len(keys) < 2:
-            return {
-                "delta_macro_f1": 0.0,
-                "delta_accuracy": 0.0,
-                "disparate_impact_ratio": 1.0,
-                "four_fifths_rule_passed": True,
-                "note": "Menos de 2 subgrupos disponibles.",
-            }
-        g1, g2 = keys[0], keys[1]
+
+def apply_spatial_mask(images, mode, generator=None):
+    """Zero normalized pixels; central rectangle spans 60% per axis (~36% area)."""
+    _, _, h, w = images.shape
+    hs, he, ws, we = int(h * 0.2), int(h * 0.8), int(w * 0.2), int(w * 0.8)
+    mask = torch.zeros((len(images), 1, h, w), dtype=torch.bool, device=images.device)
+    if mode == "center_occlusion":
+        mask[:, :, hs:he, ws:we] = True
+    elif mode in ("peripheral_occlusion", "inverse_occlusion", "center_only"):
+        mask[:] = True
+        mask[:, :, hs:he, ws:we] = False
+    elif mode == "edge_only":
+        mask[:, :, int(h * 0.1) : int(h * 0.9), int(w * 0.1) : int(w * 0.9)] = True
+    elif mode == "random_occlusion":
+        mh, mw = he - hs, we - ws
+        for i in range(len(images)):
+            top = int(torch.randint(h - mh + 1, (1,), generator=generator))
+            left = int(torch.randint(w - mw + 1, (1,), generator=generator))
+            mask[i, :, top : top + mh, left : left + mw] = True
     else:
-        g1, g2 = "real", "lab"
-
-    m1 = subgroups[g1]
-    m2 = subgroups[g2]
-
-    f1_1 = m1["macro_f1"]
-    f1_2 = m2["macro_f1"]
-    acc_1 = m1["accuracy"]
-    acc_2 = m2["accuracy"]
-
-    delta_f1 = float(abs(f1_1 - f1_2))
-    delta_acc = float(abs(acc_1 - acc_2))
-
-    max_f1 = max(f1_1, f1_2)
-    min_f1 = min(f1_1, f1_2)
-    dir_ratio = float(min_f1 / max_f1) if max_f1 > 1e-6 else 1.0
-    passed_80_rule = bool(dir_ratio >= 0.80)
-
-    # Disparidad de FNR por patología
-    fnr_1 = m1.get("class_fnr", {})
-    fnr_2 = m2.get("class_fnr", {})
-    fnr_disparity = {
-        cls: float(abs(fnr_1.get(cls, 0.0) - fnr_2.get(cls, 0.0)))
-        for cls in fnr_1
-    }
-
-    return {
-        "group_a": g1,
-        "group_b": g2,
-        "delta_macro_f1": round(delta_f1, 4),
-        "delta_accuracy": round(delta_acc, 4),
-        "disparate_impact_ratio": round(dir_ratio, 4),
-        "four_fifths_rule_passed": passed_80_rule,
-        "fnr_disparity_by_class": fnr_disparity,
-    }
+        raise ValueError(f"Unknown mask_mode: {mode}")
+    return images.masked_fill(mask, 0.0), float(mask.float().mean())
 
 
-def evaluate_background_shortcut(
-    model: nn.Module,
-    loader: DataLoader,
-    device: torch.device,
-    mask_mode: str = "center_occlusion",
-) -> dict[str, Any]:
-    """Test de ablación contra atajos visuales (Clever Hans Effect).
-
-    Modos soportados:
-    - 'center_occlusion': Ocluye el 60% central (donde reside la lesión patológica).
-      Si el modelo retiene alta confianza mirando solo la periferia/fondo, confirma
-      aprendizaje de atajos espurios (Shortcut Learning).
-    - 'peripheral_occlusion': Ocluye el 40% periférico dejando visible únicamente
-      el 60% central (lesión pura sin entorno). Si la confianza o exactitud colapsa
-      al retirar el fondo, confirma que la red dependía del contexto exterior.
-    - 'edge_only': Modo complementario de oclusión del 80% central.
-    """
+def evaluate_background_shortcut(model, loader, device, mask_mode="center_occlusion"):
+    """Measure sensitivity of a fixed original predicted class, without a causal verdict."""
+    if mask_mode not in {
+        "center_occlusion",
+        "peripheral_occlusion",
+        "inverse_occlusion",
+        "center_only",
+        "edge_only",
+        "random_occlusion",
+    }:
+        raise ValueError(f"Unknown mask_mode: {mask_mode}")
     model.eval()
-    orig_confidences: list[float] = []
-    masked_confidences: list[float] = []
-    orig_correct: int = 0
-    masked_correct: int = 0
-    correct_flips: int = 0
-    total_samples: int = 0
-
+    records = []
+    generator = torch.Generator().manual_seed(42)
     with torch.no_grad():
-        for images, targets in loader:
-            images = images.to(device)
-            targets = targets.to(device)
-            bs = images.size(0)
-            total_samples += bs
-
-            # Inferencia original
-            logits_orig = model(images)
-            probs_orig = torch.softmax(logits_orig, dim=-1)
-            conf_orig, preds_orig = torch.max(probs_orig, dim=-1)
-            orig_confidences.extend(conf_orig.cpu().tolist())
-            orig_correct += int((preds_orig == targets).sum().item())
-
-            # Crear imagen enmascarada
-            _, _, h, w = images.shape
-            h_start, h_end = int(h * 0.2), int(h * 0.8)
-            w_start, w_end = int(w * 0.2), int(w * 0.8)
-
-            if mask_mode == "center_occlusion":
-                # Ocluir el 60% central (tapar la lesión, dejar solo fondo/bordes)
-                masked_images = images.clone()
-                masked_images[:, :, h_start:h_end, w_start:w_end] = 0.0
-            elif mask_mode in ("peripheral_occlusion", "inverse_occlusion", "center_only"):
-                # Control inverso: tapar el 40% periférico, dejando visible ÚNICAMENTE el 60% central
-                masked_images = torch.zeros_like(images)
-                masked_images[:, :, h_start:h_end, w_start:w_end] = images[:, :, h_start:h_end, w_start:w_end]
-            elif mask_mode == "edge_only":
-                # Ocluir el 80% central dejando solo bordes extremos
-                h_edge_start, h_edge_end = int(h * 0.1), int(h * 0.9)
-                w_edge_start, w_edge_end = int(w * 0.1), int(w * 0.9)
-                masked_images = images.clone()
-                masked_images[:, :, h_edge_start:h_edge_end, w_edge_start:w_edge_end] = 0.0
-            else:
-                raise ValueError(f"mask_mode '{mask_mode}' no reconocido.")
-
-            # Inferencia sobre imagen enmascarada
-            logits_masked = model(masked_images)
-            probs_masked = torch.softmax(logits_masked, dim=-1)
-            conf_masked, preds_masked = torch.max(probs_masked, dim=-1)
-            masked_confidences.extend(conf_masked.cpu().tolist())
-            masked_correct += int((preds_masked == targets).sum().item())
-
-            # Contar aciertos originales que cambiaron a error (flip)
-            flips = (preds_masked != targets) & (preds_orig == targets)
-            correct_flips += int(flips.sum().item())
-
-    mean_orig_conf = float(np.mean(orig_confidences)) if orig_confidences else 0.0
-    mean_masked_conf = float(np.mean(masked_confidences)) if masked_confidences else 0.0
-    confidence_drop = float(mean_orig_conf - mean_masked_conf)
-    shortcut_vulnerability_score = float(mean_masked_conf / (mean_orig_conf + 1e-6))
-
-    acc_orig = float(orig_correct / total_samples) if total_samples > 0 else 0.0
-    acc_masked = float(masked_correct / total_samples) if total_samples > 0 else 0.0
-    acc_drop = float(acc_orig - acc_masked)
-    flip_rate = float(correct_flips / max(orig_correct, 1))
-
-    # Diagnóstico riguroso según la dirección de la oclusión:
-    if mask_mode == "center_occlusion":
-        # En oclusión central: si la confianza se mantiene alta (poca caída) o retiene > 75%,
-        # significa que la red clasifica por fondo/bordes -> ALERTA DE ATAJO CONFIRMADA.
-        collapse_confirmed = bool(confidence_drop > 0.40 and shortcut_vulnerability_score < 0.60)
-        shortcut_detected = bool(shortcut_vulnerability_score >= 0.75 or confidence_drop < 0.20)
-        risk_level = "CRITICAL" if shortcut_detected else ("MODERATE" if confidence_drop < 0.35 else "LOW")
-    elif mask_mode in ("peripheral_occlusion", "inverse_occlusion", "center_only"):
-        # En control inverso (solo centro):
-        # Si la precisión o confianza colapsa al retirar el fondo, el modelo depende del fondo.
-        collapse_confirmed = bool(acc_drop > 0.25 or confidence_drop > 0.30)
-        shortcut_detected = bool(acc_drop > 0.20 or confidence_drop > 0.25)
-        risk_level = "CRITICAL" if shortcut_detected else ("MODERATE" if acc_drop > 0.10 else "LOW")
-    else:
-        collapse_confirmed = bool(confidence_drop > 0.15 or shortcut_vulnerability_score < 0.75)
-        shortcut_detected = not collapse_confirmed
-        risk_level = "MODERATE"
-
+        for images, targets, sample_ids in identified_batches(loader):
+            images, targets = images.to(device), targets.to(device)
+            original = model(images).softmax(-1)
+            predicted = original.argmax(-1)
+            masked, fraction = apply_spatial_mask(images, mask_mode, generator)
+            occluded = model(masked).softmax(-1)
+            after = occluded.argmax(-1)
+            original_confidence = original.gather(1, predicted[:, None]).squeeze(1)
+            fixed_confidence = occluded.gather(1, predicted[:, None]).squeeze(1)
+            for i in range(len(targets)):
+                records.append(
+                    {
+                        "sample_id": None if sample_ids is None else sample_ids[i],
+                        "target": int(targets[i]),
+                        "fixed_class": int(predicted[i]),
+                        "prediction_original": int(predicted[i]),
+                        "prediction_masked": int(after[i]),
+                        "confidence_original": float(original_confidence[i]),
+                        "confidence_masked_fixed_class": float(fixed_confidence[i]),
+                        "correct_original": bool(predicted[i] == targets[i]),
+                        "correct_masked": bool(after[i] == targets[i]),
+                        "masked_fraction": fraction,
+                    }
+                )
+    if not records:
+        return {"status": "insufficient", "mask_mode": mask_mode, "total_samples": 0, "samples": []}
+    before = np.array([r["confidence_original"] for r in records])
+    after = np.array([r["confidence_masked_fixed_class"] for r in records])
+    hits = np.array([r["correct_original"] for r in records])
+    masked_hits = np.array([r["correct_masked"] for r in records])
     return {
+        "status": "sensitivity_only",
         "mask_mode": mask_mode,
-        "total_samples": total_samples,
-        "mean_original_confidence": round(mean_orig_conf, 4),
-        "mean_masked_confidence": round(mean_masked_conf, 4),
-        "confidence_drop": round(confidence_drop, 4),
-        "shortcut_vulnerability_ratio": round(shortcut_vulnerability_score, 4),
-        "accuracy_original": round(acc_orig, 4),
-        "accuracy_masked": round(acc_masked, 4),
-        "accuracy_drop": round(acc_drop, 4),
-        "flip_rate": round(flip_rate, 4),
-        "collapse_confirmed": collapse_confirmed,
-        "shortcut_detected": shortcut_detected,
-        "risk_level": risk_level,
+        "total_samples": len(records),
+        "fixed_class": "original_prediction",
+        "mask_fill": "zero in normalized space (normalization mean in RGB)",
+        "masked_fraction": float(np.mean([r["masked_fraction"] for r in records])),
+        "mean_original_confidence": float(before.mean()),
+        "mean_masked_confidence": float(after.mean()),
+        "confidence_drop": float((before - after).mean()),
+        "confidence_retention_ratio": float(after.mean() / before.mean()),
+        "accuracy_original": float(hits.mean()),
+        "accuracy_masked": float(masked_hits.mean()),
+        "accuracy_drop": float(hits.mean() - masked_hits.mean()),
+        "flip_rate": float((hits & ~masked_hits).sum() / hits.sum()) if hits.any() else None,
+        "accuracy_masked_ci95": wilson_interval(int(masked_hits.sum()), len(records)),
+        "samples": records,
     }
 
 
-def evaluate_dual_shortcut_audit(
-    model: nn.Module,
-    loader: DataLoader,
-    device: torch.device,
-) -> dict[str, Any]:
-    """Ejecuta una auditoría dual completa de atajos visuales:
-
-    1. Oclusión Central: mide la retención espuria de certeza ante pérdida de la lesión.
-    2. Oclusión Periférica (Control Inverso): mide la capacidad diagnóstica sobre la lesión pura sin fondo.
-    """
-    center_res = evaluate_background_shortcut(model, loader, device, mask_mode="center_occlusion")
-    peripheral_res = evaluate_background_shortcut(model, loader, device, mask_mode="peripheral_occlusion")
-
-    # Diagnóstico conjunto
-    shortcut_confirmed = bool(center_res["shortcut_detected"] or peripheral_res["shortcut_detected"])
-
-    if center_res["shortcut_vulnerability_ratio"] >= 0.85:
-        verdict = (
-            f"VULNERABILIDAD SEVERA (Clever Hans Confirmado): El modelo retiene el "
-            f"{center_res['shortcut_vulnerability_ratio']*100:.1f}% de su confianza sin ver la lesión central. "
-            f"El {100 - center_res['confidence_drop']*100:.1f}% de su comportamiento está anclado a artefactos periféricos."
-        )
-    else:
-        verdict = "Comportamiento dentro de márgenes esperados de atención foliar."
-
+def evaluate_dual_shortcut_audit(model, loader, device):
+    results = {
+        mode: evaluate_background_shortcut(model, loader, device, mode)
+        for mode in ("center_occlusion", "peripheral_occlusion", "random_occlusion")
+    }
     return {
-        "center_occlusion": center_res,
-        "peripheral_occlusion": peripheral_res,
-        "shortcut_confirmed": shortcut_confirmed,
-        "overall_risk_level": "CRITICAL" if shortcut_confirmed else "LOW",
-        "diagnostic_summary": verdict,
+        **results,
+        "schema_version": 2,
+        "status": "sensitivity_only",
+        "diagnostic_summary": (
+            "Spatial sensitivity; rectangles do not identify leaf, lesion or background. "
+            "No causal shortcut conclusion."
+        ),
     }
 
 
@@ -363,7 +272,7 @@ def plot_disaggregated_confusion_matrices(
     class_names: list[str],
     output_path: Path,
 ) -> None:
-    """Genera y guarda una figura con las matrices de confusión normalizadas de Campo Real vs Laboratorio lado a lado."""
+    """Matrices de confusión normalizadas de campo y laboratorio, lado a lado."""
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), dpi=150)
     num_classes = len(class_names)
 
@@ -375,7 +284,9 @@ def plot_disaggregated_confusion_matrices(
         normalize=True,
     )
     im0 = axes[0].imshow(cm_lab, interpolation="nearest", cmap="Blues", vmin=0, vmax=1)
-    axes[0].set_title("Matriz de Confusión: Entorno Laboratorio (lab)", fontsize=12, fontweight="bold", pad=12)
+    axes[0].set_title(
+        "Matriz de Confusión: Entorno Laboratorio (lab)", fontsize=12, fontweight="bold", pad=12
+    )
     axes[0].set_xticks(range(num_classes))
     axes[0].set_yticks(range(num_classes))
     axes[0].set_xticklabels(class_names, rotation=35, ha="right", fontsize=9)
@@ -387,7 +298,9 @@ def plot_disaggregated_confusion_matrices(
         for j in range(num_classes):
             val = cm_lab[i, j]
             color = "white" if val > 0.5 else "black"
-            axes[0].text(j, i, f"{val:.2f}", ha="center", va="center", color=color, fontweight="bold")
+            axes[0].text(
+                j, i, f"{val:.2f}", ha="center", va="center", color=color, fontweight="bold"
+            )
 
     # Matriz Campo Real
     cm_real = _compute_confusion_matrix_np(
@@ -397,7 +310,9 @@ def plot_disaggregated_confusion_matrices(
         normalize=True,
     )
     im1 = axes[1].imshow(cm_real, interpolation="nearest", cmap="Greens", vmin=0, vmax=1)
-    axes[1].set_title("Matriz de Confusión: Entorno Campo Real (real)", fontsize=12, fontweight="bold", pad=12)
+    axes[1].set_title(
+        "Matriz de Confusión: Entorno Campo Real (real)", fontsize=12, fontweight="bold", pad=12
+    )
     axes[1].set_xticks(range(num_classes))
     axes[1].set_yticks(range(num_classes))
     axes[1].set_xticklabels(class_names, rotation=35, ha="right", fontsize=9)
@@ -409,7 +324,9 @@ def plot_disaggregated_confusion_matrices(
         for j in range(num_classes):
             val = cm_real[i, j]
             color = "white" if val > 0.5 else "black"
-            axes[1].text(j, i, f"{val:.2f}", ha="center", va="center", color=color, fontweight="bold")
+            axes[1].text(
+                j, i, f"{val:.2f}", ha="center", va="center", color=color, fontweight="bold"
+            )
 
     fig.colorbar(im0, ax=axes[0], fraction=0.046, pad=0.04)
     fig.colorbar(im1, ax=axes[1], fraction=0.046, pad=0.04)
@@ -425,7 +342,7 @@ def plot_subgroup_disparity_bars(
     subgroup_metrics: dict[str, Any],
     output_path: Path,
 ) -> None:
-    """Genera un gráfico de barras comparativo de Macro F1, Accuracy, Precision y Recall entre subgrupos."""
+    """Compara macro-F1, accuracy, precision y recall entre subgrupos."""
     subgroups = subgroup_metrics.get("subgroups", {})
     if not subgroups:
         return
@@ -443,7 +360,14 @@ def plot_subgroup_disparity_bars(
     for idx, g in enumerate(groups):
         values = [subgroups[g].get(m, 0.0) for m in metrics_names]
         offset = (idx - (len(groups) - 1) / 2) * width
-        rects = ax.bar(x + offset, values, width, label=f"Entorno: {g}", color=colors[idx % len(colors)], alpha=0.85)
+        rects = ax.bar(
+            x + offset,
+            values,
+            width,
+            label=f"Entorno: {g}",
+            color=colors[idx % len(colors)],
+            alpha=0.85,
+        )
         for rect in rects:
             h = rect.get_height()
             ax.annotate(
@@ -458,11 +382,15 @@ def plot_subgroup_disparity_bars(
             )
 
     ax.set_ylabel("Puntuación (0 - 1.0)", fontsize=11, fontweight="bold")
-    ax.set_title("Comparativa de Rendimiento por Subgrupo de Entorno (Fairness Audit)", fontsize=13, fontweight="bold", pad=14)
+    ax.set_title(
+        "Comparativa de Rendimiento por Subgrupo de Entorno (Fairness Audit)",
+        fontsize=13,
+        fontweight="bold",
+        pad=14,
+    )
     ax.set_xticks(x)
     ax.set_xticklabels(display_names, fontsize=10, fontweight="bold")
     ax.set_ylim(0, 1.15)
-    ax.axhline(0.80, color="gray", linestyle="--", alpha=0.6, label="Umbral 80% (Fairness Reference)")
     ax.grid(axis="y", linestyle=":", alpha=0.6)
     ax.legend(loc="lower right", frameon=True)
 

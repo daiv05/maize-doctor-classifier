@@ -1,0 +1,24 @@
+{
+  "pairs": [
+    {
+      "path": "clean/gray_leaf_spot/real/gray_leaf_spot_corn_leaf_diseases_classification_roboflow_real_876a0071.jpg",
+      "size": [
+        2048,
+        1536
+      ],
+      "sha256": "876a0071b9f1c436f6a4686d51525f1d5c9e8d24b1d462fa002daacee23c4b83"
+    },
+    {
+      "path": "clean/gray_leaf_spot/real/gray_leaf_spot_corn_leaf_diseases_classification_roboflow_real_08bad0ef.jpg",
+      "size": [
+        4000,
+        3000
+      ],
+      "sha256": "08bad0eff277c27d2d18e5cae20abee48cb1ff0d9428791bbc549c1c7da1e195"
+    }
+  ],
+  "mae_224_rgb": 1.1491682610544218,
+  "pearson_224_rgb": 0.9995604407710984,
+  "assessment": "same capture at different resolutions, visually inspected by assistant; not all pHash candidates confirmed",
+  "observations": "same hole outline, lesion arrangement, leaf edge, foreground fragment and background"
+}

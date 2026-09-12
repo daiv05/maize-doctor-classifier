@@ -7,12 +7,10 @@ import yaml
 from torch.utils.data import Dataset, WeightedRandomSampler
 
 from src.config import PROJECT_ROOT, get_dataset_root
+from src.data.identity import ensure_sample_ids
 from src.data.loader import load_and_normalize_image
 
 _DEFAULT_CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
-
-# Reintentos ante imágenes ilegibles antes de asumir que el dataset entero es inaccesible.
-_MAX_FALLBACK_ATTEMPTS = 5
 
 _DEFAULT_MINORITY_RATIO_THRESHOLD = 4.0
 
@@ -75,7 +73,7 @@ class CornDataset(Dataset):
                               se deriva de la distribución real del split (ver
                               `compute_minority_classes` y `augmentation.minority_ratio_threshold`).
         """
-        if not os.path.exists(csv_path):
+        if not isinstance(csv_path, pd.DataFrame) and not os.path.exists(csv_path):
             raise FileNotFoundError(f"No se encontró el archivo de manifiesto: {csv_path}")
 
         self.transform = transform
@@ -83,7 +81,9 @@ class CornDataset(Dataset):
         self.dataset_root = get_dataset_root()
 
         # 1. Cargar y filtrar el manifiesto
-        df = pd.read_csv(csv_path)
+        df = ensure_sample_ids(
+            csv_path if isinstance(csv_path, pd.DataFrame) else pd.read_csv(csv_path)
+        )
         if exclude_classes:
             df = df[~df["label"].isin(exclude_classes)].reset_index(drop=True)
         self.data_frame = df
@@ -103,9 +103,10 @@ class CornDataset(Dataset):
             with open(config_path, "r") as f:
                 config = yaml.safe_load(f)
 
-            # Construir class_to_idx compacto solo con las clases presentes tras el filtro.
-            # El orden respeta la lista del YAML para reproducibilidad entre ejecuciones.
-            self.allowed_classes = [c for c in config["dataset"]["classes"] if c in present]
+            # The class contract is independent of which labels occur in this split.
+            self.allowed_classes = [
+                c for c in config["dataset"]["classes"] if c not in (exclude_classes or [])
+            ]
             self.class_to_idx = {name: idx for idx, name in enumerate(self.allowed_classes)}
 
             # Validar que no haya etiquetas en el CSV no cubiertas por el YAML.
@@ -115,6 +116,8 @@ class CornDataset(Dataset):
                 raise ValueError(f"Etiquetas en el CSV no registradas en config: {sorted(unknown)}")
 
         self.idx_to_class = {idx: name for name, idx in self.class_to_idx.items()}
+        if sorted(self.idx_to_class) != list(range(len(self.class_to_idx))):
+            raise ValueError("class_to_idx must contain unique contiguous indices from zero")
 
         if minority_classes is not None:
             self.minority_classes = set(minority_classes)
@@ -129,27 +132,20 @@ class CornDataset(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
         """Carga perezosa: lee, normaliza y transforma la muestra bajo demanda."""
-        # Reintentos acotados: una imagen corrupta no mata el worker, pero una racha de
-        # fallos (dataset inaccesible) sí se propaga.
-        last_error: Exception | None = None
-        for attempt in range(_MAX_FALLBACK_ATTEMPTS):
-            row = self.data_frame.iloc[(idx + attempt) % len(self)]
-            img_path = self.dataset_root / row["image_path"]
-            try:
-                image = load_and_normalize_image(img_path)
-                class_name = row["label"]
-                break
-            except (FileNotFoundError, RuntimeError) as e:
-                last_error = e
-                logger.warning(
-                    f"Imagen no disponible en idx={idx + attempt} ({img_path}): {e}. "
-                    "Probando la siguiente fila."
-                )
-        else:
+        row = self.data_frame.iloc[idx]
+        img_path = self.dataset_root / row["image_path"]
+        try:
+            from src.provenance import sha256_file
+
+            if "sha256" in row and sha256_file(img_path) != row["sha256"]:
+                raise RuntimeError("Source image hash differs from immutable manifest")
+            image = load_and_normalize_image(img_path)
+        except (FileNotFoundError, RuntimeError, OSError) as error:
             raise RuntimeError(
-                f"{_MAX_FALLBACK_ATTEMPTS} imágenes consecutivas ilegibles desde idx={idx}; "
-                "verifica que DATASET_ROOT siga accesible y los splits estén al día."
-            ) from last_error
+                f"Unreadable sample_id={row['sample_id']} path={img_path}; "
+                "no sample substitution is permitted (train, validation or test)."
+            ) from error
+        class_name = row["label"]
 
         # 2. Mapear la etiqueta de texto a su correspondiente índice entero codificado
         label_idx = self.class_to_idx[class_name]

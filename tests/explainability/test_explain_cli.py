@@ -51,15 +51,15 @@ def test_a_subcommand_is_required():
         build_parser().parse_args([])
 
 
-def test_visual_fails_fast_when_fallback_splits_dir_is_missing(tmp_path, monkeypatch):
+def test_visual_fails_fast_when_requested_run_is_missing(tmp_path, monkeypatch):
     monkeypatch.setattr(explain_cli, "get_output_root", lambda: tmp_path)
 
     args = argparse.Namespace(
-        models=["all"], run=None, baseline=True, output_dir=None, image=None, output=None
+        models=["all"], run=None, baseline=True, output_dir=str(tmp_path), image=None, output=None
     )
     cfg = {"lime": {"baseline": True}, "gradcam": {"enabled": False}}
 
-    with pytest.raises(SystemExit, match="El directorio de splits no existe"):
+    with pytest.raises(SystemExit, match="No hay runs registrados"):
         explain_cli.cmd_visual(args, cfg, device=None)
 
 

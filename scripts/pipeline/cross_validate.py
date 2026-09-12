@@ -1,55 +1,20 @@
-"""Validación Cruzada Estratificada (K-Fold, K=5) y Evaluación Final (Criterio 3 - Rúbrica Etapa 2).
+"""CV del pipeline principal sobre train+val; HPO explícito y test opt-in.
 
-Ejecuta K-Fold Cross Validation sobre el conjunto de desarrollo (train+val), conecta automáticamente
-los hiperparámetros óptimos de Optuna (best_params.json), y evalúa el ensamble Out-of-Fold (Fold Averaging)
-sobre el conjunto de prueba retenido (test.csv) para generar métricas finales y matriz de confusión.
-
-Uso:
-    python scripts/pipeline/cross_validate.py --model efficientnet_b0 --k-folds 5 --epochs 20
-    python scripts/pipeline/cross_validate.py --model shufflenet_v2_x1_0 --best-params outputs/tuning/shufflenet_v2_x1_0/best_params.json
+No es el CV independiente de Etapa 2 ni una estimación anidada tras seleccionar HPO.
+Cada fold guarda su mejor checkpoint, historia, configuración y predicciones.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import logging
-import sys
 from pathlib import Path
-from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
 import yaml
-
-def _calc_acc(y_t, y_p):
-    y_t, y_p = np.asarray(y_t), np.asarray(y_p)
-    return float(np.mean(y_t == y_p)) if len(y_t) > 0 else 0.0
-
-def _calc_f1_macro(y_t, y_p, num_classes=4):
-    y_t, y_p = np.asarray(y_t), np.asarray(y_p)
-    f1s = []
-    for c in range(num_classes):
-        tp = float(np.sum((y_t == c) & (y_p == c)))
-        fp = float(np.sum((y_t != c) & (y_p == c)))
-        fn = float(np.sum((y_t == c) & (y_p != c)))
-        p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-        f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
-        f1s.append(f1)
-    return float(np.mean(f1s)) if f1s else 0.0
-
-def _calc_cm_np(y_t, y_p, num_classes=4, normalize=False):
-    cm = np.zeros((num_classes, num_classes), dtype=np.float64)
-    for t, p in zip(y_t, y_p):
-        if 0 <= t < num_classes and 0 <= p < num_classes:
-            cm[int(t), int(p)] += 1.0
-    if normalize:
-        row_sums = cm.sum(axis=1, keepdims=True)
-        cm = np.divide(cm, row_sums, out=np.zeros_like(cm), where=row_sums > 0)
-    return cm
 from torch.utils.data import DataLoader
 
 from src.config import PROJECT_ROOT, get_output_root, set_global_seed
@@ -61,11 +26,22 @@ from src.data.cross_validation import (
 from src.data.dataset import CornDataset
 from src.data.transforms import CornTransformFactory
 from src.models import build_model, list_models, resolve_input_size
-from src.models.ensemble import SoftVotingEnsemble
 from src.training.common import select_device, worker_init_fn
 from src.training.loop import fit, run_epoch
 from src.training.losses import build_criterion
 from src.training.optim import EarlyStopping, build_scheduler
+
+
+def _calc_cm_np(y_t, y_p, num_classes=4, normalize=False):
+    cm = np.zeros((num_classes, num_classes), dtype=np.float64)
+    for t, p in zip(y_t, y_p):
+        if 0 <= t < num_classes and 0 <= p < num_classes:
+            cm[int(t), int(p)] += 1.0
+    if normalize:
+        row_sums = cm.sum(axis=1, keepdims=True)
+        cm = np.divide(cm, row_sums, out=np.zeros_like(cm), where=row_sums > 0)
+    return cm
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,7 +52,7 @@ logger = logging.getLogger("kfold")
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Validación Cruzada Estratificada (K-Fold) y Evaluación Final en Test Set (Etapa 2)."
+        description="CV del pipeline principal con evaluación final de test opt-in."
     )
     parser.add_argument(
         "--model",
@@ -134,7 +110,7 @@ def _parse_args() -> argparse.Namespace:
         "--best-params",
         default=None,
         dest="best_params_path",
-        help="Ruta a best_params.json generado por Optuna para inyectar hiperparámetros óptimos automáticamente.",
+        help="JSON PyTorch explícito; precedencia CLI > archivo > defaults.",
     )
     parser.add_argument(
         "--splits-dir",
@@ -153,27 +129,21 @@ def _parse_args() -> argparse.Namespace:
         default=str(PROJECT_ROOT / "config" / "dataset.yaml"),
         help="Ruta al archivo dataset.yaml.",
     )
-    return parser.parse_args()
+    parser.add_argument("--evaluate-test", action="store_true")
+    parser.add_argument("--no-pretrained", action="store_true")
+    parser.add_argument("--num-workers", type=int, default=0)
+    parser.add_argument("--clahe", action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument("--label-smoothing", type=float, default=0.1)
+    parser.add_argument("--warmup-epochs", type=int, default=2)
+    from src.training.hyperparameters import parse_with_best_params
+
+    return parse_with_best_params(parser)
 
 
-def _load_best_params_if_available(model_name: str, explicit_path: str | None, output_root: Path) -> dict[str, Any] | None:
-    """Intenta cargar los hiperparámetros óptimos de Optuna."""
-    if explicit_path:
-        p = Path(explicit_path)
-        if p.exists():
-            with open(p, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("best_params", data)
-        logger.warning("No se encontró el archivo de hiperparámetros indicado: %s", explicit_path)
+def _load_best_params_if_available(model_name, explicit_path, output_root):
+    from src.training.hyperparameters import load_best_params
 
-    # Auto-descubrimiento en outputs/tuning/<model>/best_params.json
-    auto_path = output_root / "tuning" / model_name / "best_params.json"
-    if auto_path.exists():
-        with open(auto_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            logger.info("Auto-descubiertos hiperparámetros de Optuna en: %s", auto_path)
-            return data.get("best_params", data)
-    return None
+    return load_best_params(explicit_path) if explicit_path else None
 
 
 def plot_test_confusion_matrix(
@@ -222,230 +192,203 @@ def plot_test_confusion_matrix(
     plt.close(fig)
 
 
-def main() -> None:
+def main():
+    import gc
+
+    from src.data.identity import ensure_sample_ids, identified_batches
+    from src.provenance import atomic_json
+    from src.training.artifacts import write_predictions_csv, write_summary
+    from src.training.common import generate_run_id
+    from src.training.loop import _metrics_from_predictions
+
     args = _parse_args()
-    config_path = Path(args.config)
-    output_root = get_output_root()
-    splits_dir = Path(args.splits_dir) if args.splits_dir else output_root / "splits" / "seed_42"
-    output_dir = Path(args.output_dir) if args.output_dir else output_root / "kfold" / args.model
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    if not splits_dir.exists():
-        logger.error("El directorio de splits no existe: %s", splits_dir)
-        sys.exit(1)
-
-    with open(config_path, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+    cfg = yaml.safe_load(Path(args.config).read_text())
     seed = cfg["dataset"]["seed"]
     set_global_seed(seed)
+    root = get_output_root()
+    split_dir = (
+        Path(args.splits_dir) if args.splits_dir else root / cfg["paths"]["split_output_dir"]
+    )
+    output = (
+        Path(args.output_dir)
+        if args.output_dir
+        else root / "kfold" / args.model / generate_run_id()
+    )
+    if output.exists() and any(output.iterdir()):
+        raise FileExistsError(f"Use an empty CV output directory: {output}")
+    output.mkdir(parents=True, exist_ok=True)
+    dev = ensure_sample_ids(
+        pd.concat(
+            [pd.read_csv(split_dir / "train.csv"), pd.read_csv(split_dir / "val.csv")],
+            ignore_index=True,
+        )
+    )
+    mapping = {name: i for i, name in enumerate(cfg["dataset"]["classes"])}
+    class_names = list(mapping)
+    params = _load_best_params_if_available(args.model, args.best_params_path, root) or {}
+    lr, wd = args.learning_rate, args.weight_decay
+    bs = args.batch_size
+    cw, smoothing = args.class_weights, args.label_smoothing
+    size = resolve_input_size(args.model, tuple(cfg["dataset"]["target_size"]))
+    factory = CornTransformFactory(args.config, size, clahe=args.clahe)
+    from src.data.segmented import bind_segmented_splits
+
+    bind_segmented_splits(factory, split_dir)
     device = select_device()
-    base_target_size = tuple(cfg["dataset"]["target_size"])
-    target_size = resolve_input_size(args.model, base_target_size)
-
-    # Inyección de Hiperparámetros Óptimos de Optuna (si existen)
-    optuna_params = _load_best_params_if_available(args.model, args.best_params_path, output_root)
-    lr = float(optuna_params.get("learning_rate", args.learning_rate)) if optuna_params else args.learning_rate
-    wd = float(optuna_params.get("weight_decay", args.weight_decay)) if optuna_params else args.weight_decay
-    bs = int(optuna_params.get("batch_size", args.batch_size)) if optuna_params else args.batch_size
-    cw = str(optuna_params.get("class_weights", args.class_weights)) if optuna_params else args.class_weights
-    ls = float(optuna_params.get("label_smoothing", 0.1)) if optuna_params else 0.1
-    warmup = int(optuna_params.get("warmup_epochs", 2)) if optuna_params else 2
-    use_clahe = bool(optuna_params.get("clahe", False)) if optuna_params else False
-
-    # 1. Cargar Pool de Desarrollo (train + val) y Test Set Retenido
-    train_df = pd.read_csv(splits_dir / "train.csv")
-    val_df = pd.read_csv(splits_dir / "val.csv")
-    dev_df = pd.concat([train_df, val_df], ignore_index=True)
-    test_df = pd.read_csv(splits_dir / "test.csv")
-
-    logger.info("=== VALIDACIÓN CRUZADA ESTRATIFICADA (%d-FOLD) + TEST FINAL ===", args.k_folds)
-    logger.info("Modelo: %s | Pool Desarrollo: %d imágenes | Test Retenido: %d imágenes", args.model, len(dev_df), len(test_df))
-    logger.info("Hiperparámetros: lr=%.2e, wd=%.2e, batch_size=%d, loss_weight='%s', clahe=%s", lr, wd, bs, cw, use_clahe)
-
-    # 2. Generar K Folds Estratificados
-    splitter = HierarchicalKFoldSplitter(n_splits=args.k_folds, seed=seed)
-    splits = splitter.split(dev_df)
-
-    factory = CornTransformFactory(config_path=str(config_path), target_size=target_size, clahe=use_clahe)
-    pin_memory = (device.type == "cuda")
-
-    # Dataset de prueba final retenido
-    test_dataset = CornDataset(
-        csv_path=str(splits_dir / "test.csv"),
-        config_path=str(config_path),
-        transform=factory.get_pipeline("test"),
-    )
-    class_to_idx = test_dataset.class_to_idx
-    idx_to_class = {v: k for k, v in class_to_idx.items()}
-    class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
-
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=bs,
-        shuffle=False,
-        num_workers=2,
-        pin_memory=pin_memory,
-    )
-
-    fold_metrics_list: list[dict[str, float]] = []
-    trained_fold_models: list[torch.nn.Module] = []
-
-    # 3. Entrenamiento y Evaluación por Fold
-    for split in splits:
-        logger.info("--- Entrenando Fold %d / %d (Train: %d, Val: %d) ---", split.fold_index, args.k_folds, len(split.train_df), len(split.val_df))
-        set_global_seed(seed + split.fold_index)
-
-        train_dataset = CornDataset(
-            csv_path=split.train_df,
-            config_path=str(config_path),
+    rows, checkpoints = [], []
+    for fold in HierarchicalKFoldSplitter(args.k_folds, seed).split(dev):
+        set_global_seed(seed + fold.fold_index)
+        fold_dir = output / f"fold_{fold.fold_index}"
+        fold_dir.mkdir()
+        fold.train_df.to_csv(fold_dir / "train.csv", index=False)
+        fold.val_df.to_csv(fold_dir / "val.csv", index=False)
+        train_ds = CornDataset(
+            fold.train_df,
+            args.config,
             transform=factory.get_pipeline("train"),
             minority_transform=factory.get_pipeline("minority"),
+            class_to_idx=mapping,
         )
-
-        val_dataset = CornDataset(
-            csv_path=split.val_df,
-            config_path=str(config_path),
-            transform=factory.get_pipeline("val"),
-            class_to_idx=class_to_idx,
+        val_ds = CornDataset(
+            fold.val_df, args.config, transform=factory.get_pipeline("val"), class_to_idx=mapping
         )
-
         train_loader = DataLoader(
-            train_dataset,
+            train_ds,
             batch_size=bs,
             shuffle=True,
-            num_workers=2,
-            pin_memory=pin_memory,
+            num_workers=args.num_workers,
             worker_init_fn=worker_init_fn,
         )
-        val_loader = DataLoader(
-            val_dataset,
-            batch_size=bs,
-            shuffle=False,
-            num_workers=2,
-            pin_memory=pin_memory,
-        )
-
-        model = build_model(args.model, num_classes=len(class_to_idx), pretrained=True).to(device)
+        val_loader = DataLoader(val_ds, batch_size=bs, num_workers=args.num_workers)
+        model = build_model(
+            args.model, num_classes=len(mapping), pretrained=not args.no_pretrained
+        ).to(device)
         criterion = build_criterion(
-            labels=train_dataset.data_frame["label"].tolist(),
-            class_to_idx=class_to_idx,
+            train_ds.data_frame.label.tolist(),
+            mapping,
             strategy=cw,
-            label_smoothing=ls,
+            label_smoothing=smoothing,
             device=device,
         )
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
-        scheduler = build_scheduler(optimizer, kind="cosine", total_epochs=args.epochs, warmup_epochs=warmup, min_lr=1e-6)
-        early_stopping = EarlyStopping(patience=args.patience)
-
+        scheduler = build_scheduler(
+            optimizer,
+            kind="cosine",
+            total_epochs=args.epochs,
+            warmup_epochs=args.warmup_epochs,
+            min_lr=1e-6,
+        )
         history = fit(
-            model=model,
-            train_loader=train_loader,
-            val_loader=val_loader,
-            criterion=criterion,
-            optimizer=optimizer,
-            device=device,
-            epochs=args.epochs,
-            model_name=f"{args.model}_fold{split.fold_index}",
+            model,
+            train_loader,
+            val_loader,
+            criterion,
+            optimizer,
+            device,
+            args.epochs,
+            args.model,
+            run_dir=fold_dir,
             scheduler=scheduler,
-            early_stopping=early_stopping,
+            early_stopping=EarlyStopping(patience=args.patience),
             clip_grad_norm=1.0,
         )
-
-        # Evaluar en el conjunto de validación del fold
-        val_metrics, y_true, y_pred, _ = run_epoch(
-            model=model,
-            loader=val_loader,
-            criterion=criterion,
-            device=device,
-            optimizer=None,
-            desc=f"[Fold {split.fold_index} Val]",
-        )
-
-        f1_macro = _calc_f1_macro(y_true, y_pred, num_classes=len(class_to_idx))
-        acc = _calc_acc(y_true, y_pred)
-        prec = f1_macro
-        rec = acc
-
-        logger.info("[Fold %d Val] Macro F1: %.4f | Accuracy: %.4f", split.fold_index, f1_macro, acc)
-        fold_metrics_list.append(
+        metrics, labels, predictions, probs = run_epoch(model, val_loader, criterion, device)
+        write_predictions_csv(fold_dir, val_ds, dict(enumerate(class_names)), predictions, probs)
+        pd.DataFrame(history).to_csv(fold_dir / "history.csv", index=False)
+        best = max(history, key=lambda row: row["val_macro_f1"])
+        write_summary(
+            fold_dir,
             {
-                "fold": split.fold_index,
-                "macro_f1": f1_macro,
-                "accuracy": acc,
-                "macro_precision": prec,
-                "macro_recall": rec,
+                "model": args.model,
+                "class_to_idx": mapping,
+                "image_size": list(size),
+                "preprocessing": factory.to_contract(),
+                "config_path": args.config,
+                "splits_dir": str(fold_dir),
+                "best_epoch": best["epoch"],
+                "best_val_macro_f1": best["val_macro_f1"],
+                "effective_args": vars(args),
+                "hpo_parameters": params,
+                "validation": metrics,
+            },
+        )
+        rows.append(
+            {
+                "fold": fold.fold_index,
+                **{
+                    k: metrics[k]
+                    for k in ("accuracy", "macro_precision", "macro_recall", "macro_f1")
+                },
             }
         )
-
-        model.eval()
-        trained_fold_models.append(model)
-
-    # 4. Estadísticas Agregadas de Validación Cruzada
-    stats = compute_aggregate_statistics(fold_metrics_list)
-    logger.info("=== ESTADÍSTICAS AGREGADAS %d-FOLD (%s) ===", args.k_folds, args.model)
-    logger.info("Macro F1: %.4f ± %.4f (IC 95%%: [%.4f, %.4f])", stats["macro_f1"]["mean"], stats["macro_f1"]["std"], stats["macro_f1"]["ci_95_lower"], stats["macro_f1"]["ci_95_upper"])
-    logger.info("Accuracy: %.4f ± %.4f (IC 95%%: [%.4f, %.4f])", stats["accuracy"]["mean"], stats["accuracy"]["std"], stats["accuracy"]["ci_95_lower"], stats["accuracy"]["ci_95_upper"])
-
-    # 5. Evaluación de la Prueba Final en Test Set Retenido (Fold Averaging Ensemble)
-    logger.info("=== EVALUACIÓN DE LA PRUEBA FINAL SOBRE TEST SET RETENIDO ===")
-    fold_ensemble = SoftVotingEnsemble(models=trained_fold_models)
-    
-    test_y_true: list[int] = []
-    test_y_pred: list[int] = []
-
-    with torch.no_grad():
-        for images, targets in test_loader:
-            images = images.to(device)
-            test_y_true.extend(targets.tolist())
-            ens_probs = fold_ensemble.predict_probabilities(images)
-            preds = torch.argmax(ens_probs, dim=-1).cpu().tolist()
-            test_y_pred.extend(preds)
-
-    test_macro_f1 = _calc_f1_macro(test_y_true, test_y_pred, num_classes=len(class_to_idx))
-    test_acc = _calc_acc(test_y_true, test_y_pred)
-    test_prec = test_macro_f1
-    test_rec = test_acc
-
-    logger.info("=== RESULTADOS EN TEST SET FINAL (HOLD-OUT) ===")
-    logger.info("Test Final Macro F1: %.4f", test_macro_f1)
-    logger.info("Test Final Accuracy: %.4f", test_acc)
-    logger.info("Test Final Precision: %.4f | Recall: %.4f", test_prec, test_rec)
-
-    # 6. Exportar Artefactos
-    df_folds = pd.DataFrame(fold_metrics_list)
-    df_folds.to_csv(output_dir / "kfold_metrics.csv", index=False)
-
-    summary_data = {
-        "model_name": args.model,
-        "k_folds": args.k_folds,
-        "optuna_params_applied": optuna_params is not None,
-        "hyperparameters_used": {
-            "learning_rate": lr,
-            "weight_decay": wd,
-            "batch_size": bs,
-            "class_weights": cw,
-            "label_smoothing": ls,
-            "clahe": use_clahe,
+        checkpoints.append(fold_dir / "best.pth")
+        del model, optimizer, scheduler, train_loader, val_loader
+        gc.collect()
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
+    stats = compute_aggregate_statistics(
+        [{k: v for k, v in row.items() if k != "fold"} for row in rows]
+    )
+    pd.DataFrame(rows).to_csv(output / "kfold_metrics.csv", index=False)
+    plot_kfold_boxplot(rows, output / "kfold_boxplot.png", model_name=args.model)
+    test_metrics = None
+    if args.evaluate_test:
+        test = ensure_sample_ids(pd.read_csv(split_dir / "test.csv"))
+        if set(test.sample_id) & set(dev.sample_id):
+            raise ValueError("Development and holdout share sample IDs")
+        dataset = CornDataset(
+            test, args.config, transform=factory.get_pipeline("test"), class_to_idx=mapping
+        )
+        loader = DataLoader(dataset, batch_size=bs, num_workers=args.num_workers)
+        total_probs = None
+        for checkpoint in checkpoints:
+            model = build_model(args.model, num_classes=len(mapping), pretrained=False).to(device)
+            model.load_state_dict(
+                torch.load(checkpoint, map_location=device, weights_only=True), strict=True
+            )
+            model.eval()
+            ids, labels, values = [], [], []
+            with torch.no_grad():
+                for images, targets, sample_ids in identified_batches(loader):
+                    ids.extend(sample_ids)
+                    labels.extend(targets.tolist())
+                    values.extend(model(images.to(device)).softmax(1).cpu().tolist())
+            values = np.array(values)
+            total_probs = values if total_probs is None else total_probs + values
+            del model
+            gc.collect()
+            if device.type == "cuda":
+                torch.cuda.empty_cache()
+        probs = total_probs / len(checkpoints)
+        predictions = probs.argmax(1).tolist()
+        test_metrics = _metrics_from_predictions(
+            labels, predictions, 0.0, list(range(len(mapping)))
+        )
+        write_predictions_csv(
+            output,
+            dataset,
+            dict(enumerate(class_names)),
+            predictions,
+            probs.max(1).tolist(),
+            sample_ids=ids,
+        )
+        plot_test_confusion_matrix(
+            labels, predictions, class_names, output / "confusion_matrix_test.png"
+        )
+    atomic_json(
+        output / "kfold_summary.json",
+        {
+            "model": args.model,
+            "class_policy": "canonical classes, zero division=0",
+            "kfold_validation_statistics": stats,
+            "fold_checkpoints": [str(p) for p in checkpoints],
+            "hold_out_test_metrics": test_metrics,
+            "effective_args": vars(args),
+            "hpo_parameters": params,
+            "limitation": "CV after prior HPO is not independent nested CV.",
         },
-        "kfold_validation_statistics": stats,
-        "hold_out_test_metrics": {
-            "test_macro_f1": round(test_macro_f1, 4),
-            "test_accuracy": round(test_acc, 4),
-            "test_macro_precision": round(test_prec, 4),
-            "test_macro_recall": round(test_rec, 4),
-            "test_samples": len(test_y_true),
-        },
-        "dev_dataset_size": len(dev_df),
-        "test_dataset_size": len(test_df),
-    }
-    with open(output_dir / "kfold_summary.json", "w", encoding="utf-8") as f:
-        json.dump(summary_data, f, indent=2)
-
-    # Gráficos
-    plot_kfold_boxplot(fold_metrics_list, output_dir / "kfold_boxplot.png", model_name=args.model)
-    plot_test_confusion_matrix(test_y_true, test_y_pred, class_names, output_dir / "confusion_matrix_test.png")
-
-    logger.info("Reportes y matrices guardados exitosamente en: %s", output_dir)
+    )
+    print(f"Cross-validation artifacts: {output}")
 
 
 if __name__ == "__main__":

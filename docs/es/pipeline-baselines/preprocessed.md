@@ -26,7 +26,7 @@ entrenar con el 100 % de las imágenes disponibles.
 
 ## Balanceo de clases
 
-Para el pipeline principal se plantea una estrategia de balanceo de dos capas (sampler + pérdida ponderada), en el baseline una versión más simple:
+El principal usa pérdida ponderada sin sampler. El baseline mantiene esta política distinta:
 
 - **El propio cap ya actúa como un undersampling suave** de las clases mayoritarias: al topar a 1 500 imágenes, reduce su dominio frente a las minoritarias antes de que empiece el entrenamiento. Es reversible (se regenera el split) y no borra datos del dataset original.
 - **`WeightedRandomSampler`** (la primera capa) se aplica igual: repite las muestras minoritarias dentro de cada epoch, y como la augmentation es en caliente cada repetición se ve distinta.
