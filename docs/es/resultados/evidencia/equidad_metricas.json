@@ -1,0 +1,300 @@
+{
+  "model_name": "efficientnet_lite0",
+  "checkpoint_used": "/outputs/main/efficientnet_lite0/20260812_221429/best.pth",
+  "subgroup_metrics": {
+    "subgroups": {
+      "lab": {
+        "sample_count": 532,
+        "macro_f1": 0.9423458557108613,
+        "accuracy": 0.9680451127819549,
+        "macro_precision": 0.9501598965775329,
+        "macro_recall": 0.9369916887079359,
+        "evaluable_classes": 3,
+        "total_classes": 9,
+        "support_per_class": {
+          "common_rust": 322,
+          "fall_armyworm": 0,
+          "gray_leaf_spot": 77,
+          "healthy": 0,
+          "lethal_necrosis": 0,
+          "nitrogen_deficiency": 0,
+          "northern_corn_leaf_blight": 133,
+          "phosphorus_deficiency": 0,
+          "potassium_deficiency": 0
+        },
+        "class_fnr": {
+          "common_rust": 0.0031055900621117516,
+          "fall_armyworm": NaN,
+          "gray_leaf_spot": 0.1558441558441559,
+          "healthy": NaN,
+          "lethal_necrosis": NaN,
+          "nitrogen_deficiency": NaN,
+          "northern_corn_leaf_blight": 0.03007518796992481,
+          "phosphorus_deficiency": NaN,
+          "potassium_deficiency": NaN
+        }
+      },
+      "real": {
+        "sample_count": 4483,
+        "macro_f1": 0.9214719894332425,
+        "accuracy": 0.9803702877537364,
+        "macro_precision": 0.9326508903730466,
+        "macro_recall": 0.9119104719763094,
+        "evaluable_classes": 9,
+        "total_classes": 9,
+        "support_per_class": {
+          "common_rust": 16,
+          "fall_armyworm": 728,
+          "gray_leaf_spot": 213,
+          "healthy": 1311,
+          "lethal_necrosis": 963,
+          "nitrogen_deficiency": 127,
+          "northern_corn_leaf_blight": 892,
+          "phosphorus_deficiency": 140,
+          "potassium_deficiency": 93
+        },
+        "class_fnr": {
+          "common_rust": 0.3125,
+          "fall_armyworm": 0.019230769230769273,
+          "gray_leaf_spot": 0.05164319248826288,
+          "healthy": 0.0,
+          "lethal_necrosis": 0.0020768431983385627,
+          "nitrogen_deficiency": 0.15748031496062997,
+          "northern_corn_leaf_blight": 0.010089686098654682,
+          "phosphorus_deficiency": 0.09999999999999998,
+          "potassium_deficiency": 0.13978494623655913
+        }
+      }
+    },
+    "overall": {
+      "macro_f1": 0.9467892693956654,
+      "accuracy": 0.9790628115653041,
+      "macro_precision": 0.9532727549139669,
+      "macro_recall": 0.9412980417141008,
+      "sample_count": 5015,
+      "evaluable_classes": 9,
+      "total_classes": 9,
+      "support_per_class": {
+        "common_rust": 338,
+        "fall_armyworm": 728,
+        "gray_leaf_spot": 290,
+        "healthy": 1311,
+        "lethal_necrosis": 963,
+        "nitrogen_deficiency": 127,
+        "northern_corn_leaf_blight": 1025,
+        "phosphorus_deficiency": 140,
+        "potassium_deficiency": 93
+      },
+      "class_fnr": {
+        "common_rust": 0.017751479289940808,
+        "fall_armyworm": 0.019230769230769273,
+        "gray_leaf_spot": 0.07931034482758625,
+        "healthy": 0.0,
+        "lethal_necrosis": 0.0020768431983385627,
+        "nitrogen_deficiency": 0.15748031496062997,
+        "northern_corn_leaf_blight": 0.012682926829268304,
+        "phosphorus_deficiency": 0.09999999999999998,
+        "potassium_deficiency": 0.13978494623655913
+      }
+    }
+  },
+  "disparity_analysis": {
+    "evaluable": true,
+    "group_a": "real",
+    "group_b": "lab",
+    "delta_macro_f1": 0.0209,
+    "delta_accuracy": 0.0123,
+    "disparate_impact_ratio": 0.9778,
+    "dir_metric": "macro_f1",
+    "four_fifths_rule_passed": true,
+    "fnr_disparity_by_class": {
+      "common_rust": 0.3094,
+      "fall_armyworm": null,
+      "gray_leaf_spot": 0.1042,
+      "healthy": null,
+      "lethal_necrosis": null,
+      "nitrogen_deficiency": null,
+      "northern_corn_leaf_blight": 0.02,
+      "phosphorus_deficiency": null,
+      "potassium_deficiency": null
+    }
+  },
+  "shortcut_learning_test": {
+    "mask_mode": "center_occlusion",
+    "mask_type": "geometric_rectangle",
+    "mask_note": "Máscara rectangular fija (20%-80% de cada eje). No aísla lesión ni hoja; los resultados indican sensibilidad a regiones, no causalidad sobre el fondo.",
+    "class_fixed": true,
+    "total_samples": 5015,
+    "mean_original_confidence": 0.84,
+    "mean_masked_confidence": 0.5809,
+    "confidence_drop": 0.259,
+    "confidence_retention": 0.6916,
+    "shortcut_vulnerability_ratio": 0.6916,
+    "accuracy_original": 0.9791,
+    "accuracy_masked": 0.7946,
+    "accuracy_drop": 0.1844,
+    "flip_rate": 0.1951,
+    "collapse_confirmed": false,
+    "shortcut_detected": false,
+    "risk_level": "MODERATE"
+  },
+  "shortcut_learning_audit": {
+    "center_occlusion": {
+      "mask_mode": "center_occlusion",
+      "mask_type": "geometric_rectangle",
+      "mask_note": "Máscara rectangular fija (20%-80% de cada eje). No aísla lesión ni hoja; los resultados indican sensibilidad a regiones, no causalidad sobre el fondo.",
+      "class_fixed": true,
+      "total_samples": 5015,
+      "mean_original_confidence": 0.84,
+      "mean_masked_confidence": 0.5809,
+      "confidence_drop": 0.259,
+      "confidence_retention": 0.6916,
+      "shortcut_vulnerability_ratio": 0.6916,
+      "accuracy_original": 0.9791,
+      "accuracy_masked": 0.7946,
+      "accuracy_drop": 0.1844,
+      "flip_rate": 0.1951,
+      "collapse_confirmed": false,
+      "shortcut_detected": false,
+      "risk_level": "MODERATE"
+    },
+    "peripheral_occlusion": {
+      "mask_mode": "peripheral_occlusion",
+      "mask_type": "geometric_rectangle",
+      "mask_note": "Máscara rectangular fija (20%-80% de cada eje). No aísla lesión ni hoja; los resultados indican sensibilidad a regiones, no causalidad sobre el fondo.",
+      "class_fixed": true,
+      "total_samples": 5015,
+      "mean_original_confidence": 0.84,
+      "mean_masked_confidence": 0.3584,
+      "confidence_drop": 0.4816,
+      "confidence_retention": 0.4266,
+      "shortcut_vulnerability_ratio": 0.4266,
+      "accuracy_original": 0.9791,
+      "accuracy_masked": 0.4225,
+      "accuracy_drop": 0.5565,
+      "flip_rate": 0.5743,
+      "collapse_confirmed": true,
+      "shortcut_detected": true,
+      "risk_level": "CRITICAL"
+    },
+    "shortcut_confirmed": true,
+    "overall_risk_level": "CRITICAL",
+    "diagnostic_summary": "La confianza en la clase original cae al 69.2% tras ocultar el centro. Sensibilidad dentro de márgenes esperados."
+  },
+  "subgroup_column": "environment",
+  "control_nulo_clase_mayoritaria": 0.2614157527417747,
+  "por_procedencia": [
+    {
+      "source_id": "maize_africa",
+      "n": 1499,
+      "clases_con_soporte": 3,
+      "accuracy": 0.9946631087391594,
+      "accuracy_clase_mayoritaria": 0.43028685790527016,
+      "macro_f1_evaluable": 0.9964596388278765
+    },
+    {
+      "source_id": "multi_desease",
+      "n": 862,
+      "clases_con_soporte": 3,
+      "accuracy": 0.9930394431554525,
+      "accuracy_clase_mayoritaria": 0.54292343387471,
+      "macro_f1_evaluable": 0.9942563861034591
+    },
+    {
+      "source_id": "maize_desease_v1.1",
+      "n": 742,
+      "clases_con_soporte": 1,
+      "accuracy": 1.0,
+      "accuracy_clase_mayoritaria": 1.0,
+      "macro_f1_evaluable": 1.0
+    },
+    {
+      "source_id": "corn_leaf_roboflow",
+      "n": 424,
+      "clases_con_soporte": 6,
+      "accuracy": 0.9245283018867925,
+      "accuracy_clase_mayoritaria": 0.2665094339622642,
+      "macro_f1_evaluable": 0.9107008696169223
+    },
+    {
+      "source_id": "cropdg",
+      "n": 390,
+      "clases_con_soporte": 3,
+      "accuracy": 0.958974358974359,
+      "accuracy_clase_mayoritaria": 0.46153846153846156,
+      "macro_f1_evaluable": 0.944005599440056
+    },
+    {
+      "source_id": "maize_desease",
+      "n": 330,
+      "clases_con_soporte": 2,
+      "accuracy": 0.996969696969697,
+      "accuracy_clase_mayoritaria": 0.5575757575757576,
+      "macro_f1_evaluable": 0.9982817869415808
+    },
+    {
+      "source_id": "maize_africa_v1.2",
+      "n": 255,
+      "clases_con_soporte": 1,
+      "accuracy": 1.0,
+      "accuracy_clase_mayoritaria": 1.0,
+      "macro_f1_evaluable": 1.0
+    },
+    {
+      "source_id": "maize_field",
+      "n": 133,
+      "clases_con_soporte": 3,
+      "accuracy": 0.8796992481203008,
+      "accuracy_clase_mayoritaria": 0.6917293233082706,
+      "macro_f1_evaluable": 0.8483319881624967
+    },
+    {
+      "source_id": "maize_2_roboflow",
+      "n": 116,
+      "clases_con_soporte": 3,
+      "accuracy": 0.8706896551724138,
+      "accuracy_clase_mayoritaria": 0.3706896551724138,
+      "macro_f1_evaluable": 0.8742944558738196
+    },
+    {
+      "source_id": "corn_leaf_diseases_classification_roboflow",
+      "n": 73,
+      "clases_con_soporte": 1,
+      "accuracy": 0.9726027397260274,
+      "accuracy_clase_mayoritaria": 1.0,
+      "macro_f1_evaluable": 0.9861111111111112
+    },
+    {
+      "source_id": "maize_africa_v1",
+      "n": 62,
+      "clases_con_soporte": 1,
+      "accuracy": 1.0,
+      "accuracy_clase_mayoritaria": 1.0,
+      "macro_f1_evaluable": 1.0
+    },
+    {
+      "source_id": "maize_nutrient",
+      "n": 49,
+      "clases_con_soporte": 4,
+      "accuracy": 0.9183673469387755,
+      "accuracy_clase_mayoritaria": 0.4897959183673469,
+      "macro_f1_evaluable": 0.8980263157894737
+    },
+    {
+      "source_id": "maize_leaf_roboflow",
+      "n": 48,
+      "clases_con_soporte": 1,
+      "accuracy": 1.0,
+      "accuracy_clase_mayoritaria": 1.0,
+      "macro_f1_evaluable": 1.0
+    },
+    {
+      "source_id": "maize_deficiency_scanner_roboflow",
+      "n": 32,
+      "clases_con_soporte": 3,
+      "accuracy": 0.84375,
+      "accuracy_clase_mayoritaria": 0.40625,
+      "macro_f1_evaluable": 0.8570750237416904
+    }
+  ]
+}

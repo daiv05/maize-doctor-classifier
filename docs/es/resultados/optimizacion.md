@@ -75,6 +75,20 @@ entrenamiento está limitado por CPU, cada trial que lo activaba costaba el dobl
 frente a 15— para decidir una única opción binaria de preprocesado. Queda pendiente medirlo como
 comparación directa de dos corridas.
 
+## La configuración de `b0` bajo partición agrupada
+
+El experimento 2×2 de [Evaluación rigurosa](/es/resultados/evaluacion) mide esa misma
+configuración con validación cruzada agrupada por procedencia, y allí el orden se invierte:
+
+| protocolo | por defecto | hp de `b0` | diferencia |
+| --- | ---: | ---: | ---: |
+| Prueba retenida, partición estándar | **0,9468** | 0,9386 | −0,0081 |
+| Validación cruzada agrupada | 0,6026 ± 0,1240 | **0,6499 ± 0,1508** | +0,0473 |
+
+Los intervalos se solapan holgadamente, así que con cinco pliegues la ventaja bajo partición
+agrupada **no es significativa**. La dirección es coherente con que una configuración que ajusta
+peor a la partición con fuga se apoye menos en ella, pero con estos datos sólo puede señalarse.
+
 ## Limitaciones
 
 No se ejecutó un barrido sobre `lite0` a presupuesto completo, que sería el cuarto brazo del

@@ -127,6 +127,16 @@ const esDatasetSidebar = [
     ],
   },
   {
+    text: "Resultados",
+    items: [
+      { text: "Resumen", link: "/es/resultados/" },
+      { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
+      { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
+      { text: "Evaluación rigurosa y métricas finales", link: "/es/resultados/evaluacion" },
+      { text: "Análisis de sesgos y ética", link: "/es/resultados/equidad" },
+    ],
+  },
+  {
     text: "Deployment",
     items: [
       { text: "GPU en Modal", link: "/es/deployment/modal" },
@@ -234,6 +244,16 @@ export default defineConfig({
             ],
           },
           {
+            text: "Resultados",
+            items: [
+              { text: "Resumen", link: "/es/resultados/" },
+              { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
+              { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
+              { text: "Evaluación y métricas finales", link: "/es/resultados/evaluacion" },
+              { text: "Sesgos y ética", link: "/es/resultados/equidad" },
+            ],
+          },
+          {
             text: "Deployment",
             items: [
               { text: "GPU en Modal", link: "/es/deployment/modal" },
@@ -252,6 +272,8 @@ export default defineConfig({
           "/es/pipeline-baselines/": esDatasetSidebar,
           "/es/deep-learning/": esDatasetSidebar,
           "/es/pipeline/": esDatasetSidebar,
+          "/es/provenance/": esDatasetSidebar,
+          "/es/resultados/": esDatasetSidebar,
           "/es/deployment/": esDatasetSidebar,
         },
         search: {
