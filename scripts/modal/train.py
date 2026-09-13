@@ -416,7 +416,9 @@ def cross_validate_modal(
     model: str = "efficientnet_b0",
     k_folds: int = 5,
     epochs: int = 20,
-    batch_size: int = 64,
+    # El pipeline y el CLI de cross_validate.py usan 32. Un default distinto aqui
+    # se impone sobre ambos y convierte la linea base en otra configuracion.
+    batch_size: int = 32,
     learning_rate: float = 0.0,
     weight_decay: float = 0.0,
     class_weights: str = "",
