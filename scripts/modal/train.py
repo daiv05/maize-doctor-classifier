@@ -425,6 +425,7 @@ def cross_validate_modal(
     output_dir: str = "",
     num_workers: int = 32,
     group_by_source: bool = False,
+    ignore_tuned_params: bool = False,
 ) -> None:
     """Ejecuta validación cruzada K-Fold en GPU de Modal.
 
@@ -448,6 +449,8 @@ def cross_validate_modal(
     ]
     if group_by_source:
         command += ["--group-by-source"]
+    if ignore_tuned_params:
+        command += ["--ignore-tuned-params"]
     if learning_rate > 0:
         command += ["--learning-rate", str(learning_rate)]
     if weight_decay > 0:

@@ -168,6 +168,13 @@ def _parse_args() -> argparse.Namespace:
         help="Ruta al archivo dataset.yaml.",
     )
     parser.add_argument(
+        "--ignore-tuned-params",
+        action="store_true",
+        dest="ignore_tuned_params",
+        help="Ignora cualquier best_params.json, incluido el auto-descubierto, y usa los "
+             "valores por defecto del pipeline.",
+    )
+    parser.add_argument(
         "--group-by-source",
         action="store_true",
         dest="group_by_source",
@@ -185,8 +192,19 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _load_best_params_if_available(model_name: str, explicit_path: str | None, output_root: Path) -> dict[str, Any] | None:
+def _load_best_params_if_available(
+    model_name: str,
+    explicit_path: str | None,
+    output_root: Path,
+    ignorar: bool = False,
+) -> dict[str, Any] | None:
     """Intenta cargar los hiperparámetros óptimos de Optuna."""
+    # El auto-descubrimiento inyecta hiperparametros afinados sin que nadie los pida,
+    # asi que una corrida pensada como linea base deja de serlo en silencio.
+    if ignorar:
+        logger.info("Hiperparametros: valores por defecto del pipeline (auto-descubrimiento desactivado)")
+        return None
+
     if explicit_path:
         p = Path(explicit_path)
         if p.exists():
@@ -279,7 +297,9 @@ def main() -> None:
     target_size = resolve_input_size(args.model, base_target_size)
 
     # Inyección de Hiperparámetros Óptimos de Optuna (si existen)
-    optuna_params = _load_best_params_if_available(args.model, args.best_params_path, output_root)
+    optuna_params = _load_best_params_if_available(
+        args.model, args.best_params_path, output_root, args.ignore_tuned_params
+    )
     lr = float(optuna_params.get("learning_rate", args.learning_rate)) if optuna_params else args.learning_rate
     wd = float(optuna_params.get("weight_decay", args.weight_decay)) if optuna_params else args.weight_decay
     bs = int(optuna_params.get("batch_size", args.batch_size)) if optuna_params else args.batch_size
