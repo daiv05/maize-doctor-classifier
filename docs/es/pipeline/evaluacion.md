@@ -23,11 +23,14 @@ Esta métrica asigna idéntico peso a todas las clases ($C=9$), impidiendo que e
 | Modelo / Ensamble | Macro $F_1$ | Accuracy | Macro Precision | Macro Recall | Weighted $F_1$ |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **[ShuffleNet-V2-x1.0](./entrenamiento)** | 0.9330 | 0.9731 | 0.9388 | 0.9298 | 0.9728 |
+| **[EfficientNet-Lite0](./entrenamiento)** (desplegada) | 0.9468 | 0.9791 | 0.9533 | 0.9413 | — |
 | **[EfficientNet-B0](./entrenamiento)** | 0.9483 | 0.9797 | 0.9589 | 0.9400 | 0.9793 |
-| **[Soft Voting Ensemble](./ensamble)** 🏆 | **`0.9507`** | **`0.9799`** | **`0.9582`** | **`0.9445`** | **`0.9796`** |
+| **[Soft Voting Ensemble](./ensamble)** 🏆 | **`0.9567`** | **`0.9829`** | **`0.9642`** | **`0.9506`** | — |
 
 ::: tip Conclusión de Desempeño
-El **Soft Voting Ensemble** logra el equilibrio óptimo superando la barrera del **95% en Macro $F_1$** y alcanzando un **98% de exactitud diagnóstica global**, reduciendo sustancialmente los falsos positivos entre patologías de manchas foliares.
+El **Soft Voting Ensemble** supera la barrera del **95% en Macro $F_1$** y alcanza un **98% de exactitud diagnóstica global**. La ganancia sobre el mejor individual es de **+0.84 pp**, y está concentrada: el ensamble mejora en 4 de las 14 fuentes del corpus y empeora en 5. El desglose está en [Modelos avanzados y ensamble](/es/resultados/ensamble).
+
+El modelo desplegado en la aplicación móvil es `EfficientNet-Lite0`, no el ensamble: la inferencia en dispositivo ejecuta un único modelo.
 :::
 
 ---
@@ -42,8 +45,10 @@ Para auditar este sesgo algorítmico, el conjunto de prueba se evaluó de forma 
 
 | Subgrupo de Entorno | Muestras ($N$) | Macro $F_1$ (evaluable) | Macro $F_1$ (9 clases) | Exactitud (Accuracy) | Macro Precision | Macro Recall |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Campo Real (`real`)** | **4,483** | **0.9298 (92.98%)** | **0.9298 (92.98%)** | **0.9842 (98.42%)** | 0.9466 | 0.9164 |
-| **Laboratorio (`lab`)** | **532** | **0.8865 (88.65%)\*** | **0.2955 (29.55%)\*** | **0.9417 (94.17%)** | 0.9279 | 0.8712 |
+| **Campo Real (`real`)** | **4,483** | **0.9215 (92.15%)** | **0.9215 (92.15%)** | **0.9804 (98.04%)** | — | — |
+| **Laboratorio (`lab`)** | **532** | **0.9423 (94.23%)\*** | **0.2955 (29.55%)\*** | **0.9680 (96.80%)** | — | — |
+
+Estas cifras corresponden a `EfficientNet-Lite0`, la arquitectura desplegada. La disparidad de Macro $F_1$ evaluable es **0.0209** y el DIR **0.9778**, que cumple la regla del 80 %.
 | **Global (Test Set)** | **5,015** | **0.9483 (94.83%)** | **0.9483 (94.83%)** | **0.9797 (97.97%)** | 0.9589 | 0.9400 |
 
 ### Análisis Crítico de la Disparidad Aritmética vs. Desempeño Real
@@ -66,6 +71,16 @@ Si evaluamos el comportamiento real del modelo sobre las clases que **sí existe
 El **Macro $F_1$ evaluable en laboratorio alcanza 0.8865** y la **Exactitud se sitúa en 94.17%**, con una disparidad de exactitud frente a campo real de apenas **$\Delta \text{Acc} = 4.24\%$** y un $DIR_{F_1} = 0.9534 \ge 0.80$ sobre clases evaluables. No obstante, como se analiza en la sección 4, la ausencia de 6 clases en laboratorio y la sensibilidad a regiones perimetrales aconsejan interpretar estas métricas con prudencia técnica y respaldarlas con segmentación previa en producción.
 
 ![Comparativa de Disparidad por Subgrupo](/fairness/fairness_disparity.png)
+
+---
+
+### Desagregación por procedencia
+
+El entorno tiene dos categorías; la procedencia tiene **catorce**, y es el eje con más varianza del corpus.
+
+![Disparidad por procedencia](/fairness/fairness_disparity_por_fuente.png)
+
+Cuatro fuentes puntúan accuracy 1.0000 y las cuatro contienen **una sola clase**: un predictor constante también acierta el 100 % en ellas. La tabla completa, con el exceso de cada fuente sobre ese control nulo, está en [Análisis de sesgos y ética](/es/resultados/equidad).
 
 ---
 

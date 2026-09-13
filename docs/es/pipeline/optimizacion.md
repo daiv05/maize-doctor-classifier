@@ -66,6 +66,35 @@ La configuración encontrada por Optuna eleva el Macro $F_1$ de prueba de **94.2
 El baseline de referencia es la corrida archivada `efficientnet_b0/20260811_211306`, que con los valores por defecto alcanza 0.9551 de validación y 0.9426 de prueba. En validación la diferencia es de dos diezmilésimas; la ganancia real y verificable está en el conjunto de prueba.
 :::
 
+## El barrido sobre `EfficientNet-Lite0`
+
+Se ejecutó un segundo estudio, de **25 trials**, sobre la arquitectura desplegada. Su resultado no se adoptó, y la razón es parte del resultado:
+
+El barrido sobre `efficientnet_lite0` se ejecutó con un techo de **15 épocas** por coste de cómputo. Ese presupuesto resultó insuficiente como criterio de selección: la corrida de referencia alcanza su óptimo en la **época 35**, de modo que a las 15 ninguna configuración ha convergido y la búsqueda selecciona por **velocidad de convergencia**, no por calidad final. La configuración elegida lo confirma —0.9451 en la época 12, agotada en la 20— frente a **0.9554 en la época 35** de los valores por defecto.
+
+En lugar de repetir el barrido, se evaluaron dos configuraciones adicionales sobre `lite0`, ambas derivadas del estudio sobre `efficientnet_b0`: la configuración completa de seis hiperparámetros (**0.9386** en prueba) y la restringida a `learning_rate` y `batch_size` (**0.9343**), que es el tratamiento exacto con el que esas mismas modificaciones **mejoran** a `efficientnet_b0` (+0.0057) y a `shufflenet_v2_x1_0` (+0.0093). Las tres quedan por debajo de los valores por defecto (**0.9468**).
+
+| configuración sobre `lite0` | val | prueba |
+|---|:---:|:---:|
+| **Valores por defecto** | **0.9554** | **0.9468** |
+| Optuna, techo de 15 épocas | 0.9451 | 0.9379 |
+| Hiperparámetros de `b0`, los seis | 0.9548 | 0.9386 |
+| Hiperparámetros de `b0`, sólo `lr` y `batch_size` | 0.9468 | 0.9343 |
+
+El resultado identifica un **mecanismo**, no sólo una ausencia de mejora: `EfficientNet-Lite0` sustituye los bloques Squeeze & Excitation y las activaciones *swish* por operaciones cuantizables, y no tolera el `learning_rate` elevado que beneficia a las otras dos arquitecturas. Dado que el espacio de búsqueda se centra en ese rango, un barrido a presupuesto completo exploraría predominantemente la región donde se ha medido la degradación. **La configuración de producción se mantiene en los valores por defecto.**
+
+::: warning Limitación
+No se ejecutó un barrido sobre `lite0` a presupuesto completo. La conclusión se apoya en que tres configuraciones optimizadas medidas quedan por debajo de la de referencia y en el mecanismo identificado, no en haber agotado el espacio de búsqueda.
+:::
+
+![Historial de Optimización — Lite0](/tuning/lite0_optimization_history.png)
+
+![Importancia de Hiperparámetros — Lite0](/tuning/lite0_param_importances.png)
+
+De los 25 trials, 6 completaron y 19 fueron podados por el `MedianPruner`. El detalle y la evidencia bruta están en [Optimización e hiperparámetros](/es/resultados/optimizacion).
+
+---
+
 ::: warning Alcance de lo que se aplicó
 Las corridas de producción de `EfficientNet-B0` y `ShuffleNet-V2` tomaron de este estudio únicamente `learning_rate` y `batch_size`. Conservaron `warmup_epochs` en 3 y `weight_decay` en 1.0e-4, en lugar de los 2 y 1.573e-05 del Trial #12, porque el wrapper de Modal no propagaba esos dos parámetros.
 

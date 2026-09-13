@@ -1,6 +1,6 @@
 # Ensamble Multimodelo por Soft Voting
 
-Se diseñó e implementó un sistema de ensamble heterogéneo basado en **Soft Voting (votación por promedio de probabilidades)** que combina las fortalezas complementarias de **`EfficientNet-B0`** y **`ShuffleNet-V2-x1.0`**.
+Se diseñó e implementó un sistema de ensamble heterogéneo basado en **Soft Voting (votación por promedio de probabilidades)** que combina las tres arquitecturas del proyecto: **`EfficientNet-Lite0`**, **`EfficientNet-B0`** y **`ShuffleNet-V2-x1.0`**.
 
 ---
 
@@ -8,7 +8,7 @@ Se diseñó e implementó un sistema de ensamble heterogéneo basado en **Soft V
 
 En el aprendizaje profundo, un ensamble solo produce ganancias significativas si las redes individuales cometen **errores descorrelacionados** (*Principio de Diversidad de Dietterich*). Si combináramos dos modelos de la misma familia, ambos compartirían los mismos sesgos de representación.
 
-Por esta razón se seleccionaron intencionalmente dos arquitecturas con **sesgos inductivos (*inductive bias*) radicalmente dispares**:
+Por esta razón se seleccionaron arquitecturas con **sesgos inductivos (*inductive bias*) dispares**. `EfficientNet-Lite0` aporta una tercera fuente de diversidad: sustituye los bloques Squeeze & Excitation y las activaciones *swish* de `B0` por operaciones cuantizables, de modo que su representación interna difiere de la de `B0` pese a compartir la familia de escalado compuesto.
 
 ```
                          ┌────────────────────────────────────┐
@@ -54,11 +54,9 @@ En nuestra implementación, los pesos se configuraron en paridad equilibrada ($w
 
 ---
 
-::: tip Cifra vigente
-Esta página documenta el ensamble de dos modelos (`EfficientNet-B0` + `ShuffleNet-V2`), que alcanza 0.9507. Incorporando `EfficientNet-Lite0` como tercer miembro, el ensamble sube a **0.9567**. Las cifras actualizadas, su desglose por procedencia y los checkpoints exactos están en [Modelos avanzados y ensamble](/es/resultados/ensamble).
-:::
-
 ## 2. Comparativa de Rendimiento en Test (5,015 Imágenes)
+
+El ensamble combina las **tres** arquitecturas, cada una con su mejor checkpoint: `efficientnet_lite0/20260812_221429`, `efficientnet_b0/20260910_170120` y `shufflenet_v2_x1_0/20260910_184521`. Las cuatro cifras se recomputan de forma exacta desde `ensamble_predicciones.csv`.
 
 Al evaluar el ensamble en el conjunto de prueba independiente (`test.csv`), los resultados superaron a los modelos individuales en todas las métricas globales clave:
 
@@ -69,8 +67,9 @@ Al evaluar el ensamble en el conjunto de prueba independiente (`test.csv`), los 
 | Modelo / Ensamble | Macro $F_1$-Score | Exactitud (Accuracy) | Macro Precision | Macro Recall | Delta vs Mejor Individual |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **ShuffleNet-V2-x1.0** | 0.9330 (93.30%) | 0.9731 (97.31%) | 0.9388 | 0.9298 | -1.53 pp |
+| **EfficientNet-Lite0** | 0.9468 (94.68%) | 0.9791 (97.91%) | 0.9533 | 0.9413 | -0.15 pp |
 | **EfficientNet-B0** | 0.9483 (94.83%) | 0.9797 (97.97%) | 0.9589 | 0.9400 | (Base individual) |
-| **Soft Voting Ensemble** 🏆 | **`0.9507` (95.07%)** | **`0.9799` (97.99%)** | **`0.9582`** | **`0.9445`** | **+0.24 pp netos** 🚀 |
+| **Soft Voting Ensemble** 🏆 | **`0.9567` (95.67%)** | **`0.9829` (98.29%)** | **`0.9642`** | **`0.9506`** | **+0.84 pp netos** 🚀 |
 
 ::: tip Máxima Sensibilidad Agronómica (Recall: 94.45%)
 El mayor beneficio del ensamble se observa en el **Macro Recall**, que asciende a **0.9445 (94.45%)**, superior tanto a EfficientNet (0.9400) como a ShuffleNet (0.9298). En patología vegetal, el Recall es la métrica de bioseguridad más crítica: un falso negativo (no detectar una roya o una deficiencia foliar incipiente) cuesta la pérdida potencial del cultivo.
@@ -102,9 +101,10 @@ La matriz de confusión normalizada calculada sobre las 5,015 imágenes del conj
 La existencia de este ensamble multimodelo permite una arquitectura de despliegue en dos niveles:
 
 1. **Nivel 1: Despliegue en la Nube / API (Servicio Completo):**
-   - Para productores o técnicos del CENTA/MAG con acceso a Internet, el backend FastAPI ejecuta el **Soft Voting Ensemble**, entregando la máxima precisión posible ($F_1 = 0.9507$) y calibración de confianza.
+   - Para productores o técnicos del CENTA/MAG con acceso a Internet, el backend FastAPI puede ejecutar el **Soft Voting Ensemble**, entregando la máxima precisión medida ($F_1 = 0.9567$) a cambio de triplicar el cómputo de inferencia.
 2. **Nivel 2: Despliegue Móvil Desconectado (Edge):**
-   - Para zonas rurales sin cobertura 4G, la aplicación móvil ejecuta individualmente **`ShuffleNet-V2` cuantizado a INT8** (apenas 2.3M parámetros y ~2.5 MB de peso), manteniendo un sólido 93.3% de $F_1$ con inferencia instantánea en el dispositivo.
+   - Para zonas rurales sin cobertura, la aplicación móvil ejecuta **`EfficientNet-Lite0` cuantizado a INT8** (3.6 MiB), con $F_1$ de 0.9468 en el modelo de precisión completa.
+   - El `manifest.json` de la aplicación registra la corrida exacta que empaqueta: `20260812_221429`, con su SHA-256.
 
 ---
 
