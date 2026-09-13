@@ -46,14 +46,14 @@ Para auditar este sesgo algorítmico, el conjunto de prueba se evaluó de forma 
 | Subgrupo de Entorno | Muestras ($N$) | Macro $F_1$ (evaluable) | Macro $F_1$ (9 clases) | Exactitud (Accuracy) | Macro Precision | Macro Recall |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Campo Real (`real`)** | **4,483** | **0.9215 (92.15%)** | **0.9215 (92.15%)** | **0.9804 (98.04%)** | — | — |
-| **Laboratorio (`lab`)** | **532** | **0.9423 (94.23%)\*** | **0.2955 (29.55%)\*** | **0.9680 (96.80%)** | — | — |
+| **Laboratorio (`lab`)** | **532** | **0.9423 (94.23%)\*** | **0.3141 (31.41%)\*** | **0.9680 (96.80%)** | — | — |
 
 Estas cifras corresponden a `EfficientNet-Lite0`, la arquitectura desplegada. La disparidad de Macro $F_1$ evaluable es **0.0209** y el DIR **0.9778**, que cumple la regla del 80 %.
-| **Global (Test Set)** | **5,015** | **0.9483 (94.83%)** | **0.9483 (94.83%)** | **0.9797 (97.97%)** | 0.9589 | 0.9400 |
+| **Global (Test Set)** | **5,015** | **0.9468 (94.68%)** | **0.9468 (94.68%)** | **0.9791 (97.91%)** | 0.9533 | 0.9413 |
 
 ### Análisis Crítico de la Disparidad Aritmética vs. Desempeño Real
 
-Al analizar el reporte cuantitativo original, surge una aparente disparidad en Macro $F_1$ ($\Delta F_1 = 0.6343$). Sin embargo, la inspección detallada de la distribución del dataset revela una causa estructural del corpus:
+Al analizar el reporte cuantitativo original, surge una aparente disparidad en Macro $F_1$ ($\Delta F_1 = 0.6074$). Sin embargo, la inspección detallada de la distribución del dataset revela una causa estructural del corpus:
 
 ::: info Hallazgo Demográfico en el Dataset
 En el conjunto de prueba, **únicamente 3 de las 9 clases** disponen de muestras en laboratorio (*common_rust*, *gray_leaf_spot* y *northern_corn_leaf_blight*). Las 6 clases restantes (*fall_armyworm*, *healthy*, *lethal_necrosis*, *nitrogen_deficiency*, *phosphorus_deficiency*, *potassium_deficiency*) provienen 100% de tomas directas en campo real.
@@ -61,14 +61,18 @@ En el conjunto de prueba, **únicamente 3 de las 9 clases** disponen de muestras
 
 Al calcular el Macro $F_1$ no ajustado sobre el subgrupo de laboratorio dividiendo entre $C=9$, las 6 clases con 0 muestras asignan un score de $0.0$, deprimiendo aritméticamente el promedio global del subgrupo:
 
-$$\text{Macro } F_{1, \text{lab, no ajustado}} = \frac{F_{1, \text{rust}} + F_{1, \text{gls}} + F_{1, \text{nclb}} + 0 + 0 + 0 + 0 + 0 + 0}{9} \approx 0.2955$$
+$$\text{Macro } F_{1, \text{lab, no ajustado}} = \frac{F_{1, \text{rust}} + F_{1, \text{gls}} + F_{1, \text{nclb}} + 0 + 0 + 0 + 0 + 0 + 0}{9} \approx 0.3141$$
 
 Si evaluamos el comportamiento real del modelo sobre las clases que **sí existen** en laboratorio (clases evaluables con soporte $N > 0$):
 1. **Roya Común (*common_rust*, $N=322$):** Tasa de falsos negativos **$FNR = 0.0\%$** (Recall perfecto del 100%).
-2. **Tizón Foliar (*northern_corn_leaf_blight*, $N=133$):** Tasa de falsos negativos **$FNR = 2.25\%$** (Recall del 97.75%).
-3. **Mancha Gris (*gray_leaf_spot*, $N=77$):** Tasa de falsos negativos **$FNR = 36.36\%$** (Recall del 63.64%).
+2. **Tizón Foliar (*northern_corn_leaf_blight*, $N=133$):** Tasa de falsos negativos **$FNR = 3.01\%$** (Recall del 96.99%).
+3. **Mancha Gris (*gray_leaf_spot*, $N=77$):** Tasa de falsos negativos **$FNR = 15.58\%$** (Recall del 84.42%), la peor de las tres clases presentes en laboratorio.
 
-El **Macro $F_1$ evaluable en laboratorio alcanza 0.8865** y la **Exactitud se sitúa en 94.17%**, con una disparidad de exactitud frente a campo real de apenas **$\Delta \text{Acc} = 4.24\%$** y un $DIR_{F_1} = 0.9534 \ge 0.80$ sobre clases evaluables. No obstante, como se analiza en la sección 4, la ausencia de 6 clases en laboratorio y la sensibilidad a regiones perimetrales aconsejan interpretar estas métricas con prudencia técnica y respaldarlas con segmentación previa en producción.
+El **Macro $F_1$ evaluable en laboratorio alcanza 0.9423** y la **Exactitud se sitúa en 96.80%**, con una disparidad de exactitud frente a campo real de $\Delta 	ext{Acc} = 1.23\%$ y un $DIR_{F_1} = 0.9778 \ge 0.80$ sobre clases evaluables.
+
+Conviene notar que en este modelo el subgrupo de laboratorio puntúa **por encima** del de campo real en Macro $F_1$ evaluable (0.9423 frente a 0.9215), y por debajo en exactitud (0.9680 frente a 0.9804). No es contradictorio: laboratorio contiene tres clases y campo real las nueve, así que el macro promedia sobre conjuntos distintos. Comparar ambos subgrupos con una sola cifra es, en rigor, comparar dos problemas de clasificación diferentes.
+
+Como se analiza en la sección 4, la ausencia de 6 clases en laboratorio y la sensibilidad a regiones perimetrales aconsejan interpretar estas métricas con prudencia.
 
 ![Comparativa de Disparidad por Subgrupo](/fairness/fairness_disparity.png)
 
@@ -107,32 +111,36 @@ Para auditar si la red convolucional depende de regiones centrales de la lámina
 
 ### Resultados de la Auditoría de Sensibilidad Dual:
 
-| Condición de Inferencia | Confianza Media | $\Delta$ Confianza | Exactitud ($Acc$) | $\Delta Acc$ | Retención de Confianza (Clase Original) | Tasa de Error Inducido (*Flip Rate*) |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Inferencia Original (Test Base)** | **84.29%** | — | **97.97%** | — | 100.0% | 0.0% |
-| **Oclusión Central 60% (Máscara Rectangular)** | **77.95%** | `-6.34 pp` | **80.46%** | `-17.51 pp` | **`92.47%`** | 18.60% |
-| **Control Inverso (Solo Centro 60%)** | **70.60%** | `-13.69 pp` | **71.76%** | **`-26.20 pp`** | 83.76% | **27.58%** |
+| Condición de Inferencia | Confianza Media | Exactitud ($Acc$) | $\Delta Acc$ | Retención de Confianza | *Flip Rate* |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **Inferencia Original (Test Base)** | **84.00%** | **97.91%** | — | 100.0% | 0.0% |
+| **Oclusión Central 60%** (queda la periferia) | **58.09%** | **79.46%** | `-18.44 pp` | **`69.16%`** | 19.51% |
+| **Control Inverso** (queda sólo el centro) | **35.84%** | **42.25%** | **`-55.65 pp`** | 42.66% | **57.43%** |
+| **Control nulo** (clase mayoritaria constante) | — | **26.14%** | — | — | — |
+
+La última fila es la referencia sin la cual las anteriores no se pueden interpretar: un modelo degenerado que emitiera siempre la clase mayoritaria alcanzaría 26.14% sin extraer nada de la imagen.
 
 ::: warning Alerta Técnica: Sensibilidad Relevante a la Periferia de la Imagen
-La retención de un **92.47% de confianza** en la clase original y un **80.46% de exactitud** tras ocultar el 60% central revela que el clasificador extrae señales discriminantes significativas de las regiones exteriores de la imagen.
+**El fondo por sí solo predice mejor que la hoja por sí sola.** Con el 60% central tapado —queda únicamente la periferia— el modelo acierta el **79.46%**, muy por encima del control nulo de 26.14%, y retiene el 69.16% de su confianza. Con la periferia tapada y la lesión visible cae al **42.25%**, con un 57.43% de predicciones correctas que mutan a error.
 
-Al retirar el contexto periférico en el **Control Inverso**, la exactitud se reduce **26.20 puntos porcentuales** (de 97.97% a 71.76%) y un **27.58% de las predicciones correctas mutan a clasificaciones erróneas**. 
+La caída al ocultar la periferia (55.65 puntos) triplica la caída al ocultar el centro (18.44 puntos). 
 
-**Directriz Técnica y de Despliegue:** Aunque la máscara rectangular no aísla el fondo del tejido foliar perimetral, esta marcada sensibilidad aconseja **no desplegar directamente sobre tomas fotográficas sin filtrar**, recomendando la integración frontal del modelo de segmentación (`maize-doctor-segmenter`) para aislar exclusivamente la hoja de maíz antes de clasificar.
+**Directriz Técnica y de Despliegue:** La máscara rectangular no aísla el fondo del tejido foliar perimetral, así que mide sensibilidad espacial y no causalidad sobre el fondo. Aun con esa acotación, la magnitud aconseja no leer el 97.91% de exactitud global como capacidad de diagnóstico foliar pura.
+
+La mitigación aparente —segmentar antes de clasificar— **se midió y cuesta**: la corrida `20260907_163546`, entrenada y evaluada sobre imágenes segmentadas, rinde 0.7191 frente a 0.9468. Eliminar el fondo elimina también señal que el modelo estaba usando con éxito dentro de este corpus.
 :::
 
 ### Evaluación de Mitigaciones Necesarias antes del Despliegue
 
 Para neutralizar esta vulnerabilidad antes de considerar un despliegue operativo en los campos agrícolas de El Salvador (MAG / CENTA), el pipeline requiere la implementación de las siguientes contramedidas:
 
-1. **Desacople Mandatorio de Fondo vía Segmentación Foliar:**
-   Integrar el modelo de segmentación de `maize-doctor-segmenter` como etapa frontal estricta: aislar la lámina de la hoja y poner en negro neutro (`pixel = 0`) el 100% de los píxeles de fondo (suelo, dedos, maleza o rastrojo) antes de ingresar al clasificador.
+1. **Desacople de fondo vía segmentación foliar — medido, con coste:**
+   Integrar `maize-doctor-segmenter` como etapa frontal y poner en negro el 100% de los píxeles de fondo. **Medido: el Macro $F_1$ baja de 0.9468 a 0.7191.** No se descarta como línea de trabajo, pero no es una mitigación gratuita ni está implantada.
 2. **Entrenamiento Basado en Parches (*Patch-Based Training*):**
    Reentrenar la red convolucional utilizando parches de alta resolución ($128 \times 128$ o $224 \times 224$) muestreados estrictamente del interior del tejido vegetal enfermo, desacoplando la escala de la hoja y los artefactos de encuadre.
-3. **Data Augmentation Destructivo de Entorno:**
-   * **Borrado aleatorio periférico (*Perimeter CutMix / Random Erasing*):** Ocluir agresivamente bordes durante el entrenamiento para forzar a los filtros convolucionales a extraer características de pústulas y manchas necróticas.
-   * **Reemplazo sintético de fondos (*Background Swapping*):** Mezclar hojas recortadas con fondos aleatorios de otros cultivos y texturas inertes.
-   * **Simulación de ruido de sensor:** Inyección de ruido Gaussiano y compresión destructiva JPEG (calidad variable 30-75) para desmantelar firmas fotométricas de dispositivos específicos.
+3. **Data augmentation destructivo de entorno — probado sobre el pipeline real:**
+   Se midieron dos brazos sobre validación por fuente, con las transformaciones del proyecto: jitter de color agresivo y recorte aleatorio con escala 0.3-1.0. **Ninguno mejoró**, y ambos aumentaron la dependencia del marco respecto de la configuración base. El detalle está en [Procedencia y fuga](/es/provenance/consolidacion).
+   * Quedan sin medir el reemplazo sintético de fondos (*Background Swapping*) y la inyección de ruido de sensor con recompresión JPEG.
 4. **Filtro Fuera de Distribución (OOD):**
    Utilizar la distancia de Mahalanobis para rechazar imágenes donde las características de fondo interfieran con la distribución biológica aprendida.
 
@@ -140,17 +148,21 @@ Para neutralizar esta vulnerabilidad antes de considerar un despliegue operativo
 
 ## 5. Auditoría Visual de Explicabilidad con Grad-CAM
 
-Para validar cualitativamente el foco de atención, se generaron mapas de activación de la última capa convolucional (`features.-1` en EfficientNet-B0) mediante **Grad-CAM** (*Gradient-weighted Class Activation Mapping*):
+Para validar cualitativamente el foco de atención, se generaron mapas de activación de la última capa convolucional de `EfficientNet-Lite0` mediante **Grad-CAM** (*Gradient-weighted Class Activation Mapping*):
 
 ![Panel de Auditoría Visual Grad-CAM](/fairness/gradcam_samples.png)
 
 ### Observaciones del Panel Visual:
 1. **Muestras de Campo Real:**
-   * La atención de la red se concentra exactamente sobre los focos de infección foliar (pústulas elongadas de roya y manchas necróticas).
-   * Se ignora por completo el fondo (tierra del surco, rastrojo, malezas perimetrales o sombras arrojadas).
+   * La atención se concentra de forma dominante sobre los focos de infección foliar: pústulas elongadas de roya y manchas necróticas.
 2. **Muestras de Laboratorio:**
    * La red enfoca la textura clorótica de la hoja cortada.
-   * No se presentan activaciones espurias en los bordes de la mesa ni en artefactos de iluminación controlada.
+
+::: warning El panel visual no contradice ni confirma la ablación
+Una lectura cualitativa de mapas de activación **no puede** establecer que la red ignore el fondo: Grad-CAM muestra dónde se concentra el gradiente de la clase predicha, no cuánta información aporta cada región. La medición cuantitativa de la sección 4 es inequívoca en la dirección contraria: **con la hoja tapada y sólo el fondo visible, el modelo acierta el 79.46%**, frente a un control nulo de 26.14%.
+
+Cuando el panel visual y la ablación discrepan, manda la ablación.
+:::
 
 ---
 

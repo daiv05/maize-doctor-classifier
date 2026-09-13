@@ -105,19 +105,21 @@ Aplicado a `efficientnet_lite0` el mismo cambio de `learning_rate` y `batch_size
 
 ## Análisis del Historial de Optimización
 
-A lo largo de los 15 trials evaluados por el sampler TPE, seis alcanzaron valores por encima de 0.93 y tres se situaron en el entorno de 0.953:
+A lo largo de los 15 trials evaluados por el sampler TPE, seis completaron: cinco superaron 0.93 y tres se situaron en el entorno de 0.953 (0.9529, 0.9530 y 0.9553):
 
 ![Historial de Optimización](/tuning/optimization_history.png)
 
 ### Eficiencia de la Poda Temprana (*Early Pruning*)
 
 De los 15 trials ejecutados:
-* **6 trials completaron las 15 épocas** (trials prometedores que alcanzaron convergencia alta, $F_1 > 0.93$).
-* **7 trials fueron podados (*PRUNED*)** por el `MedianPruner` entre la época 3 y 5 al situarse por debajo de la mediana histórica.
-* **1 trial falló** y **1 trial fue cancelado** al detener el estudio.
+* **6 trials completaron** (valores de 0.9298 a 0.9553; cinco por encima de 0.93).
+* **7 trials fueron podados (*PRUNED*)** por el `MedianPruner` al situarse por debajo de la mediana histórica.
+* **1 trial falló** y **1 quedó en ejecución** al detener el estudio.
+
+El número de épocas por trial no quedó registrado en `trials.csv`, que almacena estado, valor, duración y parámetros.
 
 ::: info Ahorro Computacional
-Cada trial completo tomó en promedio **1 hora y 25 minutos**, mientras que los trials podados requirieron apenas **25 a 30 minutos**. La poda temprana ahorró **más de 10 horas de cómputo en GPU**, permitiendo explorar combinaciones extremas sin desperdiciar recursos en configuraciones no viables.
+Cada trial completo tomó de media **101 minutos** (mediana 87; rango 84 a 139), mientras que los podados requirieron de media **33 minutos** (rango 24 a 52). Suponiendo que los siete podados hubieran corrido hasta el final, la poda ahorró **unas 7.9 horas de cómputo en GPU**.
 :::
 
 ---

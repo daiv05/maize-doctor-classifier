@@ -1,6 +1,6 @@
 # Entrenamiento de Producción (Pipeline Principal)
 
-Se entrenaron tres arquitecturas sobre el corpus completo del proyecto (**33,438 imágenes** repartidas en las 9 clases del cultivo de maíz). **`EfficientNet-Lite0` es la arquitectura desplegada**: es la que se exporta a TFLite y la que ejecuta la aplicación móvil. `EfficientNet-B0` y `ShuffleNet-V2-x1.0` se entrenan como comparación y como miembros del ensamble.
+Se entrenaron tres arquitecturas sobre el corpus completo del proyecto (**33,433 imágenes** repartidas en las 9 clases del cultivo de maíz). **`EfficientNet-Lite0` es la arquitectura desplegada**: es la que se exporta a TFLite y la que ejecuta la aplicación móvil. `EfficientNet-B0` y `ShuffleNet-V2-x1.0` se entrenan como comparación y como miembros del ensamble.
 
 El objetivo de esta fase es converger a los checkpoints definitivos de alto rendimiento (`best.pth`) que alimentarán el **Ensamble Multimodelo**, la **Auditoría de Equidad (Fairness)** y la **Exportación a Dispositivos Móviles (TFLite/Edge)**.
 
@@ -15,10 +15,10 @@ A diferencia de los baselines (que operaron sobre un subconjunto capado a 10,020
 
 | Partición | Proporción | Muestras | Propósito |
 |---|:---:|:---:|---|
-| **Entrenamiento (`train.csv`)** | 70 % | **23,407** | Ajuste de gradientes mediante AdamW |
-| **Validación (`val.csv`)** | 15 % | **5,016** | Monitoreo por época, scheduler y early stopping |
-| **Prueba (`test.csv`)** | 15 % | **5,015** | Evaluación final retenida (no vista en entrenamiento) |
-| **Total Corpus** | **100 %** | **33,438** | 9 clases patológicas y nutricionales |
+| **Entrenamiento (`train.csv`)** | 70.0 % | **23,403** | Ajuste de gradientes mediante AdamW |
+| **Validación (`val.csv`)** | 15.0 % | **5,015** | Monitoreo por época, scheduler y early stopping |
+| **Prueba (`test.csv`)** | 15.0 % | **5,015** | Evaluación final retenida (no vista en entrenamiento) |
+| **Total Corpus** | **100 %** | **33,433** | 9 clases patológicas y nutricionales |
 
 ---
 
@@ -97,18 +97,22 @@ Las tres cifras de prueba se recomputan de forma exacta desde las predicciones p
 
 Desempeño detallado sobre las 9 clases en `test.csv` (Precision / Recall / $F_1$-Score):
 
-| Clase Agronómica | Muestras Test | EfficientNet-B0 ($F_1$) | ShuffleNet-V2 ($F_1$) | Diagnóstico Agronómico |
-|---|:---:|:---:|:---:|---|
-| **Lethal Necrosis** | 963 | **0.9984** (Recall: 1.00) | **0.9974** (Recall: 1.00) | Detección perfecta sin falsos negativos. |
-| **Healthy (Planta Sana)** | 1,311 | **0.9954** | **0.9901** | Gran especificidad; no clasifica enfermos como sanos. |
-| **Common Rust (Roya Común)** | 338 | **0.9896** | **0.9867** | Pústulas foliares identificadas con alta precisión. |
-| **Fall Armyworm (Gusano Cogollero)**| 728 | **0.9877** | **0.9815** | Daño masticador reconocido fielmente. |
-| **Northern Corn Leaf Blight** | 1,025 | **0.9769** | **0.9728** | Lesiones elípticas grandes diferenciadas correctamente. |
-| **Phosphorus Deficiency** | 140 | **0.9527** | **0.9275** | Coloración púrpura/rojiza diagnosticada con éxito. |
-| **Gray Leaf Spot** | 290 | **0.9194** | **0.9120** | Lesiones rectangulares estrechas bien delimitadas. |
-| **Nitrogen Deficiency** | 127 | **0.8939** (Recall: 0.929) | **0.8613** (Recall: 0.929) | Clorosis en "V" identificada pese al tamaño de muestra. |
-| **Potassium Deficiency** | 93 | **0.8208** | **0.7674** | Clorosis marginal en hojas basales; clase con menor soporte. |
+| Clase Agronómica | Muestras Test | **Lite0** ($F_1$) | B0 ($F_1$) | ShuffleNet-V2 ($F_1$) | Diagnóstico Agronómico |
+|---|:---:|:---:|:---:|:---:|---|
+| **Lethal Necrosis** | 963 | **0.9990** | 0.9984 | 0.9974 | Recall 0.998; una sola imagen no detectada. |
+| **Healthy (Planta Sana)** | 1,311 | **0.9936** | 0.9954 | 0.9901 | Recall 1.000 en Lite0: ninguna planta sana clasificada como enferma. |
+| **Common Rust (Roya Común)** | 338 | **0.9866** | 0.9896 | 0.9867 | Pústulas foliares identificadas con alta precisión. |
+| **Fall Armyworm (Gusano Cogollero)**| 728 | **0.9814** | 0.9877 | 0.9815 | Daño masticador reconocido fielmente. |
+| **Northern Corn Leaf Blight** | 1,025 | **0.9797** | 0.9769 | 0.9728 | Lesiones elípticas grandes diferenciadas correctamente. |
+| **Gray Leaf Spot** | 290 | **0.9451** | 0.9194 | 0.9120 | Lite0 es la mejor de las tres en esta clase, por 2.6 puntos. |
+| **Phosphorus Deficiency** | 140 | **0.9403** | 0.9527 | 0.9275 | Coloración púrpura/rojiza diagnosticada con éxito. |
+| **Nitrogen Deficiency** | 127 | **0.8664** | 0.8939 | 0.8613 | Clorosis en "V"; recall de 0.843 en Lite0, el más bajo del conjunto. |
+| **Potassium Deficiency** | 93 | **0.8290** | 0.8208 | 0.7674 | Clorosis marginal en hojas basales; clase con menor soporte. |
 
-::: tip Cumplimiento de Rúbrica
-El entrenamiento de ambas arquitecturas cumple con el estándar de modelos convolucionales modernos. Ambos modelos superan con holgura la barrera del 93% y 94% de Macro $F_1$, estableciendo la base idónea para combinarse en el **[Ensamble Multimodelo](./ensamble)**.
+Las tres arquitecturas ordenan las clases igual: las patologías con lesión visible bien delimitada por encima de 0.97, y las tres deficiencias nutricionales por debajo de 0.95. Esa jerarquía la fija el soporte —93, 127 y 140 muestras frente a las 963-1,311 de las mayoritarias— y la similitud visual de los patrones cloróticos, no la arquitectura.
+
+`EfficientNet-Lite0` es la mejor de las tres en `gray_leaf_spot` (0.9451 frente a 0.9194 y 0.9120), `lethal_necrosis`, `northern_corn_leaf_blight` y `potassium_deficiency`; `EfficientNet-B0` lo es en las cinco restantes.
+
+::: tip Base para el ensamble
+Que cada arquitectura sea mejor en clases distintas es la condición que hace útil el **[Ensamble Multimodelo](./ensamble)**: sus errores están parcialmente descorrelacionados.
 :::
