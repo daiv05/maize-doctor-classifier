@@ -227,6 +227,7 @@ def train_main(
     segmented: bool = False,
     splits_dir: str = "",
     best_params: str = "",
+    seed: int = 0,
 ) -> None:
     """
     Entrena el pipeline principal en GPU, persistiendo en el Volume corn-outputs.
@@ -270,6 +271,8 @@ def train_main(
         command += ["--num-workers", str(num_workers)]
     if best_params:
         command += ["--best-params", best_params]
+    if seed:
+        command += ["--seed", str(seed)]
     if clahe:
         command.append("--clahe")
     if no_pretrained:

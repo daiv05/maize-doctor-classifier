@@ -125,6 +125,14 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--config", default=str(PROJECT_ROOT / "config" / "dataset.yaml"))
     parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Semilla de inicializacion y barajado. No altera la particion, que se lee ya "
+             "materializada de --splits-dir: variarla mide la varianza del entrenamiento "
+             "sobre un reparto fijo. Por defecto, dataset.seed del YAML.",
+    )
+    parser.add_argument(
         "--best-params",
         type=str,
         default="",
@@ -160,7 +168,7 @@ def main() -> None:
     config_path = Path(args.config)
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
-    seed = cfg["dataset"]["seed"]
+    seed = args.seed if args.seed is not None else cfg["dataset"]["seed"]
     set_global_seed(seed)
 
     model_names = resolve_model_names(args.models, MODEL_REGISTRY)
@@ -314,6 +322,7 @@ def main() -> None:
                 "class_to_idx": class_to_idx,
                 "image_size": list(target_size),
                 "splits_dir": str(splits_dir),
+                "seed": seed,
                 "epochs_requested": args.epochs,
                 "epochs_run": len(history),
                 "batch_size": args.batch_size,
