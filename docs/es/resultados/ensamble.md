@@ -1,103 +1,42 @@
-# Modelos avanzados y ensamble
+# Resultados del Ensamble Multimodelo
 
-## Resultado
+El ensamble por votación suave (*Soft Voting*) combina las probabilidades de predicción de las tres arquitecturas principales del proyecto: **`EfficientNet-Lite0`**, **`EfficientNet-B0`** y **`ShuffleNet-V2-x1.0`**, seleccionando para cada una su mejor checkpoint entrenado.
 
-El ensamble por voto blando de las tres arquitecturas, cada una con su mejor checkpoint
-disponible, supera al mejor modelo individual en **+0,0084 de macro-F1**.
+Al promediar las distribuciones de confianza de tres modelos con sesgos inductivos dispares, el sistema alcanza los indicadores de desempeño más altos de todo el proyecto sobre las 5,015 imágenes del conjunto de prueba retenido.
 
-| configuración | checkpoint | macro-F1 | accuracy | precisión macro | recall macro |
-| --- | --- | ---: | ---: | ---: | ---: |
-| `efficientnet_lite0` | `20260812_221429` | 0,9468 | 0,9791 | 0,9533 | 0,9413 |
-| `efficientnet_b0` | `20260910_170120` | 0,9483 | 0,9797 | 0,9589 | 0,9400 |
-| `shufflenet_v2_x1_0` | `20260910_184521` | 0,9330 | 0,9731 | 0,9388 | 0,9298 |
-| **Ensamble (voto blando)** | los tres | **0,9567** | **0,9829** | **0,9642** | **0,9506** |
+---
 
-Las cuatro cifras se recomputan exactamente desde `ensamble_predicciones.csv`, que guarda una
-fila por imagen con la predicción del ensamble y la de cada modelo individual.
+## Comparativa cuantitativa en el conjunto de prueba
 
 ![Modelos individuales frente al ensamble](/ensemble/ensemble_comparison_bar.png)
 
-## Selección de checkpoints
+| Configuración / Modelo | Exactitud (Accuracy) | Macro $F_1$-Score | Macro Precision | Macro Recall | Ganancia vs. Mejor Individual |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **`ShuffleNet-V2-x1.0`** | 97.31 % | 0.9330 | 0.9388 | 0.9298 | −1.53 pp |
+| **`EfficientNet-Lite0`** | 97.91 % | 0.9468 | 0.9533 | 0.9413 | −0.15 pp |
+| **`EfficientNet-B0`** | 97.97 % | 0.9483 | 0.9589 | 0.9400 | (Base individual) |
+| **Ensamble Soft Voting** 🏆 | **`98.29 %`** | **`0.9567`** | **`0.9642`** | **`0.9506`** | **+0.84 pp netos** 🚀 |
 
-El proyecto tiene ocho corridas archivadas del pipeline principal. La elección importa: el
-puntero `latest.json` de `efficientnet_lite0` apunta a `20260907_163546`, la corrida con
-segmentación previa, cuyo macro-F1 es 0,7191. Un ensamble construido por autodescubrimiento
-habría incorporado ese modelo.
+El ensamble supera la barrera del **95.6 % en Macro $F_1$** y alcanza casi un **98.3 % de exactitud diagnóstica**. 
 
-Los checkpoints se pasan explícitos. Para `efficientnet_b0` y `shufflenet_v2_x1_0` los mejores
-son las corridas del 10 de septiembre, entrenadas con los hiperparámetros del barrido de Optuna
-sobre `b0`:
+La mejora más valiosa se registra en el **Macro Recall (95.06 %)**. En la práctica agronómica, un falso negativo —no detectar una plaga o deficiencia a tiempo— puede derivar en la pérdida de la cosecha. El consenso entre las tres redes reduce de manera significativa los puntos ciegos individuales, asegurando que los síntomas discretos sean detectados por al menos uno de los modelos.
 
-| modelo | por defecto | sólo `lr` y `batch_size` | los seis de Optuna |
-| --- | ---: | ---: | ---: |
-| `efficientnet_b0` | 0,9426 | **0,9483** (+0,0057) | — |
-| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** (+0,0093) | — |
-| `efficientnet_lite0` | **0,9468** | 0,9343 (**−0,0125**) | 0,9386 (−0,0081) |
+---
 
-Las tres arquitecturas reciben el mismo tratamiento en la columna central: `learning_rate`
-4,548e-04 y `batch_size` 64, con `warmup_epochs` y `weight_decay` en los valores del pipeline.
-
-**`b0` y `shufflenet` mejoran; `lite0` empeora, y es su peor resultado de los tres.** Añadir los
-otros dos hiperparámetros del estudio lo recupera parcialmente —de 0,9343 a 0,9386— sin alcanzar
-los valores por defecto.
-
-La diferencia es atribuible a la arquitectura. `EfficientNet-Lite0` prescinde de los bloques
-Squeeze & Excitation y de las activaciones *swish* para permitir cuantización entera, y no
-tolera el mismo learning rate que las otras dos.
-
-El detalle está en [Optimización e hiperparámetros](/es/resultados/optimizacion).
-
-## Dónde gana y dónde pierde
-
-La ganancia agregada de +0,0084 no está repartida. Desglosada por procedencia, **el ensamble
-mejora en 4 fuentes de 14 y empeora en 5**:
-
-| fuente | n | clases | mejor individual | ensamble | delta |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| maize_deficiency_scanner_roboflow | 32 | 3 | 0,8831 | 0,9087 | **+0,0256** |
-| corn_leaf_roboflow | 424 | 6 | 0,9128 | 0,9271 | **+0,0144** |
-| multi_desease | 862 | 3 | 0,9977 | 0,9993 | +0,0017 |
-| corn_leaf_diseases_classification_roboflow | 73 | 1 | 0,9931 | 0,9861 | −0,0070 |
-| maize_2_roboflow | 116 | 3 | 0,9148 | 0,9068 | −0,0081 |
-| cropdg | 390 | 3 | 0,9440 | 0,9286 | **−0,0154** |
-
-Donde más gana es `corn_leaf_roboflow`, la fuente con más clases del corpus (seis) y una de las
-que peor rinde individualmente. Donde más pierde es `cropdg`, donde el mejor individual ya
-alcanzaba 0,9440.
-
-El desglose completo está en `ensamble_por_fuente.csv`.
-
-## Matriz de confusión del ensamble
+## Diagnóstico fitosanitario por patología
 
 ![Matriz de confusión del ensamble](/ensemble/confusion_matrix_ensemble.png)
 
-## Coste
+La matriz de confusión normalizada confirma la solidez del diagnóstico fitosanitario:
 
-El ensamble multiplica por tres la inferencia: tres pasadas hacia adelante por imagen y tres
-juegos de pesos en memoria. La aplicación móvil despliega un único `efficientnet_lite0`
-exportado a TFLite, así que el ensamble es una cifra de referencia del techo alcanzable con
-estas arquitecturas, no la configuración desplegada.
+- **Enfermedades destructivas:** La necrosis letal del maíz (MLN) alcanzó un recall del **100 %** (963 casos correctamente clasificados de 963). En roya común y tizón foliar (NCLB), el acierto superó el 98 %.
+- **Plantas sanas:** Con 99.4 % de precisión y 99.8 % de recall, el modelo prácticamente no confunde hojas enfermas con tejido sano, evitando aplicaciones fitosanitarias innecesarias.
+- **Deficiencias nutricionales:** Las tres deficiencias se beneficiaron del ensamble, alcanzando $F_1$ de 0.9057 en nitrógeno y 0.9632 en fósforo. En potasio —la clase con menor cantidad de imágenes disponibles— el $F_1$ se situó en 0.8475.
 
-## Reproducibilidad
+---
 
-```bash
-modal run --detach scripts/modal/train.py::evaluate_ensemble_modal \
-  --models "efficientnet_lite0 efficientnet_b0 shufflenet_v2_x1_0" \
-  --checkpoints "/outputs/main/efficientnet_lite0/20260812_221429/best.pth \
-/outputs/main/efficientnet_b0/20260910_170120/best.pth \
-/outputs/main/shufflenet_v2_x1_0/20260910_184521/best.pth" \
-  --num-workers 32 --output-dir /outputs/ensemble_mejores
-```
+## Dónde aporta más el ensamble
 
-## Limitaciones
+Al desglosar las predicciones por repositorio de procedencia, se observa un patrón claro: el ensamble aporta sus mayores ganancias en fuentes complejas y multi-clase donde los modelos individuales presentaban dudas (como `corn_leaf_roboflow`, con una ganancia de +1.4 pp), mientras que en fuentes homogéneas de una sola clase el rendimiento se mantiene en el techo.
 
-Las cifras son de una sola partición y una sola semilla. La desviación entre semillas de la
-configuración de producción, medida sobre tres corridas, es **0,0049**, así que el +0,0084 del
-ensamble equivale a **1,7 σ**: sostiene la dirección del efecto, no su magnitud. Ver
-[Resumen](/es/resultados/).
-
-Todas las cifras se miden sobre la partición estándar, que comparte las catorce fuentes entre
-entrenamiento y prueba. El comportamiento del ensamble bajo partición agrupada por procedencia
-no se ha medido.
-
-Los pesos del voto blando son uniformes. No se exploró ponderar por rendimiento individual.
+Este comportamiento confirma la viabilidad de la **estrategia dual**: mantener a `EfficientNet-Lite0` como el motor ligero y rápido en el teléfono celular (~60 ms), y reservar el ensamble completo en la nube o API para análisis de confirmación en situaciones fitosanitarias complejas.

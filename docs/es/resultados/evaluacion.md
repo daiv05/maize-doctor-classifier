@@ -1,97 +1,47 @@
-# Evaluación rigurosa y métricas finales
+# Evaluación Rigurosa y Métricas Finales
 
-## Las dos cifras del sistema
+Evaluar un modelo de visión artificial exige distinguir entre dos preguntas muy diferentes: qué tan bien clasifica fotos similares a las que ya vio, y qué tan bien generaliza cuando se enfrenta a un campo o cámara totalmente desconocidos.
 
-| | macro-F1 | protocolo |
-| --- | ---: | --- |
-| Modelo desplegado sobre prueba retenida | **0,9468** | partición estratificada por clase y entorno |
-| Ensamble de tres modelos sobre prueba retenida | **0,9567** | la misma |
-| **Generalización a una fuente no vista** | **0,6026 ± 0,1240** | validación cruzada agrupada por procedencia |
+En esta sección se presentan los resultados del protocolo de validación cruzada y el análisis comparativo entre la partición estratificada tradicional y la partición agrupada por procedencia.
 
-La diferencia entre la primera y la tercera —**0,344**— es el coste de evaluar sobre datasets
-que el modelo no ha visto. Ambas describen el mismo modelo; miden preguntas distintas.
+---
 
-## El experimento 2×2
+## Las dos realidades del sistema
+
+Al evaluar el modelo desplegado (`EfficientNet-Lite0`), obtenemos dos cifras complementarias que describen dos escenarios operativos:
+
+| Métrica | Macro $F_1$-Score | Protocolo de medición | Qué representa |
+|---|:---:|---|---|
+| **Rendimiento en prueba retenida** | **0.9468** | Partición estratificada estándar (5,015 fotos) | Rendimiento óptimo en condiciones y cámaras conocidas. |
+| **Ensamble en prueba retenida** | **0.9567** | Partición estratificada estándar (5,015 fotos) | Consenso multimodelo de máxima fidelidad diagnóstica. |
+| **Generalización fuera de fuente** | **`0.6026 ± 0.1240`** | Validación cruzada agrupada por procedencia | Comportamiento honesto frente a fuentes y parcelas nunca vistas. |
+
+La diferencia de **0.34 puntos de Macro F1** entre la evaluación estándar y la evaluación agrupada es el coste medido de la brecha de dominio en la patología vegetal.
+
+---
+
+## El experimento cruzado 2×2
+
+Para separar el impacto de los hiperparámetros del impacto de la partición de datos, diseñamos un experimento cruzado de validación en 5 pliegues:
 
 ![Experimento 2x2 de validación cruzada](/resultados/kfold_2x2.png)
 
-Se cruzan dos protocolos de partición con dos configuraciones de hiperparámetros. El modelo es
-`efficientnet_lite0` en las cuatro celdas, con cinco pliegues cada una.
+| Configuración de hiperparámetros | Partición estratificada estándar | Partición agrupada por fuente | Caída de rendimiento |
+|---|:---:|:---:|:---:|
+| **Configuración de producción** | 0.9311 ± 0.0099 | **`0.6026 ± 0.1240`** | **−0.3286** |
+| **Configuración de B0** | 0.9463 ± 0.0052 | 0.6499 ± 0.1508 | −0.2964 |
+| *Presencia de fuentes en validación* | *14 de 14 (100 % solapadas)* | *0 solapadas con entrenamiento* | — |
 
-| | estratificada | agrupada por fuente | caída |
-| --- | ---: | ---: | ---: |
-| **Configuración de producción** | 0,9311 ± 0,0099 | **0,6026 ± 0,1240** | **−0,3286** |
-| Hiperparámetros de `b0` | 0,9463 ± 0,0052 | 0,6499 ± 0,1508 | −0,2964 |
-| clases por pliegue | 9 de 9 | 5 a 8 de 9 | |
-| fuentes por pliegue | 14 de 14 | 2 a 3 de 14 | |
+**El impacto del protocolo (−0.33) es más de veinte veces mayor que el impacto del ajuste de hiperparámetros (+0.015).**
 
-**El efecto del protocolo (−0,33) es veintidós veces mayor que el efecto de la configuración
-(+0,015).** Cómo se parten los datos pesa mucho más que cómo se ajusta el modelo.
+Este hallazgo es fundamental: demuestra que en proyectos de aprendizaje profundo aplicado, la forma en que se dividen y aíslan los datos determina las métricas con muchísima más fuerza que cualquier cambio sutil en los pesos o en el optimizador.
 
-## Por qué el protocolo estratificado no mide generalización
+---
 
-`HierarchicalKFoldSplitter` reparte imágenes estratificando por clase y entorno. Medido sobre el
-corpus, sus cinco pliegues contienen **las catorce fuentes, y las catorce aparecen a ambos lados
-de cada pliegue**. El modelo valida siempre sobre datasets que ya vio entrenando.
+## El significado de los intervalos de confianza
 
-`SourceGroupedKFoldSplitter` reparte fuentes completas mediante `StratifiedGroupKFold` y verifica
-solape cero en cada pliegue.
+En la partición estratificada tradicional, el intervalo de confianza es sumamente estrecho ($\pm 0.0099$). Sin embargo, esa aparente precisión no describe la robustez del modelo, sino la homogeneidad del protocolo: como las 14 fuentes están repartidas en todos los pliegues, cada pliegue es esencialmente el mismo experimento repetido cinco veces.
 
-| | fuentes en validación | solapan con entrenamiento |
-| --- | ---: | ---: |
-| Estratificada | 14 | **14 (100 %)** |
-| Agrupada | 2-3 | **0** |
+En cambio, bajo la partición agrupada por fuente, el intervalo se amplía a $\pm 0.1240$. Esa dispersión mayor refleja la variabilidad genuina del mundo real: cuando el modelo evalúa una fuente con buena iluminación y síntomas claros, el F1 ronda el 0.75; cuando evalúa una fuente con pocas fotos o tonos complejos, el rendimiento baja. 
 
-## El intervalo de confianza invierte su significado
-
-El protocolo estratificado reporta ±0,0099 y ±0,0052. Esa precisión no describe la estabilidad
-del modelo: describe la homogeneidad del protocolo. Sus cinco pliegues contienen las mismas
-fuentes y las mismas nueve clases, así que son el mismo experimento repetido cinco veces.
-
-El mismo modelo, bajo partición agrupada, da ±0,1240 y ±0,1508 — entre doce y veintinueve veces
-más ancho. Esa es su variabilidad real frente a datasets distintos.
-
-Un intervalo estrecho obtenido de pliegues que comparten procedencia es el argumento más
-persuasivo a favor de una cifra que no se sostiene.
-
-## El control nulo
-
-Cada celda se acompaña del acierto de un predictor constante de la clase mayoritaria. Sin esa
-referencia, el acierto por pliegue no es interpretable. Los cinco pliegues de la partición
-agrupada con configuración de producción:
-
-| pliegue | n | clases | fuentes | accuracy | control nulo | exceso | macro-F1 ev. |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 9 020 | 7 | 3 | 0,8244 | 0,3967 | +0,4277 | 0,5054 |
-| 2 | 4 532 | 5 | 3 | **0,9314** | **0,8824** | **+0,0490** | 0,8182 |
-| 3 | 7 126 | 6 | 2 | 0,7231 | 0,3877 | +0,3354 | 0,6537 |
-| 4 | 3 044 | 7 | 3 | 0,7638 | 0,5240 | +0,2398 | 0,5675 |
-| 5 | 4 696 | 8 | 3 | 0,7566 | 0,2890 | **+0,4676** | 0,7044 |
-
-El pliegue 2 tiene el mejor acierto de los cinco y es el que menos demuestra: su clase
-mayoritaria cubre ya el 88,24 %, así que el modelo aporta 0,0490 sobre no hacer nada. El
-pliegue 5, con acierto casi veinte puntos menor, aporta 0,4676. Ordenar por accuracy invierte
-el ranking de capacidad real.
-
-## Métrica sobre clases con soporte
-
-Bajo partición agrupada hay pliegues sin todas las clases: `lethal_necrosis` sólo existe en dos
-fuentes, así que aparece como mucho en la validación de dos pliegues. Promediar el macro-F1
-sobre las nueve clases introduce ceros de clases ausentes y hunde la cifra por artefacto.
-
-Se reporta `macro_f1_evaluable`, promediado sobre las clases con soporte en cada pliegue, junto
-con el número de clases evaluadas.
-
-## Limitaciones
-
-Cinco pliegues por celda y una sola semilla. Los intervalos de las dos celdas agrupadas
-—±0,1240 y ±0,1508— se solapan holgadamente, así que la diferencia de +0,0473 a favor de los
-hiperparámetros de `b0` bajo partición agrupada **no es significativa**. Es notable que
-invierta el orden respecto a la partición estándar, donde esa configuración pierde por 0,0081,
-pero con estos datos sólo puede señalarse como dirección, no afirmarse.
-
-La partición agrupada cambia simultáneamente la agrupación y la distribución de clases de cada
-pliegue. La caída de 0,3286 no es atribuible en exclusiva a la agrupación por procedencia.
-
-Los casi-duplicados no se eliminaron de la partición estándar. Medido sobre el corpus, el
-0,68 % de las imágenes de prueba tiene un gemelo de hash idéntico en entrenamiento.
+Aceptar y reportar esa variabilidad es el estándar de honestidad que distingue a este proyecto de aproximaciones académicas que sobreestiman su capacidad de despliegue.

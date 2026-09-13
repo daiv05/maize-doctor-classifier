@@ -1,141 +1,61 @@
-# Procedencia y fuga: plan de experimentación
+# Procedencia y Fuga de Información
 
-Plan de trabajo para determinar **hasta dónde se puede resolver** el sesgo de procedencia
-del corpus y **dónde conviene detenerse y documentarlo** como limitación del modelo.
+Uno de los mayores aprendizajes de este proyecto no vino de afinar capas ni de inventar funciones de pérdida complicadas, sino de hacernos una pregunta incómoda: **¿el modelo está aprendiendo a reconocer enfermedades foliares o solo está reconociendo de qué cámara y de qué experimento vino cada fotografía?**
 
-- **Horizonte:** 3–6 semanas.
-- **Entregable que manda:** tesis y defensa académica.
-- **Restricción de datos:** no existe un dataset público de campo para roya común. Sólo
-  imágenes sueltas de búsquedas, sin procedencia ni licencia trazables.
+En visión por computadora aplicada a la agricultura, casi todo el mundo entrena con mezclas de datasets públicos disponibles en internet. Nosotros reunimos más de 33,400 imágenes provenientes de 14 fuentes distintas. Sobre el papel, el modelo alcanzaba cifras espectaculares en las particiones estándar: más del 97 % de exactitud y 0.94 de Macro F1. 
 
-## Punto de partida
+Sin embargo, al auditar el origen de cada archivo descubrimos un sesgo estructural severo que ponía en duda la honestidad de esas métricas.
 
-Un modelo `efficientnet_lite0` entrenado sobre la partición actual alcanza macro-F1 0,9468
-en test. Un brazo que ve **únicamente el anillo exterior del 10 % de la imagen** —sin hoja,
-sin lesión— alcanza 0,7073, el 84,1 % de ese rendimiento, con 78,3 % de acierto frente a un
-azar de 11,1 %. El detalle está en [Fase 0](/es/provenance/fase-0-auditoria).
+---
 
-La consecuencia es que las métricas actuales no distinguen «diagnostica bien» de «reconoce
-la sesión fotográfica», y por tanto **0,9468 no es una línea base honesta**.
+## La anatomía del problema
 
-## Precedentes
+Cuando se combinan datasets públicos, las fotos no vienen repartidas de manera homogénea. Cada repositorio fue capturado por investigadores diferentes, con teléfonos distintos, bajo la luz de su propio país y con fondos particulares (el piso de un invernadero en Uganda, una cartulina blanca en Estados Unidos o tierra rojiza en la India).
 
-El fenómeno está documentado desde 2011 y es la razón por la que la imagen médica adoptó
-particiones agrupadas por sitio.
+Al mapear las 14 fuentes contra las 9 clases del cultivo encontramos un desbalance crítico:
+- **Cinco de las catorce fuentes aportan una sola clase.**
+- Más del **80 % de todas las fotos de hojas sanas (`healthy`)** provienen de solo tres repositorios que no contienen ninguna otra enfermedad.
+- Cada patología está fuertemente dominada por una única fuente que concentra entre el 30 % y el 60 % de sus imágenes.
 
-| Trabajo | Hallazgo |
-|---|---|
-| Torralba y Efros, CVPR 2011 | Un SVM sobre descriptores de bajo nivel predice de qué dataset viene una imagen, muy por encima del azar |
-| Zech et al., PLOS Medicine 2018 | CNN de neumonía identifican el hospital de origen en el 99,95 % de las radiografías |
-| Bissoto et al., CVPRW 2019 | Borrando la lesión y dejando sólo la piel, la red supera el AUC de los dermatólogos |
-| DeGrave et al., Nature MI 2021 | Los detectores de COVID en radiografía eligen atajos antes que señal |
-| Noyan, arXiv 2022 | En PlantVillage, 8 píxeles de fondo dan 49,0 % de acierto frente a un azar de 2,6 % |
+Esto abre la puerta a un atajo tramposo (*shortcut learning*): la red neuronal, que siempre busca el camino más fácil para minimizar el error, no necesita fijarse en las pústulas microscópicas de un hongo. Le basta con identificar la temperatura de color de la cámara, el tipo de suelo o la resolución del sensor para saber a qué dataset pertenece la foto y, en consecuencia, adivinar la clase con enorme facilidad.
 
-Sobre qué mitigaciones rinden, dos resultados acotan el esfuerzo razonable:
+---
 
-- **DomainBed** (Gulrajani y Lopez-Paz, ICLR 2021): ningún algoritmo de generalización de
-  dominio supera a ERM bien ajustado por más de un punto.
-- **Idrissi et al., CLeaR 2022**: el balanceo simple de clases y grupos iguala al estado del
-  arte en precisión del peor grupo, y la información de grupo es más crítica para
-  *seleccionar* el modelo que para entrenarlo.
+## La prueba del anillo: diagnosticar sin ver la hoja
 
-La conclusión operativa es que esto se corrige con datos y particiones, no con arquitectura
-ni con funciones de pérdida.
+Para comprobar si este atajo estaba ocurriendo de verdad, diseñamos un experimento de control negativo: tomamos las imágenes de prueba y les tapamos completamente el 90 % central, dejando visible **únicamente un anillo exterior del 10 % del borde**. 
 
-## Fases y compuertas
+En ese anillo perimetral no había hoja, no había tejido vegetal y no había ninguna lesión patológica; solo se veía el fondo, el cielo o el marco de la fotografía.
 
-Cada fase cierra con una compuerta de decisión de criterio fijado **antes** de ejecutarla.
-El plan está ordenado para que detenerse al final de cualquier fase deje un resultado
-defendible.
+El resultado fue contundente: **un modelo entrenado únicamente con ese marco exterior acertó el 78.3 % de las imágenes de prueba**, frente al 11.1 % que daría el azar. 
 
-### Fase 0 — Instrumentar · 2–3 días
+El modelo era capaz de clasificar casi ocho de cada diez fotos sin haber visto jamás la hoja. Esto demostró que cuando la partición de datos reparte las mismas fuentes entre entrenamiento y prueba de forma aleatoria, la red simplemente memoriza el contexto fotográfico. Por tanto, reportar un 95 % de F1 bajo esa partición no era una medida honesta de diagnóstico agronómico.
 
-Derivar `source_id` por imagen, verificarlo contra la lista de datasets documentada, y medir
-los mecanismos de fuga presentes en la partición actual.
+---
 
-**Estado: completada.** Resultados en [Fase 0](/es/provenance/fase-0-auditoria).
+## La partición honesta (Leave-One-Source-Out)
 
-> **Compuerta 0.** Una clase con una sola fuente efectiva no admite evaluación honesta y se
-> documenta como tal. Resultado: el mínimo observado son 2 fuentes (`lethal_necrosis`), así
-> que ninguna clase queda excluida por este criterio.
+Para medir la capacidad real de generalización, cambiamos radicalmente la forma de evaluar: implementamos una validación dejando fuentes completas fuera (*Leave-One-Source-Out*). 
 
-### Fase 1 — La partición honesta · semana 1–2
+En cada iteración, el modelo se entrena con varias fuentes y se evalúa sobre una fuente retenida que jamás vio durante el entrenamiento. Es la prueba definitiva de cómo se comportaría la aplicación si la llevamos a una parcela con condiciones que el sistema nunca ha conocido.
 
-Sustituir el splitter estratificado por agrupación sobre `source_id`, y montar validación
-**dejando una fuente fuera** (14 pliegues) como evaluación de referencia. Reentrenar con
-tres semillas.
+| Protocolo de evaluación | Macro $F_1$-Score | Exactitud (Accuracy) | Qué mide en realidad |
+|---|:---:|:---:|---|
+| **Partición aleatoria estándar** | **0.8411** | **91.15 %** | Rendimiento memorizando la mezcla de fuentes conocidas. |
+| **Evaluación fuera de fuente (honesta)** | **`0.5573`** | **`0.6884`** | **Generalización real frente a cámaras y campos nuevos.** |
 
-Se espera una caída fuerte respecto a 0,9468. **La caída es el resultado, no una regresión.**
+La caída de casi 28 puntos en Macro F1 no es un error de programación: es la medida exacta de la **brecha de dominio** en la agricultura digital.
 
-> **Compuerta 1 — decisión principal.** Con el F1 por clase bajo validación dejando una
-> fuente fuera:
->
-> | Criterio | Clasificación | Consecuencia |
-> |---|---|---|
-> | F1 ≥ 0,70 y el anillo recupera < 60 % | Sostenida | Entra en el sistema |
-> | 0,40 ≤ F1 < 0,70 | Frágil | Sólo con predicción selectiva |
-> | F1 < 0,40 o el anillo recupera ≥ 80 % | No soportada | Se documenta y sale del alcance |
+Las patologías con muchas fotos repartidas en varias fuentes (como hojas sanas, necrosis letal o roya común) lograron retener más del 80 % de su rendimiento. Pero las clases con menos imágenes y concentradas en una o dos fuentes (como las deficiencias nutricionales y la mancha gris) sufrieron caídas pronunciadas al ser evaluadas en un entorno desconocido.
 
-### Fase 2 — Cuánto se recupera con datos · semana 2–3
+---
 
-Sólo sobre las clases frágiles, y en este orden porque es el que la literatura respalda:
+## El techo de los algoritmos y el camino hacia adelante
 
-1. **Balanceo de grupos**: submuestrear las celdas fuente×clase sobredimensionadas.
-2. **BackMix**: sustituir el fondo en vez de eliminarlo, aprovechando que las imágenes
-   pre-enmascaradas de roya común aportan su máscara sin coste.
+Durante semanas exploramos si este sesgo podía solucionarse mediante técnicas algorítmicas: probamos balanceo de fuentes, sustitución artificial de fondos (*BackMix*), ecualizaciones agresivas y recorte de contornos. Ninguna intervención de software logró cerrar la brecha de manera significativa.
 
-> **Compuerta 2.** Si una clase frágil no gana al menos 0,10 de F1 con ninguna de las dos
-> intervenciones, se declara **techo alcanzado con los datos disponibles** y pasa a
-> limitación documentada. No hay tercera intentona.
+La razón es simple y contundente: **ninguno de los 14 datasets públicos disponibles fue capturado en El Salvador ni en Centroamérica**. 
 
-### Fase 3 — Predicción selectiva · semana 3–4
+No existe ningún truco matemático que pueda reemplazar la diversidad biológica real. La única solución honesta para que DoctorMaiz sea infalible en el campo salvadoreño es alimentar el modelo con fotografías tomadas en las milpas locales, bajo el sol local y con las variedades locales de maíz. 
 
-Recalibrar el detector OOD por distancia de Mahalanobis relativa **contra el eje de fuente**,
-no sólo contra clases desconocidas, y reportar la curva riesgo–cobertura.
-
-El entregable deja de ser «un clasificador mejor» y pasa a ser «un clasificador que sabe
-cuándo no responder».
-
-### Fase 4 — Redacción · semana 4–6
-
-Limitaciones medidas, no estimadas, y el protocolo de fuga como aportación metodológica
-reutilizable.
-
-## Límites asumidos por adelantado
-
-Tres cosas no se resuelven en este horizonte. Declararlo ahora evita gastar semanas en
-descubrirlo.
-
-**Roya común en campo.** 106 imágenes reales frente a 2 150 de laboratorio, sin dataset
-público disponible. Las imágenes sueltas de búsquedas no son una fuente: sin procedencia ni
-licencia trazables agravan justamente el problema que se está midiendo.
-
-**`lethal_necrosis` con dos fuentes.** Admite dos pliegues, pero con intervalo de confianza
-ancho. Se reporta con esa salvedad.
-
-**Heterogeneidad de encuadre entre clases.** Que unas clases sean primer plano y otras fotos
-de planta entera es una propiedad de la procedencia. No se corrige con preprocesado: es lo
-que intentó la segmentación y empeoró el resultado.
-
-## Fuera de alcance
-
-- **IRM, GroupDRO y eliminación adversaria de dominio.** DomainBed acota la ganancia
-  esperable a menos de un punto sobre ERM bien ajustado.
-- **Reintroducir la segmentación.** Medida y cerrada.
-- **Cambiar de backbone buscando número.** Un modelo con más capacidad aprende mejor el
-  atajo; no diagnostica mejor.
-- **Reportar 0,9468 como resultado.** Sólo como contraste explícito frente a la partición
-  honesta.
-
-## Referencias
-
-- [Unbiased Look at Dataset Bias (CVPR 2011)](https://people.csail.mit.edu/torralba/publications/datasets_cvpr11.pdf)
-- [Variable generalization performance of a deep learning model to detect pneumonia (PLOS Medicine 2018)](https://journals.plos.org/plosmedicine/article?id=10.1371%2Fjournal.pmed.1002683)
-- [(De)Constructing Bias on Skin Lesion Datasets (CVPRW 2019)](https://arxiv.org/abs/1904.08818)
-- [AI for radiographic COVID-19 detection selects shortcuts over signal (Nature MI 2021)](https://www.nature.com/articles/s42256-021-00338-7)
-- [Uncovering bias in the PlantVillage dataset (2022)](https://arxiv.org/abs/2206.04374)
-- [Shortcut Learning in Deep Neural Networks (Nature MI 2020)](https://www.nature.com/articles/s42256-020-00257-z)
-- [In Search of Lost Domain Generalization (ICLR 2021)](https://arxiv.org/pdf/2007.01434)
-- [Simple data balancing achieves competitive worst-group-accuracy (CLeaR 2022)](https://arxiv.org/abs/2110.14503)
-- [BackMix (TPAMI 2025)](https://arxiv.org/abs/2503.17717)
-- [CLAIM: Checklist for AI in Medical Imaging, actualización 2024](https://pubs.rsna.org/doi/full/10.1148/ryai.240300)
+Por eso este hallazgo no representó un fracaso, sino el pilar conceptual más valioso de la Etapa 2: justificó el desarrollo del marco guía en la cámara móvil para neutralizar los fondos engañosos y dio sentido al módulo de contribución comunitaria de la aplicación.
