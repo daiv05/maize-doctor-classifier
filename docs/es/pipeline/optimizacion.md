@@ -66,8 +66,10 @@ La configuración encontrada por Optuna eleva el Macro $F_1$ de prueba de **94.2
 El baseline de referencia es la corrida archivada `efficientnet_b0/20260811_211306`, que con los valores por defecto alcanza 0.9551 de validación y 0.9426 de prueba. En validación la diferencia es de dos diezmilésimas; la ganancia real y verificable está en el conjunto de prueba.
 :::
 
-::: warning Transferencia entre arquitecturas
-Esta configuración no mejora a todas las arquitecturas. Aplicada a `efficientnet_lite0`, que es la desplegada, baja el Macro $F_1$ de prueba de 0.9468 a 0.9386. El contraste de las tres está en [Optimización e hiperparámetros](/es/resultados/optimizacion).
+::: warning Alcance de lo que se aplicó
+Las corridas de producción de `EfficientNet-B0` y `ShuffleNet-V2` tomaron de este estudio únicamente `learning_rate` y `batch_size`. Conservaron `warmup_epochs` en 3 y `weight_decay` en 1.0e-4, en lugar de los 2 y 1.573e-05 del Trial #12, porque el wrapper de Modal no propagaba esos dos parámetros.
+
+Aplicada a `efficientnet_lite0` con los seis parámetros, la configuración baja el Macro $F_1$ de prueba de 0.9468 a 0.9386. Las dos cosas no son comparables entre sí; el detalle está en [Optimización e hiperparámetros](/es/resultados/optimizacion).
 :::
 
 ---

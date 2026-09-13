@@ -65,15 +65,25 @@ arquitectura más pesada. No se puede determinar cuál de las dos cosas explica 
 
 Lo que sí está medido es que esa configuración **no transfiere entre arquitecturas**:
 
-| modelo | por defecto | hiperparámetros de `b0` | delta |
-| --- | ---: | ---: | ---: |
-| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** |
-| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** |
-| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** |
+| modelo | por defecto | modificada | delta | qué se cambió |
+| --- | ---: | ---: | ---: | --- |
+| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** | `lr` y `batch_size` |
+| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** | `lr` y `batch_size` |
+| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** | los **seis** de Optuna |
 
-Mejora las dos arquitecturas sobre las que no se buscó menos una: perjudica precisamente a
-`lite0`, que es la desplegada. La conclusión no es que los valores por defecto sean mejores en
-general, sino que **lo son para `lite0`**.
+**Las tres filas no son comparables entre sí.** Las corridas de `b0` y `shufflenet` sólo
+modificaron `learning_rate` y `batch_size`; la de `lite0` modificó además `warmup_epochs` y
+`weight_decay`. La causa es que el wrapper de Modal no propagaba esos dos parámetros cuando se
+lanzaron las primeras.
+
+Lo que se puede afirmar de cada fila por separado:
+
+- Subir el learning rate a 4,548e-04 con lote 64 **mejora** `b0` y `shufflenet`.
+- La configuración completa de seis parámetros **empeora** `lite0`.
+
+Lo que **no** se puede afirmar es que la diferencia se deba a la arquitectura. Podría deberse a
+los dos parámetros adicionales. Separarlo requiere entrenar `lite0` cambiando sólo `lr` y
+`batch_size`, experimento que no se ha ejecutado.
 
 ## Coste y configuración del barrido
 

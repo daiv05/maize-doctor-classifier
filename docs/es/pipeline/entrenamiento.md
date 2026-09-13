@@ -24,7 +24,7 @@ A diferencia de los baselines (que operaron sobre un subconjunto capado a 10,020
 
 ## 2. Hiperparámetros de Producción
 
-Se aplicaron estrictamente los hiperparámetros ganadores identificados durante el estudio bayesiano de Optuna (Trial #12), diseñados para balancear la velocidad de convergencia con una regularización estocástica robusta:
+De los hiperparámetros ganadores del estudio bayesiano de Optuna (Trial #12) se aplicaron `learning_rate` y `batch_size`. Los valores de `warmup_epochs` y `weight_decay` de la tabla son los del pipeline, no los del trial —que eran 2 y 1.573e-05— porque el wrapper de Modal no los propagaba en el momento de lanzar estas corridas:
 
 | Hiperparámetro | Valor de Producción | Justificación Técnica |
 |---|:---:|---|
@@ -42,9 +42,10 @@ Se aplicaron estrictamente los hiperparámetros ganadores identificados durante 
 
 ## 3. Curvas de Convergencia y Dinámica de Entrenamiento
 
-Se entrenaron de forma paralela e independiente las dos arquitecturas troncales del proyecto:
+Se entrenaron de forma independiente tres arquitecturas. Las dos primeras con la configuración de esta página; `EfficientNet-Lite0`, que es la que se exporta a TFLite y se despliega en la aplicación, con los valores por defecto del pipeline (`learning_rate` 1e-4, `batch_size` 32) en la corrida `20260812_221429`:
 1. **`EfficientNet-B0`:** Red convolucional de alta capacidad con bloques MBConv y atención de canales (Squeeze & Excitation).
 2. **`ShuffleNet-V2-x1.0`:** Red ultra-ligera de baja latencia con división y barajado de canales (*Channel Split & Shuffle*).
+3. **`EfficientNet-Lite0`:** Variante sin Squeeze & Excitation ni activaciones *swish*, diseñada para cuantización entera y despliegue móvil. **Es la arquitectura desplegada.**
 
 ![Convergencia del Entrenamiento](/training/training_convergence.png)
 
@@ -65,10 +66,10 @@ Se entrenaron de forma paralela e independiente las dos arquitecturas troncales 
 
 Al evaluar los checkpoints finales (`best.pth`) sobre el subconjunto de prueba independiente (`test.csv`), ambos modelos demostraron una capacidad de generalización sobresaliente:
 
-| Métrica Global | EfficientNet-B0 (Best Epoch: 28) | ShuffleNet-V2-x1.0 (Best Epoch: 23) |
-|---|:---:|:---:|
-| **Test Accuracy** | **`97.97 %`** | **`97.31 %`** |
-| **Test Macro $F_1$-Score** | **`0.9483` (94.83 %)** | **`0.9330` (93.30 %)** |
+| Métrica Global | EfficientNet-B0 (Best Epoch: 28) | ShuffleNet-V2-x1.0 (Best Epoch: 23) | EfficientNet-Lite0 (Best Epoch: 35) |
+|---|:---:|:---:|:---:|
+| **Test Accuracy** | **`97.97 %`** | **`97.31 %`** | **`97.91 %`** |
+| **Test Macro $F_1$-Score** | **`0.9483` (94.83 %)** | **`0.9330` (93.30 %)** | **`0.9468` (94.68 %)** |
 | **Test Weighted $F_1$** | **`0.9793` (97.93 %)** | **`0.9728` (97.28 %)** |
 | **Macro Precision** | **`0.9589`** | **`0.9388`** |
 | **Macro Recall** | **`0.9400`** | **`0.9298`** |

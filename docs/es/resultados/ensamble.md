@@ -26,15 +26,20 @@ Los checkpoints se pasan explícitos. Para `efficientnet_b0` y `shufflenet_v2_x1
 son las corridas del 10 de septiembre, entrenadas con los hiperparámetros del barrido de Optuna
 sobre `b0`:
 
-| modelo | valores por defecto | hiperparámetros afinados | delta |
-| --- | ---: | ---: | ---: |
-| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** |
-| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** |
-| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** |
+| modelo | por defecto | modificada | delta | qué se cambió |
+| --- | ---: | ---: | ---: | --- |
+| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** | `lr` y `batch_size` |
+| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** | `lr` y `batch_size` |
+| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** | los **seis** de Optuna |
 
-Esa configuración mejora dos de las tres arquitecturas y empeora la tercera, que es
-precisamente la desplegada. El detalle está en
-[Optimización e hiperparámetros](/es/resultados/optimizacion).
+Las tres filas **no comparan la misma configuración**. Las corridas de `b0` y
+`shufflenet` modificaron dos hiperparámetros; la de `lite0` modificó seis, añadiendo
+`warmup_epochs` 2 en vez de 3 y `weight_decay` 1,573e-05 en vez de 1,0e-04.
+
+El motivo es que el wrapper de Modal no propagaba `--weight-decay` ni `--warmup-epochs`
+cuando se lanzaron las de septiembre. Por tanto, que `lite0` empeore **no es atribuible a la
+arquitectura**: puede deberse a esos dos parámetros adicionales. Distinguirlo requiere entrenar
+`lite0` cambiando sólo `lr` y `batch_size`, que no se ha hecho.
 
 ## Dónde gana y dónde pierde
 
