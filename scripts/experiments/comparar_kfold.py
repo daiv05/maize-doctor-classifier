@@ -18,11 +18,15 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
+# La configuracion llamada "hp de b0" son los hiperparametros que Optuna encontro para
+# efficientnet_b0 a presupuesto completo, aplicados al entrenamiento de efficientnet_lite0.
+# El modelo es lite0 en las cuatro celdas. No es la mejor configuracion conocida: medida
+# aparte, pierde en prueba contra los valores por defecto (0.9386 frente a 0.9468).
 CELDAS = {
     "estratificado_actual": ("estratificada", "por defecto"),
-    "estratificado_afinada": ("estratificada", "afinada"),
+    "estratificado_afinada": ("estratificada", "hp de b0"),
     "agrupado_actual": ("agrupada", "por defecto"),
-    "agrupado_afinada": ("agrupada", "afinada"),
+    "agrupado_afinada": ("agrupada", "hp de b0"),
 }
 
 
