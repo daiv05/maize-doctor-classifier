@@ -26,20 +26,24 @@ Los checkpoints se pasan explícitos. Para `efficientnet_b0` y `shufflenet_v2_x1
 son las corridas del 10 de septiembre, entrenadas con los hiperparámetros del barrido de Optuna
 sobre `b0`:
 
-| modelo | por defecto | modificada | delta | qué se cambió |
-| --- | ---: | ---: | ---: | --- |
-| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** | `lr` y `batch_size` |
-| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** | `lr` y `batch_size` |
-| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** | los **seis** de Optuna |
+| modelo | por defecto | sólo `lr` y `batch_size` | los seis de Optuna |
+| --- | ---: | ---: | ---: |
+| `efficientnet_b0` | 0,9426 | **0,9483** (+0,0057) | — |
+| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** (+0,0093) | — |
+| `efficientnet_lite0` | **0,9468** | 0,9343 (**−0,0125**) | 0,9386 (−0,0081) |
 
-Las tres filas **no comparan la misma configuración**. Las corridas de `b0` y
-`shufflenet` modificaron dos hiperparámetros; la de `lite0` modificó seis, añadiendo
-`warmup_epochs` 2 en vez de 3 y `weight_decay` 1,573e-05 en vez de 1,0e-04.
+Las tres arquitecturas reciben el mismo tratamiento en la columna central: `learning_rate`
+4,548e-04 y `batch_size` 64, con `warmup_epochs` y `weight_decay` en los valores del pipeline.
 
-El motivo es que el wrapper de Modal no propagaba `--weight-decay` ni `--warmup-epochs`
-cuando se lanzaron las de septiembre. Por tanto, que `lite0` empeore **no es atribuible a la
-arquitectura**: puede deberse a esos dos parámetros adicionales. Distinguirlo requiere entrenar
-`lite0` cambiando sólo `lr` y `batch_size`, que no se ha hecho.
+**`b0` y `shufflenet` mejoran; `lite0` empeora, y es su peor resultado de los tres.** Añadir los
+otros dos hiperparámetros del estudio lo recupera parcialmente —de 0,9343 a 0,9386— sin alcanzar
+los valores por defecto.
+
+La diferencia es atribuible a la arquitectura. `EfficientNet-Lite0` prescinde de los bloques
+Squeeze & Excitation y de las activaciones *swish* para permitir cuantización entera, y no
+tolera el mismo learning rate que las otras dos.
+
+El detalle está en [Optimización e hiperparámetros](/es/resultados/optimizacion).
 
 ## Dónde gana y dónde pierde
 

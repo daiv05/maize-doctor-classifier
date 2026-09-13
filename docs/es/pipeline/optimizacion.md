@@ -69,7 +69,7 @@ El baseline de referencia es la corrida archivada `efficientnet_b0/20260811_2113
 ::: warning Alcance de lo que se aplicó
 Las corridas de producción de `EfficientNet-B0` y `ShuffleNet-V2` tomaron de este estudio únicamente `learning_rate` y `batch_size`. Conservaron `warmup_epochs` en 3 y `weight_decay` en 1.0e-4, en lugar de los 2 y 1.573e-05 del Trial #12, porque el wrapper de Modal no propagaba esos dos parámetros.
 
-Aplicada a `efficientnet_lite0` con los seis parámetros, la configuración baja el Macro $F_1$ de prueba de 0.9468 a 0.9386. Las dos cosas no son comparables entre sí; el detalle está en [Optimización e hiperparámetros](/es/resultados/optimizacion).
+Aplicado a `efficientnet_lite0` el mismo cambio de `learning_rate` y `batch_size`, el Macro $F_1$ de prueba baja de 0.9468 a 0.9343; con los seis parámetros del trial queda en 0.9386. La configuración mejora dos arquitecturas y perjudica a la tercera, que es la desplegada. El detalle está en [Optimización e hiperparámetros](/es/resultados/optimizacion).
 :::
 
 ---

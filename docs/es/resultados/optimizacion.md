@@ -65,25 +65,22 @@ arquitectura más pesada. No se puede determinar cuál de las dos cosas explica 
 
 Lo que sí está medido es que esa configuración **no transfiere entre arquitecturas**:
 
-| modelo | por defecto | modificada | delta | qué se cambió |
-| --- | ---: | ---: | ---: | --- |
-| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** | `lr` y `batch_size` |
-| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** | `lr` y `batch_size` |
-| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** | los **seis** de Optuna |
+| modelo | por defecto | sólo `lr` y `batch_size` | los seis de Optuna |
+| --- | ---: | ---: | ---: |
+| `efficientnet_b0` | 0,9426 | **0,9483** (+0,0057) | — |
+| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** (+0,0093) | — |
+| `efficientnet_lite0` | **0,9468** | 0,9343 (**−0,0125**) | 0,9386 (−0,0081) |
 
-**Las tres filas no son comparables entre sí.** Las corridas de `b0` y `shufflenet` sólo
-modificaron `learning_rate` y `batch_size`; la de `lite0` modificó además `warmup_epochs` y
-`weight_decay`. La causa es que el wrapper de Modal no propagaba esos dos parámetros cuando se
-lanzaron las primeras.
+Las tres arquitecturas reciben el mismo tratamiento en la columna central: `learning_rate`
+4,548e-04 y `batch_size` 64, con `warmup_epochs` y `weight_decay` en los valores del pipeline.
 
-Lo que se puede afirmar de cada fila por separado:
+**`b0` y `shufflenet` mejoran; `lite0` empeora, y es su peor resultado de los tres.** Añadir los
+otros dos hiperparámetros del estudio lo recupera parcialmente —de 0,9343 a 0,9386— sin alcanzar
+los valores por defecto.
 
-- Subir el learning rate a 4,548e-04 con lote 64 **mejora** `b0` y `shufflenet`.
-- La configuración completa de seis parámetros **empeora** `lite0`.
-
-Lo que **no** se puede afirmar es que la diferencia se deba a la arquitectura. Podría deberse a
-los dos parámetros adicionales. Separarlo requiere entrenar `lite0` cambiando sólo `lr` y
-`batch_size`, experimento que no se ha ejecutado.
+La diferencia es atribuible a la arquitectura. `EfficientNet-Lite0` prescinde de los bloques
+Squeeze & Excitation y de las activaciones *swish* para permitir cuantización entera, y no
+tolera el mismo learning rate que las otras dos.
 
 ## Coste y configuración del barrido
 
