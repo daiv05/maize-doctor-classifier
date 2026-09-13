@@ -32,7 +32,11 @@ Un acuerdo alto en las tres refuerza la confianza en la explicación; un desacue
 
 ![Panel LIME, SHAP y Grad-CAM](/xai/panel_compare_common_rust.png)
 
-Las tres técnicas sobre la misma imagen y la **misma segmentación**: LIME y SHAP explican exactamente los mismos superpíxeles, así que sus atribuciones son comparables término a término. El pie recoge las tres métricas de acuerdo de ese panel.
+Las tres técnicas sobre la misma imagen y la **misma segmentación**: LIME y SHAP explican exactamente los mismos superpíxeles, así que sus atribuciones son comparables término a término. El pie recoge las tres métricas de acuerdo **junto a su valor esperado bajo independencia**:
+`IoU top-k: 0.43 (azar 0.06) | Spearman: 0.67 | Acuerdo de signo: 0.79 (azar 0.68)`. Leídos a
+secas, 0.43 y 0.79 sugieren que el segundo es el acuerdo más sólido; con su azar al lado, es al
+revés. Con pocos segmentos dos selecciones al azar ya se solapan, y dos vectores mayoritariamente
+del mismo signo coinciden mucho sin que eso signifique acuerdo.
 
 Grad-CAM usa `jet` aparte porque su magnitud es no negativa; LIME y SHAP comparten un divergente centrado en cero que evita el eje rojo-verde, donde el verde ya significa tejido sano y el contraste colapsa en daltonismo.
 
