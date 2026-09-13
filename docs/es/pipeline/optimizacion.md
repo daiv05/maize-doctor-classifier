@@ -50,7 +50,8 @@ Se ejecutó un estudio de **15 trials** sobre la arquitectura base **`EfficientN
 
 | Métrica / Parámetro | Baseline (Valores por Defecto) | Optimizada con Optuna (Trial #12) | Impacto / Delta |
 |---|:---:|:---:|:---:|
-| **Macro $F_1$-Score** | `0.9146` (91.46 %) | **`0.9553` (95.53 %)** | **+4.07 pp (+4.45 %)** 🚀 |
+| **Macro $F_1$ (validación)** | `0.9551` (95.51 %) | **`0.9553` (95.53 %)** | **+0.02 pp** |
+| **Macro $F_1$ (prueba retenida)** | `0.9426` (94.26 %) | **`0.9483` (94.83 %)** | **+0.57 pp** |
 | **Learning Rate** | $1.00 \times 10^{-4}$ | **$4.55 \times 10^{-4}$** | Tasa 4.5x más eficiente con Warmup |
 | **Weight Decay** | $1.00 \times 10^{-4}$ | **$1.57 \times 10^{-5}$** | Menor penalización sobre pesos |
 | **Batch Size** | 32 | **64** | Mayor estabilidad y saturación GPU |
@@ -59,15 +60,21 @@ Se ejecutó un estudio de **15 trials** sobre la arquitectura base **`EfficientN
 | **Warmup Epochs** | - | **2 épocas** | Arranque suave del optimizador |
 | **CLAHE** | No | **No** | Red convolucional aprende invariancia sin prefiltrado |
 
-::: tip Resultados vs Baseline 
-La configuración encontrada por Optuna eleva el Macro $F_1$ de **91.46% a 95.53%**, representando un incremento de **+4.07 puntos porcentuales netos** y validando el uso de búsqueda bayesiana frente al ajuste empírico.
+::: tip Resultados vs Baseline
+La configuración encontrada por Optuna eleva el Macro $F_1$ de prueba de **94.26% a 94.83%**, un incremento de **+0.57 puntos porcentuales** sobre la corrida `20260910_170120`.
+
+El baseline de referencia es la corrida archivada `efficientnet_b0/20260811_211306`, que con los valores por defecto alcanza 0.9551 de validación y 0.9426 de prueba. En validación la diferencia es de dos diezmilésimas; la ganancia real y verificable está en el conjunto de prueba.
+:::
+
+::: warning Transferencia entre arquitecturas
+Esta configuración no mejora a todas las arquitecturas. Aplicada a `efficientnet_lite0`, que es la desplegada, baja el Macro $F_1$ de prueba de 0.9468 a 0.9386. El contraste de las tres está en [Optimización e hiperparámetros](/es/resultados/optimizacion).
 :::
 
 ---
 
 ## Análisis del Historial de Optimización
 
-A lo largo de los 15 trials evaluados por el sampler TPE, el estudio mostró una rápida curva de aprendizaje que superó el umbral baseline desde las primeras iteraciones:
+A lo largo de los 15 trials evaluados por el sampler TPE, seis alcanzaron valores por encima de 0.93 y tres se situaron en el entorno de 0.953:
 
 ![Historial de Optimización](/tuning/optimization_history.png)
 
@@ -106,6 +113,10 @@ Mediante el análisis de importancia basado en bosques aleatorios (*Random Fores
 ## Costura con el Resto del Pipeline
 
 El estudio de optimización no opera como un módulo aislado; sus resultados se serializan en `outputs/tuning/efficientnet_b0/best_params.json`:
+
+::: warning Sobre los campos `baseline_macro_f1` e `improvement_*`
+El valor `0.9146` que aparece abajo es el que se pasó como referencia al lanzar el estudio y no corresponde a ninguna corrida archivada del proyecto; los campos `improvement_delta` e `improvement_pct` se derivan de él y por tanto tampoco. Son campos de reporte: no intervienen en la función objetivo de Optuna ni en la selección del mejor trial, así que `best_params` es válido. Las cifras correctas están en la tabla comparativa de esta página.
+:::
 
 ```json
 {

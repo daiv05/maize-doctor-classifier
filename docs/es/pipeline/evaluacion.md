@@ -6,6 +6,10 @@ El protocolo asegura la reproducibilidad científica y atiende al **Criterio 4 d
 
 ---
 
+::: tip Generalización a fuentes no vistas
+Las cifras de esta página se miden sobre la partición estándar, que reparte las catorce fuentes del corpus entre entrenamiento y prueba. El rendimiento del mismo modelo sobre una fuente que no vio entrenando es **0.6026 ± 0.1240**, medido con validación cruzada agrupada por procedencia en [Evaluación rigurosa y métricas finales](/es/resultados/evaluacion).
+:::
+
 ## 1. Métricas Primarias y Rendimiento Global en Test
 
 Dado el desbalance natural de patologías vegetales en el dataset, la métrica primaria oficial es el **Macro $F_1$-Score**:

@@ -2,8 +2,12 @@
 
 ## Resultado
 
-Los valores por defecto del pipeline ganan en el conjunto de prueba a las dos configuraciones
-optimizadas que se midieron. La configuración de producción no cambia.
+Para `efficientnet_lite0`, que es la arquitectura desplegada, los valores por defecto del
+pipeline ganan en el conjunto de prueba a las dos configuraciones optimizadas que se midieron.
+La configuración de producción no cambia.
+
+Esa conclusión es específica de `lite0`. La misma configuración afinada **mejora** a
+`efficientnet_b0` y a `shufflenet_v2_x1_0`.
 
 | configuración | val macro-F1 | **test macro-F1** | épocas | mejor época |
 | --- | ---: | ---: | ---: | ---: |
@@ -48,17 +52,28 @@ A 15 épocas la configuración optimizada gana por 0,0195. A presupuesto complet
 
 ## El contraejemplo
 
-El barrido previo sobre `efficientnet_b0` se ejecutó con un presupuesto por trial mucho mayor:
-sus trials completos duraron entre 1 h 24 min y 2 h 18 min, frente a los 15 minutos de los de
-`lite0`. Aplicada a `lite0`, esa configuración sostiene el entrenamiento hasta la época 23 y
-alcanza 0,9548 de validación, a seis diezmilésimas de los valores por defecto.
+El barrido previo sobre `efficientnet_b0` produjo una configuración distinta. Aplicada a
+`lite0`, sostiene el entrenamiento hasta la época 23 y alcanza 0,9548 de validación, a seis
+diezmilésimas de los valores por defecto, frente al 0,9451 de la búsqueda con techo de 15
+épocas. No colapsa temprano.
 
-Eso identifica la causa del fallo anterior: no es el método, es el presupuesto. Una búsqueda a
-presupuesto completo produce una configuración que no colapsa temprano.
+Sus trials completos duraron entre 1 h 24 min y 2 h 18 min, frente a los 15 minutos de los de
+`lite0`. **El número de épocas por trial no está registrado en ningún artefacto del estudio**:
+la documentación del pipeline indica 15, y las duraciones son compatibles con un presupuesto
+mayor una vez descontado que aquel estudio corrió con cuatro núcleos de CPU y sobre una
+arquitectura más pesada. No se puede determinar cuál de las dos cosas explica la diferencia.
 
-Pero la ganancia en validación **no se traslada a prueba**: +0,0098 en validación frente a
-+0,0008 en prueba respecto de la búsqueda corta, y −0,0081 frente a los valores por defecto. Los
-hiperparámetros óptimos de una arquitectura no transfieren limpiamente a otra.
+Lo que sí está medido es que esa configuración **no transfiere entre arquitecturas**:
+
+| modelo | por defecto | hiperparámetros de `b0` | delta |
+| --- | ---: | ---: | ---: |
+| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** |
+| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** |
+| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** |
+
+Mejora las dos arquitecturas sobre las que no se buscó menos una: perjudica precisamente a
+`lite0`, que es la desplegada. La conclusión no es que los valores por defecto sean mejores en
+general, sino que **lo son para `lite0`**.
 
 ## Coste y configuración del barrido
 

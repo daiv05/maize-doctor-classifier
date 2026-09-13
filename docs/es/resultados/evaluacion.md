@@ -5,7 +5,7 @@
 | | macro-F1 | protocolo |
 | --- | ---: | --- |
 | Modelo desplegado sobre prueba retenida | **0,9468** | partición estratificada por clase y entorno |
-| Ensamble de tres modelos sobre prueba retenida | **0,9551** | la misma |
+| Ensamble de tres modelos sobre prueba retenida | **0,9567** | la misma |
 | **Generalización a una fuente no vista** | **0,6026 ± 0,1240** | validación cruzada agrupada por procedencia |
 
 La diferencia entre la primera y la tercera —**0,344**— es el coste de evaluar sobre datasets

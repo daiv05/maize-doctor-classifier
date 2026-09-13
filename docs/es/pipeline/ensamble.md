@@ -54,6 +54,10 @@ En nuestra implementación, los pesos se configuraron en paridad equilibrada ($w
 
 ---
 
+::: tip Cifra vigente
+Esta página documenta el ensamble de dos modelos (`EfficientNet-B0` + `ShuffleNet-V2`), que alcanza 0.9507. Incorporando `EfficientNet-Lite0` como tercer miembro, el ensamble sube a **0.9567**. Las cifras actualizadas, su desglose por procedencia y los checkpoints exactos están en [Modelos avanzados y ensamble](/es/resultados/ensamble).
+:::
+
 ## 2. Comparativa de Rendimiento en Test (5,015 Imágenes)
 
 Al evaluar el ensamble en el conjunto de prueba independiente (`test.csv`), los resultados superaron a los modelos individuales en todas las métricas globales clave:
