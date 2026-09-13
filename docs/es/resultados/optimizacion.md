@@ -17,6 +17,10 @@ Esa conclusión es específica de `lite0`. La misma configuración afinada **mej
 
 Las tres cifras de prueba se recomputan exactamente desde sus CSV de predicciones por imagen.
 
+![Las tres arquitecturas bajo la configuración de Optuna](/resultados/optimizacion_tres_arquitecturas.png)
+
+Las tres barras centrales reciben el mismo tratamiento: `learning_rate` 4,548e-04 y `batch_size` 64. El signo del efecto cambia con la arquitectura.
+
 ## Las tres configuraciones
 
 | hiperparámetro | por defecto | Optuna `lite0` | Optuna `b0` |
@@ -81,6 +85,12 @@ los valores por defecto.
 La diferencia es atribuible a la arquitectura. `EfficientNet-Lite0` prescinde de los bloques
 Squeeze & Excitation y de las activaciones *swish* para permitir cuantización entera, y no
 tolera el mismo learning rate que las otras dos.
+
+## El barrido sobre `lite0`
+
+![Historial de optimización sobre lite0](/tuning/lite0_optimization_history.png)
+
+![Importancia de hiperparámetros sobre lite0](/tuning/lite0_param_importances.png)
 
 ## Coste y configuración del barrido
 

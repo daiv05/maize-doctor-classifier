@@ -15,6 +15,8 @@ disponible, supera al mejor modelo individual en **+0,0084 de macro-F1**.
 Las cuatro cifras se recomputan exactamente desde `ensamble_predicciones.csv`, que guarda una
 fila por imagen con la predicción del ensamble y la de cada modelo individual.
 
+![Modelos individuales frente al ensamble](/ensemble/ensemble_comparison_bar.png)
+
 ## Selección de checkpoints
 
 El proyecto tiene ocho corridas archivadas del pipeline principal. La elección importa: el
@@ -64,6 +66,10 @@ que peor rinde individualmente. Donde más pierde es `cropdg`, donde el mejor in
 alcanzaba 0,9440.
 
 El desglose completo está en `ensamble_por_fuente.csv`.
+
+## Matriz de confusión del ensamble
+
+![Matriz de confusión del ensamble](/ensemble/confusion_matrix_ensemble.png)
 
 ## Coste
 

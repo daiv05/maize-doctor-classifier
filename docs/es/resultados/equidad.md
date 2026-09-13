@@ -24,6 +24,8 @@ que emitiera siempre la clase mayoritaria alcanzaría 0,2614 sin extraer nada de
 La máscara es geométrica rectangular, no una segmentación anatómica de la lámina. Mide
 sensibilidad a regiones espaciales, no causalidad biológica sobre fondo frente a lesión.
 
+![Ablación con control nulo](/resultados/ablacion_control_nulo.png)
+
 ## Desagregación por entorno
 
 | subgrupo | n | macro-F1 evaluable | accuracy |
@@ -37,7 +39,11 @@ El subgrupo de laboratorio contiene únicamente tres de las nueve clases. Promed
 nueve, su macro-F1 sería 0,2955 por los ceros de las seis clases ausentes; la cifra de 0,9423
 promedia sobre las clases con soporte real.
 
+![Matrices de confusión desagregadas](/fairness/disaggregated_confusion_matrices.png)
+
 ## Desagregación por procedencia
+
+![Rendimiento por procedencia con su control nulo](/resultados/equidad_por_fuente.png)
 
 El entorno tiene dos categorías. La procedencia tiene catorce, y es el eje con más varianza del
 corpus.
@@ -69,6 +75,14 @@ evidencia de capacidad de clasificación. `maize_field`, pese a un acierto de 0,
 Las fuentes que de verdad demuestran capacidad son `corn_leaf_roboflow` (+0,6580 sobre el nulo,
 seis clases) y `maize_africa` (+0,5644). Ordenar la tabla por accuracy invierte el ranking:
 coloca arriba justo a las que no prueban nada.
+
+## Atención visual
+
+![Panel Grad-CAM](/fairness/gradcam_samples.png)
+
+Grad-CAM muestra dónde se concentra el gradiente de la clase predicha, **no cuánta información
+aporta cada región**. No puede confirmar ni refutar la ablación de arriba, porque no mide lo
+mismo. Cuando ambos parecen discrepar, manda la medición cuantitativa.
 
 ## Fuga de procedencia
 

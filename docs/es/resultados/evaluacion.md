@@ -13,6 +13,8 @@ que el modelo no ha visto. Ambas describen el mismo modelo; miden preguntas dist
 
 ## El experimento 2×2
 
+![Experimento 2x2 de validación cruzada](/resultados/kfold_2x2.png)
+
 Se cruzan dos protocolos de partición con dos configuraciones de hiperparámetros. El modelo es
 `efficientnet_lite0` en las cuatro celdas, con cinco pliegues cada una.
 
