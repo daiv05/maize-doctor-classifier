@@ -104,6 +104,13 @@ El cambio sube las máscaras válidas del 69 % al 79 % y las clases con ratio fi
 | healthy | 30 | 0,538 | 0,578 | −0,040 | 90 % |
 | gray_leaf_spot | 26 | 0,570 | 0,639 | **−0,069** | 92 % |
 
+![Perfil global por clase](/xai/class_profile.png)
+
+Ninguna de esas cifras debe leerse sin la auditoría de la máscara, que muestra qué considera
+hoja en cada caso y cuáles quedaron fuera por declarar hoja a la imagen entera:
+
+![Auditoría de la máscara foliar](/xai/mask_audit.png)
+
 De las seis clases con ratio fiable, **tres atribuyen a la hoja por encima del azar y tres por
 debajo**. No hay un patrón único: la atribución depende de la clase.
 

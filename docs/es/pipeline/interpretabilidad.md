@@ -26,6 +26,28 @@ Un acuerdo alto en las tres refuerza la confianza en la explicación; un desacue
 
 **Salvedad honesta sobre ese ratio:** la heurística puede fallar en hojas cloróticas o con fondo similar en color. `global_summary.csv` nunca reporta el ratio sin contexto: junto a `mean_leaf_attribution_ratio` siempre van `n_mask_rejected` (imágenes cuya máscara se descartó por cobertura degenerada) y `n_ratio_undefined` (imágenes con máscara válida pero sin atribución positiva que repartir - un síntoma distinto, del lado del modelo y no de la máscara). `ratio_reliable` resume ambas causas: se apaga cuando su suma supera el 30% de las imágenes de esa fila. Leer el ratio sin mirar `ratio_reliable` es leerlo a ciegas.
 
+## Los artefactos visuales
+
+### Panel comparado
+
+![Panel LIME, SHAP y Grad-CAM](/xai/panel_compare_common_rust.png)
+
+Las tres técnicas sobre la misma imagen y la **misma segmentación**: LIME y SHAP explican exactamente los mismos superpíxeles, así que sus atribuciones son comparables término a término. El pie recoge las tres métricas de acuerdo de ese panel.
+
+Grad-CAM usa `jet` aparte porque su magnitud es no negativa; LIME y SHAP comparten un divergente centrado en cero que evita el eje rojo-verde, donde el verde ya significa tejido sano y el contraste colapsa en daltonismo.
+
+### Perfil global por clase
+
+![Perfil global por clase](/xai/class_profile.png)
+
+Distribución del ratio hoja/fondo por clase, con la línea de azar y las clases de ratio no fiable marcadas con `(!)`. Es deliberadamente **no espacial**: promediar mapas de atribución en coordenadas de píxel mezcla hojas en distinta posición y ángulo, y converge a una mancha centrada que describe el encuadre del corpus, no el modelo.
+
+### Auditoría de la máscara
+
+![Auditoría de la máscara foliar](/xai/mask_audit.png)
+
+La zona atenuada es lo que la máscara considera fondo. **Ningún ratio de las tablas anteriores debe leerse sin mirar este panel.** Las imágenes marcadas `RECHAZADA` tienen cobertura 1.00 —la máscara declara hoja a la imagen entera— y quedan fuera del cómputo. Entre ellas hay casos donde la hoja efectivamente llena el encuadre y casos donde la máscara falla de verdad: en una de `nitrogen_deficiency` marca como hoja el suelo de baldosa y una pierna.
+
 ## Resultados sobre el modelo desplegado
 
 Las cifras del perfil global y del panel comparado sobre `efficientnet_lite0/20260812_221429`
