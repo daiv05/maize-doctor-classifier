@@ -1,0 +1,20 @@
+{
+  "study_name": "sinclahe_efficientnet_lite0",
+  "model_name": "efficientnet_lite0",
+  "best_trial_number": 22,
+  "best_val_macro_f1": 0.9483,
+  "baseline_macro_f1": 0.9554,
+  "improvement_delta": -0.0071,
+  "improvement_pct": -0.75,
+  "best_params": {
+    "learning_rate": 0.0002719273903804248,
+    "weight_decay": 1.1141701324858545e-05,
+    "batch_size": 64,
+    "class_weights": "sqrt_inverse",
+    "label_smoothing": 0.05633111724922725,
+    "warmup_epochs": 1
+  },
+  "total_trials": 25,
+  "pruned_trials": 19,
+  "complete_trials": 6
+}

@@ -1,0 +1,21 @@
+{
+  "study_name": "tune_efficientnet_b0",
+  "model_name": "efficientnet_b0",
+  "best_trial_number": 12,
+  "best_val_macro_f1": 0.9553,
+  "baseline_macro_f1": 0.9146,
+  "improvement_delta": 0.0407,
+  "improvement_pct": 4.45,
+  "best_params": {
+    "learning_rate": 0.0004548490396244796,
+    "weight_decay": 1.5731194601419433e-05,
+    "batch_size": 64,
+    "class_weights": "sqrt_inverse",
+    "label_smoothing": 0.10012457623772764,
+    "warmup_epochs": 2,
+    "clahe": false
+  },
+  "total_trials": 15,
+  "pruned_trials": 7,
+  "complete_trials": 6
+}
