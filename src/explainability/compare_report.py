@@ -295,10 +295,14 @@ def _save_figure(
     fig.text(
         0.5,
         0.01,
+        # Cada metrica va con su valor esperado bajo independencia: con pocos segmentos
+        # dos selecciones al azar ya se solapan, y dos vectores del mismo signo coinciden
+        # mucho, asi que el numero a secas no distingue acuerdo de coincidencia fortuita.
         f"Segmentacion compartida ({segmentation}) - "
-        f"IoU top-k: {agreement['iou_topk']:.2f} | "
+        f"IoU top-k: {agreement['iou_topk']:.2f} (azar {agreement.get('iou_topk_null', 0):.2f}) | "
         f"Spearman: {agreement['spearman']:.2f} | "
-        f"Acuerdo de signo: {agreement['sign_agreement']:.2f}",
+        f"Acuerdo de signo: {agreement['sign_agreement']:.2f} "
+        f"(azar {agreement.get('sign_agreement_null', 0):.2f})",
         ha="center",
         fontsize=9,
         fontstyle="italic",
