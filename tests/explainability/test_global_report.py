@@ -1,6 +1,7 @@
 import json
 
 import numpy as np
+import pandas as pd
 
 from src.explainability.global_report import GlobalAccumulator, write_global_report
 
@@ -146,8 +147,20 @@ def test_write_global_report_emits_maps_and_summary(tmp_path):
 
     write_global_report(accumulator, tmp_path)
 
-    assert (tmp_path / "healthy_attribution_map.png").exists()
+    # Los mapas promediados viven en framing_diagnostics/ porque son un diagnostico de
+    # encuadre, no un mapa de donde mira el modelo.
+    assert (tmp_path / "framing_diagnostics" / "healthy_framing.png").exists()
     assert (tmp_path / "global_summary.csv").exists()
+    assert (tmp_path / "global_per_image.csv").exists()
+
+    resumen = pd.read_csv(tmp_path / "global_summary.csv")
+    assert "attribution_excess" in resumen.columns
+
+    por_imagen = pd.read_csv(tmp_path / "global_per_image.csv")
+    assert {"image_path", "source_id", "mask_source", "attribution_excess"} <= set(
+        por_imagen.columns
+    )
+
     payload = json.loads((tmp_path / "global_summary.json").read_text(encoding="utf-8"))
     assert payload[0]["label"] == "healthy"
 
