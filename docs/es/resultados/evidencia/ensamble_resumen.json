@@ -1,0 +1,46 @@
+{
+  "models_included": [
+    "efficientnet_lite0",
+    "efficientnet_b0",
+    "shufflenet_v2_x1_0"
+  ],
+  "weights": [
+    0.3333333432674408,
+    0.3333333432674408,
+    0.3333333432674408
+  ],
+  "metrics_per_model": {
+    "efficientnet_lite0": {
+      "macro_f1": 0.9467892693956654,
+      "weighted_f1": 0.9789727083329198,
+      "accuracy": 0.9790628115653041,
+      "macro_precision": 0.9532727549139669,
+      "macro_recall": 0.9412980417141008
+    },
+    "efficientnet_b0": {
+      "macro_f1": 0.9483330101876505,
+      "weighted_f1": 0.9793178664307708,
+      "accuracy": 0.9796610169491525,
+      "macro_precision": 0.9589224304317059,
+      "macro_recall": 0.9399906226501789
+    },
+    "shufflenet_v2_x1_0": {
+      "macro_f1": 0.9329803745633506,
+      "weighted_f1": 0.9728385860778975,
+      "accuracy": 0.9730807577268196,
+      "macro_precision": 0.9387607935319665,
+      "macro_recall": 0.9297624383894549
+    },
+    "soft_voting_ensemble": {
+      "macro_f1": 0.9566569450594972,
+      "weighted_f1": 0.982684689260557,
+      "accuracy": 0.982851445663011,
+      "macro_precision": 0.9641568020437208,
+      "macro_recall": 0.9505917000166675
+    }
+  },
+  "best_individual_macro_f1": 0.9483,
+  "ensemble_macro_f1": 0.9567,
+  "ensemble_gain_delta": 0.0083,
+  "total_test_samples": 5015
+}

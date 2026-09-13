@@ -14,11 +14,30 @@ estos ficheros.
 | `run_afinada_lite0_summary.json` | reentrenamiento a presupuesto completo de la primera |
 | `run_afinada_b0_summary.json` | reentrenamiento a presupuesto completo de la segunda |
 
+## Manifiesto de corridas
+
+`manifiesto_corridas.csv` lista las ocho corridas del pipeline principal que existen en el
+Volume `corn-outputs`, con su ruta en Modal, su configuración completa, sus métricas publicadas
+y el fichero desde el que cada cifra se recomputa. **Las ocho verifican de forma exacta.**
+
+Dos de ellas —`efficientnet_b0/20260910_170120` y `shufflenet_v2_x1_0/20260910_184521`— no
+guardaron `predictions.csv` propio; sus cifras se verifican desde la columna correspondiente de
+`ensamble_predicciones.csv`, que registra la predicción de cada modelo por imagen.
+
+Se regenera con:
+
+```bash
+python scripts/experiments/manifiesto_auditoria.py
+```
+
 ## Ensamble
 
 | fichero | contenido |
 | --- | --- |
 | `ensamble_comparacion.csv` | los tres modelos individuales y el voto blando |
+| `ensamble_predicciones.csv` | 5 015 filas con procedencia y la predicción de cada modelo |
+| `ensamble_resumen.json` | resumen de la corrida |
+| `ensamble_por_fuente.csv` | ganancia del ensamble desglosada por las 14 fuentes |
 
 ## Validación cruzada
 

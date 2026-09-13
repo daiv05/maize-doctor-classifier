@@ -1,5 +1,5 @@
 Tipo,Arquitectura,Macro F1,Accuracy,Macro Precision,Macro Recall
 Modelo Individual,efficientnet_lite0,0.9468,0.9791,0.9533,0.9413
-Modelo Individual,efficientnet_b0,0.9426,0.9777,0.9528,0.9348
-Modelo Individual,shufflenet_v2_x1_0,0.9237,0.9649,0.93,0.9185
-Ensamble (Soft Voting),efficientnet_lite0 + efficientnet_b0 + shufflenet_v2_x1_0,0.9551,0.9821,0.9623,0.9491
+Modelo Individual,efficientnet_b0,0.9483,0.9797,0.9589,0.94
+Modelo Individual,shufflenet_v2_x1_0,0.933,0.9731,0.9388,0.9298
+Ensamble (Soft Voting),efficientnet_lite0 + efficientnet_b0 + shufflenet_v2_x1_0,0.9567,0.9829,0.9642,0.9506

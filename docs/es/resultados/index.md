@@ -19,12 +19,15 @@ recomputadas desde predicciones por imagen y declara sus limitaciones.
 | | macro-F1 |
 | --- | ---: |
 | Modelo desplegado, prueba retenida | 0,9468 |
-| Ensamble de tres modelos, prueba retenida | 0,9551 |
+| Ensamble de tres modelos, prueba retenida | 0,9567 |
 | Generalización a una fuente no vista | 0,6026 ± 0,1240 |
 
 La diferencia entre la primera y la última es el coste de evaluar sobre datasets que el modelo
 no ha visto durante el entrenamiento.
 
-## Evidencia
+## Paquete auditable
 
-Los artefactos brutos de cada medición están en [evidencia](/es/resultados/evidencia/).
+Los artefactos de cada medición están en [evidencia](/es/resultados/evidencia/), junto a un
+manifiesto de las ocho corridas archivadas en el Volume `corn-outputs` de Modal. Cada cifra
+publicada en esta sección se recomputa desde predicciones por imagen, y el manifiesto registra
+desde qué fichero.

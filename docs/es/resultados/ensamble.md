@@ -2,43 +2,59 @@
 
 ## Resultado
 
-El ensamble por voto blando de las tres arquitecturas supera al mejor modelo individual en
-**+0,0083 de macro-F1** sobre el conjunto de prueba.
+El ensamble por voto blando de las tres arquitecturas, cada una con su mejor checkpoint
+disponible, supera al mejor modelo individual en **+0,0084 de macro-F1**.
 
-| configuración | macro-F1 | accuracy | precisión macro | recall macro |
-| --- | ---: | ---: | ---: | ---: |
-| `efficientnet_lite0` | 0,9468 | 0,9791 | 0,9533 | 0,9413 |
-| `efficientnet_b0` | 0,9426 | 0,9777 | 0,9528 | 0,9348 |
-| `shufflenet_v2_x1_0` | 0,9237 | 0,9649 | 0,9300 | 0,9185 |
-| **Ensamble (voto blando)** | **0,9551** | **0,9821** | **0,9623** | **0,9491** |
+| configuración | checkpoint | macro-F1 | accuracy | precisión macro | recall macro |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `efficientnet_lite0` | `20260812_221429` | 0,9468 | 0,9791 | 0,9533 | 0,9413 |
+| `efficientnet_b0` | `20260910_170120` | 0,9483 | 0,9797 | 0,9589 | 0,9400 |
+| `shufflenet_v2_x1_0` | `20260910_184521` | 0,9330 | 0,9731 | 0,9388 | 0,9298 |
+| **Ensamble (voto blando)** | los tres | **0,9567** | **0,9829** | **0,9642** | **0,9506** |
 
-Las cuatro cifras se recomputan exactamente desde `ensemble_predictions.csv`, que guarda una
+Las cuatro cifras se recomputan exactamente desde `ensamble_predicciones.csv`, que guarda una
 fila por imagen con la predicción del ensamble y la de cada modelo individual.
+
+## Selección de checkpoints
+
+El proyecto tiene ocho corridas archivadas del pipeline principal. La elección importa: el
+puntero `latest.json` de `efficientnet_lite0` apunta a `20260907_163546`, la corrida con
+segmentación previa, cuyo macro-F1 es 0,7191. Un ensamble construido por autodescubrimiento
+habría incorporado ese modelo.
+
+Los checkpoints se pasan explícitos. Para `efficientnet_b0` y `shufflenet_v2_x1_0` los mejores
+son las corridas del 10 de septiembre, entrenadas con los hiperparámetros del barrido de Optuna
+sobre `b0`:
+
+| modelo | valores por defecto | hiperparámetros afinados | delta |
+| --- | ---: | ---: | ---: |
+| `efficientnet_b0` | 0,9426 | **0,9483** | **+0,0057** |
+| `shufflenet_v2_x1_0` | 0,9237 | **0,9330** | **+0,0093** |
+| `efficientnet_lite0` | **0,9468** | 0,9386 | **−0,0081** |
+
+Esa configuración mejora dos de las tres arquitecturas y empeora la tercera, que es
+precisamente la desplegada. El detalle está en
+[Optimización e hiperparámetros](/es/resultados/optimizacion).
 
 ## Dónde gana y dónde pierde
 
-La ganancia agregada de +0,0083 no está repartida. Desglosada por procedencia:
+La ganancia agregada de +0,0084 no está repartida. Desglosada por procedencia, **el ensamble
+mejora en 4 fuentes de 14 y empeora en 5**:
 
 | fuente | n | clases | mejor individual | ensamble | delta |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| maize_field | 133 | 3 | 0,8547 | 0,8701 | **+0,0154** |
-| maize_2_roboflow | 116 | 3 | 0,8784 | 0,8928 | **+0,0145** |
-| corn_leaf_roboflow | 424 | 6 | 0,9107 | 0,9224 | **+0,0117** |
-| multi_desease | 862 | 3 | 0,9976 | 0,9981 | +0,0005 |
-| maize_africa_v1, v1.2, leaf_roboflow, desease, corn_leaf_diseases_class. | 48-330 | 1-2 | — | — | 0,0000 |
-| maize_africa | 1 499 | 3 | 0,9985 | 0,9983 | −0,0002 |
-| maize_desease_v1.1 | 742 | 1 | 1,0000 | 0,9993 | −0,0007 |
-| cropdg | 390 | 3 | 0,9473 | 0,9440 | −0,0033 |
-| maize_nutrient | 49 | 4 | 0,8980 | 0,8897 | −0,0083 |
-| maize_deficiency_scanner_roboflow | 32 | 3 | 0,9195 | 0,9087 | −0,0108 |
+| maize_deficiency_scanner_roboflow | 32 | 3 | 0,8831 | 0,9087 | **+0,0256** |
+| corn_leaf_roboflow | 424 | 6 | 0,9128 | 0,9271 | **+0,0144** |
+| multi_desease | 862 | 3 | 0,9977 | 0,9993 | +0,0017 |
+| corn_leaf_diseases_classification_roboflow | 73 | 1 | 0,9931 | 0,9861 | −0,0070 |
+| maize_2_roboflow | 116 | 3 | 0,9148 | 0,9068 | −0,0081 |
+| cropdg | 390 | 3 | 0,9440 | 0,9286 | **−0,0154** |
 
-**El ensamble mejora en 4 fuentes de 14 y empeora en 5.** Las tres en las que más gana
-—`maize_field`, `maize_2_roboflow`, `corn_leaf_roboflow`— son precisamente aquellas donde el
-mejor modelo individual rinde peor. Donde pierde, o bien el rendimiento individual ya roza el
-techo (`maize_desease_v1.1` con 1,0000) o bien el soporte es de decenas de imágenes.
+Donde más gana es `corn_leaf_roboflow`, la fuente con más clases del corpus (seis) y una de las
+que peor rinde individualmente. Donde más pierde es `cropdg`, donde el mejor individual ya
+alcanzaba 0,9440.
 
-Es decir, el ensamble aporta donde el clasificador es débil y resta de forma marginal donde ya
-no queda margen. Ese comportamiento es el que justifica adoptarlo, más que el +0,0083 agregado.
+El desglose completo está en `ensamble_por_fuente.csv`.
 
 ## Coste
 
@@ -47,12 +63,25 @@ juegos de pesos en memoria. La aplicación móvil despliega un único `efficient
 exportado a TFLite, así que el ensamble es una cifra de referencia del techo alcanzable con
 estas arquitecturas, no la configuración desplegada.
 
+## Reproducibilidad
+
+```bash
+modal run --detach scripts/modal/train.py::evaluate_ensemble_modal \
+  --models "efficientnet_lite0 efficientnet_b0 shufflenet_v2_x1_0" \
+  --checkpoints "/outputs/main/efficientnet_lite0/20260812_221429/best.pth \
+/outputs/main/efficientnet_b0/20260910_170120/best.pth \
+/outputs/main/shufflenet_v2_x1_0/20260910_184521/best.pth" \
+  --num-workers 32 --output-dir /outputs/ensemble_mejores
+```
+
 ## Limitaciones
 
 Las cifras son de una sola partición y una sola semilla, sin desviación estándar asociada. La
-diferencia de +0,0083 entre el ensamble y el mejor individual está por debajo de la variación
-que cabría esperar entre semillas, así que sostiene la dirección del efecto pero no su magnitud.
+diferencia de +0,0084 entre el ensamble y el mejor individual está por debajo de la variación
+que cabría esperar entre semillas: sostiene la dirección del efecto, no su magnitud.
 
-Todas las cifras de esta página se miden sobre la partición estándar, que comparte procedencia
-entre entrenamiento y prueba. El comportamiento del ensamble bajo partición agrupada por fuente
+Todas las cifras se miden sobre la partición estándar, que comparte las catorce fuentes entre
+entrenamiento y prueba. El comportamiento del ensamble bajo partición agrupada por procedencia
 no se ha medido.
+
+Los pesos del voto blando son uniformes. No se exploró ponderar por rendimiento individual.
