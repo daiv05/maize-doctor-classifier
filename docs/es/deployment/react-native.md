@@ -189,6 +189,20 @@ Y en muchos runtimes el modelo debe existir como **archivo en disco**, no como m
 - **FP32 frente a int8**: la int8 reduce el tamaño unas 3.5×. La latencia *no* mejora necesariamente — en algunos dispositivos el modelo cuantizado corre más lento —, así que si el objetivo es velocidad hay que medirlo en el teléfono, no asumirlo.
 - **Nunca embarcar una variante int8 sin evaluarla.** La cuantización cambia los números a propósito, y esa pérdida se concentra justo en las clases minoritarias, que son las que más importan aquí. Para eso existe `make eval-export-main`.
 
+::: danger El artefacto puede calcular cosas distintas según el runtime
+`make eval-export-main` construye el intérprete con sus delegados por defecto, es decir con
+XNNPACK. El runtime que embarca la app **no** lo activa, y para algunas configuraciones de
+cuantización los dos no calculan lo mismo. Un `FULLY_CONNECTED` dinámico con escalas de peso
+**por canal** es una de ellas: el kernel integrado aplica una sola escala por tensor y devuelve
+los logits multiplicados por `1/escala_c`, distinta por clase, sin error ni aviso.
+
+Por eso `validate_tflite_parity` corre el artefacto con y sin delegado y falla el export si las
+probabilidades difieren más de 0,05. El acuerdo top-1 no basta como señal: cuando esto se
+detectó, las dos configuraciones coincidían en la clase predicha en el 100 % de la muestra y aun
+así diferían hasta 0,4312 en probabilidad. Evidencia completa en
+[Prototipo en dispositivo](/es/deployment/prototipo).
+:::
+
 ::: warning CLAHE
 Si el modelo se entrenó con `--clahe`, la app tendría que aplicar CLAHE con los mismos parámetros antes de normalizar, o las predicciones no coincidirán. Reimplementar CLAHE en JS es trabajo extra y una fuente de divergencia sutil. La recomendación es entrenar **sin** CLAHE el modelo destinado a móvil.
 :::

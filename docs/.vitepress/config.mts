@@ -141,6 +141,7 @@ const esDatasetSidebar = [
     items: [
       { text: "GPU en Modal", link: "/es/deployment/modal" },
       { text: "App React Native", link: "/es/deployment/react-native" },
+      { text: "Prototipo en dispositivo", link: "/es/deployment/prototipo" },
     ],
   },
 ];
@@ -258,6 +259,7 @@ export default defineConfig({
             items: [
               { text: "GPU en Modal", link: "/es/deployment/modal" },
               { text: "App React Native", link: "/es/deployment/react-native" },
+              { text: "Prototipo en dispositivo", link: "/es/deployment/prototipo" },
             ],
           },
         ],

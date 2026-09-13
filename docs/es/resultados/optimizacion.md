@@ -128,6 +128,8 @@ experimento y costaría unas cinco horas. La conclusión de que los valores por 
 suficientes se apoya en que ninguna de las dos configuraciones optimizadas medidas los supera en
 prueba, no en haber agotado el espacio de búsqueda.
 
-La diferencia entre los tres brazos en prueba —0,9468, 0,9386 y 0,9379— se midió con una sola
-semilla. No hay desviación estándar asociada, así que las distancias por debajo de una centésima
-no deberían leerse como diferencias reales.
+La desviación entre semillas de la configuración de producción es **0,0049**, medida sobre tres
+corridas. Frente a ella, la caída de la configuración afinada sobre `lite0` es de 1,6 σ con los
+seis parámetros y 2,5 σ con sólo `lr` y `batch_size`; las mejoras sobre `b0` y `shufflenet` son
+de 1,2 σ y 1,9 σ. Sólo la última supera el umbral de dos desviaciones y media. Ver
+[Resumen](/es/resultados/).

@@ -91,9 +91,10 @@ modal run --detach scripts/modal/train.py::evaluate_ensemble_modal \
 
 ## Limitaciones
 
-Las cifras son de una sola partición y una sola semilla, sin desviación estándar asociada. La
-diferencia de +0,0084 entre el ensamble y el mejor individual está por debajo de la variación
-que cabría esperar entre semillas: sostiene la dirección del efecto, no su magnitud.
+Las cifras son de una sola partición y una sola semilla. La desviación entre semillas de la
+configuración de producción, medida sobre tres corridas, es **0,0049**, así que el +0,0084 del
+ensamble equivale a **1,7 σ**: sostiene la dirección del efecto, no su magnitud. Ver
+[Resumen](/es/resultados/).
 
 Todas las cifras se miden sobre la partición estándar, que comparte las catorce fuentes entre
 entrenamiento y prueba. El comportamiento del ensamble bajo partición agrupada por procedencia

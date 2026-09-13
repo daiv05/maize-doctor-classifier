@@ -1,0 +1,45 @@
+{
+  "pipeline": "main",
+  "model": "efficientnet_lite0",
+  "run_id": "20260913_151826",
+  "num_classes": 9,
+  "class_to_idx": {
+    "common_rust": 0,
+    "fall_armyworm": 1,
+    "gray_leaf_spot": 2,
+    "healthy": 3,
+    "lethal_necrosis": 4,
+    "nitrogen_deficiency": 5,
+    "northern_corn_leaf_blight": 6,
+    "phosphorus_deficiency": 7,
+    "potassium_deficiency": 8
+  },
+  "image_size": [
+    224,
+    224
+  ],
+  "splits_dir": "/outputs/splits/seed_42",
+  "seed": 1,
+  "epochs_requested": 60,
+  "epochs_run": 60,
+  "batch_size": 32,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "scheduler": "cosine",
+  "warmup_epochs": 3,
+  "min_lr": 1e-06,
+  "patience": 8,
+  "class_weights": "sqrt_inverse",
+  "label_smoothing": 0.1,
+  "clip_grad_norm": 1.0,
+  "clahe": false,
+  "sampler": null,
+  "pretrained": true,
+  "best_epoch": 53,
+  "best_val_macro_f1": 0.957684877773111,
+  "test": {
+    "loss": 0.766526707548605,
+    "accuracy": 0.9766699900299103,
+    "macro_f1": 0.9447976254880037
+  }
+}
