@@ -126,13 +126,13 @@ def main(
     max_previews: int = 50,
 ) -> None:
     print(
-        f"Lanzando pre-segmentación en Modal (profile={profile}, "
+        f"[*] Lanzando pre-segmentacion en Modal (profile={profile}, "
         f"max_images={max_images}, max_previews={max_previews})..."
     )
-    call = run_segmentation_job.spawn(
+    run_segmentation_job.remote(
         profile=profile,
         max_images=max_images,
         max_previews=max_previews,
     )
-    print(f"✓ Tarea lanzada exitosamente a Modal con ID: {call.object_id}")
-    print("✓ El trabajo corre de forma autónoma en la nube. Tu consola queda libre.")
+    print("[*] Proceso completado exitosamente en Modal.")
+
