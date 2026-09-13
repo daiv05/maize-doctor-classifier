@@ -84,6 +84,53 @@ Grad-CAM muestra dónde se concentra el gradiente de la clase predicha, **no cu�
 aporta cada región**. No puede confirmar ni refutar la ablación de arriba, porque no mide lo
 mismo. Cuando ambos parecen discrepar, manda la medición cuantitativa.
 
+## Atribución de SHAP y procedencia
+
+El perfil global acumula valores de Shapley sobre 270 imágenes y mide qué fracción de la
+atribución positiva cae dentro de la lámina foliar. La referencia es la **cobertura de la
+máscara**: el ratio que daría una atribución repartida al azar. La columna que importa es la
+diferencia entre ambas.
+
+La máscara se deriva del corpus segmentado, no de la heurística de color, que en
+`lethal_necrosis` marcaba el 100 % de la imagen como hoja y hacía el ratio trivialmente uno.
+El cambio sube las máscaras válidas del 69 % al 79 % y las clases con ratio fiable de 5 a 6.
+
+| clase (aciertos) | n | ratio | azar | **exceso** | máscaras válidas |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| common_rust | 29 | 0,897 | 0,703 | **+0,193** | 100 % |
+| phosphorus_deficiency | 28 | 0,474 | 0,378 | +0,096 | 89 % |
+| nitrogen_deficiency | 23 | 0,352 | 0,302 | +0,051 | 91 % |
+| northern_corn_leaf_blight | 30 | 0,575 | 0,584 | −0,009 | 83 % |
+| healthy | 30 | 0,538 | 0,578 | −0,040 | 90 % |
+| gray_leaf_spot | 26 | 0,570 | 0,639 | **−0,069** | 92 % |
+
+De las seis clases con ratio fiable, **tres atribuyen a la hoja por encima del azar y tres por
+debajo**. No hay un patrón único: la atribución depende de la clase.
+
+![Atribución de SHAP por dataset](/resultados/xai_por_procedencia.png)
+
+### El instrumento no corrobora la fuga
+
+Agregando por dataset, los dos que concentran la fuga del marco atribuyen a la hoja **más** que
+los limpios, no menos:
+
+| dataset | n | exceso | acierto recuperable del marco |
+| --- | ---: | ---: | ---: |
+| cropdg-unified-multidomain | 13 | **−0,089** | 1,0 % |
+| maize-in-field-dataset | 7 | +0,015 | 1,0 % |
+| maize-diseases | 38 | +0,067 | **85,4 %** |
+| multicrop-disease-maiz | 30 | +0,093 | **72,7 %** |
+
+**Con cuatro datasets medidos eso no es evidencia de nada**: una correlación sobre cuatro puntos
+no sostiene ninguna afirmación. Lo que sí permite decir es que la explicabilidad **no corrobora**
+la fuga a nivel de fuente, y que esperar que lo hiciera era un error de planteamiento.
+
+Las dos técnicas responden preguntas distintas. La ablación del anillo pregunta si el marco
+**basta** para clasificar; SHAP pregunta **dónde pone el peso** el modelo cuando ve la imagen
+entera. Un modelo puede atribuir mayoritariamente a la lámina y tener aun así un marco
+suficiente, porque el marco identifica la fuente y la fuente arrastra su prior de clase. Que una
+sea alta no obliga a que la otra lo sea.
+
 ## Fuga de procedencia
 
 Sobre la partición estándar, un modelo entrenado y evaluado únicamente sobre el anillo exterior

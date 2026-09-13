@@ -26,6 +26,25 @@ Un acuerdo alto en las tres refuerza la confianza en la explicación; un desacue
 
 **Salvedad honesta sobre ese ratio:** la heurística puede fallar en hojas cloróticas o con fondo similar en color. `global_summary.csv` nunca reporta el ratio sin contexto: junto a `mean_leaf_attribution_ratio` siempre van `n_mask_rejected` (imágenes cuya máscara se descartó por cobertura degenerada) y `n_ratio_undefined` (imágenes con máscara válida pero sin atribución positiva que repartir - un síntoma distinto, del lado del modelo y no de la máscara). `ratio_reliable` resume ambas causas: se apaga cuando su suma supera el 30% de las imágenes de esa fila. Leer el ratio sin mirar `ratio_reliable` es leerlo a ciegas.
 
+## Resultados sobre el modelo desplegado
+
+Las cifras del perfil global y del panel comparado sobre `efficientnet_lite0/20260812_221429`
+están en [Análisis de sesgos y ética](/es/resultados/equidad). En resumen:
+
+| métrica de acuerdo LIME-SHAP | observado | esperado bajo independencia | exceso |
+| --- | ---: | ---: | ---: |
+| `spearman` | 0,730 | 0,000 | **+0,730** |
+| `iou_topk` | 0,521 | 0,127 | **+0,395** |
+| `sign_agreement` | 0,823 | **0,707** | **+0,116** |
+
+Las tres métricas viajan con su valor esperado bajo independencia. Sin esa referencia,
+`sign_agreement` parece la más fuerte de las tres y es la más débil: dos vectores
+mayoritariamente del mismo signo coinciden mucho sin que eso signifique acuerdo, y **7 de 45
+paneles no superan su propio nulo**.
+
+En el perfil global, el `attribution_excess` —ratio de atribución a la hoja menos cobertura de
+la máscara— reparte las seis clases fiables en tres por encima del azar y tres por debajo.
+
 ## Alcance
 
 `compare` y `global` son exclusivos del pipeline principal (`outputs/main`); no tienen variante `-baselines`. Los baselines se quedan con LIME + Grad-CAM (`visual`/`fidelity`/`errors`) - ver [interpretabilidad de baselines](../pipeline-baselines/interpretabilidad.md) para el porqué.
