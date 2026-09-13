@@ -432,12 +432,15 @@ def main() -> None:
         output_path=output_dir / "fairness_disparity.png",
     )
 
-    # Las dos matrices comparan los dos subgrupos con mas soporte, en lugar de exigir
-    # que se llamen lab y real: con subgrupos por fuente esos nombres no existen.
-    conteo = Counter(subgroups)
-    mayores = [nombre for nombre, _ in conteo.most_common(2)]
-    mask_lab = np.array(subgroups) == (mayores[0] if mayores else "")
-    mask_real = np.array(subgroups) == (mayores[1] if len(mayores) > 1 else "")
+    # Separar subgrupos garantizando que 'lab' y 'real' no queden invertidos
+    if "lab" in subgroups and "real" in subgroups:
+        mask_lab = np.array(subgroups) == "lab"
+        mask_real = np.array(subgroups) == "real"
+    else:
+        conteo = Counter(subgroups)
+        mayores = [nombre for nombre, _ in conteo.most_common(2)]
+        mask_lab = np.array(subgroups) == (mayores[0] if len(mayores) > 0 else "")
+        mask_real = np.array(subgroups) == (mayores[1] if len(mayores) > 1 else "")
     if np.any(mask_lab) and np.any(mask_real):
         plot_disaggregated_confusion_matrices(
             y_true_lab=np.array(y_true)[mask_lab],
