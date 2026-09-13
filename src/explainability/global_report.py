@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
+from src.data.provenance import source_from_path
 from src.explainability.leaf_mask import (
     is_mask_unreliable,
     leaf_mask,
@@ -55,6 +56,8 @@ class GlobalAccumulator:
         shap_values: np.ndarray,
         segments: np.ndarray,
         image_np: np.ndarray,
+        relative_path: str = "",
+        external_mask: np.ndarray | None = None,
     ) -> None:
         """
         Incorpora la explicacion de una imagen al perfil de su clase verdadera.
@@ -64,6 +67,12 @@ class GlobalAccumulator:
         @param {np.ndarray} shap_values Valores de Shapley por segmento.
         @param {np.ndarray} segments Mapa de superpixeles con etiquetas desde 0.
         @param {np.ndarray} image_np Imagen HWC uint8 reescalada a target_size.
+        @param {str} relative_path Ruta de la imagen relativa a la raiz del dataset, para
+                                   poder desagregar despues por procedencia.
+        @param {np.ndarray | None} external_mask Mascara de hoja precalculada. Cuando se
+                                   entrega, sustituye a la heuristica de color, que sobre
+                                   algunas clases marca la imagen entera como hoja y deja
+                                   el ratio sin significado.
         """
         weight_map = shap_values[segments]
         max_abs = np.abs(weight_map).max()
@@ -75,7 +84,7 @@ class GlobalAccumulator:
         )
         self._counts[label] = self._counts.get(label, 0) + 1
 
-        mask = leaf_mask(image_np)
+        mask = leaf_mask(image_np) if external_mask is None else external_mask
         coverage = mask_coverage(mask)
         fragmentation = mask_fragmentation(mask)
         rejected = is_mask_unreliable(coverage, fragmentation)
@@ -101,6 +110,9 @@ class GlobalAccumulator:
         self._rows.append(
             {
                 "label": label,
+                "image_path": relative_path,
+                "source_id": source_from_path(relative_path) if relative_path else "",
+                "mask_source": "segmentador" if external_mask is not None else "exg",
                 "correct": bool(correct),
                 "leaf_attribution_ratio": (
                     float(positive[mask].sum() / positive_total) if usable else float("nan")
@@ -341,7 +353,20 @@ def write_global_report(accumulator: GlobalAccumulator, output_dir: Path) -> Non
     summary = accumulator.summary()
     _plot_class_profile(accumulator.rows(), summary, output_dir / "class_profile.png")
     _plot_mask_audit(accumulator.mask_samples(), output_dir / "mask_audit.png")
+    # El exceso sobre la cobertura de la mascara es la lectura util: la cobertura es el
+    # ratio que daria una atribucion repartida al azar, asi que sin restarla el ratio no
+    # distingue atribuir a la hoja de atribuir a cualquier sitio.
+    summary["attribution_excess"] = (
+        summary["mean_leaf_attribution_ratio"] - summary["mean_mask_coverage"]
+    )
     summary.to_csv(output_dir / "global_summary.csv", index=False)
+
+    por_imagen = pd.DataFrame(accumulator.rows())
+    if not por_imagen.empty:
+        por_imagen["attribution_excess"] = (
+            por_imagen["leaf_attribution_ratio"] - por_imagen["mask_coverage"]
+        )
+        por_imagen.to_csv(output_dir / "global_per_image.csv", index=False)
     (output_dir / "global_summary.json").write_text(
         summary.to_json(orient="records", indent=2), encoding="utf-8"
     )

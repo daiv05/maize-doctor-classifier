@@ -20,10 +20,12 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
 import yaml
+from PIL import Image
 
 import src.models.baselines.efficientnet  # noqa: F401 - registra modelos
 import src.models.baselines.fastvit  # noqa: F401 - registra modelos
@@ -177,6 +179,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     global_profile = subparsers.add_parser(
         "global", parents=[common], help="Perfil global por clase."
+    )
+    global_profile.add_argument(
+        "--segmented-root",
+        type=str,
+        default="",
+        dest="segmented_root",
+        help="Raiz del corpus segmentado. Cuando se indica, la mascara foliar se deriva "
+             "de esas imagenes en lugar de la heuristica de color, que en algunas clases "
+             "marca la imagen entera como hoja.",
     )
     global_profile.add_argument(
         "--sample-size",
@@ -613,6 +624,29 @@ def cmd_compare(args: argparse.Namespace, cfg: dict, device: torch.device) -> No
         logger.info(f"[{context.model_name}] Acuerdo:\n{summary.to_string(index=False)}")
 
 
+
+def _mascara_segmentada(
+    raiz: str | None, ruta_relativa: str, forma: tuple[int, int]
+) -> "np.ndarray | None":
+    """Deriva la mascara foliar de la imagen segmentada correspondiente.
+
+    El corpus segmentado guarda PNG sin perdida con el fondo en negro, asi que la mascara
+    es el conjunto de pixeles no negros y no requiere volver a ejecutar el segmentador.
+
+    @param {str | None} raiz Raiz del corpus segmentado; None desactiva la sustitucion.
+    @param {str} ruta_relativa Ruta de la imagen dentro del corpus original.
+    @param {tuple[int, int]} forma Alto y ancho a los que reescalar la mascara.
+    @returns {np.ndarray | None} Mascara booleana, o None si no hay imagen segmentada.
+    """
+    if not raiz:
+        return None
+    candidata = Path(raiz) / Path(ruta_relativa).with_suffix(".png")
+    if not candidata.exists():
+        return None
+    with Image.open(candidata) as imagen:
+        reescalada = imagen.convert("RGB").resize((forma[1], forma[0]))
+    return np.asarray(reescalada).sum(axis=2) > 12
+
 def cmd_global(args: argparse.Namespace, cfg: dict, device: torch.device) -> None:
     """
     Perfil global por clase: mapa espacial medio de atribucion y ratio hoja/fondo.
@@ -678,6 +712,10 @@ def cmd_global(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
                 shap_values=explanation.values,
                 segments=segments,
                 image_np=image_np,
+                relative_path=row["image_path"],
+                external_mask=_mascara_segmentada(
+                    args.segmented_root, row["image_path"], image_np.shape[:2]
+                ),
             )
             logger.info(f"[{context.model_name}] {image_path.name}: acumulado")
 
