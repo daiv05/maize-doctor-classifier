@@ -168,8 +168,8 @@ $$D_M(x) = \min_{c} \sqrt{(\phi(x) - \mu_c)^T \Sigma^{-1} (\phi(x) - \mu_c)}$$
 
 ## 7. Directrices Éticas para el Despliegue en Campo
 
-A partir de esta auditoría, se establecen las siguientes salvaguardas para la aplicación móvil:
+A partir de esta auditoría se derivan las siguientes salvaguardas. Se distingue lo que el sistema **ya hace** de lo que queda **propuesto**:
 
-1. **Preprocesamiento Mandatorio y Desacople de Fondo:** Para mitigar la dependencia de atajos de contexto demostrada en el test Clever Hans, la aplicación móvil ejecuta la inferencia en dos etapas: primero aísla la lámina foliar descartando el fondo mediante el segmentador local, guiando al usuario con retícula de encuadre en el visor.
-2. **Advertencia de Confianza en Deficiencia de Potasio:** Al ser la clase minoritaria con mayor tasa de falsos negativos ($FNR = 23.6\%$), el sistema sugiere una segunda toma con iluminación natural directa si la probabilidad diagnóstica es inferior al 75%.
+1. **Desacople de fondo — propuesto, con coste medido.** El test Clever Hans demuestra dependencia del contexto: con el 60 % central ocluido el modelo aún acierta el 79.5 %, frente a un control nulo de 26.1 %. La mitigación natural sería segmentar la lámina foliar antes de clasificar, pero **esa vía se midió y sale cara**: entrenar y evaluar sobre imágenes segmentadas baja el Macro $F_1$ de 0.9468 a **0.7191** (corrida `20260907_163546`). La aplicación móvil **no incorpora segmentador**; empaqueta únicamente el clasificador. Queda como línea abierta, no como salvaguarda implantada.
+2. **Advertencia de confianza en deficiencias nutricionales.** Sobre el modelo desplegado, las dos clases con mayor tasa de falsos negativos son `potassium_deficiency` ($FNR = 14.0\%$) y `nitrogen_deficiency` ($FNR = 15.7\%$). Ambas son minoritarias —93 y 127 muestras en prueba— y justifican solicitar una segunda toma cuando la probabilidad diagnóstica sea baja.
 3. **Privacidad y Procesamiento en Dispositivo (*Edge AI*):** Todo el cómputo de inferencia (vía modelos cuantizados INT8 TFLite y ONNX) se realiza localmente en el teléfono, sin requerir conexión a internet ni almacenar datos privados del productor en servidores remotos.
