@@ -3,13 +3,13 @@
 Montajes de Volumes:
   /data           -> corn-clean (lectura del dataset original /data/clean)
   /segmenter      -> doctor-maiz-leaf-segmentation-outputs (pesos del segmentador)
-  /data_segmented -> corn-clean-segmented (escritura de imágenes con hoja aislada)
+  /data_segmented -> corn-clean-square (escritura de imágenes con hoja cuadrada centrada)
   /outputs        -> corn-outputs (previews visuales y métricas de auditoría)
 
 Uso detached (desacoplado de la máquina local):
-  modal run --detach scripts/modal/segment_dataset.py
-  modal run --detach scripts/modal/segment_dataset.py --profile crop_mask_letterbox
-  modal run --detach scripts/modal/segment_dataset.py --max-images 1000  # prueba rápida
+  modal run --detach scripts/modal/segment_dataset.py --profile square_crop
+  # Prueba rápida:
+  modal run --detach scripts/modal/segment_dataset.py --profile square_crop --max-images 1000
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ REPO_ANCHOR = "/root"
 
 dataset_vol = modal.Volume.from_name("corn-clean")
 segmenter_vol = modal.Volume.from_name("doctor-maiz-leaf-segmentation-outputs")
-segmented_dataset_vol = modal.Volume.from_name("corn-clean-segmented", create_if_missing=True)
+segmented_dataset_vol = modal.Volume.from_name("corn-clean-square", create_if_missing=True)
 outputs_vol = modal.Volume.from_name("corn-outputs", create_if_missing=True)
 
 image = (
@@ -66,7 +66,7 @@ app = modal.App(APP_NAME, image=image)
     timeout=24 * 3600,
 )
 def run_segmentation_job(
-    profile: str = "crop_mask_letterbox",
+    profile: str = "square_crop",
     max_images: int = 0,
     max_previews: int = 50,
 ) -> None:
@@ -121,7 +121,7 @@ def run_segmentation_job(
 
 @app.local_entrypoint()
 def main(
-    profile: str = "crop_mask_letterbox",
+    profile: str = "square_crop",
     max_images: int = 0,
     max_previews: int = 50,
 ) -> None:

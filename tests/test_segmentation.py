@@ -5,15 +5,16 @@ from PIL import Image
 
 from src.segmentation.geometry import (
     apply_leaf_mask,
-    binary_mask_image,
     clip_bbox,
     crop_leaf_region,
+    crop_square_centered,
     letterbox_image,
     mask_area_ratio,
     mask_bbox,
 )
 from src.segmentation.leaf_processor import (
     CROP_MASK_LETTERBOX,
+    SQUARE_CROP,
     LeafInstance,
     LeafMaskProcessorConfig,
     SegmentedLeafProcessor,
@@ -83,4 +84,48 @@ def test_segmented_leaf_processor() -> None:
     # Panel de preview
     panel = build_comparison_panel(result)
     assert panel.size[1] == 240
+
+
+def test_crop_square_centered() -> None:
+    # Imagen de 200x100 (panorámica) con un fondo verde (0, 100, 0)
+    img = Image.new("RGB", (200, 100), (0, 100, 0))
+    # Hoja pequeña de 30x40 en (50, 30, 80, 70)
+    bbox = (50, 30, 80, 70)
+    cropped = crop_square_centered(img, bbox, margin_ratio=0.2, target_size=(224, 224))
+    assert cropped.size == (224, 224)
+
+    # Verificar que preserva el fondo (sin negro)
+    arr = np.array(cropped)
+    assert arr[0, 0].tolist() == [0, 100, 0]
+
+
+def test_segmented_leaf_processor_square_crop() -> None:
+    # Imagen 300x300 con fondo fotográfico (150, 120, 80)
+    img = Image.new("RGB", (300, 300), (150, 120, 80))
+    mask = Image.new("L", (300, 300), 0)
+    mask_arr = np.array(mask)
+    mask_arr[100:180, 120:160] = 255
+    mask = Image.fromarray(mask_arr, mode="L")
+
+    instance = LeafInstance(
+        mask=mask,
+        confidence=0.88,
+        bbox=(120, 100, 160, 180),
+        source_index=0,
+        class_id=0,
+    )
+
+    config = LeafMaskProcessorConfig(
+        processing_profile=SQUARE_CROP,
+        target_size=(224, 224),
+    )
+    processor = SegmentedLeafProcessor(config=config)
+    result = processor.process(img, [instance])
+
+    assert not result.fallback_used
+    assert result.processed_image is not None
+    assert result.processed_image.size == (224, 224)
+    # Verificar que las esquinas conservan el color de fondo original en vez de negro
+    arr = np.array(result.processed_image)
+    assert arr[0, 0].tolist() == [150, 120, 80]
 

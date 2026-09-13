@@ -196,3 +196,74 @@ def apply_leaf_mask(
     bg_color = normalize_rgb_color(background_value)
     bg = Image.new("RGB", rgb.size, bg_color)
     return Image.composite(rgb, bg, binary)
+
+
+def crop_square_centered(
+    image: Image.Image,
+    bbox: BoundingBox,
+    *,
+    margin_ratio: float = 0.15,
+    target_size: Sequence[int] | None = None,
+    resample: Image.Resampling = Image.Resampling.BILINEAR,
+) -> Image.Image:
+    """Recorta un cuadro 1:1 centrado en la hoja conservando el fondo natural.
+
+    Calcula una ventana cuadrada que cubre la dimensión mayor de la hoja más un
+    margen porcentual, desplazando la ventana para no salir de los bordes de la foto
+    original (sin inventar píxeles ni introducir fondo negro). Si target_size es
+    especificado, escala el resultado manteniendo la geometría cuadrada.
+    """
+    if not isinstance(image, Image.Image):
+        raise TypeError("image debe ser una instancia de PIL.Image.Image")
+    clipped = clip_bbox(bbox, image.width, image.height)
+    x1, y1, x2, y2 = clipped
+    bw = x2 - x1
+    bh = y2 - y1
+    cx = (x1 + x2) / 2.0
+    cy = (y1 + y2) / 2.0
+
+    w_img, h_img = image.size
+    max_dim = max(bw, bh)
+    side = max_dim * (1.0 + max(0.0, float(margin_ratio)))
+    # El cuadrado dentro de la imagen no puede superar la dimensión mínima de la foto
+    side = min(side, min(w_img, h_img))
+    half = side / 2.0
+
+    sq_x1 = cx - half
+    sq_y1 = cy - half
+    sq_x2 = cx + half
+    sq_y2 = cy + half
+
+    # Ajustar para permanecer dentro de los bordes
+    if sq_x1 < 0:
+        shift = -sq_x1
+        sq_x1 = 0.0
+        sq_x2 = min(float(w_img), sq_x2 + shift)
+    if sq_y1 < 0:
+        shift = -sq_y1
+        sq_y1 = 0.0
+        sq_y2 = min(float(h_img), sq_y2 + shift)
+    if sq_x2 > w_img:
+        shift = sq_x2 - float(w_img)
+        sq_x2 = float(w_img)
+        sq_x1 = max(0.0, sq_x1 - shift)
+    if sq_y2 > h_img:
+        shift = sq_y2 - float(h_img)
+        sq_y2 = float(h_img)
+        sq_y1 = max(0.0, sq_y1 - shift)
+
+    crop_coords = (
+        int(math.floor(sq_x1)),
+        int(math.floor(sq_y1)),
+        int(math.ceil(sq_x2)),
+        int(math.ceil(sq_y2)),
+    )
+    crop_coords = clip_bbox(crop_coords, w_img, h_img)
+    rgb = image_to_rgb(image)
+    cropped = rgb.crop(crop_coords)
+
+    if target_size is not None:
+        th, tw = validate_target_size(target_size)
+        cropped = cropped.resize((tw, th), resample=resample)
+    return cropped
+
