@@ -449,6 +449,10 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
                         "mean_abs_prob_diff": f.parity.mean_abs_prob_diff,
                         "tolerance": f.parity.tolerance,
                         "min_agreement_rate": f.parity.min_agreement_rate,
+                        "cross_runtime_agreement_rate": f.parity.cross_runtime_agreement_rate,
+                        "cross_runtime_max_abs_prob_diff": f.parity.cross_runtime_max_abs_prob_diff,
+                        "cross_runtime_tolerance": f.parity.cross_runtime_tolerance,
+                        "per_channel_fully_connected": f.parity.per_channel_fully_connected,
                         "passed": f.parity.passed,
                         "warnings": f.parity.warnings,
                     }

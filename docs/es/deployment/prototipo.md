@@ -2,9 +2,9 @@
 
 Pruebas del prototipo funcional de DoctorMaiz corriendo sobre un teléfono real, con el modelo
 del run `20260812_221429`. La página reporta qué hace la app de punta a punta, cuánto tarda cada
-etapa del pipeline, qué predice sobre imágenes del corpus limpio, y dos límites que las pruebas
-dejaron a la vista: uno de implementación, que se corrigió, y otro de datos, que no se puede
-corregir con más ingeniería.
+etapa del pipeline, qué predice sobre imágenes del corpus limpio, y lo que las pruebas dejaron a la
+vista: dos defectos de implementación, que se corrigieron, y un techo de datos, que no se corrige
+con más ingeniería.
 
 ## Qué se midió y con qué
 
@@ -30,11 +30,12 @@ a un cuadrado centrado. Sin eso, la comparación contra el servidor no sería so
 píxeles.
 :::
 
-**Cada resultado se valida antes de aceptarlo.** El motor de la app volcó por `adb logcat` la suma
-del tensor de entrada, y el arnés compara esa suma con la calculada en el PC para la imagen que
-creía estar enviando. Sin esa comprobación el experimento habría quedado inservible: el selector de
-fotos de Android ordena por fecha y devolvía siempre la misma imagen, así que las primeras tandas
-midieron cuarenta y cinco veces la misma foto sin que nada lo delatara.
+**Cada resultado se valida antes de aceptarlo.** El motor de la app volcó por `adb logcat` dos
+magnitudes del tensor de entrada —su suma y su primer elemento—, y el arnés las compara con las
+calculadas en el PC para la imagen que creía estar enviando; hacen falta las dos porque la suma sola
+colisiona entre algunas imágenes del corpus. Sin esa comprobación el experimento habría quedado
+inservible: el selector de fotos de Android ordena por fecha y devolvía siempre la misma imagen, así
+que las primeras tandas midieron cuarenta y cinco veces la misma foto sin que nada lo delatara.
 
 ## Lo que hace la app
 
@@ -50,13 +51,18 @@ La cámara superpone un marco con forma de hoja, una línea de barrido animada y
 explícitas sobre la distancia de captura. Es la respuesta de la app al problema del encuadre, que
 se detalla más abajo.
 
+![Resultado con diagnóstico de mancha gris](/app/resultado-mancha-gris.png)
+
+La pantalla de resultado da el diagnóstico, la confianza, la imagen analizada y las recomendaciones
+de manejo. Los campos de temperatura y humedad aparecen como `N/D`: el escaneo no los captura.
+
 ![Aporte al dataset nacional](/app/contribuir.png)
 
 La pantalla de aporte pide foto y etiqueta de diagnóstico, y encola el envío al backend. Es el
 mecanismo con el que el proyecto pretende salir del techo de datos descrito al final de esta
 página.
 
-## Un defecto que solo aparece en el teléfono
+## Primer defecto: la cuantización del head
 
 La primera tanda de escaneos devolvía siempre **100 % de confianza**, incluso en imágenes que el
 servidor clasificaba con 0,78. Esa saturación no era un detalle cosmético: era el síntoma de que el
@@ -196,17 +202,171 @@ corre el export— aplica bien las escalas por canal y habría dado un **falso a
 (`max|Δprob|` = 0,0068). Una compuerta cuyo veredicto cambia según qué tenga instalado la máquina no
 protege de nada.
 
+## Segundo defecto: el escalado de la imagen
+
+Con la cuantización ya corregida, las predicciones sobre el corpus limpio seguían sin cuadrar con
+las del servidor, y **más de la mitad de las hojas legítimas salían como «no reconocida»**. Esta
+vez el tensor de entrada tampoco coincidía: difería en torno al 0,5 %, lo bastante poco para pasar
+por ruido y lo bastante para cambiar el diagnóstico.
+
+`preprocessImageSkia.ts` bajaba la foto al cuadrado de 224 en un solo paso:
+
+```ts
+canvas.drawImageRectOptions(
+  image,
+  Skia.XYWHRect(0, 0, image.width(), image.height()),
+  Skia.XYWHRect(0, 0, size, size),
+  FilterMode.Linear,
+  MipmapMode.None,
+);
+```
+
+`FilterMode.Linear` con `MipmapMode.None` muestrea **cuatro téxeles por píxel de salida**. Bajando
+de 3840 px a 224 eso descarta más del 99 % de la imagen y produce aliasing severo. El pipeline de
+entrenamiento escala con un filtro cuyo soporte crece con el factor de reducción, que promedia
+todos los píxeles.
+
+Reproducir ese muestreo en CPU —bilineal sobre la rejilla de salida, sin prefiltro— reproduce al
+teléfono:
+
+| Imagen | px | Referencia con antialias | Sin prefiltro (simulado) | Dispositivo |
+|---|---|---|---|---|
+| md00a | 3840² | common_rust 0,925 · RMD 20,8 | common_rust 0,209 · RMD 674 | common_rust 0,205 · RMD **625** |
+| md02a | 3456² | common_rust 0,930 · RMD 8,2 | **healthy** 0,266 · RMD 600 | **healthy** 0,278 · RMD **567** |
+| md13a | 1390² | lethal_necrosis 0,834 · RMD −1,2 | **healthy** 0,426 · RMD 451 | **healthy** 0,565 · RMD **475** |
+| md24a | 3000² | potassium 0,980 · RMD −7,5 | potassium 0,983 · RMD −15,8 | potassium 0,982 · RMD −17,7 |
+
+El daño es doble y depende del contenido de alta frecuencia, no solo del tamaño: md24a apenas se
+mueve, md02a y md13a **cambian de clase**, y el RMD se multiplica por cincuenta o más. Ese segundo
+efecto es el que llenaba la pantalla de «no reconocida»: el detector OOD estaba haciendo bien su
+trabajo sobre un tensor que ya no era el de una hoja.
+
+**El arreglo** reduce a la mitad por pasos antes del escalado final. Cada paso a la mitad con filtro
+lineal equivale a promediar bloques de 2×2 —el mismo cálculo que un nivel de mipmap—, así que
+encadenarlos reconstruye el promedio que faltaba. Validado en CPU antes de tocar la app, y después
+en el teléfono:
+
+| | Antes | Después | Referencia |
+|---|---:|---:|---:|
+| md00a — confianza | 0,205 | **0,901** | 0,925 |
+| md00a — RMD | 625,1 | **20,2** | 20,8 |
+
 ## Tiempos por etapa
 
-<!-- MEDICIONES_TIEMPOS -->
+El motor de la app mide tres etapas y las emite por `adb logcat`: `preprocess` (decodificar,
+escalar y construir el tensor), `inference` (solo la llamada al modelo, sin IO) y `pipeline` (de la
+imagen al resultado guardado y navegado). Estas son las 27 fotos del corpus entrando por galería,
+en caliente, con el modelo y el escalado ya corregidos:
+
+| etapa | mediana | media | mín | máx | p95 |
+|---|---:|---:|---:|---:|---:|
+| `preprocess` | 41 ms | 157 ms | 19 ms | 675 ms | 515 ms |
+| `inference` | 60 ms | 68 ms | 34 ms | 141 ms | 110 ms |
+| `pipeline` | 473 ms | 548 ms | 336 ms | 977 ms | 897 ms |
+
+El primer escaneo de cada sesión paga la carga del modelo. Medido sobre el build final, tras
+`force-stop`: `preprocess` 386 ms, `inference` 58 ms, `pipeline` 810 ms. El sobrecoste está en el
+`pipeline`, no en la inferencia: el modelo ya está cargado cuando `runSync` arranca su cronómetro.
+
+**La inferencia no es el cuello de botella.** El modelo tarda 60 ms medianos; el preprocesado varía
+veinte veces entre la foto más pequeña y la más grande del lote, porque el trabajo es proporcional
+a los píxeles que hay que promediar. Y el `pipeline` completo es casi un orden de magnitud mayor que
+la suma de los dos, porque incluye crear el registro en la base local, navegar a la pantalla de
+resultado y persistir el escaneo.
+
+Una captura real con la cámara del teléfono, que es el caso de uso de verdad:
+
+| | |
+|---|---|
+| Resolución de la foto | 3072 × 4096 (12,6 MP) |
+| `preprocess` | 75 ms |
+| `inference` | 61 ms |
+| `pipeline` | 289 ms |
+
+El preprocesado de una foto de 12,6 MP cuesta 75 ms **porque se recorta al marco guía antes de
+escalar**: el recorte entrega 3,02 MP al escalador en vez de 12,58.
+
+::: warning El recorte no está dentro de ninguna de las tres medidas
+`handleCapture` recorta la foto y solo después llama a `persistScan`, que es quien abre la medición
+`pipeline`. El recorte reabre el JPEG, lo recodifica y lo escribe, así que la espera real del usuario
+tras pulsar el disparador es mayor que los 289 ms de la tabla. Medirla requiere instrumentar
+`handleCapture`, cosa que este ensayo no hizo.
+:::
 
 ## Inferencias sobre el corpus limpio
 
-<!-- MEDICIONES_INFERENCIA -->
+Las 27 fotos del split de test, tres por clase, entrando por la galería tal cual. Cada resultado se
+verificó contra la firma del tensor para confirmar que el teléfono procesó la imagen que se le
+envió.
+
+| clase | n | acierta | muestra «no reconocida» | confianza mediana |
+|---|---:|---:|---:|---:|
+| `common_rust` | 3 | 3 | 1 | 0,908 |
+| `fall_armyworm` | 3 | 2 | 1 | 0,874 |
+| `gray_leaf_spot` | 3 | 3 | 0 | 0,939 |
+| `healthy` | 3 | 3 | 1 | 0,806 |
+| `lethal_necrosis` | 3 | 3 | 0 | 0,840 |
+| `nitrogen_deficiency` | 3 | 2 | 1 | 0,866 |
+| `northern_corn_leaf_blight` | 3 | 3 | 1 | 0,863 |
+| `phosphorus_deficiency` | 3 | 3 | 2 | 0,907 |
+| `potassium_deficiency` | 3 | 3 | 0 | 0,978 |
+
+**25 de 27 con la clase correcta**, el mismo número que obtiene el artefacto corrido en CPU sobre
+las mismas imágenes. La confianza media es 0,874 y ninguna predicción satura.
+
+Lo más útil del reparto no es el acierto sino dónde caen los errores. Las dos fallidas son:
+
+| | clase real | predicción | confianza | RMD | qué mostró la app |
+|---|---|---|---:|---:|---|
+| md04a | gusano cogollero | roya común | 0,600 | 480,9 | no reconocida |
+| md16a | deficiencia de nitrógeno | necrosis letal | 0,777 | 169,5 | no reconocida |
+
+**Las dos las atrapa el detector OOD antes de llegar a la pantalla.** De las 27 fotos, la app afirmó
+un diagnóstico en 20 y acertó las 20; en las otras 7 se negó a diagnosticar. El coste de esa
+prudencia son las 5 fotos que habría acertado y rechazó igual: el umbral está en el percentil 95 de
+validación, así que rechazar en torno a una de cada veinte imágenes de dominio es el precio de
+diseño, y aquí sale más caro que eso.
+
+![Diagnóstico de deficiencia de potasio](/app/resultado-potasio.png)
+
+![Imagen que el detector rechaza](/app/resultado-no-reconocida.png)
 
 ## El problema del encuadre
 
-<!-- MEDICIONES_ENCUADRE -->
+El modelo se entrenó estirando cada imagen a 224 × 224 **sin preservar el aspecto y sin recortar**.
+Lo que entra en el encuadre es, literalmente, lo que el modelo ve. Y el corpus de entrenamiento son
+sobre todo primeros planos de una hoja: de una muestra de 24 fotos de campo real del split de test
+revisadas una a una, solo 5 muestran la planta pequeña dentro de la escena; el resto son la hoja
+llenando el cuadro. Si el usuario dispara desde lejos, la mayor parte del tensor pasa a ser suelo,
+cielo y plantas vecinas, algo que el modelo apenas vio.
+
+La app responde con un marco guía que no es decorativo: `cropPhotoToOverlay` recorta la foto a la
+región que el marco encierra antes de que el modelo la vea. Con las dimensiones reales medidas en
+el dispositivo:
+
+| | |
+|---|---|
+| Foto capturada | 3072 × 4096 px |
+| Visor de cámara | 432 × 782,4 dp |
+| Marco guía | 260 × 320 dp, centrado, con 15 % de margen |
+| Región conservada | 1565 × 1927 px en (754, 1085) |
+| Fracción del encuadre | 50,9 % de ancho × 47,0 % de alto = **24,0 % del área** |
+
+Es decir: de los 12,58 MP que captura el sensor, el modelo recibe 3,02 MP. Tres cuartas partes de
+la foto se descartan por diseño, y esa es la razón de que el banner insista en «acérquese a 20–30 cm
+y llene el marco»: lo que quede fuera del marco no se analiza, y lo que quede dentro sin ser hoja sí.
+
+::: warning Un fondo uniforme se diagnostica con confianza
+Una comprobación de control lo deja claro. Tomando cinco imágenes del corpus, desenfocándolas hasta
+eliminar toda estructura de hoja y pasando **solo ese fondo, sin ninguna hoja**, el modelo responde
+`fall_armyworm` con confianza entre 0,806 y 0,873 en los cinco casos, y el detector OOD solo rechaza
+uno.
+
+No es un fallo de la cuantización ni del escalado: es el mismo atajo de procedencia que
+[Procedencia y fuga](/es/provenance/) mide sobre el corpus, donde un anillo del 10 % del borde
+—sin hoja ni lesión— clasifica el 78,3 % del test. Un encuadre que llene el marco de vegetación de
+fondo cae justo en ese modo de fallo, y ni la confianza ni el detector OOD avisan.
+:::
 
 ## El techo: catorce fuentes, ninguna centroamericana
 
