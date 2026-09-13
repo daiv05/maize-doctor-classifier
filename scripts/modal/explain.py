@@ -206,11 +206,15 @@ def explain_global(
     nsamples: int = 0,
     pipeline: str = "main",
     segmented: bool = False,
+    segmented_mask: bool = False,
 ) -> None:
     """Perfil global por clase. Espeja `make explain-global-main`.
 
     @param {bool} segmented El run fue entrenado sobre corn-clean-segmented: usa DATASET_ROOT=
         /data_segmented para explicar sobre las mismas imagenes que vio el checkpoint.
+    @param {bool} segmented_mask Explica sobre el corpus normal pero deriva la mascara foliar
+        de las imagenes segmentadas. Es distinto de `segmented`: el modelo ve las mismas
+        imagenes de siempre y lo unico que cambia es como se mide donde cae la atribucion.
     """
     args = [sys.executable, "scripts/pipeline/explain.py", "global", "--models", *models.split()]
     args += _output_dir_args(pipeline)
@@ -218,6 +222,8 @@ def explain_global(
         args += ["--run", run]
     if baseline:
         args += ["--baseline"]
+    if segmented_mask:
+        args += ["--segmented-root", SEGMENTED_DATASET_MOUNT]
     if sample_size:
         args += ["--sample-size", str(sample_size)]
     if nsamples:
