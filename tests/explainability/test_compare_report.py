@@ -126,7 +126,14 @@ def test_result_reports_prediction_and_agreement(tmp_path):
 
     assert result["predicted_label"] in _IDX_TO_CLASS.values()
     assert 0.0 <= result["predicted_prob"] <= 1.0
-    assert set(result["agreement"]) == {"iou_topk", "spearman", "sign_agreement"}
+    assert set(result["agreement"]) == {
+        "iou_topk",
+        "iou_topk_null",
+        "spearman",
+        "spearman_null",
+        "sign_agreement",
+        "sign_agreement_null",
+    }
 
 
 def test_sidecar_holds_both_attribution_vectors(tmp_path):

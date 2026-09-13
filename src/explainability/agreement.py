@@ -36,6 +36,25 @@ def top_positive_mask(values: np.ndarray, top_k: int) -> np.ndarray:
     return mask
 
 
+def expected_iou(tamano_a: int, tamano_b: int, total: int) -> float:
+    """Solapamiento esperado entre dos selecciones independientes del mismo tamano.
+
+    Es la referencia sin la cual `iou_topk` no se puede leer: con pocos segmentos, dos
+    selecciones al azar ya se solapan de forma apreciable, asi que un valor observado alto
+    no implica acuerdo entre las dos tecnicas.
+
+    @param {int} tamano_a Segmentos seleccionados por la primera tecnica.
+    @param {int} tamano_b Segmentos seleccionados por la segunda.
+    @param {int} total Segmentos disponibles.
+    @returns {float} IoU esperado bajo independencia.
+    """
+    if total <= 0 or tamano_a == 0 or tamano_b == 0:
+        return 0.0
+    interseccion = tamano_a * tamano_b / total
+    union = tamano_a + tamano_b - interseccion
+    return float(interseccion / union) if union > 0 else 0.0
+
+
 def attribution_agreement(
     lime_weights: np.ndarray, shap_values: np.ndarray, top_k: int
 ) -> dict[str, float]:
@@ -48,7 +67,8 @@ def attribution_agreement(
     @param {np.ndarray} lime_weights Pesos de la regresion local de LIME por segmento.
     @param {np.ndarray} shap_values Valores de Shapley por segmento.
     @param {int} top_k Segmentos positivos a considerar en el IoU.
-    @returns {dict[str, float]} Claves iou_topk, spearman y sign_agreement.
+    @returns {dict[str, float]} Cada metrica junto a su valor esperado bajo
+                                independencia, con sufijo `_null`.
     @throws {ValueError} Si los vectores no tienen la misma longitud.
     """
     if lime_weights.shape != shap_values.shape:
@@ -63,10 +83,21 @@ def attribution_agreement(
         if np.isnan(correlation):
             correlation = 0.0
 
+    mascara_lime = top_positive_mask(lime_weights, top_k)
+    mascara_shap = top_positive_mask(shap_values, top_k)
+    proporcion_lime = float((lime_weights > 0).mean())
+    proporcion_shap = float((shap_values > 0).mean())
+
     return {
-        "iou_topk": mask_iou(
-            top_positive_mask(lime_weights, top_k), top_positive_mask(shap_values, top_k)
+        "iou_topk": mask_iou(mascara_lime, mascara_shap),
+        "iou_topk_null": expected_iou(
+            int(mascara_lime.sum()), int(mascara_shap.sum()), lime_weights.size
         ),
         "spearman": correlation,
+        "spearman_null": 0.0,
         "sign_agreement": float(np.mean(np.sign(lime_weights) == np.sign(shap_values))),
+        "sign_agreement_null": (
+            proporcion_lime * proporcion_shap
+            + (1.0 - proporcion_lime) * (1.0 - proporcion_shap)
+        ),
     }
