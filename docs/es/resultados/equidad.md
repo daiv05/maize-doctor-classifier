@@ -17,11 +17,31 @@ Para medir qué tanto influye el contexto exterior de la foto frente a los sínt
 | **Oclusión periférica** | **Caja central** (fondo y bordes tapados) | 36.3 % | **42.25 %** | +16.11 pp | 42.66 % |
 | *Línea base de control nulo* | *Sin ver la imagen (clase más frecuente)* | 0.0 % | *26.14 %* | 0.0 pp | — |
 
-**El anillo periférico basta para acertar en ocho de cada diez imágenes** (79.46 %, +53.32 pp sobre el azar) conservando casi el 70 % de la confianza original, pese a que el centro de la escena —donde se encuentra la lámina foliar en la práctica totalidad del corpus— está tapado en negro.
+### Cómo se lee la tabla
 
-Las dos condiciones de oclusión **no están igualadas en área**: la que deja visible el anillo muestra 1.75 veces más píxeles que la que deja visible la caja central, así que la distancia entre 79.46 % y 42.25 % no es atribuible únicamente a la región observada. Lo que sí queda establecido es la comparación de cada condición contra el control nulo: el anillo supera al predictor constante en +53.32 pp y la caja central en +16.11 pp.
+Ninguna de esas exactitudes significa nada tomada por separado, porque un clasificador de nueve clases desbalanceadas no parte de cero. Responder siempre `healthy`, la categoría más frecuente del conjunto de prueba con 1,311 de las 5,015 imágenes, ya acierta el **26.14 %** sin haber mirado un solo píxel. Ese predictor constante es el control nulo, y la columna de exceso mide lo que cada condición añade por encima de él. Por eso una exactitud del 42.25 % no debe leerse como un fracaso del modelo: sigue situándose 16.11 puntos sobre lo que se obtiene sin información alguna.
 
-La lectura de fondo es que las redes convolucionales son muy sensibles a la composición global de la toma (el color del suelo, la vegetación circundante o la luz ambiental). De ahí la importancia de guiar al agricultor mediante el marco en pantalla para asegurar que el encuadre se concentre en la lámina foliar.
+### Qué arroja la oclusión del centro
+
+Al tapar en negro la caja central —la región donde el encuadre habitual del corpus sitúa la lámina foliar— el modelo conserva una exactitud del **79.46 %**, esto es **+53.32 puntos sobre el control nulo**. La conclusión no descansa sobre esa cifra aislada, sino sobre tres mediciones independientes que apuntan en la misma dirección:
+
+1. **Exactitud.** El acierto cae de 97.91 % a 79.46 %, una pérdida de 18.45 puntos. Si el diagnóstico dependiera de la lesión foliar, ocultarla debería acercar el resultado al 26.14 % del control nulo, y queda a más de cincuenta puntos de él.
+2. **Confianza retenida.** La probabilidad media asignada a la clase predicha cae de 0.840 a 0.581, el 69.16 % de la original. Esta cifra se mide sobre **la misma clase que el modelo predijo en la imagen íntegra**, no sobre un nuevo máximo, así que no puede inflarse cambiando de respuesta: el modelo no solo sigue acertando, sigue estando seguro de la misma respuesta que dio con la hoja a la vista.
+3. **Tasa de vuelco.** Únicamente el **19.51 %** de las predicciones originalmente correctas pasa a ser errónea al ocultar el centro. Con la periferia oculta, en cambio, se vuelca el **57.43 %**. Cuatro de cada cinco aciertos sobreviven sin ver la hoja; poco más de dos de cada cinco sobreviven sin ver el entorno.
+
+### Qué autoriza a concluir y qué no
+
+Lo que queda establecido es que **la región exterior de la fotografía porta, por sí sola, una fracción sustancial de la información de clase**: sin ella el modelo pierde casi seis de cada diez aciertos, y con ella sola retiene ocho de cada diez.
+
+Lo que **no** queda establecido es que el fondo pese más que la hoja. Las dos condiciones de oclusión no están igualadas en área —la que deja visible el anillo muestra 1.75 veces más píxeles que la que deja visible la caja central—, así que la distancia entre 79.46 % y 42.25 % no es atribuible únicamente a la región observada. La comparación rigurosa es la de cada condición contra el control nulo, y ambas lo superan. Tampoco puede afirmarse que el modelo ignore la lesión: la caja central por sí sola también supera al azar, y la caída de 18.45 puntos al taparla demuestra que el centro aporta señal propia.
+
+### De dónde sale la información del fondo
+
+El resultado solo sorprende si se supone que el fondo es ruido. No lo es. Cada repositorio del corpus fue fotografiado bajo sus propias condiciones de suelo, iluminación, distancia focal y sensor, y varios contienen muy pocas clases, hasta el extremo de que cuatro de las catorce fuentes contienen una sola. En consecuencia, **la periferia no predice la enfermedad: predice el repositorio, y el repositorio acota la enfermedad**. Reconocer de qué dataset proviene una fotografía no exige ver la lesión, basta con la textura del suelo y el tono de la luz.
+
+Es la misma lectura que arroja, desde otro ángulo, el [experimento cruzado 2×2](/es/resultados/evaluacion): cuando las fuentes se reúnen en pliegues disjuntos y el modelo debe evaluar repositorios que jamás vio, el macro $F_1$ se desploma de 0.9311 a 0.6026. Dos pruebas metodológicamente independientes —una que borra regiones de la imagen y otra que reorganiza la partición de los datos— convergen en el mismo diagnóstico, y esa convergencia es lo que sostiene la conclusión.
+
+La consecuencia operativa es directa: en una parcela salvadoreña el suelo, la luz y la cámara no se parecen a los de ningún repositorio del corpus, así que la porción de evidencia que el modelo extraía del entorno deja de ayudar y puede llegar a confundir. De ahí la importancia de guiar al agricultor mediante el marco en pantalla para que el encuadre se concentre en la lámina foliar.
 
 ---
 

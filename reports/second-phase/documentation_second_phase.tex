@@ -357,7 +357,7 @@ Configuraci\'on de B0 & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
 
 \textbf{El impacto del protocolo de partici\'on ($-0.33$) es veintid\'os veces mayor que el impacto del ajuste de hiperpar\'ametros ($+0.015$)}. 
 
-En la partici\'on estratificada tradicional, las 14 fuentes aparecen simult\'aneamente en entrenamiento y prueba, arrojando una falsa sensaci\'on de precisi\'on con un intervalo diminuto ($\pm 0.0099$). Pero al evaluar fuera de fuente, con las 14 procedencias repartidas en 5 pliegues disjuntos mediante \texttt{StratifiedGroupKFold}, el Macro $F_1$ real desciende a $0.6026 \pm 0.1240$. Esta brecha cuantitativa de 0.34 puntos confirma que los clasificadores sobre conjuntos p\'ublicos se apoyan sustancialmente en la firma visual de la fuente.
+En la partici\'on estratificada tradicional, las 14 fuentes aparecen simult\'aneamente en entrenamiento y prueba, arrojando una falsa sensaci\'on de precisi\'on con un intervalo diminuto ($\pm 0.0099$). Pero al evaluar fuera de fuente, con las 14 procedencias repartidas en 5 pliegues disjuntos mediante \texttt{StratifiedGroupKFold}, el Macro $F_1$ real desciende a $0.6026 \pm 0.1240$. Esta brecha cuantitativa de 0.34 puntos confirma que un clasificador entrenado unicamente bajo los conjuntos p\'ublicos recopilados en este proyecto se apoya sustancialmente en la firma visual de la fuente, es su límite.
 
 \subsection{Estabilidad entre semillas}
 
@@ -424,7 +424,7 @@ Laboratorio (\texttt{lab}) & 532 & 96.80\% & 0.9423 \\
 \end{singlespace}
 \end{table}
 
-Sobre esa base comparable, la disparidad en exactitud es de \textbf{0.97 puntos porcentuales} y ambos \textit{Disparate Impact Ratio} —$0.9901$ en exactitud y $0.9604$ en Macro $F_1$— superan con holgura el umbral regulatorio del 80\% (Figura~\ref{fig:fairness_disparity}). El sentido de la disparidad se invierte seg\'un la m\'etrica: campo real acierta m\'as en conjunto, y laboratorio reparte mejor el acierto entre las tres clases.
+Sobre esa base comparable, la disparidad en exactitud es de \textbf{0.97 puntos porcentuales} y ambos \textit{Disparate Impact Ratio}, $0.9901$ en exactitud y $0.9604$ en Macro $F_1$, superan con holgura el umbral regulatorio del 80\% (Figura~\ref{fig:fairness_disparity}). El sentido de la disparidad se invierte seg\'un la m\'etrica: campo real acierta m\'as en conjunto, y laboratorio reparte mejor el acierto entre las tres clases.
 
 \begin{figure}[H]
 \centering
@@ -490,14 +490,22 @@ Control nulo (sin imagen) & Clase mayoritaria & 0.0\% & 26.14\% & 0.0 pp & — \
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\linewidth]{images/resultados/ablacion_control_nulo.png}
+\includegraphics[width=0.62\linewidth]{images/resultados/ablacion_control_nulo.png}
 \caption{Exactitud del modelo seg\'un la regi\'on visible frente a la l\'inea de azar nulo.}
 \label{fig:ablation_chart}
 \end{figure}
 
-\textbf{El anillo perif\'erico basta para acertar en 8 de cada 10 im\'agenes} (79.46\%, $+53.32$~pp sobre el azar) conservando el 69\% de la confianza original, pese a que el centro de la escena, donde se encuentra la l\'amina foliar en la pr\'actica totalidad del corpus, est\'a tapado en negro. El contexto exterior de la fotograf\'ia porta, por s\'i solo, una fracci\'on sustancial de la informaci\'on de clase.
+Responder siempre \texttt{healthy}, la clase m\'as frecuente con 1~311 de las 5~015 im\'agenes, ya acierta el \textbf{26.14\%} sin mirar un p\'ixel. Ese predictor constante es el control nulo y la columna de exceso mide lo que cada condici\'on a\~nade sobre \'el.
 
-Recortar el fondo mediante un segmentador autom\'atico a negro degrad\'o el Macro $F_1$ a 0.7191. Esa ca\'ida mezcla dos efectos: la p\'erdida del atajo de procedencia, y los errores de la propia segmentaci\'on, que sobre clases de fondo poco contrastado rechaza o recorta tejido leg\'itimo. La soluci\'on de ingenier\'ia adoptada consisti\'o en dise\~nar un \textbf{marco gu\'ia en la c\'amara m\'ovil} para que la l\'amina foliar ocupe el encuadre desde la captura.
+Al tapar el centro, donde el encuadre habitual del corpus sit\'ua la l\'amina foliar, el modelo conserva el \textbf{79.46\%}, esto es \textbf{$+53.32$ puntos sobre el nulo}.
+
+Queda establecido que \textbf{la regi\'on exterior porta por s\'i sola una fracci\'on sustancial de la informaci\'on de clase}, pero no que el fondo pese m\'as que la hoja: las dos condiciones no est\'an igualadas en \'area, ya que el anillo muestra 1.75 veces m\'as p\'ixeles que la caja central. La comparaci\'on rigurosa es la de cada condici\'on contra el nulo, y ambas lo superan, la ca\'ida de 18.45 puntos al tapar el centro demuestra que este aporta se\~nal propia.
+
+Cada repositorio se fotografi\'o con su propio suelo, luz y sensor, y cuatro de las catorce fuentes contienen una sola clase: \textbf{la periferia no predice la enfermedad, predice el repositorio, y el repositorio acota la enfermedad}. Es lo mismo que arroja desde otro \'angulo la Tabla~\ref{tab:kfold_results}, donde el Macro $F_1$ cae a 0.6026 al evaluar fuentes nunca vistas. 
+
+Con esto se puede concluir que en una parcela salvadore\~na el suelo y la luz no se parecen a los del corpus, de modo que esa evidencia deja de ayudar y puede confundir.
+
+Recortar el fondo mediante un segmentador autom\'atico a negro degrad\'o el Macro $F_1$ a 0.7191, esta ca\'ida mezcla dos efectos: la p\'erdida del atajo de procedencia, y los errores de la propia segmentaci\'on, que sobre clases de fondo poco contrastado rechaza o recorta tejido leg\'itimo.
 
 \subsection{Auditor\'ia visual con Grad-CAM y SHAP}
 
@@ -505,14 +513,14 @@ Para auditar cualitativamente la atenci\'on, se generaron mapas de activaci\'on 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\linewidth]{images/fairness/gradcam_samples.png}
+\includegraphics[width=0.70\linewidth]{images/fairness/gradcam_samples.png}
 \caption{Mapas de activaci\'on Grad-CAM en muestras de campo real y laboratorio.}
 \label{fig:gradcam_panel}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\linewidth]{images/xai/panel_compare_common_rust.png}
+\includegraphics[width=0.62\linewidth]{images/xai/panel_compare_common_rust.png}
 \caption{Panel comparado de interpretabilidad con segmentaci\'on SLIC: LIME, SHAP y Grad-CAM.}
 \label{fig:xai_compare}
 \end{figure}
@@ -542,7 +550,7 @@ Mancha Gris (GLS) & 26 & 0.570 & 0.639 & $-0.069$ \\
 \end{singlespace}
 \end{table}
 
-El perfil se calcul\'o sobre 270 im\'agenes (30 por clase), empleando como m\'ascara de hoja la segmentaci\'on producida por el modelo del repositorio \texttt{maize-doctor-segmenter} en lugar de un umbral crom\'atico. Las tres clases restantes —\textit{gusano cogollero}, \textit{necrosis letal} y \textit{deficiencia de potasio}— quedan fuera de la tabla porque su m\'ascara alcanza coberturas de entre 0.54 y 0.86 y el control de calidad rechaza entre el 37\% y el 57\% de sus im\'agenes, de modo que su ratio no es interpretable.
+El perfil se calcul\'o sobre 270 im\'agenes (30 por clase), empleando como m\'ascara de hoja la segmentaci\'on producida por el modelo del repositorio \texttt{maize-doctor-segmenter}. Las tres clases restantes —\textit{gusano cogollero}, \textit{necrosis letal} y \textit{deficiencia de potasio}— quedan fuera de la tabla porque su m\'ascara (debido a los límites del segmentador entrenado) alcanza coberturas de entre 0.54 y 0.86 y el control de calidad rechaza entre el 37\% y el 57\% de sus im\'agenes, de modo que su ratio no es interpretable.
 
 El resultado es que \textbf{el exceso medio es de $+0.037$ y su signo se reparte: tres clases por encima del azar y tres por debajo}. La atribuci\'on sobre la hoja no supera de forma consistente la que producir\'ia una atenci\'on repartida en proporci\'on al \'area. \'Unicamente la roya com\'un exhibe una concentraci\'on foliar netamente superior a su nivel de azar.
 
@@ -621,9 +629,9 @@ La aplicaci\'on incorpora cuatro innovaciones clave adaptadas al campo salvadore
 \item \textbf{C\'amara con marco gu\'ia (Figura~\ref{fig:app_cam}):} Para neutralizar el atajo del fondo descubierto en el an\'alisis de sesgos, el visor superpone la silueta de una hoja e instruye: \textit{«Ac\'erquese a 20--30 cm y llene el marco»}. La app recorta autom\'aticamente el 24\% central de la foto (3.02 MP a partir del sensor de 12.6 MP), descartando tres cuartas partes del fondo enga\~noso antes de inferir.
 \item \textbf{Detector OOD por distancia de Mahalanobis (Figura~\ref{fig:app_ood}):} Para evitar diagn\'osticos falsos frente a manos, tierra o malezas ajenas, el modelo extrae el vector de caracter\'isticas (1~280 dimensiones) y calcula la distancia relativa de Mahalanobis (RMD) reducida por PCA a 186 componentes. Si la distancia supera el percentil 95 calibrado ($31.47$), la pantalla muestra prudentemente: \textbf{«Imagen no reconocida»} en lugar de inventar una enfermedad.
 \item \textbf{M\'odulo de contribuci\'on comunitaria (Figura~\ref{fig:app_contrib}):} Permite al agricultor guardar fotos y etiquetas para subirlas al backend cuando haya se\~nal, resolviendo la brecha de datos con fotos genuinas de El Salvador.
-\item \textbf{Gu\'ia de severidad en lenguaje natural (Figura~\ref{fig:app_sev}):} El clasificador dice qu\'e tiene la hoja, pero no cu\'anto. Una hoja con tres p\'ustulas sueltas y otra con la l\'amina entera destruida salen de la red con la misma etiqueta y una confianza pr\'acticamente igual, porque el modelo nunca aprendi\'o a medir \'area foliar afectada. Y no lo aprendi\'o por una raz\'on sencilla, que es que las im\'agenes del corpus vienen etiquetadas por clase y nada m\'as. A\~nadirles un grado de da\~no no ser\'ia cuesti\'on de limpiar datos sino de sentar a un fitopat\'ologo a calificar imagen por imagen con la escala que corresponda a cada pat\'ogeno, que son distintas entre s\'i (la Cobb modificada para roya, la de Vieira \textit{et al.} para tiz\'on del norte, la de Brito \textit{et al.} para mancha gris, la ordinal del CIMMYT para necrosis letal, la de Davis \textit{et al.} para cogollero). Aun con ese trabajo hecho, repartir en tres grados unas clases que apenas rondan las 300 im\'agenes dejar\'ia celdas de dos d\'igitos, demasiado peque\~nas para entrenar y a\'un m\'as para evaluar con honestidad.
+\item \textbf{Gu\'ia de severidad en lenguaje natural (Figura~\ref{fig:app_sev}):} El clasificador dice qu\'e tiene la hoja, pero no cu\'anto. Una hoja con tres p\'ustulas sueltas y otra con la l\'amina entera destruida salen de la red con la misma etiqueta y una confianza pr\'acticamente igual, porque el modelo nunca aprendi\'o a medir \'area foliar afectada. Y no lo aprendi\'o por una raz\'on sencilla, que es que las im\'agenes del corpus vienen etiquetadas por clase y nada m\'as. A\~nadirles un grado de da\~no no ser\'ia cuesti\'on de limpiar datos sino de sentar a un fitopat\'ologo a calificar imagen por imagen con la escala que corresponda a cada pat\'ogeno, que son distintas entre s\'i (la Cobb modificada para roya, la de Vieira \textit{et al.} para tiz\'on del norte, la de Brito \textit{et al.} para mancha gris, la ordinal del CIMMYT para necrosis letal, la de Davis \textit{et al.} para cogollero). Aun con ese trabajo hecho, repartir en tres grados unas clases que apenas rondan las 300 im\'agenes dejar\'ia celdas de dos d\'igitos, demasiado peque\~nas para entrenar.
 
-La app cubre ese hueco haciendo que debajo del diagn\'ostico aparezcan los niveles de severidad de la enfermedad detectada, reescritos en lenguaje natural, y el agricultor compara su hoja con ellos y decide. Cada nivel indica cu\'anta hoja suele comprometer, qu\'e se ve a simple vista y qu\'e hacer al respecto seg\'un manejo integrado de plagas. Los textos provienen del cat\'alogo de escalas homologadas por CIMMYT, Embrapa, Iowa State University Extension e IPNI; se conservaron los umbrales y los nombres de los bioinsumos, que es lo que el productor va a pedir en la agroservicio, y se quitaron la nomenclatura binomial y las siglas patom\'etricas.
+La app cubre ese hueco haciendo que debajo del diagn\'ostico aparezcan los niveles de severidad de la enfermedad detectada, reescritos en lenguaje natural, y el agricultor compara su hoja con ellos y decide. Cada nivel indica cu\'anta hoja suele comprometer, qu\'e se ve a simple vista y qu\'e hacer al respecto seg\'un manejo integrado de plagas. Los textos provienen del cat\'alogo de escalas homologadas por CIMMYT, Embrapa, Iowa State University Extension e IPNI, se conservaron los umbrales y los nombres de los bioinsumos, que es lo que el productor va a pedir en la agroservicio, y se quitaron la nomenclatura binomial y las siglas patom\'etricas.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -654,29 +662,20 @@ La app cubre ese hueco haciendo que debajo del diagn\'ostico aparezcan los nivel
 
 \section{An\'alisis de Impacto Social y Recomendaciones de Pol\'itica P\'ublica}
 
-La viabilidad de una soluci\'on de inteligencia artificial en el sector agropecuario no se mide \'unicamente por su puntuaci\'on de F1 en un servidor, sino por su capacidad para transformar las condiciones de vida de los sectores m\'as vulnerables y encajar en las pol\'iticas p\'ublicas del pa\'is.
+La viabilidad de una soluci\'on de inteligencia artificial en el sector agropecuario no se mide \'unicamente por su puntuaci\'on de F1, sino por su capacidad para transformar las condiciones de vida de los sectores m\'as vulnerables y encajar en las pol\'iticas p\'ublicas del pa\'is.
 
-\subsection{El contexto socioecon\'omico del agro salvadore\~no}
+\subsection{Recomendaciones de pol\'itica p\'ublica aplicables}
 
-En El Salvador, la producci\'on de ma\'iz blanco es sin\'onimo de seguridad alimentaria. De los m\'as de 400~000 peque\~nos agricultores del pa\'is, m\'as del 80\% cultiva ma\'iz para autoconsumo familiar en parcelas de ladera bajo condiciones de temporal. Las p\'erdidas por plagas y patolog\'ias foliares golpean con crudeza desproporcionada a este sector:
-\begin{itemize}
-\item \textbf{Vulnerabilidad econ\'omica extrema:} La inversi\'on por manzana en semilla y fertilizante ronda los \$400--\$600 d\'olares. La p\'erdida de media cosecha por un brote no detectado de cogollero o tiz\'on empuja a la familia por debajo de la l\'inea de pobreza extrema y genera endeudamiento con prestamistas informales.
-\item \textbf{Uso indiscriminado e intoxicaci\'on por agroqu\'imicos:} Ante la duda diagn\'ostica, los campesinos aplican c\'octeles emp\'iricos de plaguicidas de etiqueta roja o amarilla, gastando dinero escaso, contaminando mantos acu\'iferos y provocando da\~nos cr\'onicos a la salud humana.
-\item \textbf{D\'eficit estructural de asistencia t\'ecnica:} El Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA) cuenta con un n\'umero limitado de extensionistas para atender a centenares de cantones. La relaci\'on supera en muchas zonas un t\'ecnico por cada 1~500 productores, haciendo imposible el monitoreo presencial continuo.
-\end{itemize}
+Para traducir los avances t\'ecnicos de este proyecto en acciones, se proponen cinco medidas de pol\'itica p\'ublica dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA:
 
-\subsection{Cinco recomendaciones de pol\'itica p\'ublica aplicables}
-
-Para traducir los avances t\'ecnicos de este proyecto en bienestar rural tangible, se proponen cinco medidas de pol\'itica p\'ublica dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA:
-
-\subsubsection{1. Adopci\'on de DoctorMaiz como herramienta oficial de extensi\'on}
-El MAG debe homologar la aplicaci\'on m\'ovil como herramienta de apoyo digital de bolsillo para los m\'as de 300 extensionistas y promotores agr\'icolas comunitarios del CENTA. Su funcionamiento offline permite que el t\'ecnico emita diagn\'osticos estandarizados en caser\'ios remotos de Caba\~nas o Moraz\'an sin consumir datos m\'oviles, complementando el juicio agron\'omico presencial y reduciendo el tiempo de atenci\'on en m\'as de un 60\%.
+\subsubsection{1. Adopci\'on a futuro de DoctorMaiz como herramienta oficial de extensi\'on}
+El MAG puede homologar la aplicaci\'on m\'ovil como herramienta de apoyo digital de bolsillo para los m\'as de 300 extensionistas y promotores agr\'icolas comunitarios del CENTA. Su funcionamiento offline permite que el t\'ecnico emita diagn\'osticos estandarizados en caser\'ios remotos de Caba\~nas o Moraz\'an sin consumir datos m\'oviles, complementando el juicio agron\'omico presencial y reduciendo el tiempo de atenci\'on.
 
 \subsubsection{2. Red Nacional de Alerta Fitosanitaria Temprana}
 Aprovechando el m\'odulo de sincronizaci\'on de la app, cada escaneo realizado por productores o extensionistas puede almacenar de forma an\'onima las coordenadas GPS aproximadas y la fecha del diagn\'ostico. Cuando el dispositivo detecte conexi\'on, esos registros alimentar\'ian un \textbf{Tablero Epidemiol\'ogico Nacional} en el MAG, detectando en tiempo real la dispersi\'on geogr\'afica de plagas cuarentenarias (como la necrosis letal o rebrotes de roya) para activar cordones fitosanitarios semanas antes de que se conviertan en desastres nacionales.
 
 \subsubsection{3. Creaci\'on del Banco Nacional Participativo de Datos Agr\'icolas}
-La auditor\'ia de procedencia de este proyecto demostr\'o que entrenar con fotos de \'Africa o India limita la generalizaci\'on en El Salvador. El Estado debe financiar a trav\'es del FITEA (Fondo de Investigaci\'on y Transferencia de Tecnolog\'ia Agropecuaria) brigadas de captura fotogr\'afica participativa, articuladas con estudiantes de la Universidad de El Salvador (UES) y escuelas agr\'icolas, para nutrir un repositorio soberano de im\'agenes de variedades locales (como el h\'ibrido H-59 y ma\'ices criollos), recalibrando peri\'odicamente los modelos para cerrar la brecha de dominio.
+La auditor\'ia de procedencia de este proyecto demostr\'o que entrenar con fotos de \'Africa o India limita la generalizaci\'on en El Salvador. El Estado puede financiar brigadas de captura fotogr\'afica participativa, articuladas con estudiantes de la Universidad de El Salvador (UES) y escuelas agr\'icolas, para nutrir un repositorio soberano de im\'agenes de variedades locales (como el h\'ibrido H-59 y ma\'ices criollos), recalibrando peri\'odicamente los modelos para cerrar la brecha de dominio que ha sido el principal hallazgo y limitaci\'on de la Etapa 2.
 
 \subsubsection{4. Campa\~nas comunitarias de alfabetizaci\'on digital agropecuaria}
 El despliegue de la aplicaci\'on debe acompa\~narse de talleres pr\'acticos en cooperativas agr\'icolas y ADESCOs, ense\~nando a los productores el uso correcto del marco gu\'ia de la c\'amara y la interpretaci\'on del detector OOD. La tecnolog\'ia debe presentarse como un \textit{«asistente de apoyo»} y no como un reemplazo del saber campesino, fomentando la confianza y evitando la exclusi\'on de adultos mayores o mujeres productoras.
@@ -692,20 +691,19 @@ La Etapa 2 de este proyecto de investigaci\'on consolida la transici\'on desde l
 
 \subsection{Conclusiones principales}
 \begin{enumerate}
-\item \textbf{Superaci\'on de metas de desempe\~no:} El ensamble heterog\'eneo por voto suave alcanz\'o un Macro $F_1$ de \textbf{0.9567} y una exactitud de \textbf{98.29\%}, superando con holgura el umbral de viabilidad del proyecto ($F_1 \geq 0.85$). M\'as importante a\'un, el \textbf{Macro Recall alcanz\'o 95.06\%}, garantizando una detecci\'on fitosanitaria segura con 100\% de recall en necrosis letal y $>98\%$ en roya y tiz\'on.
+\item \textbf{Superaci\'on de metas de desempe\~no:} El ensamble heterog\'eneo por voto suave alcanz\'o un Macro $F_1$ de \textbf{0.9567} y una exactitud de \textbf{98.29\%}, superando con holgura el umbral de viabilidad del proyecto ($F_1 \geq 0.85$). 
 \item \textbf{Resoluci\'on del cuello de botella de potasio:} La incorporaci\'on de nuevos datasets dirigidos y la funci\'on de p\'erdida \texttt{sqrt\_inverse} permitieron elevar el $F_1$ de \texttt{potassium\_deficiency} desde 0.49 (Etapa 1) hasta \textbf{0.8475}, mitigando el sesgo hacia las clases mayoritarias.
-\item \textbf{Descubrimiento cr\'itico sobre la brecha de dominio:} La validaci\'on cruzada agrupada por procedencia demostr\'o que evaluar fuera de fuente reduce el F1 a \textbf{0.6026}, evidenciando que las redes convolucionales son vulnerables a memorizar el fondo y la c\'amara de los repositorios p\'ublicos. Las intervenciones algor\'itmicas alcanzaron un techo: la soluci\'on definitiva reside en la captura de datos locales.
+\item \textbf{Descubrimiento cr\'itico sobre la brecha de dominio:} La validaci\'on cruzada agrupada por procedencia demostr\'o que evaluar fuera de fuente reduce el F1 a \textbf{0.6026}, evidenciando que las redes convolucionales son vulnerables a memorizar el fondo y la c\'amara de los repositorios p\'ublicos recopilados en este proyecto. Las intervenciones algor\'itmicas alcanzaron un techo, dando como conclusión que la soluci\'on definitiva es la captura de datos locales.
 \item \textbf{Prototipo m\'ovil de alta eficiencia:} Se logr\'o compilar \texttt{EfficientNet-Lite0} a Int8 ocupando apenas \textbf{3.56~MB}, con una latencia de inferencia de \textbf{60~ms} en un tel\'efono f\'isico Motorola edge 40 neo. El encuadre se resolvi\'o con un marco gu\'ia foliar y la salida qued\'o protegida por un detector de anomal\'ias OOD. Como el corpus no trae anotaciones de nivel de da\~no, la interfaz acompa\~na cada etiqueta con una gu\'ia de severidad escrita en lenguaje natural, que le devuelve al agricultor el juicio que el modelo no puede emitir.
 \end{enumerate}
 
 \subsection{Trabajo futuro y transici\'on a campo}
 
-Hacia las siguientes etapas del proyecto se plantean las siguientes prioridades:
 \begin{itemize}
-\item \textbf{Piloto de validaci\'on en cooperativas salvadore\~nas:} Desplegar la aplicaci\'on en campo con agricultores de los valles de Zapotit\'an y San Vicente en coordinaci\'on con el CENTA, evaluando la adopci\'on y usabilidad real del marco gu\'ia en condiciones de luz solar intensa.
+\item \textbf{Piloto de validaci\'on en cooperativas salvadore\~nas:} Desplegar la aplicaci\'on en campo con agricultores evaluando la adopci\'on y usabilidad real del marco gu\'ia en condiciones de luz solar intensa.
 \item \textbf{Alimentaci\'on del Banco de Datos Nacional:} Integrar las primeras 1~000 fotograf\'ias capturadas en parcelas locales mediante el m\'odulo de contribuci\'on para realizar un \textit{fine-tuning} regional de los pesos del modelo.
-\item \textbf{Anotaci\'on de severidad para predecir el grado de da\~no:} Calificar un subconjunto del corpus con las escalas diagram\'aticas homologadas, de la mano de fitopat\'ologos del CENTA, abrir\'ia la puerta a una cabeza de regresi\'on ordinal capaz de estimar el nivel adem\'as de la clase. La gu\'ia de autoevaluaci\'on dejar\'ia entonces de ser un sustituto y pasar\'ia a explicar lo que el modelo predice.
-\item \textbf{Modelos en cascada con segmentaci\'on liviana en servidor:} Evaluar en el backend en la nube la incorporaci\'on de un detector ligero (YOLOv8-Nano) que a\'isle la hoja antes del ensamble cuando se reciban im\'agenes con encuadres lejanos.
+\item \textbf{Anotaci\'on de severidad para predecir el grado de da\~no:} Calificar un subconjunto del corpus con las escalas diagram\'aticas homologadas, de la mano de fitopat\'ologos del CENTA, abrir\'ia la puerta a una cabeza de regresi\'on ordinal capaz de estimar el nivel adem\'as de la clase.
+\item \textbf{Modelos en cascada con segmentaci\'on liviana en servidor:} Evaluar en el backend en la nube la incorporaci\'on de un detector ligero (YOLOv8-Nano) que a\'isle la hoja antes del ensamble cuando se reciban im\'agenes con encuadres lejanos, para intentar mejorar la robustez frente a fotos de campo con mucho fondo.
 \end{itemize}
 
 \newpage
@@ -772,22 +770,5 @@ Selvaraju, R. R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., \& Batra, D. 
 Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. En \textit{Proceedings of the 36th International Conference on Machine Learning (ICML)} (pp. 6105--6114). Long Beach, CA, USA.
 
 \newpage
-
-\section*{Anexo. Fuentes Consolidadas y Reproducibilidad del C\'odigo}
-\addcontentsline{toc}{section}{Anexo. Fuentes Consolidadas y Reproducibilidad del C\'odigo}
-\label{anexo:reproducibilidad}
-
-\subsection*{Comandos de reproducci\'on r\'apida}
-
-El proyecto utiliza un entorno reproducible basado en un archivo \texttt{Makefile} centralizado y scripts parametrizados:
-
-\begin{itemize}
-\item \textbf{Descarga del dataset limpio:} \texttt{make download-dataset} (descarga autom\'atica de shards desde Hugging Face Hub con descompresi\'on a \texttt{data/clean/}).
-\item \textbf{Generaci\'on de splits deterministas:} \texttt{make splits} (partici\'on jer\'arquica por clase y entorno con semilla fija 42 hacia \texttt{outputs/splits/seed\_42/}).
-\item \textbf{Entrenamiento del pipeline principal en GPU:} \texttt{make modal-train-main MAIN\_MODELS=efficientnet\_lite0 MAIN\_EPOCHS=60} (lanza la ejecuci\'on remota en Modal sobre NVIDIA A10G).
-\item \textbf{Evaluaci\'on del ensamble multimodelo:} \texttt{python scripts/pipeline/evaluate\_ensemble.py --models efficientnet\_lite0 efficientnet\_b0 shufflenet\_v2\_x1\_0 --checkpoints <checkpoints>}.
-\item \textbf{Exportaci\'on m\'ovil TFLite Int8:} \texttt{make export-main MAIN\_MODELS=efficientnet\_lite0 EXPORT\_FORMATS=tflite QUANTIZE=int8} (genera \texttt{model\_int8.tflite}, \texttt{labels.json} y valida paridad num\'erica).
-\item \textbf{C\'alculo de estad\'isticas del detector OOD:} \texttt{make compute-ood-stats MAIN\_MODELS=efficientnet\_lite0} (produce \texttt{ood\_stats.json} con centroides y matriz de covarianza).
-\end{itemize}
 
 \end{document}
