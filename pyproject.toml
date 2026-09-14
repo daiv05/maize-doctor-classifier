@@ -2,6 +2,13 @@
 name = "maize-doctor-classifier"
 version = "0.1.0"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Josias Abner Rivas Fuentes" },
+    { name = "David Alejandro Deras Cerros" },
+    { name = "Elmer Edenilson Rosales Molina" },
+]
 dependencies = [
     "torch>=2.4,<2.13",
     "torchvision>=0.17,<0.28",
