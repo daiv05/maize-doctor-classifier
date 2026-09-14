@@ -77,7 +77,10 @@ La auditor\'ia de equidad (\textit{Fairness}) confirm\'o paridad entre laborator
 \noindent\textbf{Enlaces del proyecto.} El c\'odigo, los pesos exportados y la documentaci\'on completa est\'an disponibles p\'ublicamente:
 
 \begin{itemize}
-\item Repositorio: \url{https://github.com/daiv05/maize-doctor-classifier}
+\item Clasificador (\textit{pipeline} de entrenamiento, evaluaci\'on y exportaci\'on): \url{https://github.com/daiv05/maize-doctor-classifier}
+\item Aplicaci\'on m\'ovil \textbf{DoctorMaiz} (React Native, inferencia \textit{offline}): \url{https://github.com/Edenilson-Molina/maize-doctor-app}
+\item Segmentador foliar (detecci\'on y segmentaci\'on de instancias de hoja): \url{https://github.com/abner-rivas/maize-doctor-segmenter-leaf}
+\item API (cuenta de usuario, sincronizaci\'on opcional y avisos de actualizaci\'on): \url{https://github.com/daiv05/maize-doctor-api}
 \item Sitio web y documentaci\'on t\'ecnica: \url{https://doctor-maiz.deras.dev/es}
 \item Dataset consolidado en Hugging Face: \url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}
 \item Artefactos de evaluaci\'on y modelos exportados: \url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
@@ -89,7 +92,7 @@ La auditor\'ia de equidad (\textit{Fairness}) confirm\'o paridad entre laborator
 
 El cultivo de ma\'iz representa la base alimentaria y econ\'omica de m\'as de dos millones de salvadore\~nos en el sector rural. De acuerdo con datos del Ministerio de Agricultura y Ganader\'ia (MAG), m\'as del 82\% de los productores operan en r\'egimen de subsistencia en parcelas familiares menores a dos manzanas. En estas condiciones, una infecci\'on desatendida de tiz\'on foliar o un ataque de gusano cogollero puede destruir entre el 50\% y el 70\% del rendimiento agr\'icola en pocas semanas, como se reflej\'o en la ca\'ida acumulada de un tercio de la producci\'on nacional entre 2021 y 2023.
 
-En la \textbf{Etapa 1} de este proyecto de investigaci\'on se sentaron las bases para abordar esta problem\'atica mediante inteligencia artificial en el borde (\textit{Edge AI}). Se recopil\'o y depur\'o un corpus inicial de 31~622 im\'agenes provenientes de repositorios p\'ublicos internacionales y se fijaron modelos de referencia (\textit{baselines}) entrenados bajo un r\'egimen controlado con un tope de 1~500 im\'agenes por clase (10~020 im\'agenes efectivas). Esos experimentos iniciales demostraron la viabilidad del enfoque: las tres arquitecturas ligeras evaluadas preentrenadas en ImageNet alcanzaron la meta preliminar de Macro $F_1 \geq 0.85$, lideradas por EfficientNet-B0 ($0.9146$), ShuffleNet-V2 ($0.9030$) y EfficientNet-Lite0 ($0.8951$).
+En la \textbf{Etapa 1} de este proyecto de investigaci\'on se sentaron las bases para abordar esta problem\'atica mediante inteligencia artificial (\textit{Edge AI}). Se recopil\'o y depur\'o un corpus inicial de 31~622 im\'agenes provenientes de repositorios p\'ublicos internacionales y se fijaron modelos de referencia (\textit{baselines}) entrenados bajo un r\'egimen controlado con un tope de 1~500 im\'agenes por clase (10~020 im\'agenes efectivas). Esos experimentos iniciales demostraron la viabilidad del enfoque: las tres arquitecturas ligeras evaluadas preentrenadas en ImageNet alcanzaron la meta preliminar de Macro $F_1 \geq 0.85$, lideradas por EfficientNet-B0 ($0.9146$), ShuffleNet-V2 ($0.9030$) y EfficientNet-Lite0 ($0.8951$).
 
 No obstante, los an\'alisis de la primera etapa pusieron al descubierto limitaciones severas que definieron la hoja de ruta para la presente Etapa 2:
 \begin{enumerate}
@@ -105,7 +108,7 @@ Para responder a estos retos, en esta \textbf{Etapa 2} se ampli\'o el corpus a \
 
 \section{Optimizaci\'on de Hiperpar\'ametros}
 
-El ajuste manual de hiperpar\'ametros en redes neuronales profundas resulta emp\'iricamente ineficiente y con frecuencia desemboca en configuraciones sub\'optimas o en un sobreajuste inadvertido. En esta etapa se desarroll\'o un pipeline automatizado de \textbf{Optimizaci\'on Bayesiana de Hiperpar\'ametros (HPO)} implementado con la librer\'ia \textbf{Optuna}, ejecutando m\'ultiples ensayos (\textit{trials}) en paralelo sobre instancias GPU NVIDIA A10G (24~GB VRAM) en la nube mediante Modal.
+En esta etapa se desarroll\'o un pipeline automatizado de \textbf{Optimizaci\'on Bayesiana de Hiperpar\'ametros (HPO)} implementado con la librer\'ia \textbf{Optuna}, ejecutando m\'ultiples ensayos (\textit{trials}) en paralelo sobre instancias GPU NVIDIA A10G (24~GB VRAM) en la nube mediante Modal.
 
 \subsection{Metodolog\'ia de b\'usqueda y espacio de configuraci\'on}
 
@@ -158,7 +161,7 @@ De los 15 ensayos corridos sobre la arquitectura de referencia EfficientNet-B0, 
 \end{minipage}
 \end{figure}
 
-\subsection{Hallazgos clave e impacto vs. Baseline}
+\subsection{Hallazgos clave e impacto vs. Baseline Etapa 2}
 
 El an\'alisis de importancia derivado del estudio (Figura~\ref{fig:param_importance}) y la comparaci\'on de resultados arrojaron tres conclusiones de alto valor:
 \begin{enumerate}
@@ -167,17 +170,17 @@ El an\'alisis de importancia derivado del estudio (Figura~\ref{fig:param_importa
 \item \textbf{Descarte de CLAHE:} Optuna determin\'o que la ecualizaci\'on adaptativa no aportaba ventajas (\texttt{clahe = False}), demostrando que las capas convolucionales aprenden invarianza a la iluminaci\'on de forma intr\'inseca.
 \end{enumerate}
 
-La configuraci\'on \'optima obtenida (Trial \#12) demostr\'o una \textbf{mejora significativa frente al baseline} de la primera etapa sobre el conjunto de prueba independiente (Tabla~\ref{tab:opt_vs_base}).
+La configuraci\'on \'optima obtenida (Trial \#12) demostr\'o una \textbf{mejora significativa frente al baseline de esta nueva etapa (con el dataset completo)} sobre el conjunto de prueba independiente (Tabla~\ref{tab:opt_vs_base}).
 
 \begin{table}[H]
-\caption{Comparativa cuantitativa: Baseline vs. Configuraci\'on Optimizada (Optuna)}
+\caption{Comparativa cuantitativa: Baseline Etapa 2 Sin Optuna vs. Configuraci\'on Optimizada (Optuna)}
 \label{tab:opt_vs_base}
 \centering
 \small
 \begin{singlespace}
 \begin{tabular}{lccc}
 \toprule
-\textbf{M\'etrica / Hiperpar\'ametro} & \textbf{Baseline (Etapa 1)} & \textbf{Optimizada Optuna} & \textbf{Delta / Impacto} \\
+\textbf{M\'etrica / Hiperpar\'ametro} & \textbf{Sin Optuna} & \textbf{Optimizada Optuna} & \textbf{Delta / Impacto} \\
 \midrule
 Macro $F_1$ en Validaci\'on & 0.9551 & \textbf{0.9553} & +0.02 pp \\
 \textbf{Macro $F_1$ en Prueba Retenida} & 0.9426 & \textbf{0.9483} & \textbf{+0.57 pp netos} \\
@@ -279,14 +282,16 @@ El aporte m\'as contundente del ensamble reside en el \textbf{Macro Recall de 95
 Estos resultados sustentan una arquitectura de despliegue en dos niveles:
 \begin{itemize}
 \item \textbf{Nivel 1 (M\'ovil Offline):} En la parcela sin internet, el tel\'efono ejecuta \texttt{EfficientNet-Lite0} cuantizado a Int8, entregando respuestas en 60~ms con un s\'olido $F_1$ de 0.9468.
-\item \textbf{Nivel 2 (Nube / API para Extensi\'on):} Cuando hay conectividad o cuando t\'ecnicos agr\'icolas revisan diagn\'osticos en el servidor, el backend corre el \textbf{ensamble completo} alcanzando el 95.67\% de $F_1$ para resolver casos complejos.
+\item \textbf{Nivel 2 (Nube / API para Extensi\'on):} Cuando hay conectividad o cuando t\'ecnicos agr\'icolas revisan diagn\'osticos en el servidor, un backend podría correr el \textbf{ensamble completo} alcanzando el 95.67\% de $F_1$ para resolver casos complejos.
 \end{itemize}
+
+Cabe aclarar que para este proyecto solo se despleg\'o el nivel 1 en la aplicaci\'on m\'ovil \textbf{DoctorMaiz}, mientras que el nivel 2 queda como una opci\'on futura para extensi\'on de servicios.
 
 \newpage
 
 \section{Evaluaci\'on Rigurosa y M\'etricas Finales}
 
-Una evaluaci\'on honesta en visi\'on artificial requiere poner a prueba los l\'imites del sistema frente a diferentes protocolos de partici\'on de datos, examinando si los indicadores cuantitativos reflejan estabilidad matem\'atica o simples coincidencias en los datos de prueba.
+Una evaluaci\'on honesta en visi\'on artificial requiere poner a prueba los l\'imites del sistema frente a diferentes protocolos de partici\'on de datos, examinando si los indicadores reflejan estabilidad matem\'atica o simples coincidencias en los datos de prueba.
 
 \subsection{Evaluaci\'on sobre el conjunto de prueba retenido}
 
@@ -350,7 +355,7 @@ Configuraci\'on de B0 & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
 \end{singlespace}
 \end{table}
 
-El resultado es categ\'orico: \textbf{el impacto del protocolo de partici\'on ($-0.33$) es veintid\'os veces mayor que el impacto del ajuste de hiperpar\'ametros ($+0.015$)}. 
+\textbf{El impacto del protocolo de partici\'on ($-0.33$) es veintid\'os veces mayor que el impacto del ajuste de hiperpar\'ametros ($+0.015$)}. 
 
 En la partici\'on estratificada tradicional, las 14 fuentes aparecen simult\'aneamente en entrenamiento y prueba, arrojando una falsa sensaci\'on de precisi\'on con un intervalo diminuto ($\pm 0.0099$). Pero al evaluar fuera de fuente (\textit{Leave-One-Source-Out}), el Macro $F_1$ real desciende a $0.6026 \pm 0.1240$. Esta brecha cuantitativa de 0.34 puntos confirma que los clasificadores sobre conjuntos p\'ublicos se apoyan sustancialmente en la firma visual de la fuente.
 
@@ -443,7 +448,7 @@ Control nulo (sin imagen) & Clase mayoritaria & 26.14\% & 0.0 pp & — \\
 \label{fig:ablation_chart}
 \end{figure}
 
-El hallazgo es contundente: \textbf{el fondo por s\'i solo predice mejor que la hoja por s\'i sola (79.46\% vs. 42.25\%)}. Al tapar la hoja entera, la red retiene el 69\% de su confianza y acierta casi 8 de cada 10 veces, apoy\'andose en el suelo o la iluminaci\'on. 
+\textbf{El fondo por s\'i solo predice mejor que la hoja por s\'i sola (79.46\% vs. 42.25\%)}. Al tapar la hoja entera, la red retiene el 69\% de su confianza y acierta casi 8 de cada 10 veces, apoy\'andose en el suelo o la iluminaci\'on. 
 
 Intentar recortar el fondo mediante un segmentador autom\'atico a negro degrad\'o el Macro $F_1$ a 0.7191, confirmando que eliminar el contexto destruye referencias \'utiles. La soluci\'on de ingenier\'ia adoptada consisti\'o en dise\~nar un \textbf{marco gu\'ia en la c\'amara m\'ovil} para forzar al usuario a llenar el cuadro con la hoja.
 
@@ -510,7 +515,7 @@ La inferencia toma apenas \textbf{60 milisegundos}, cumpliendo con holgura extre
 
 \subsection{Interfaz y soluciones de Experiencia de Usuario (UX)}
 
-La aplicaci\'on incorpora tres pantallas e innovaciones clave adaptadas al campo salvadore\~no:
+La aplicaci\'on incorpora cuatro innovaciones clave adaptadas al campo salvadore\~no, cada una respondiendo a una limitaci\'on concreta detectada en el an\'alisis del modelo:
 
 \begin{figure}[H]
 \centering
@@ -540,6 +545,7 @@ La aplicaci\'on incorpora tres pantallas e innovaciones clave adaptadas al campo
 \item \textbf{C\'amara con marco gu\'ia (Figura~\ref{fig:app_cam}):} Para neutralizar el atajo del fondo descubierto en el an\'alisis de sesgos, el visor superpone la silueta de una hoja e instruye: \textit{«Ac\'erquese a 20--30 cm y llene el marco»}. La app recorta autom\'aticamente el 24\% central de la foto (3.02 MP a partir del sensor de 12.6 MP), descartando tres cuartas partes del fondo enga\~noso antes de inferir.
 \item \textbf{Detector OOD por distancia de Mahalanobis (Figura~\ref{fig:app_ood}):} Para evitar diagn\'osticos falsos frente a manos, tierra o malezas ajenas, el modelo extrae el vector de caracter\'isticas (1~280 dimensiones) y calcula la distancia relativa de Mahalanobis (RMD) reducida por PCA a 186 componentes. Si la distancia supera el percentil 95 calibrado ($31.47$), la pantalla muestra prudentemente: \textbf{«Imagen no reconocida»} en lugar de inventar una enfermedad.
 \item \textbf{M\'odulo de contribuci\'on comunitaria (Figura~\ref{fig:app_contrib}):} Permite al agricultor guardar fotos y etiquetas para subirlas al backend cuando haya se\~nal, resolviendo la brecha de datos con fotos genuinas de El Salvador.
+\item \textbf{Gu\'ia de severidad en lenguaje llano:} El clasificador responde \textit{qu\'e} tiene la hoja, no \textit{cu\'anto}. Sus salidas son una clase y una confianza, y ninguna mide \'area foliar afectada, n\'umero de lesiones ni grado de defoliaci\'on: dos hojas con tres p\'ustulas y con la l\'amina destruida reciben el mismo diagn\'ostico y una confianza parecida. No se entren\'o un modelo de niveles de da\~no porque el corpus consolidado trae una sola etiqueta por imagen y ninguna anotaci\'on de severidad; producirla no es trabajo de limpieza sino de calificaci\'on experta, pues cada pat\'ogeno se punt\'ua con su propia escala diagram\'atica validada (Cobb modificada para roya, Vieira \textit{et al.} para tiz\'on del norte, Brito \textit{et al.} para mancha gris, la ordinal 1--5 del CIMMYT para necrosis letal y la 1--9 de Davis \textit{et al.} para cogollero), y partir en tres grados clases que rondan las 300 im\'agenes habr\'ia dejado celdas de dos d\'igitos, insuficientes para entrenar y para evaluar. Para cubrir ese vac\'io sin fingir una medici\'on, debajo de cada resultado de inferencia la app despliega los niveles de severidad de la clase diagnosticada traducidos a lenguaje llano —cu\'anta hoja compromete cada uno, qu\'e se ve y qu\'e hacer seg\'un manejo integrado de plagas— y advierte de forma expl\'icita: \textbf{«La app no mide qu\'e tan avanzado est\'a el da\~no»}. El contenido reescribe el cat\'alogo de escalas homologadas por CIMMYT, Embrapa, Iowa State University Extension e IPNI, conservando los umbrales num\'ericos y los nombres de los bioinsumos pero eliminando la nomenclatura binomial y las siglas patom\'etricas. El grado lo juzga el agricultor comparando su hoja, y esa elecci\'on no se registra ni se presenta como predicci\'on del modelo.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -604,7 +610,7 @@ La Etapa 2 de este proyecto de investigaci\'on consolida la transici\'on desde l
 \item \textbf{Superaci\'on de metas de desempe\~no:} El ensamble heterog\'eneo por voto suave alcanz\'o un Macro $F_1$ de \textbf{0.9567} y una exactitud de \textbf{98.29\%}, superando con holgura el umbral de viabilidad del proyecto ($F_1 \geq 0.85$). M\'as importante a\'un, el \textbf{Macro Recall alcanz\'o 95.06\%}, garantizando una detecci\'on fitosanitaria segura con 100\% de recall en necrosis letal y $>98\%$ en roya y tiz\'on.
 \item \textbf{Resoluci\'on del cuello de botella de potasio:} La incorporaci\'on de nuevos datasets dirigidos y la funci\'on de p\'erdida \texttt{sqrt\_inverse} permitieron elevar el $F_1$ de \texttt{potassium\_deficiency} desde 0.49 (Etapa 1) hasta \textbf{0.8475}, mitigando el sesgo hacia las clases mayoritarias.
 \item \textbf{Descubrimiento cr\'itico sobre la brecha de dominio:} La validaci\'on cruzada agrupada por procedencia demostr\'o que evaluar fuera de fuente reduce el F1 a \textbf{0.6026}, evidenciando que las redes convolucionales son vulnerables a memorizar el fondo y la c\'amara de los repositorios p\'ublicos. Las intervenciones algor\'itmicas alcanzaron un techo: la soluci\'on definitiva reside en la captura de datos locales.
-\item \textbf{Prototipo m\'ovil de alta eficiencia:} Se logr\'o compilar \texttt{EfficientNet-Lite0} a Int8 ocupando apenas \textbf{3.56~MB}, con una latencia de inferencia de \textbf{60~ms} en un tel\'efono f\'isico Motorola edge 40 neo, resolviendo el encuadre mediante un marco gu\'ia foliar y protegiendo la salida con un detector de anomal\'ias OOD por distancia de Mahalanobis.
+\item \textbf{Prototipo m\'ovil de alta eficiencia:} Se logr\'o compilar \texttt{EfficientNet-Lite0} a Int8 ocupando apenas \textbf{3.56~MB}, con una latencia de inferencia de \textbf{60~ms} en un tel\'efono f\'isico Motorola edge 40 neo, resolviendo el encuadre mediante un marco gu\'ia foliar, protegiendo la salida con un detector de anomal\'ias OOD por distancia de Mahalanobis y complementando la etiqueta con una gu\'ia de severidad en lenguaje llano que suple, en la interfaz, la ausencia de anotaciones de nivel de da\~no en el corpus.
 \end{enumerate}
 
 \subsection{Trabajo futuro y transici\'on a campo}
@@ -613,6 +619,7 @@ Hacia las siguientes etapas del proyecto se plantean las siguientes prioridades:
 \begin{itemize}
 \item \textbf{Piloto de validaci\'on en cooperativas salvadore\~nas:} Desplegar la aplicaci\'on en campo con agricultores de los valles de Zapotit\'an y San Vicente en coordinaci\'on con el CENTA, evaluando la adopci\'on y usabilidad real del marco gu\'ia en condiciones de luz solar intensa.
 \item \textbf{Alimentaci\'on del Banco de Datos Nacional:} Integrar las primeras 1~000 fotograf\'ias capturadas en parcelas locales mediante el m\'odulo de contribuci\'on para realizar un \textit{fine-tuning} regional de los pesos del modelo.
+\item \textbf{Anotaci\'on de severidad para predecir el grado de da\~no:} Calificar un subconjunto del corpus con las escalas diagram\'aticas homologadas, en coordinaci\'on con fitopat\'ologos del CENTA, y entrenar una cabeza de regresi\'on ordinal que estime el nivel adem\'as de la clase. La gu\'ia de autoevaluaci\'on pasar\'ia entonces de sustituto a explicaci\'on de la predicci\'on.
 \item \textbf{Modelos en cascada con segmentaci\'on liviana en servidor:} Evaluar en el backend en la nube la incorporaci\'on de un detector ligero (YOLOv8-Nano) que a\'isle la hoja antes del ensamble cuando se reciban im\'agenes con encuadres lejanos.
 \end{itemize}
 

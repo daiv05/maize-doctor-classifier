@@ -41,6 +41,8 @@ La distancia entre 0.9468 y 0.6026 es la brecha de dominio: dentro de las condic
 
 **Equidad.** Macro F1 de 0.9298 en campo real frente a 0.8865 en laboratorio sobre clases con soporte, con un *disparate impact ratio* de 0.9534, por encima de la regla del 80 %. Detalle completo en [FAIRNESS_REPORT.md](FAIRNESS_REPORT.md).
 
+**Alcance: clase, no severidad.** El clasificador responde qué tiene la hoja, no cuánto. No se entrenó un modelo de niveles de daño porque las 31 623 imágenes de `data/clean/` traen una sola etiqueta por imagen y ninguna anotación de severidad: producirla exige un fitopatólogo aplicando la escala diagramática propia de cada patógeno, y partir en tres grados clases que rondan las 300 imágenes habría dejado celdas de dos dígitos. La app compensa esa limitación con una guía de autoevaluación que muestra los niveles del en lenguaje natural.
+
 ---
 
 ## Clases Objetivo
@@ -296,6 +298,7 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 - [x] Exportación a ONNX/TFLite Int8 con validación de paridad entre runtimes
 - [x] Detector fuera de dominio (Mahalanobis relativo) y sincronización con la app
 - [x] Aplicación Android con TensorFlow Lite, validada en dispositivo físico
+- [x] Guía de severidad en lenguaje llano dentro de la app, frente a la ausencia de etiquetas de nivel de daño
 
 ---
 
