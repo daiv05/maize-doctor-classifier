@@ -126,27 +126,16 @@ El proyecto avanza en fases iterativas siguiendo el marco **CRISP-DM**:
 
 ## Pipeline de Machine Learning
 
-El código vive en `src/` (librería instalable, `pip install -e .`) y `scripts/` (entrypoints).
-Sobre el mismo dataset limpio (`clean/`) conviven dos pipelines paralelos:
+El código vive en `src/` (librería instalable, `pip install -e .`) y `scripts/` (entrypoints). Sobre el mismo dataset limpio (`clean/`) conviven dos pipelines paralelos:
 
-- **Baselines** (`scripts/pipeline/train_baselines.py`): entrenado sobre el perfil `baseline`
-  (`config/dataset.yaml -> baseline:`, 9 clases, cap de 1 500 imágenes por clase) con tres
-  arquitecturas canónicas pensadas para comparar rápido y barato; ver
-  [Baselines](docs/es/baselines/index.md).
-- **Pipeline principal** (`scripts/pipeline/train.py`): entrenamiento completo sobre el corpus,
-  con optimización de hiperparámetros vía Optuna, ensamble por voto suave, validación cruzada
-  K-Fold, auditoría de equidad y exportación a ONNX/TFLite.
+- **Baselines** (`scripts/pipeline/train_baselines.py`): entrenado sobre el perfil `baseline` (`config/dataset.yaml -> baseline:`, 9 clases, cap de 1 500 imágenes por clase) con tres arquitecturas canónicas pensadas para comparar rápido y barato; ver [Baselines](docs/es/baselines/index.md).
+- **Pipeline principal** (`scripts/pipeline/train.py`): entrenamiento completo sobre el corpus, con optimización de hiperparámetros vía Optuna, ensamble por voto suave, validación cruzada K-Fold, auditoría de equidad y exportación a ONNX/TFLite.
 
 Guía de instalación local (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md).
 
 ### Del checkpoint al teléfono
 
-`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes.
-El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las
-features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula los
-centroides, la covarianza y el umbral de Mahalanobis que la app usa para rechazar imágenes que
-no son hojas de maíz. `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` +
-`ood_stats.json` a la app verificando el hash.
+`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes. El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula los centroides, la covarianza y el umbral de Mahalanobis que la app usa para rechazar imágenes que no son hojas de maíz. `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` + `ood_stats.json` a la app verificando el hash.
 
 | Arquitectura | FP32 | Int8 | Reducción |
 |---|:---:|:---:|:---:|
@@ -158,14 +147,9 @@ no son hojas de maíz. `sync_mobile_model.py` copia el trío `.tflite` + `labels
 
 ## Comandos
 
-Todos los comandos usan `make` (detecta Windows/Linux automáticamente). El nombre del target
-dice dónde corre y sobre qué pipeline: prefijo `modal-` = GPU en la nube (sin prefijo = local),
-sufijo `-baselines` = runs de baselines (variable `MODELS`), sufijo `-main` = runs del pipeline
-principal (variable `MAIN_MODELS`). `make help` los lista agrupados.
+Todos los comandos usan `make` (detecta Windows/Linux automáticamente). El nombre del target dice dónde corre y sobre qué pipeline: prefijo `modal-` = GPU en la nube (sin prefijo = local), sufijo `-baselines` = runs de baselines (variable `MODELS`), sufijo `-main` = runs del pipeline principal (variable `MAIN_MODELS`). `make help` los lista agrupados.
 
-Variables comunes: `MODELS` / `MAIN_MODELS` (nombre o "all"), `EPOCHS` / `MAIN_EPOCHS`,
-`NO_CAP=1` / `MAX_PER_CLASS=<n>` (override del tope de imágenes por clase del perfil baseline),
-`RUN` (run_id específico), `SAMPLE_SIZE`.
+Variables comunes: `MODELS` / `MAIN_MODELS` (nombre o "all"), `EPOCHS` / `MAIN_EPOCHS`, `NO_CAP=1` / `MAX_PER_CLASS=<n>` (override del tope de imágenes por clase del perfil baseline), `RUN` (run_id específico), `SAMPLE_SIZE`.
 
 ### Locales: setup y datos
 
@@ -219,8 +203,7 @@ make explain-global-main [MAIN_MODELS=<nombre> RUN=<id> SAMPLE_SIZE=<n>]    # pe
 
 ### Modal (GPU en la nube)
 
-Misma CLI que los comandos locales: cualquier combinación de banderas que funcione en local
-funciona igual en Modal. Detalle completo en [docs/es/deployment/modal.md](docs/es/deployment/modal.md).
+Misma CLI que los comandos locales: cualquier combinación de banderas que funcione en local funciona igual en Modal. Detalle completo en [docs/es/deployment/modal.md](docs/es/deployment/modal.md).
 
 ```bash
 make modal-seed                    # sube clean/ al Volume (una vez); FORCE=1 lo vacía y re-descarga
@@ -291,8 +274,7 @@ maize-doctor-classifier/
 └── pyproject.toml
 ```
 
-Documentación completa construida con VitePress (`npm install && npm run docs:dev`, disponible
-en `http://localhost:5173`).
+Documentación completa construida con VitePress (`npm install && npm run docs:dev`, disponible en `http://localhost:5173`).
 
 ---
 
@@ -321,11 +303,6 @@ en `http://localhost:5173`).
 
 El código de este repositorio se distribuye bajo la licencia MIT. Ver [LICENSE](LICENSE).
 
-La licencia MIT cubre **el código, no los datos**. Los 8 datasets consolidados conservan sus
-licencias originales, varias de ellas más restrictivas: `Maize in Field`, `Maize Diseases` y
-`CropDG Unified Multidomain` son CC BY-NC-SA 4.0, que prohíbe el uso comercial y obliga a
-compartir los derivados en los mismos términos. Cualquier redistribución del corpus, de los
-splits o de artefactos derivados de esas fuentes queda sujeta a esos términos, no a MIT. La
-licencia de cada fuente está documentada en la tabla de datasets y en su página individual.
+La licencia MIT cubre **el código, no los datos**. Los 8 datasets consolidados conservan sus licencias originales, varias de ellas más restrictivas: `Maize in Field`, `Maize Diseases` y `CropDG Unified Multidomain` son CC BY-NC-SA 4.0, que prohíbe el uso comercial y obliga a compartir los derivados en los mismos términos. Cualquier redistribución del corpus, de los splits o de artefactos derivados de esas fuentes queda sujeta a esos términos, no a MIT. La licencia de cada fuente está documentada en la tabla de datasets y en su página individual.
 
 Proyecto académico desarrollado en la Universidad de El Salvador.
