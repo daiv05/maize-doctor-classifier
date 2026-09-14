@@ -22,7 +22,7 @@ La evaluación comenzó comparando cómo responde el modelo frente a dos tipos d
 
 A primera vista, si se calcula un promedio ciego entre todas las clases para el subgrupo de laboratorio, el número parecería desplomarse. Sin embargo, al auditar los datos encontramos una razón estructural evidente: **en los datasets públicos disponibles, solo 3 de las 9 clases tienen fotos de laboratorio** (*common_rust*, *gray_leaf_spot* y *northern_corn_leaf_blight*). Las otras seis clases provienen exclusivamente de tomas directas en campo.
 
-Al medir el rendimiento honesto sobre las clases que sí existen en cada entorno, la disparidad es mínima ($\Delta \text{Acc} = 1.24 \%$) y el índice de impacto dispar ($DIR = 0.9778$) supera con holgura el umbral regulatorio del 80 %.
+Ese desequilibrio hace que el macro $F_1$ de laboratorio promedie sobre tres clases y el de campo real sobre nueve: el cociente entre ambos no mide disparidad, sino la distinta composición de cada promedio. La comparación válida restringe los dos subgrupos a las tres clases compartidas, y ahí la disparidad es mínima ($\Delta \text{Acc} = 0.97 \%$), con índices de impacto dispar de $DIR = 0.9901$ en exactitud y $DIR = 0.9604$ en macro $F_1$, ambos con holgura sobre el umbral regulatorio del 80 %.
 
 ![Matrices de Confusión Desagregadas](/fairness/disaggregated_confusion_matrices.png)
 
@@ -36,14 +36,18 @@ Una de las auditorías más reveladoras del proyecto fue someter al modelo a una
 
 Tapamos partes de la foto con máscaras neutras y medimos cómo reaccionaba el modelo:
 
-| Condición evaluada | Qué ve el modelo | Exactitud ($Acc$) | Retención de confianza |
-|---|---|:---:|:---:|
-| **Imagen original completa** | Hoja y fondo completos | **97.91 %** | 100.0 % |
-| **Oclusión central (60 %)** | **Solo el contorno y la periferia** (hoja tapada) | **79.46 %** | 69.16 % |
-| **Oclusión periférica (40 %)** | **Solo el centro** (fondo y bordes tapados) | **42.25 %** | 42.66 % |
-| *Línea base de azar* | *Adivinar siempre la clase más frecuente* | *26.14 %* | — |
+| Condición evaluada | Qué ve el modelo | Área visible | Exactitud ($Acc$) | Retención de confianza |
+|---|---|:---:|:---:|:---:|
+| **Imagen original completa** | Hoja y fondo completos | 100.0 % | **97.91 %** | 100.0 % |
+| **Oclusión central** | **Anillo periférico** (centro tapado) | 63.7 % | **79.46 %** | 69.16 % |
+| **Oclusión periférica** | **Caja central** (fondo y bordes tapados) | 36.3 % | **42.25 %** | 42.66 % |
+| *Línea base de azar* | *Adivinar siempre la clase más frecuente* | 0.0 % | *26.14 %* | — |
 
-El resultado invita a la humildad científica: **con el centro de la hoja tapado y dejando visible solo la periferia, el modelo acierta el 79.5 % de las veces**, muy por encima del 26.1 % que daría el azar. Si en cambio le mostramos solo el centro de la hoja tapando todo el borde, la precisión cae al 42.3 %.
+La máscara es un rectángulo fijo que abarca del 20 % al 80 % de cada eje, así que tapar el centro oculta el 36.3 % del área y tapar la periferia oculta el 63.7 % restante.
+
+El resultado invita a la humildad científica: **con el centro de la hoja tapado y dejando visible solo el anillo periférico, el modelo acierta el 79.5 % de las veces**, muy por encima del 26.1 % que daría el azar. Si en cambio le mostramos solo la caja central tapando todo el borde, la precisión cae al 42.3 %.
+
+Las dos condiciones **no están igualadas en área** —la que deja el anillo muestra 1.75 veces más píxeles que la que deja la caja central—, de modo que la distancia entre ambas cifras no es atribuible únicamente a la región observada. Lo que sí queda establecido es la comparación de cada condición contra el azar.
 
 Esto confirma que las redes convolucionales son sensibles al contexto general de la escena (la iluminación ambiental, el color de la tierra o el encuadre de la cámara) y no únicamente a la textura de la lesión. 
 

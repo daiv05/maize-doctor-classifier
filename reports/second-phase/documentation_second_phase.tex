@@ -67,9 +67,9 @@
 
 Este documento presenta los resultados correspondientes a la \textbf{Etapa 2} del proyecto de investigaci\'on aplicada enfocado en el diagn\'ostico de patolog\'ias foliares en cultivos de ma\'iz para peque\~nos productores de El Salvador. Partiendo de los hallazgos de la Etapa 1 —donde se validaron tres arquitecturas convolucionales ligeras (\textit{baselines}) sobre un conjunto topado a 10~020 im\'agenes identificando a la deficiencia de potasio como principal cuello de botella—, en esta segunda fase se escal\'o el entrenamiento al corpus consolidado completo de \textbf{33~438 im\'agenes} en 9 clases, integrando cuatro nuevos conjuntos de datos dirigidos a fortalecer las patolog\'ias minoritarias. 
 
-Se implement\'o una optimizaci\'on bayesiana de hiperpar\'ametros utilizando \textit{Optuna} con poda temprana (\textit{MedianPruner}) sobre GPUs en la nube, logrando mejoras de hasta +0.93 puntos porcentuales y ahorrando 8 horas de c\'omputo en GPU. Se desarroll\'o un ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) combinando EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2, alcanzando una exactitud del \textbf{98.29\%}, un Macro $F_1$ de \textbf{0.9567} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba retenida, minimizando los falsos negativos de bioseguridad. La evaluaci\'on rigurosa mediante un experimento cruzado $2\times2$ revel\'o que el protocolo de partici\'on pesa veintid\'os veces m\'as que los hiperpar\'ametros: mientras la evaluaci\'on tradicional arroja un Macro $F_1$ de 0.94, la validaci\'on honesta fuera de fuente (\textit{Leave-One-Source-Out}) se sit\'ua en 0.60, demostrando la existencia de atajos visuales de procedencia en los datasets p\'ublicos. 
+Se implement\'o una optimizaci\'on bayesiana de hiperpar\'ametros utilizando \textit{Optuna} con poda temprana (\textit{MedianPruner}) sobre GPUs en la nube, logrando mejoras de hasta +0.93 puntos porcentuales y ahorrando 8 horas de c\'omputo en GPU. Se desarroll\'o un ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) combinando EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2, alcanzando una exactitud del \textbf{98.29\%}, un Macro $F_1$ de \textbf{0.9567} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba retenida, minimizando los falsos negativos de bioseguridad. La evaluaci\'on rigurosa mediante un experimento cruzado $2\times2$ revel\'o que el protocolo de partici\'on pesa veintid\'os veces m\'as que los hiperpar\'ametros: mientras la evaluaci\'on tradicional arroja un Macro $F_1$ de 0.94, la validaci\'on honesta fuera de fuente (validaci\'on cruzada agrupada por procedencia en 5 pliegues) se sit\'ua en 0.60, demostrando la existencia de atajos visuales de procedencia en los datasets p\'ublicos.
 
-La auditor\'ia de equidad (\textit{Fairness}) confirm\'o paridad entre laboratorio y campo real ($DIR = 0.9778$), pero evidenci\'o mediante ablaci\'on espacial que el contexto perimetral de la foto retiene el 79.46\% de acierto aun sin ver la l\'amina foliar. Para responder a este reto, se construy\'o y prob\'o en hardware f\'isico (Motorola edge 40 neo) la aplicaci\'on m\'ovil offline \textbf{DoctorMaiz} en React Native, con un modelo cuantizado a Int8 (3.56~MB) que infiere en apenas 60~ms, guiando el encuadre con un marco foliar e integrando un detector de anomal\'ias fuera de dominio (OOD) por distancia de Mahalanobis. Finalmente, se analizan las implicaciones socioecon\'omicas en el agro salvadore\~no y se proponen cinco pol\'iticas p\'ublicas concretas para su adopci\'on en el CENTA y el Ministerio de Agricultura y Ganader\'ia.
+La auditor\'ia de equidad (\textit{Fairness}) confirm\'o paridad entre laboratorio y campo real sobre las clases comparables ($DIR = 0.9604$ en Macro $F_1$ y $0.9901$ en exactitud), pero evidenci\'o mediante ablaci\'on espacial que el anillo perif\'erico de la foto retiene el 79.46\% de acierto con el centro de la escena tapado, y que la atribuci\'on de SHAP sobre el tejido foliar apenas supera su nivel de azar ($+0.037$ de exceso medio). Para responder a este reto, se construy\'o y prob\'o en hardware f\'isico (Motorola edge 40 neo) la aplicaci\'on m\'ovil offline \textbf{DoctorMaiz} en React Native, con un modelo cuantizado a Int8 (3.56~MB) que infiere en apenas 60~ms, guiando el encuadre con un marco foliar e integrando un detector de anomal\'ias fuera de dominio (OOD) por distancia de Mahalanobis. Finalmente, se analizan las implicaciones socioecon\'omicas en el agro salvadore\~no y se proponen cinco pol\'iticas p\'ublicas concretas para su adopci\'on en el CENTA y el Ministerio de Agricultura y Ganader\'ia.
 
 \noindent\textbf{Palabras clave:} deep learning m\'ovil, ma\'iz, optimizaci\'on bayesiana, ensamble multimodelo, sesgo de procedencia, equidad algor\'itmica, Edge AI, pol\'iticas p\'ublicas agr\'icolas.
 
@@ -170,7 +170,7 @@ El an\'alisis de importancia derivado del estudio (Figura~\ref{fig:param_importa
 \item \textbf{Descarte de CLAHE:} Optuna determin\'o que la ecualizaci\'on adaptativa no aportaba ventajas (\texttt{clahe = False}), demostrando que las capas convolucionales aprenden invarianza a la iluminaci\'on de forma intr\'inseca.
 \end{enumerate}
 
-La configuraci\'on \'optima obtenida (Trial \#12) demostr\'o una \textbf{mejora significativa frente al baseline de esta nueva etapa (con el dataset completo)} sobre el conjunto de prueba independiente (Tabla~\ref{tab:opt_vs_base}).
+La configuraci\'on \'optima obtenida (Trial \#12) mejor\'o al baseline de esta nueva etapa (con el dataset completo) sobre el conjunto de prueba independiente (Tabla~\ref{tab:opt_vs_base}).
 
 \begin{table}[H]
 \caption{Comparativa cuantitativa: Baseline Etapa 2 Sin Optuna vs. Configuraci\'on Optimizada (Optuna)}
@@ -201,7 +201,7 @@ Un hallazgo metodol\'ogico de gran relevancia t\'ecnica ocurri\'o al transferir 
 \item En \textbf{EfficientNet-Lite0} (la arquitectura destinada a la aplicaci\'on m\'ovil), la configuraci\'on produjo el efecto contrario, reduciendo el Macro $F_1$ a 0.9343.
 \end{itemize}
 
-La causa es de naturaleza estructural: \texttt{EfficientNet-Lite0} prescinde de los bloques de atenci\'on \textit{Squeeze-and-Excitation} y reemplaza las activaciones \textit{swish} por ReLU6 para permitir cuantizaci\'on r\'apida a enteros de 8 bits. Al no poseer capas de atenci\'on que recalibren din\'amicamente los canales, no tolera tasas de aprendizaje elevadas y prefiere converger con suavidad en la \'epoca 35 bajo su tasa base ($10^{-4}$ y lote 32), alcanzando un s\'olido \textbf{0.9468}. Por tanto, en concordancia con el principio de rigor emp\'irico, se decidi\'o mantener a \texttt{Lite0} en sus par\'ametros base para producci\'on y adoptar los optimizados para las redes acompa\~nantes del ensamble.
+La causa es de naturaleza estructural: \texttt{EfficientNet-Lite0} prescinde de los bloques de atenci\'on \textit{Squeeze-and-Excitation} y reemplaza las activaciones \textit{swish} por ReLU6 para permitir cuantizaci\'on r\'apida a enteros de 8 bits. Al no poseer capas de atenci\'on que recalibren din\'amicamente los canales, no tolera tasas de aprendizaje elevadas y prefiere converger con suavidad en la \'epoca 35 bajo su tasa base ($10^{-4}$ y lote 32), alcanzando \textbf{0.9468} en la corrida desplegada y $0.9430 \pm 0.0122$ como valor esperado sobre tres semillas. Por tanto, en concordancia con el principio de rigor emp\'irico, se decidi\'o mantener a \texttt{Lite0} en sus par\'ametros base para producci\'on y adoptar los optimizados para las redes acompa\~nantes del ensamble.
 
 \newpage
 
@@ -357,7 +357,34 @@ Configuraci\'on de B0 & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
 
 \textbf{El impacto del protocolo de partici\'on ($-0.33$) es veintid\'os veces mayor que el impacto del ajuste de hiperpar\'ametros ($+0.015$)}. 
 
-En la partici\'on estratificada tradicional, las 14 fuentes aparecen simult\'aneamente en entrenamiento y prueba, arrojando una falsa sensaci\'on de precisi\'on con un intervalo diminuto ($\pm 0.0099$). Pero al evaluar fuera de fuente (\textit{Leave-One-Source-Out}), el Macro $F_1$ real desciende a $0.6026 \pm 0.1240$. Esta brecha cuantitativa de 0.34 puntos confirma que los clasificadores sobre conjuntos p\'ublicos se apoyan sustancialmente en la firma visual de la fuente.
+En la partici\'on estratificada tradicional, las 14 fuentes aparecen simult\'aneamente en entrenamiento y prueba, arrojando una falsa sensaci\'on de precisi\'on con un intervalo diminuto ($\pm 0.0099$). Pero al evaluar fuera de fuente, con las 14 procedencias repartidas en 5 pliegues disjuntos mediante \texttt{StratifiedGroupKFold}, el Macro $F_1$ real desciende a $0.6026 \pm 0.1240$. Esta brecha cuantitativa de 0.34 puntos confirma que los clasificadores sobre conjuntos p\'ublicos se apoyan sustancialmente en la firma visual de la fuente.
+
+\subsection{Estabilidad entre semillas}
+
+Para disponer de una escala con la que juzgar el tama\~no de cualquier diferencia reportada, la configuraci\'on de producci\'on de \texttt{EfficientNet-Lite0} se reentren\'o con tres semillas distintas sobre la \textbf{misma partici\'on materializada}, de modo que la \'unica fuente de variaci\'on es la inicializaci\'on y el barajado (Tabla~\ref{tab:semillas}).
+
+\begin{table}[H]
+\caption{Variabilidad del Macro $F_1$ en prueba retenida entre semillas de entrenamiento}
+\label{tab:semillas}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Semilla} & \textbf{Macro $F_1$ en prueba} & \textbf{\'Epocas} & \textbf{Mejor \'epoca} \\
+\midrule
+42 (modelo desplegado) & 0.9468 & 43 & 35 \\
+1 & 0.9448 & 60 & 53 \\
+2 & 0.9375 & 32 & 24 \\
+\midrule
+\textbf{Media} & $\mathbf{0.9430 \pm 0.0122}$ & — & — \\
+\textit{Desviaci\'on est\'andar} & $\sigma = 0.0049$ & — & — \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
+
+El valor esperado de esta configuraci\'on es \textbf{0.9430} con un intervalo de confianza al 95\% de $\pm 0.0122$; el \textbf{0.9468} del modelo desplegado es la m\'as alta de las tres corridas.
 
 \begin{figure}[H]
 \centering
@@ -366,7 +393,7 @@ En la partici\'on estratificada tradicional, las 14 fuentes aparecen simult\'ane
 \label{fig:sigmas}
 \end{figure}
 
-Como ilustra la Figura~\ref{fig:sigmas}, la decisi\'on de partici\'on representa un impacto de **$66.8\sigma$**, mientras que el ensamble o el tuning se mueven dentro de una franja de $1\sigma$ a $2\sigma$ respecto al ruido natural entre semillas.
+Como ilustra la Figura~\ref{fig:sigmas}, la decisi\'on de partici\'on representa un impacto de \textbf{m\'as de $66\sigma$}, mientras que el ensamble y el ajuste de hiperpar\'ametros se mueven entre $1.2\sigma$ y $2.5\sigma$ respecto al ruido natural entre semillas.
 
 \newpage
 
@@ -388,23 +415,23 @@ Se audit\'o el desempe\~no de \texttt{EfficientNet-Lite0} desglosando el conjunt
 \toprule
 \textbf{Subgrupo} & \textbf{Muestras} & \textbf{Accuracy} & \textbf{Macro $F_1$ (evaluable)} & \textbf{Disparidad ($DIR$)} \\
 \midrule
-Campo Real (\texttt{real}) & 4~483 & 98.04\% & 0.9215 & Base \\
-Laboratorio (\texttt{lab}) & 532 & 96.80\% & 0.9423 & $DIR_{\text{Acc}} = 0.9873$ \\
+Campo Real (\texttt{real}) & 1~121 & 97.77\% & 0.9050 \\
+Laboratorio (\texttt{lab}) & 532 & 96.80\% & 0.9423 \\
 \midrule
-\textbf{Global (Test Set)} & \textbf{5~015} & \textbf{97.91\%} & \textbf{0.9468} & \textbf{Cumple regla 80\%} \\
+\textit{Disparate Impact Ratio} & — & $DIR_{\text{Acc}} = 0.9901$ & $DIR_{F_1} = 0.9604$ \\
 \bottomrule
 \end{tabular}
 \end{singlespace}
 \end{table}
 
-La disparidad en exactitud es de apenas \textbf{1.24 puntos porcentuales}, y el \textit{Disparate Impact Ratio} ($DIR = 0.9778$) supera con creces el umbral regulatorio del 80\% (Figura~\ref{fig:fairness_disparity}). 
+Sobre esa base comparable, la disparidad en exactitud es de \textbf{0.97 puntos porcentuales} y ambos \textit{Disparate Impact Ratio} —$0.9901$ en exactitud y $0.9604$ en Macro $F_1$— superan con holgura el umbral regulatorio del 80\% (Figura~\ref{fig:fairness_disparity}). El sentido de la disparidad se invierte seg\'un la m\'etrica: campo real acierta m\'as en conjunto, y laboratorio reparte mejor el acierto entre las tres clases.
 
 \begin{figure}[H]
 \centering
 \begin{minipage}[b]{0.48\linewidth}
 \centering
 \includegraphics[width=\linewidth]{images/fairness/fairness_disparity.png}
-\caption{An\'alisis de disparidad y equidad por entorno.}
+\caption{Equidad por entorno sobre las tres clases comparables.}
 \label{fig:fairness_disparity}
 \end{minipage}
 \hfill
@@ -416,11 +443,31 @@ La disparidad en exactitud es de apenas \textbf{1.24 puntos porcentuales}, y el 
 \end{minipage}
 \end{figure}
 
-Al examinar las matrices de confusi\'on (Figura~\ref{fig:disagg_cm}), el panel izquierdo (azul) corresponde al entorno de laboratorio, donde los repositorios p\'ublicos hist\'oricos \'unicamente registran tres clases (\textit{roya}, \textit{mancha gris} y \textit{tiz\'on}), raz\'on por la cual las seis clases restantes presentan soporte nulo (filas en blanco/cero). En contraposici\'on, el panel derecho (verde) eval\'ua el comportamiento en campo real cubriendo las nueve clases completas. Se constata que en laboratorio el modelo no genera falsos positivos hacia categor\'ias ausentes, y en campo real preserva una diagonal s\'olida, localiz\'andose las \'unicas confusiones menores entre s\'intomas visualmente convergentes (como roya frente a tiz\'on, o la clorosis rec\'iproca entre deficiencias nutricionales).
+Al examinar las matrices de confusi\'on (Figura~\ref{fig:disagg_cm}), el panel izquierdo (azul) corresponde al entorno de laboratorio, donde los repositorios p\'ublicos hist\'oricos \'unicamente registran tres clases (\textit{roya}, \textit{mancha gris} y \textit{tiz\'on}), raz\'on por la cual las seis clases restantes presentan soporte nulo (filas en blanco/cero). En contraposici\'on, el panel derecho (verde) eval\'ua el comportamiento en campo real cubriendo las nueve clases completas. Se constata que en laboratorio el modelo no genera falsos positivos hacia categor\'ias ausentes, y en campo real preserva una diagonal s\'olida, localiz\'andose las confusiones menores entre s\'intomas visualmente convergentes (como roya frente a tiz\'on, o la clorosis rec\'iproca entre deficiencias nutricionales).
+
+La desagregaci\'on por clase dentro de cada entorno descubre una asimetr\'ia (Tabla~\ref{tab:fnr_env}). La \textbf{roya com\'un} es pr\'acticamente infalible en laboratorio (1 fallo sobre 322 im\'agenes) y \textbf{falla en casi un tercio de los casos en campo real} (5 fallos sobre 16). Es el reflejo directo de la composici\'on del corpus: el 95\% de las im\'agenes de roya del conjunto de prueba proceden de repositorios de laboratorio, de modo que el modelo aprendi\'o la patolog\'ia bajo fondo controlado y no la reconoce con fiabilidad sobre vegetaci\'on. La \textbf{mancha gris} tiene el patr\'on inverso y m\'as favorable.
+
+\begin{table}[H]
+\caption{Tasa de falsos negativos por clase y entorno en las tres clases compartidas}
+\label{tab:fnr_env}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Clase} & \textbf{$FNR$ laboratorio} & \textbf{$N$} & \textbf{$FNR$ campo real} & \textbf{$N$} \\
+\midrule
+Roya Com\'un & 0.31\% & 322 & \textbf{31.25\%} & 16 \\
+Mancha Gris (GLS) & 15.58\% & 77 & 5.16\% & 213 \\
+Tiz\'on Foliar (NCLB) & 3.01\% & 133 & 1.01\% & 892 \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
 
 \subsection{Prueba de oclusi\'on espacial (Clever Hans Check)}
 
-Para verificar si la red atiende a la patolog\'ia o al entorno, se realiz\'o una auditor\'ia de oclusi\'on geom\'etrica tapando alternativamente el centro y la periferia de las im\'agenes de prueba, contrastando el resultado contra un predictor nulo constante (Tabla~\ref{tab:ablation}).
+Para verificar si la red atiende a la patolog\'ia o al entorno, se realiz\'o una auditor\'ia de oclusi\'on geom\'etrica sobre las 5~015 im\'agenes de prueba, contrastando el resultado contra un predictor nulo constante (Tabla~\ref{tab:ablation}). La m\'ascara es un rect\'angulo fijo que abarca del 20\% al 80\% de cada eje, al ocluir el centro se tapa el 36.3\% del \'area y queda visible un anillo perif\'erico del 63.7\%, al ocluir la periferia se tapa ese 63.7\% y queda visible la caja central del 36.3\%. Es una m\'ascara geom\'etrica, no anat\'omica, es decir que no a\'isla la lesi\'on ni la l\'amina foliar, sino regiones de la escena.
 
 \begin{table}[H]
 \caption{Auditor\'ia de ablaci\'on espacial con control nulo en el conjunto de prueba}
@@ -428,14 +475,14 @@ Para verificar si la red atiende a la patolog\'ia o al entorno, se realiz\'o una
 \centering
 \small
 \begin{singlespace}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Condici\'on de Inferencia} & \textbf{Regi\'on Visible} & \textbf{Accuracy} & \textbf{Exceso s/Nulo} & \textbf{Confianza Retenida} \\
+\textbf{Condici\'on de Inferencia} & \textbf{Regi\'on Visible} & \textbf{\'Area visible} & \textbf{Accuracy} & \textbf{Exceso s/Nulo} & \textbf{Conf. Retenida} \\
 \midrule
-Imagen completa original & Toda la escena & 97.91\% & +71.77 pp & 100.0\% \\
-\textbf{Oclusi\'on central 60\%} & \textbf{Solo periferia y fondo} & \textbf{79.46\%} & \textbf{+53.32 pp} & \textbf{69.16\%} \\
-Oclusi\'on perif\'erica 40\% & Solo lesi\'on central & 42.25\% & +16.11 pp & 42.66\% \\
-Control nulo (sin imagen) & Clase mayoritaria & 26.14\% & 0.0 pp & — \\
+Imagen completa original & Toda la escena & 100.0\% & 97.91\% & +71.77 pp & 100.0\% \\
+\textbf{Oclusi\'on central} & \textbf{Anillo perif\'erico} & \textbf{63.7\%} & \textbf{79.46\%} & \textbf{+53.32 pp} & \textbf{69.16\%} \\
+Oclusi\'on perif\'erica & Caja central & 36.3\% & 42.25\% & +16.11 pp & 42.66\% \\
+Control nulo (sin imagen) & Clase mayoritaria & 0.0\% & 26.14\% & 0.0 pp & — \\
 \bottomrule
 \end{tabular}
 \end{singlespace}
@@ -448,9 +495,9 @@ Control nulo (sin imagen) & Clase mayoritaria & 26.14\% & 0.0 pp & — \\
 \label{fig:ablation_chart}
 \end{figure}
 
-\textbf{El fondo por s\'i solo predice mejor que la hoja por s\'i sola (79.46\% vs. 42.25\%)}. Al tapar la hoja entera, la red retiene el 69\% de su confianza y acierta casi 8 de cada 10 veces, apoy\'andose en el suelo o la iluminaci\'on. 
+\textbf{El anillo perif\'erico basta para acertar en 8 de cada 10 im\'agenes} (79.46\%, $+53.32$~pp sobre el azar) conservando el 69\% de la confianza original, pese a que el centro de la escena, donde se encuentra la l\'amina foliar en la pr\'actica totalidad del corpus, est\'a tapado en negro. El contexto exterior de la fotograf\'ia porta, por s\'i solo, una fracci\'on sustancial de la informaci\'on de clase.
 
-Intentar recortar el fondo mediante un segmentador autom\'atico a negro degrad\'o el Macro $F_1$ a 0.7191, confirmando que eliminar el contexto destruye referencias \'utiles. La soluci\'on de ingenier\'ia adoptada consisti\'o en dise\~nar un \textbf{marco gu\'ia en la c\'amara m\'ovil} para forzar al usuario a llenar el cuadro con la hoja.
+Recortar el fondo mediante un segmentador autom\'atico a negro degrad\'o el Macro $F_1$ a 0.7191. Esa ca\'ida mezcla dos efectos: la p\'erdida del atajo de procedencia, y los errores de la propia segmentaci\'on, que sobre clases de fondo poco contrastado rechaza o recorta tejido leg\'itimo. La soluci\'on de ingenier\'ia adoptada consisti\'o en dise\~nar un \textbf{marco gu\'ia en la c\'amara m\'ovil} para que la l\'amina foliar ocupe el encuadre desde la captura.
 
 \subsection{Auditor\'ia visual con Grad-CAM y SHAP}
 
@@ -470,7 +517,36 @@ Para auditar cualitativamente la atenci\'on, se generaron mapas de activaci\'on 
 \label{fig:xai_compare}
 \end{figure}
 
-En tomas de campo bien encuadradas, Grad-CAM y SHAP confirman que los gradientes principales se sit\'uan sobre las lesiones necr\'oticas y p\'ustulas f\'ungicas, validando que el clasificador es agron\'omicamente consistente cuando la l\'amina foliar ocupa el plano principal.
+En tomas de campo bien encuadradas, los paneles sit\'uan los gradientes principales sobre las lesiones necr\'oticas y las p\'ustulas f\'ungicas. Pero esa lectura visual no basta como evidencia, ya que la l\'amina foliar ocupa el centro y la mayor parte del cuadro en pr\'acticamente todo el corpus, de modo que una atribuci\'on repartida al azar tambi\'en recaer\'ia mayoritariamente sobre la hoja. Para separar ambos efectos se midi\'o el \textbf{exceso de atribuci\'on}: la fracci\'on de atribuci\'on positiva que cae sobre el tejido foliar menos la cobertura de la m\'ascara de hoja, que es el nivel de azar correspondiente a cada imagen.
+
+\begin{table}[H]
+\caption{Exceso de atribuci\'on sobre el tejido foliar frente a su nivel de azar}
+\label{tab:attribution_excess}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Clase} & \textbf{$N$} & \textbf{Atribuci\'on en hoja} & \textbf{Cobertura (azar)} & \textbf{Exceso} \\
+\midrule
+Roya Com\'un & 29 & 0.897 & 0.703 & $+0.193$ \\
+Deficiencia de F\'osforo & 28 & 0.474 & 0.378 & $+0.096$ \\
+Deficiencia de Nitr\'ogeno & 23 & 0.352 & 0.302 & $+0.051$ \\
+Tiz\'on Foliar (NCLB) & 30 & 0.575 & 0.584 & $-0.009$ \\
+Planta Sana & 30 & 0.538 & 0.578 & $-0.040$ \\
+Mancha Gris (GLS) & 26 & 0.570 & 0.639 & $-0.069$ \\
+\midrule
+\textbf{Media de las seis clases} & — & — & — & $\mathbf{+0.037}$ \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
+
+El perfil se calcul\'o sobre 270 im\'agenes (30 por clase), empleando como m\'ascara de hoja la segmentaci\'on producida por el modelo del repositorio \texttt{maize-doctor-segmenter} en lugar de un umbral crom\'atico. Las tres clases restantes —\textit{gusano cogollero}, \textit{necrosis letal} y \textit{deficiencia de potasio}— quedan fuera de la tabla porque su m\'ascara alcanza coberturas de entre 0.54 y 0.86 y el control de calidad rechaza entre el 37\% y el 57\% de sus im\'agenes, de modo que su ratio no es interpretable.
+
+El resultado es que \textbf{el exceso medio es de $+0.037$ y su signo se reparte: tres clases por encima del azar y tres por debajo}. La atribuci\'on sobre la hoja no supera de forma consistente la que producir\'ia una atenci\'on repartida en proporci\'on al \'area. \'Unicamente la roya com\'un exhibe una concentraci\'on foliar netamente superior a su nivel de azar.
+
+Este resultado no contradice la prueba de oclusi\'on, porque ambas t\'ecnicas responden a preguntas distintas. Grad-CAM y SHAP son m\'etodos de atribuci\'on \textit{local}: miden la contribuci\'on de cada regi\'on \textbf{mientras el resto de la imagen sigue presente}, y premian la evidencia concentrada y de alto contraste, como es una lesi\'on. La ablaci\'on mide la \textit{suficiencia}: cu\'anto acierto sobrevive cuando todo lo dem\'as se elimina. La firma de procedencia de un repositorio, como la paleta crom\'atica, iluminaci\'on, ruido de sensor, textura del suelo, es un estad\'istico de baja frecuencia repartido sobre decenas de miles de p\'ixeles: cada p\'ixel aporta poco, por lo que nunca aparece como un punto caliente en un mapa de atribuci\'on, pero el agregado carga informaci\'on de clase suficiente para sostener el 79.46\% de acierto de la Tabla~\ref{tab:ablation}.
 
 \newpage
 
@@ -489,7 +565,7 @@ Para cumplir con las restricciones de hardware rural (dispositivos de gama media
 
 \subsection{Pruebas de latencia en hardware real (Motorola edge 40 neo)}
 
-El prototipo final fue instalado y medido en un dispositivo f\'isico aut\'entico: un smartphone **Motorola edge 40 neo** (procesador MediaTek Dimensity 7030, 8 n\'ucleos a 2.5~GHz, pantalla 1080$\times$2400 px, Android 15).
+El prototipo final fue instalado y medido en un dispositivo f\'isico aut\'entico: un smartphone \textbf{Motorola edge 40 neo} (procesador MediaTek Dimensity 7030, 8 n\'ucleos a 2.5~GHz, pantalla 1080$\times$2400 px, Android 15).
 
 Las mediciones instrumentadas mediante \texttt{adb logcat} arrojaron tiempos sobresalientes (Tabla~\ref{tab:mobile_latencies}):
 
@@ -545,7 +621,9 @@ La aplicaci\'on incorpora cuatro innovaciones clave adaptadas al campo salvadore
 \item \textbf{C\'amara con marco gu\'ia (Figura~\ref{fig:app_cam}):} Para neutralizar el atajo del fondo descubierto en el an\'alisis de sesgos, el visor superpone la silueta de una hoja e instruye: \textit{«Ac\'erquese a 20--30 cm y llene el marco»}. La app recorta autom\'aticamente el 24\% central de la foto (3.02 MP a partir del sensor de 12.6 MP), descartando tres cuartas partes del fondo enga\~noso antes de inferir.
 \item \textbf{Detector OOD por distancia de Mahalanobis (Figura~\ref{fig:app_ood}):} Para evitar diagn\'osticos falsos frente a manos, tierra o malezas ajenas, el modelo extrae el vector de caracter\'isticas (1~280 dimensiones) y calcula la distancia relativa de Mahalanobis (RMD) reducida por PCA a 186 componentes. Si la distancia supera el percentil 95 calibrado ($31.47$), la pantalla muestra prudentemente: \textbf{«Imagen no reconocida»} en lugar de inventar una enfermedad.
 \item \textbf{M\'odulo de contribuci\'on comunitaria (Figura~\ref{fig:app_contrib}):} Permite al agricultor guardar fotos y etiquetas para subirlas al backend cuando haya se\~nal, resolviendo la brecha de datos con fotos genuinas de El Salvador.
-\item \textbf{Gu\'ia de severidad en lenguaje llano:} El clasificador responde \textit{qu\'e} tiene la hoja, no \textit{cu\'anto}. Sus salidas son una clase y una confianza, y ninguna mide \'area foliar afectada, n\'umero de lesiones ni grado de defoliaci\'on: dos hojas con tres p\'ustulas y con la l\'amina destruida reciben el mismo diagn\'ostico y una confianza parecida. No se entren\'o un modelo de niveles de da\~no porque el corpus consolidado trae una sola etiqueta por imagen y ninguna anotaci\'on de severidad; producirla no es trabajo de limpieza sino de calificaci\'on experta, pues cada pat\'ogeno se punt\'ua con su propia escala diagram\'atica validada (Cobb modificada para roya, Vieira \textit{et al.} para tiz\'on del norte, Brito \textit{et al.} para mancha gris, la ordinal 1--5 del CIMMYT para necrosis letal y la 1--9 de Davis \textit{et al.} para cogollero), y partir en tres grados clases que rondan las 300 im\'agenes habr\'ia dejado celdas de dos d\'igitos, insuficientes para entrenar y para evaluar. Para cubrir ese vac\'io sin fingir una medici\'on, debajo de cada resultado de inferencia la app despliega los niveles de severidad de la clase diagnosticada traducidos a lenguaje llano —cu\'anta hoja compromete cada uno, qu\'e se ve y qu\'e hacer seg\'un manejo integrado de plagas— y advierte de forma expl\'icita: \textbf{«La app no mide qu\'e tan avanzado est\'a el da\~no»}. El contenido reescribe el cat\'alogo de escalas homologadas por CIMMYT, Embrapa, Iowa State University Extension e IPNI, conservando los umbrales num\'ericos y los nombres de los bioinsumos pero eliminando la nomenclatura binomial y las siglas patom\'etricas. El grado lo juzga el agricultor comparando su hoja, y esa elecci\'on no se registra ni se presenta como predicci\'on del modelo.
+\item \textbf{Gu\'ia de severidad en lenguaje natural (Figura~\ref{fig:app_sev}):} El clasificador dice qu\'e tiene la hoja, pero no cu\'anto. Una hoja con tres p\'ustulas sueltas y otra con la l\'amina entera destruida salen de la red con la misma etiqueta y una confianza pr\'acticamente igual, porque el modelo nunca aprendi\'o a medir \'area foliar afectada. Y no lo aprendi\'o por una raz\'on sencilla, que es que las im\'agenes del corpus vienen etiquetadas por clase y nada m\'as. A\~nadirles un grado de da\~no no ser\'ia cuesti\'on de limpiar datos sino de sentar a un fitopat\'ologo a calificar imagen por imagen con la escala que corresponda a cada pat\'ogeno, que son distintas entre s\'i (la Cobb modificada para roya, la de Vieira \textit{et al.} para tiz\'on del norte, la de Brito \textit{et al.} para mancha gris, la ordinal del CIMMYT para necrosis letal, la de Davis \textit{et al.} para cogollero). Aun con ese trabajo hecho, repartir en tres grados unas clases que apenas rondan las 300 im\'agenes dejar\'ia celdas de dos d\'igitos, demasiado peque\~nas para entrenar y a\'un m\'as para evaluar con honestidad.
+
+La app cubre ese hueco haciendo que debajo del diagn\'ostico aparezcan los niveles de severidad de la enfermedad detectada, reescritos en lenguaje natural, y el agricultor compara su hoja con ellos y decide. Cada nivel indica cu\'anta hoja suele comprometer, qu\'e se ve a simple vista y qu\'e hacer al respecto seg\'un manejo integrado de plagas. Los textos provienen del cat\'alogo de escalas homologadas por CIMMYT, Embrapa, Iowa State University Extension e IPNI; se conservaron los umbrales y los nombres de los bioinsumos, que es lo que el productor va a pedir en la agroservicio, y se quitaron la nomenclatura binomial y las siglas patom\'etricas.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -563,6 +641,13 @@ La aplicaci\'on incorpora cuatro innovaciones clave adaptadas al campo salvadore
 \caption{Pantalla de aporte de datos.}
 \label{fig:app_contrib}
 \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\linewidth]{images/app/resultado-severidad.png}
+\caption{Gu\'ia de severidad bajo el resultado de inferencia, con el segundo nivel desplegado.}
+\label{fig:app_sev}
 \end{figure}
 
 \newpage
@@ -610,7 +695,7 @@ La Etapa 2 de este proyecto de investigaci\'on consolida la transici\'on desde l
 \item \textbf{Superaci\'on de metas de desempe\~no:} El ensamble heterog\'eneo por voto suave alcanz\'o un Macro $F_1$ de \textbf{0.9567} y una exactitud de \textbf{98.29\%}, superando con holgura el umbral de viabilidad del proyecto ($F_1 \geq 0.85$). M\'as importante a\'un, el \textbf{Macro Recall alcanz\'o 95.06\%}, garantizando una detecci\'on fitosanitaria segura con 100\% de recall en necrosis letal y $>98\%$ en roya y tiz\'on.
 \item \textbf{Resoluci\'on del cuello de botella de potasio:} La incorporaci\'on de nuevos datasets dirigidos y la funci\'on de p\'erdida \texttt{sqrt\_inverse} permitieron elevar el $F_1$ de \texttt{potassium\_deficiency} desde 0.49 (Etapa 1) hasta \textbf{0.8475}, mitigando el sesgo hacia las clases mayoritarias.
 \item \textbf{Descubrimiento cr\'itico sobre la brecha de dominio:} La validaci\'on cruzada agrupada por procedencia demostr\'o que evaluar fuera de fuente reduce el F1 a \textbf{0.6026}, evidenciando que las redes convolucionales son vulnerables a memorizar el fondo y la c\'amara de los repositorios p\'ublicos. Las intervenciones algor\'itmicas alcanzaron un techo: la soluci\'on definitiva reside en la captura de datos locales.
-\item \textbf{Prototipo m\'ovil de alta eficiencia:} Se logr\'o compilar \texttt{EfficientNet-Lite0} a Int8 ocupando apenas \textbf{3.56~MB}, con una latencia de inferencia de \textbf{60~ms} en un tel\'efono f\'isico Motorola edge 40 neo, resolviendo el encuadre mediante un marco gu\'ia foliar, protegiendo la salida con un detector de anomal\'ias OOD por distancia de Mahalanobis y complementando la etiqueta con una gu\'ia de severidad en lenguaje llano que suple, en la interfaz, la ausencia de anotaciones de nivel de da\~no en el corpus.
+\item \textbf{Prototipo m\'ovil de alta eficiencia:} Se logr\'o compilar \texttt{EfficientNet-Lite0} a Int8 ocupando apenas \textbf{3.56~MB}, con una latencia de inferencia de \textbf{60~ms} en un tel\'efono f\'isico Motorola edge 40 neo. El encuadre se resolvi\'o con un marco gu\'ia foliar y la salida qued\'o protegida por un detector de anomal\'ias OOD. Como el corpus no trae anotaciones de nivel de da\~no, la interfaz acompa\~na cada etiqueta con una gu\'ia de severidad escrita en lenguaje natural, que le devuelve al agricultor el juicio que el modelo no puede emitir.
 \end{enumerate}
 
 \subsection{Trabajo futuro y transici\'on a campo}
@@ -619,7 +704,7 @@ Hacia las siguientes etapas del proyecto se plantean las siguientes prioridades:
 \begin{itemize}
 \item \textbf{Piloto de validaci\'on en cooperativas salvadore\~nas:} Desplegar la aplicaci\'on en campo con agricultores de los valles de Zapotit\'an y San Vicente en coordinaci\'on con el CENTA, evaluando la adopci\'on y usabilidad real del marco gu\'ia en condiciones de luz solar intensa.
 \item \textbf{Alimentaci\'on del Banco de Datos Nacional:} Integrar las primeras 1~000 fotograf\'ias capturadas en parcelas locales mediante el m\'odulo de contribuci\'on para realizar un \textit{fine-tuning} regional de los pesos del modelo.
-\item \textbf{Anotaci\'on de severidad para predecir el grado de da\~no:} Calificar un subconjunto del corpus con las escalas diagram\'aticas homologadas, en coordinaci\'on con fitopat\'ologos del CENTA, y entrenar una cabeza de regresi\'on ordinal que estime el nivel adem\'as de la clase. La gu\'ia de autoevaluaci\'on pasar\'ia entonces de sustituto a explicaci\'on de la predicci\'on.
+\item \textbf{Anotaci\'on de severidad para predecir el grado de da\~no:} Calificar un subconjunto del corpus con las escalas diagram\'aticas homologadas, de la mano de fitopat\'ologos del CENTA, abrir\'ia la puerta a una cabeza de regresi\'on ordinal capaz de estimar el nivel adem\'as de la clase. La gu\'ia de autoevaluaci\'on dejar\'ia entonces de ser un sustituto y pasar\'ia a explicar lo que el modelo predice.
 \item \textbf{Modelos en cascada con segmentaci\'on liviana en servidor:} Evaluar en el backend en la nube la incorporaci\'on de un detector ligero (YOLOv8-Nano) que a\'isle la hoja antes del ensamble cuando se reciban im\'agenes con encuadres lejanos.
 \end{itemize}
 

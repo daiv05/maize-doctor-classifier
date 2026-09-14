@@ -6,22 +6,22 @@ Un diagnóstico erróneo en el campo tiene consecuencias directas sobre la econo
 
 ## La prueba de ablación espacial y el control nulo
 
-Para medir qué tanto influye el contexto exterior de la foto frente a los síntomas centrales de la hoja, realizamos una prueba de oclusión espacial sobre las 5,015 imágenes del conjunto de prueba, comparando los resultados contra un predictor nulo (que adivina siempre la clase mayoritaria):
+Para medir qué tanto influye el contexto exterior de la foto frente a los síntomas centrales de la hoja, realizamos una prueba de oclusión espacial sobre las 5,015 imágenes del conjunto de prueba, comparando los resultados contra un predictor nulo (que adivina siempre la clase mayoritaria). La máscara es un rectángulo fijo que abarca del 20 % al 80 % de cada eje: ocluir el centro tapa el 36.3 % del área y deja visible un anillo periférico del 63.7 %; ocluir la periferia tapa ese 63.7 % y deja visible la caja central del 36.3 %.
 
 ![Ablación con control nulo](/resultados/ablacion_control_nulo.png)
 
-| Condición de la prueba | Qué parte de la imagen ve el modelo | Exactitud (Accuracy) | Exceso sobre el azar nulo | Confianza retenida |
-|---|---|:---:|:---:|:---:|
-| **Imagen completa original** | Toda la escena (hoja y fondo) | **97.91 %** | +71.77 pp | 100.0 % |
-| **Oclusión central (60 %)** | **Solo el contorno y el fondo** (hoja tapada) | **79.46 %** | **+53.32 pp** | **69.16 %** |
-| **Oclusión periférica (40 %)** | **Solo el centro** (fondo y bordes tapados) | **42.25 %** | +16.11 pp | 42.66 % |
-| *Línea base de control nulo* | *Sin ver la imagen (clase más frecuente)* | *26.14 %* | 0.0 pp | — |
+| Condición de la prueba | Qué parte de la imagen ve el modelo | Área visible | Exactitud (Accuracy) | Exceso sobre el azar nulo | Confianza retenida |
+|---|---|:---:|:---:|:---:|:---:|
+| **Imagen completa original** | Toda la escena (hoja y fondo) | 100.0 % | **97.91 %** | +71.77 pp | 100.0 % |
+| **Oclusión central** | **Anillo periférico** (centro tapado) | 63.7 % | **79.46 %** | **+53.32 pp** | **69.16 %** |
+| **Oclusión periférica** | **Caja central** (fondo y bordes tapados) | 36.3 % | **42.25 %** | +16.11 pp | 42.66 % |
+| *Línea base de control nulo* | *Sin ver la imagen (clase más frecuente)* | 0.0 % | *26.14 %* | 0.0 pp | — |
 
-El hallazgo es inequívoco: **el fondo por sí solo predice mejor que el centro de la hoja por sí solo (79.46 % frente a 42.25 %)**. 
+**El anillo periférico basta para acertar en ocho de cada diez imágenes** (79.46 %, +53.32 pp sobre el azar) conservando casi el 70 % de la confianza original, pese a que el centro de la escena —donde se encuentra la lámina foliar en la práctica totalidad del corpus— está tapado en negro.
 
-Con el centro tapado, el modelo aún acierta ocho de cada diez veces y conserva casi el 70 % de su confianza, mientras que al tapar los bordes y dejar visible únicamente la lesión central, el acierto cae a la mitad. 
+Las dos condiciones de oclusión **no están igualadas en área**: la que deja visible el anillo muestra 1.75 veces más píxeles que la que deja visible la caja central, así que la distancia entre 79.46 % y 42.25 % no es atribuible únicamente a la región observada. Lo que sí queda establecido es la comparación de cada condición contra el control nulo: el anillo supera al predictor constante en +53.32 pp y la caja central en +16.11 pp.
 
-Esto demuestra que las redes convolucionales son muy sensibles a la composición global de la toma (el color del suelo, la vegetación circundante o la luz ambiental). De ahí la importancia de guiar al agricultor mediante el marco en pantalla para asegurar que el encuadre se concentre en la lámina foliar.
+La lectura de fondo es que las redes convolucionales son muy sensibles a la composición global de la toma (el color del suelo, la vegetación circundante o la luz ambiental). De ahí la importancia de guiar al agricultor mediante el marco en pantalla para asegurar que el encuadre se concentre en la lámina foliar.
 
 ---
 
@@ -29,16 +29,32 @@ Esto demuestra que las redes convolucionales son muy sensibles a la composición
 
 Auditamos si el modelo discrimina o pierde precisión cuando se le evalúa en entornos naturales de cultivo frente a fotos en condiciones controladas de laboratorio:
 
-| Subgrupo evaluado | Muestras ($N$) | Exactitud (Accuracy) | Macro $F_1$ sobre clases evaluables |
-|---|:---:|:---:|:---:|
-| **Campo real (`real`)** | 4,483 | **98.04 %** | **0.9215** |
-| **Laboratorio (`lab`)** | 532 | **96.80 %** | **0.9423** |
+| Subgrupo evaluado | Muestras ($N$) | Exactitud (Accuracy) | Macro $F_1$ | Clases con soporte |
+|---|:---:|:---:|:---:|:---:|
+| **Campo real (`real`)** | 4,483 | **98.04 %** | **0.9215** | 9 de 9 |
+| **Laboratorio (`lab`)** | 532 | **96.80 %** | **0.9423** | 3 de 9 |
 
-La disparidad en exactitud es de apenas **1.24 puntos porcentuales** y el ratio de impacto dispar ($DIR = 0.9778$) supera holgadamente el criterio del 80 %, confirmando que el clasificador mantiene un rendimiento parejo en ambos dominios.
+El subgrupo de laboratorio solo contiene 3 de las 9 clases en los datasets públicos (*roya*, *mancha gris* y *tizón*), de modo que su macro $F_1$ promedia sobre tres categorías y el de campo real sobre nueve. Las dos cifras no son directamente comparables entre sí, y el cociente entre ellas no mide disparidad sino la distinta composición de clases de cada promedio. La comparación válida restringe ambos subgrupos a las tres clases que comparten:
+
+| Subgrupo evaluado | Muestras ($N$) | Exactitud (Accuracy) | Macro $F_1$ (3 clases) |
+|---|:---:|:---:|:---:|
+| **Campo real (`real`)** | 1,121 | **97.77 %** | **0.9050** |
+| **Laboratorio (`lab`)** | 532 | **96.80 %** | **0.9423** |
+| *Ratio de impacto dispar* | — | *$DIR = 0.9901$* | *$DIR = 0.9604$* |
+
+Sobre esa base comparable, la disparidad en exactitud es de **0.97 puntos porcentuales** y ambos ratios de impacto dispar superan holgadamente el criterio del 80 %. El sentido de la disparidad se invierte según la métrica: campo real acierta más en conjunto, y laboratorio reparte mejor el acierto entre las tres clases.
 
 ![Matrices de confusión desagregadas](/fairness/disaggregated_confusion_matrices.png)
 
-Como se detalló en la fase de evaluación, el subgrupo de laboratorio solo contiene 3 clases en los datasets públicos (*roya*, *mancha gris* y *tizón*); sobre esas patologías evaluables, el comportamiento del modelo es altamente consistente y no genera falsos positivos hacia enfermedades de campo.
+La desagregación por clase dentro de cada entorno descubre una asimetría que las métricas globales no revelan:
+
+| Clase | $FNR$ laboratorio | $N$ | $FNR$ campo real | $N$ |
+|---|:---:|:---:|:---:|:---:|
+| **Roya común** | 0.31 % | 322 | **31.25 %** | 16 |
+| Mancha gris (GLS) | 15.58 % | 77 | 5.16 % | 213 |
+| Tizón foliar (NCLB) | 3.01 % | 133 | 1.01 % | 892 |
+
+La **roya común** es prácticamente infalible en laboratorio (1 fallo sobre 322 imágenes) y **falla en casi un tercio de los casos en campo real** (5 fallos sobre 16). Es el reflejo directo de la composición del corpus: el 95 % de las imágenes de roya del conjunto de prueba proceden de repositorios de laboratorio, así que el modelo aprendió la patología bajo fondo controlado y no la reconoce con fiabilidad sobre vegetación. La mancha gris exhibe el patrón inverso y más favorable. La lectura de la roya en campo está limitada por el tamaño de su muestra ($N = 16$): señala la dirección del problema, no su magnitud exacta.
 
 ---
 
@@ -56,8 +72,24 @@ Al auditar los resultados a través de los 14 repositorios del corpus, encontram
 
 ![Panel Grad-CAM](/fairness/gradcam_samples.png)
 
-Los mapas de activación visual con Grad-CAM confirman cualitativamente que, en condiciones normales de campo, la red dirige sus mayores gradientes hacia las manchas foliares, las pústulas fúngicas y las decoloraciones típicas de deficiencia. 
+Los mapas de activación visual con Grad-CAM sitúan, en condiciones normales de campo, los mayores gradientes sobre las manchas foliares, las pústulas fúngicas y las decoloraciones típicas de deficiencia. Esa lectura visual no basta como evidencia: la lámina foliar ocupa el centro y la mayor parte del cuadro en prácticamente todo el corpus, así que una atribución repartida al azar también recaería mayoritariamente sobre la hoja.
 
-En paralelo, los análisis cuantitativos con SHAP corroboran que la fracción de atribución positiva que recae sobre el tejido foliar supera significativamente la cobertura que daría una atención aleatoria.
+Para separar ambos efectos se mide el **exceso de atribución**: la fracción de atribución positiva que cae sobre el tejido foliar menos la cobertura de la máscara de hoja, que es el nivel de azar correspondiente a cada imagen.
 
-La combinación de estas auditorías —conocer el peso del fondo, verificar la equidad entre entornos y blindar el sistema con el marco de captura y el detector OOD— garantiza que la tecnología se despliegue con responsabilidad y rigor ético en beneficio de los productores salvadoreños.
+| Clase | $N$ | Atribución en hoja | Cobertura (azar) | Exceso |
+|---|:---:|:---:|:---:|:---:|
+| Roya común | 29 | 0.897 | 0.703 | **+0.193** |
+| Deficiencia de fósforo | 28 | 0.474 | 0.378 | +0.096 |
+| Deficiencia de nitrógeno | 23 | 0.352 | 0.302 | +0.051 |
+| Tizón foliar (NCLB) | 30 | 0.575 | 0.584 | −0.009 |
+| Planta sana | 30 | 0.538 | 0.578 | −0.040 |
+| Mancha gris (GLS) | 26 | 0.570 | 0.639 | −0.069 |
+| **Media de las seis clases** | — | — | — | **+0.037** |
+
+El perfil se calculó sobre 270 imágenes (30 por clase), empleando como máscara de hoja la segmentación producida por el modelo del repositorio `maize-doctor-segmenter` en lugar de un umbral cromático. Las tres clases restantes —*gusano cogollero*, *necrosis letal* y *deficiencia de potasio*— quedan fuera de la tabla porque su máscara alcanza coberturas de entre 0.54 y 0.86 y el control de calidad rechaza entre el 37 % y el 57 % de sus imágenes, así que su ratio no es interpretable. Los datos brutos están en [`xai_global_summary.csv`](/es/resultados/evidencia/) y su desglose por imagen en `xai_global_per_image.csv`.
+
+**El exceso medio es de +0.037 y su signo se reparte: tres clases por encima del azar y tres por debajo.** La atribución sobre la hoja no supera de forma consistente la que produciría una atención repartida en proporción al área; únicamente la roya común exhibe una concentración foliar netamente superior a su nivel de azar.
+
+Este resultado no contradice la prueba de oclusión, porque ambas técnicas responden a preguntas distintas. Grad-CAM y SHAP son métodos de atribución *local*: miden la contribución de cada región **mientras el resto de la imagen sigue presente**, y premian la evidencia concentrada y de alto contraste, como es una lesión. La ablación mide *suficiencia*: cuánto acierto sobrevive cuando todo lo demás se elimina. La firma de procedencia de un repositorio —paleta cromática, iluminación, ruido de sensor, textura del suelo— es un estadístico de baja frecuencia repartido sobre decenas de miles de píxeles: cada píxel aporta poco, así que nunca aparece como punto caliente en un mapa de atribución, pero el agregado carga información de clase suficiente para sostener el 79.46 % de acierto de la ablación. A ello se suma que la última capa convolucional produce un mapa de 7×7 celdas cuyo campo receptivo abarca casi la escena completa, de modo que evidencia recogida del fondo puede quedar representada sobre una coordenada central tras la interpolación.
+
+La combinación de estas auditorías —conocer el peso del fondo, verificar la equidad entre entornos y blindar el sistema con el marco de captura y el detector OOD— permite desplegar la tecnología declarando con precisión qué está medido y qué no.
