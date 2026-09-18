@@ -39,16 +39,20 @@ def main() -> None:
     dataset = CornDataset(csv_path=str(csv_path), transform=factory.get_pipeline("train"))
     print(f"Dataset: {len(dataset)} muestras | class_to_idx: {dataset.class_to_idx}")
 
-    tensor, label = dataset[0]
+    tensor, label, sample_id = dataset[0]
     print(
         f"Muestra 0 -> tensor {tuple(tensor.shape)} | label {label} "
-        f"({dataset.idx_to_class[label]}) | rango [{tensor.min():.3f}, {tensor.max():.3f}]"
+        f"({dataset.idx_to_class[label]}) | sample_id {sample_id} | "
+        f"rango [{tensor.min():.3f}, {tensor.max():.3f}]"
     )
 
     batch_size = min(args.batch_size, len(dataset))
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-    images, labels = next(iter(loader))
-    print(f"Batch -> imágenes {tuple(images.shape)} | labels {tuple(labels.shape)}")
+    images, labels, sample_ids = next(iter(loader))
+    print(
+        f"Batch -> imágenes {tuple(images.shape)} | labels {tuple(labels.shape)} "
+        f"| sample_ids {len(sample_ids)}"
+    )
     print("Smoke check OK.")
 
 

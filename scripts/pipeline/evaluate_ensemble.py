@@ -28,6 +28,7 @@ from torch.utils.data import DataLoader
 from src.config import PROJECT_ROOT, get_output_root, set_global_seed
 from src.analysis.predictions import write_per_image_predictions
 from src.data.dataset import CornDataset
+from src.data.identity import align_manifest_to_sample_ids, unpack_batch
 from src.data.transforms import CornTransformFactory
 from src.models import build_model
 from src.models.ensemble import SoftVotingEnsemble
@@ -313,9 +314,14 @@ def main() -> None:
     individual_predictions: dict[str, list[int]] = {m: [] for m in model_names}
     ensemble_predictions: list[int] = []
     ensemble_probs_list: list[list[float]] = []
+    inference_sample_ids: list[str] = []
 
     with torch.no_grad():
-        for batch_idx, (images, targets) in enumerate(test_loader):
+        for batch_idx, batch in enumerate(test_loader):
+            images, targets, batch_sample_ids = unpack_batch(batch)
+            if batch_sample_ids is None:
+                raise ValueError("El loader de ensamble no proporcionó sample_id")
+            inference_sample_ids.extend(batch_sample_ids)
             images = images.to(device)
             all_targets.extend(targets.tolist())
 
@@ -369,9 +375,13 @@ def main() -> None:
     # 7. Guardar Artefactos
     df_comparison = pd.DataFrame(comparison_table)
     df_comparison.to_csv(output_dir / "ensemble_comparison.csv", index=False)
+    inference_manifest = align_manifest_to_sample_ids(
+        test_dataset.data_frame, inference_sample_ids
+    )
     destino_predicciones = write_per_image_predictions(
         destination=output_dir / "ensemble_predictions.csv",
-        image_paths=test_dataset.data_frame["image_path"].tolist(),
+        sample_ids=inference_sample_ids,
+        image_paths=inference_manifest["image_path"].tolist(),
         y_true=all_targets,
         y_pred=ensemble_predictions,
         idx_to_class=dict(enumerate(class_names)),

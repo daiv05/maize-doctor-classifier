@@ -309,7 +309,7 @@ def main() -> None:
         )
         write_test_outputs(run_dir, idx_to_class, labels, predictions)
         predictions_df = write_predictions_csv(
-            run_dir, test_dataset, idx_to_class, predictions, probs
+            run_dir, test_dataset, idx_to_class, labels, predictions, probs
         )
         write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
         write_summary(

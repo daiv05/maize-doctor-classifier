@@ -37,6 +37,7 @@ from torch.utils.data import DataLoader
 from scripts.experiments.leave_one_source_out import build_folds, deduplicate
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
 from src.data.dataset import CornDataset
+from src.data.identity import unpack_batch
 from src.data.image_cache import ImageCache
 from src.data.provenance import provenance_from_path
 from src.data.transforms import CornTransformFactory
@@ -177,7 +178,8 @@ def evaluate(model, loader, device) -> tuple[np.ndarray, np.ndarray]:
     model.eval()
     trues, preds = [], []
     with torch.no_grad():
-        for images, targets in loader:
+        for batch in loader:
+            images, targets, _ = unpack_batch(batch)
             preds.append(model(images.to(device, non_blocking=True)).argmax(1).cpu().numpy())
             trues.append(targets.numpy())
     return np.concatenate(trues), np.concatenate(preds)
@@ -241,7 +243,8 @@ def run_fold(fold, manifest, args, factory, device, workdir: Path, cache=None) -
     best_f1, best_state = -1.0, None
     for epoch in range(1, args.epochs + 1):
         model.train()
-        for images, targets in train_loader:
+        for batch in train_loader:
+            images, targets, _ = unpack_batch(batch)
             optimizer.zero_grad(set_to_none=True)
             loss = criterion(model(images.to(device, non_blocking=True)),
                              targets.to(device, non_blocking=True))

@@ -7,6 +7,7 @@ import yaml
 from torch.utils.data import Dataset, WeightedRandomSampler
 
 from src.config import PROJECT_ROOT, get_dataset_root
+from src.data.identity import ensure_sample_ids
 from src.data.loader import load_and_normalize_image
 
 _DEFAULT_CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
@@ -98,6 +99,8 @@ class CornDataset(Dataset):
                 raise FileNotFoundError(f"No se encontró el archivo de manifiesto: {csv_path}")
             df = pd.read_csv(csv_path)
 
+        df = ensure_sample_ids(df)
+
         if exclude_classes:
             df = df[~df["label"].isin(exclude_classes)].reset_index(drop=True)
         self.data_frame = df
@@ -152,7 +155,7 @@ class CornDataset(Dataset):
         """Devuelve el tamaño neto total de la muestra actual."""
         return len(self.data_frame)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int, str]:
         """Carga perezosa: lee, normaliza y transforma la muestra bajo demanda."""
         # Reintentos acotados: una imagen corrupta no mata el worker, pero una racha de
         # fallos (dataset inaccesible) sí se propaga.
@@ -167,6 +170,7 @@ class CornDataset(Dataset):
                 else:
                     image = load_and_normalize_image(img_path)
                 class_name = row["label"]
+                sample_id = row["sample_id"]
                 break
             except (FileNotFoundError, RuntimeError) as e:
                 last_error = e
@@ -192,7 +196,7 @@ class CornDataset(Dataset):
         if pipeline:
             image = pipeline(image)
 
-        return image, label_idx
+        return image, label_idx, sample_id
 
 
 def resolve_class_mapping(

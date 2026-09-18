@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from src.config import get_dataset_root, get_output_root
 from src.data.deduplicate import drop_near_duplicates
+from src.data.identity import ensure_sample_ids
 from src.data.provenance import provenance_from_path
 from src.data.splitter import HierarchicalStratifiedSplitter, SourceGroupedSplitter
 
@@ -202,7 +203,7 @@ def run_data_preparation_pipeline(
             {"image_path": rel_path, "label": class_name, "environment": environment}
         )
 
-    df_manifest = pd.DataFrame(all_records)
+    df_manifest = ensure_sample_ids(pd.DataFrame(all_records))
     logger.info(
         f"Manifiesto construido: {len(df_manifest)} imágenes válidas "
         f"(duplicados exactos omitidos: {duplicates_found} | corruptas omitidas: {corrupt_found})"

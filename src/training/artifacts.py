@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
+from src.data.identity import align_manifest_to_sample_ids, dataset_manifest, sample_ids_from
 from src.data.provenance import provenance_from_path
 from src.training.evaluation import (
     compute_calibration_metrics,
@@ -64,6 +65,7 @@ def write_predictions_csv(
     run_dir: Path,
     test_dataset,
     idx_to_class: dict[int, str],
+    labels: list[int],
     predictions: list[int],
     probs: list[float],
 ) -> pd.DataFrame:
@@ -73,23 +75,39 @@ def write_predictions_csv(
     @param {Path} run_dir Directorio del run.
     @param {CornDataset} test_dataset Dataset de test, fuente de rutas y etiquetas.
     @param {dict[int,str]} idx_to_class Mapeo indice->clase.
+    @param {list[int]} labels Etiquetas reales en el orden efectivo de inferencia.
     @param {list[int]} predictions Predicciones codificadas.
     @param {list[float]} probs Confianza de la clase predicha.
     @returns {pd.DataFrame} El propio dataframe escrito.
     """
+    if not (len(labels) == len(predictions) == len(probs)):
+        raise ValueError("Labels, predicciones y probabilidades deben tener la misma longitud")
+    sample_ids = sample_ids_from(predictions, field_name="predicciones")
+    label_sample_ids = sample_ids_from(labels, field_name="etiquetas")
+    if sample_ids != label_sample_ids:
+        raise ValueError("Las etiquetas y predicciones no conservan el mismo orden de sample_id")
+
+    source_manifest = dataset_manifest(test_dataset)
+    if source_manifest is None:
+        raise ValueError("El dataset de test no expone un manifiesto con sample_id")
+    manifest = align_manifest_to_sample_ids(source_manifest, sample_ids)
+    true_labels = [idx_to_class[value] for value in labels]
+    if manifest["label"].tolist() != true_labels:
+        raise ValueError("Las etiquetas inferidas no coinciden con el manifiesto por sample_id")
+
     frame = pd.DataFrame(
         {
-            "image_path": test_dataset.data_frame["image_path"].tolist(),
-            "label": test_dataset.data_frame["label"].tolist(),
+            "sample_id": sample_ids,
+            "image_path": manifest["image_path"].tolist(),
+            "label": true_labels,
+            "true_label": true_labels,
             "pred_label": [idx_to_class[p] for p in predictions],
             "pred_prob": probs,
         }
     )
-    if "environment" in test_dataset.data_frame.columns:
-        frame["environment"] = test_dataset.data_frame["environment"].tolist()
-    frame["source_id"] = [
-        provenance_from_path(path) for path in test_dataset.data_frame["image_path"]
-    ]
+    if "environment" in manifest.columns:
+        frame["environment"] = manifest["environment"].tolist()
+    frame["source_id"] = [provenance_from_path(path) for path in frame["image_path"]]
     frame.to_csv(run_dir / "predictions.csv", index=False)
     return frame
 

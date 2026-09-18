@@ -209,7 +209,7 @@ def _train_model(
 
     test_dataset = test_loader.dataset
     predictions_df = write_predictions_csv(
-        run_dir, test_dataset, idx_to_class, predictions, test_probs
+        run_dir, test_dataset, idx_to_class, labels, predictions, test_probs
     )
     logger.info(
         "[%s] Predicciones de test guardadas en %s", model_name, run_dir / "predictions.csv"

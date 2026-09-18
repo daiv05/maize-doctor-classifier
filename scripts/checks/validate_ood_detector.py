@@ -20,6 +20,7 @@ import torch
 
 from scripts.pipeline.compute_ood_stats import _apply_pca, _l2_normalize, _mahalanobis_to_mean
 from src.config import PROJECT_ROOT
+from src.data.identity import unpack_batch
 from src.data.transforms import CornTransformFactory
 from src.export.common import load_checkpoint_for_export, resolve_export_inputs
 from src.models.feature_exposed import FeatureExposedModel
@@ -169,7 +170,8 @@ def main() -> None:
         )
         evaluated = 0
         false_positives = 0
-        for images, labels in loader:
+        for batch in loader:
+            images, labels, _ = unpack_batch(batch)
             if evaluated >= args.n_legit_samples:
                 break
             with torch.no_grad():

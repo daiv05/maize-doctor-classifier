@@ -44,6 +44,7 @@ from src.analysis.fairness import (
 )
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
 from src.data.dataset import CornDataset
+from src.data.identity import align_manifest_to_sample_ids, ensure_sample_ids, unpack_batch
 from src.data.transforms import CornTransformFactory
 from src.explainability.gradcam import GradCAM, build_gradcam_overlay, get_target_layer
 from src.models import build_model, list_models, resolve_input_size
@@ -299,7 +300,7 @@ def main() -> None:
     output_dir = Path(args.output_dir) if args.output_dir else (get_output_root() / "fairness")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    test_df = pd.read_csv(test_csv_path)
+    test_df = ensure_sample_ids(pd.read_csv(test_csv_path))
     if "environment" not in test_df.columns:
         logger.warning("Columna 'environment' no presente en test.csv. Asignando 'unknown'.")
         test_df["environment"] = "unknown"
@@ -369,6 +370,7 @@ def main() -> None:
     # Inferencia completa
     y_true: list[int] = []
     y_pred: list[int] = []
+    inference_sample_ids: list[str] = []
     if args.subgroup_column not in test_df.columns:
         if args.subgroup_column == "source_id":
             test_df["source_id"] = test_df["image_path"].map(source_from_path)
@@ -377,16 +379,21 @@ def main() -> None:
                 f"El manifiesto no tiene la columna '{args.subgroup_column}' y no se sabe "
                 "derivarla. Columnas disponibles: " + ", ".join(test_df.columns)
             )
-    subgroups: list[str] = test_df[args.subgroup_column].astype(str).tolist()
-    logger.info("Subgrupos por '%s': %d distintos", args.subgroup_column, len(set(subgroups)))
-
     with torch.no_grad():
-        for images, targets in test_loader:
+        for batch in test_loader:
+            images, targets, batch_sample_ids = unpack_batch(batch)
+            if batch_sample_ids is None:
+                raise ValueError("El loader de equidad no proporcionó sample_id")
+            inference_sample_ids.extend(batch_sample_ids)
             images = images.to(device)
             logits = model(images)
             preds = torch.argmax(logits, dim=-1).cpu().tolist()
             y_true.extend(targets.tolist())
             y_pred.extend(preds)
+
+    inference_manifest = align_manifest_to_sample_ids(test_df, inference_sample_ids)
+    subgroups: list[str] = inference_manifest[args.subgroup_column].astype(str).tolist()
+    logger.info("Subgrupos por '%s': %d distintos", args.subgroup_column, len(set(subgroups)))
 
     # 1. Calcular métricas desagregadas por subgrupo
     subgroup_metrics = compute_subgroup_metrics(y_true, y_pred, subgroups, class_names)
@@ -484,7 +491,8 @@ def main() -> None:
     df_disparity.to_csv(output_dir / "fairness_disparity.csv", index=False)
     destino_pred = write_per_image_predictions(
         destination=output_dir / "fairness_predictions.csv",
-        image_paths=test_df["image_path"].tolist(),
+        sample_ids=inference_sample_ids,
+        image_paths=inference_manifest["image_path"].tolist(),
         y_true=y_true,
         y_pred=y_pred,
         idx_to_class=dict(enumerate(class_names)),

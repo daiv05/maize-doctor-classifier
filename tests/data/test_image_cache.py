@@ -74,7 +74,8 @@ def test_el_dataset_lee_de_la_cache_sin_tocar_el_disco(corpus, tmp_path, monkeyp
         config_path=_CONFIG,
         image_cache=ImageCache(destination),
     )
-    imagen, etiqueta = dataset[0]
+    imagen, etiqueta, sample_id = dataset[0]
 
     assert imagen.size == (64, 64)
     assert etiqueta in dataset.idx_to_class
+    assert sample_id == dataset.data_frame.iloc[0]["sample_id"]

@@ -73,6 +73,11 @@ from src.data.cross_validation import (
 )
 from src.analysis.predictions import write_per_image_predictions
 from src.data.dataset import CornDataset
+from src.data.identity import (
+    align_manifest_to_sample_ids,
+    sample_ids_from,
+    unpack_batch,
+)
 from src.data.transforms import CornTransformFactory
 from src.models import build_model, list_models, resolve_input_size
 from src.models.ensemble import SoftVotingEnsemble
@@ -461,7 +466,11 @@ def main() -> None:
             json.dump(history, f, indent=2)
         write_per_image_predictions(
             destination=fold_dir / "predictions.csv",
-            image_paths=val_dataset.data_frame["image_path"].tolist(),
+            sample_ids=sample_ids_from(y_true, field_name="etiquetas de validación"),
+            image_paths=align_manifest_to_sample_ids(
+                val_dataset.data_frame,
+                sample_ids_from(y_true, field_name="etiquetas de validación"),
+            )["image_path"].tolist(),
             y_true=y_true,
             y_pred=y_pred,
             idx_to_class=idx_to_class,
@@ -489,7 +498,8 @@ def main() -> None:
     test_y_pred: list[int] = []
 
     with torch.no_grad():
-        for images, targets in test_loader:
+        for batch in test_loader:
+            images, targets, _ = unpack_batch(batch)
             images = images.to(device)
             test_y_true.extend(targets.tolist())
             ens_probs = fold_ensemble.predict_probabilities(images)

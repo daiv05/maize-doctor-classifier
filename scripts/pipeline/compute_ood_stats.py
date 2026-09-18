@@ -38,6 +38,7 @@ import numpy as np
 import torch
 
 from src.config import PROJECT_ROOT, get_output_root
+from src.data.identity import unpack_batch
 from src.export.common import load_checkpoint_for_export, resolve_export_inputs
 from src.export.data import build_test_loader, resolve_split_csv
 from src.models import list_models
@@ -112,7 +113,8 @@ def _extract_features(
     model.eval()
     all_features = []
     all_labels = []
-    for images, labels in loader:
+    for batch in loader:
+        images, labels, _ = unpack_batch(batch)
         images = images.to(device)
         _, features = model(images)
         all_features.append(features.cpu().numpy())

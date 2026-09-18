@@ -18,6 +18,8 @@ from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from src.data.identity import IdentifiedValues, unpack_batch
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +60,9 @@ def run_epoch(
     optimizer: torch.optim.Optimizer | None = None,
     desc: str = "",
     clip_grad_norm: float | None = None,
-) -> tuple[dict[str, float], list[int], list[int], list[float]]:
+) -> tuple[
+    dict[str, float], IdentifiedValues[int], IdentifiedValues[int], IdentifiedValues[float]
+]:
     """
     Ejecuta una pasada completa sobre el loader, entrenando si se pasa optimizer.
 
@@ -81,13 +85,22 @@ def run_epoch(
 
     running_loss = 0.0
     running_denominator = 0.0
-    labels_all: list[int] = []
-    preds_all: list[int] = []
-    probs_all: list[float] = []
+    labels_all: IdentifiedValues[int] = IdentifiedValues()
+    preds_all: IdentifiedValues[int] = IdentifiedValues()
+    probs_all: IdentifiedValues[float] = IdentifiedValues()
+    sample_ids_all: list[str] = []
+    identified_batches: bool | None = None
 
     context = torch.enable_grad() if is_train else torch.no_grad()
     with context:
-        for images, labels in tqdm(loader, desc=desc, leave=False):
+        for batch in tqdm(loader, desc=desc, leave=False):
+            images, labels, batch_sample_ids = unpack_batch(batch)
+            is_identified = batch_sample_ids is not None
+            if identified_batches is not None and identified_batches != is_identified:
+                raise ValueError("El DataLoader mezcló batches con y sin sample_id")
+            identified_batches = is_identified
+            if batch_sample_ids is not None:
+                sample_ids_all.extend(batch_sample_ids)
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
 
@@ -113,6 +126,10 @@ def run_epoch(
 
     avg_loss = running_loss / running_denominator if running_denominator > 0 else 0.0
     metrics = _metrics_from_predictions(labels_all, preds_all, avg_loss)
+    propagated_ids = sample_ids_all if identified_batches else None
+    labels_all.sample_ids = propagated_ids
+    preds_all.sample_ids = propagated_ids
+    probs_all.sample_ids = propagated_ids
     return metrics, labels_all, preds_all, probs_all
 
 
