@@ -1,9 +1,10 @@
 import argparse
-import hashlib
 import io
 import logging
 import os
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -13,7 +14,18 @@ from tqdm import tqdm
 
 from src.config import get_dataset_root, get_output_root
 from src.data.deduplicate import drop_near_duplicates
-from src.data.identity import ensure_sample_ids
+from src.data.identity import ensure_sample_ids, sample_id_for_path
+from src.data.preparation import (
+    Exclusion,
+    atomic_write_json,
+    build_split_audit_report,
+    load_exclusions,
+    sha256_bytes,
+    sha256_file,
+    sha256_json,
+    validate_split_integrity,
+    write_canonical_csv,
+)
 from src.data.provenance import provenance_from_path
 from src.data.splitter import HierarchicalStratifiedSplitter, SourceGroupedSplitter
 
@@ -23,6 +35,18 @@ logger = logging.getLogger(__name__)
 # sklearn exige >=2 muestras por estrato en cada corte del doble split; con 70/15/15
 # eso se garantiza a partir de ~7 imágenes por estrato label+environment.
 _MIN_STRATUM_IMAGES = 7
+_SPLIT_NAMES = ("train", "val", "test")
+_MASTER_COLUMNS = ("sample_id", "image_path", "label", "environment", "sha256")
+_SPLIT_COLUMNS = ("sample_id", "image_path", "label", "environment")
+
+
+@dataclass(frozen=True)
+class _ImageInspection:
+    """Resultado de una única lectura para SHA-256 y validación PIL."""
+
+    sha256: str
+    valid: bool
+    error: str | None = None
 
 
 def _resolve_index_workers() -> int:
@@ -42,22 +66,25 @@ def _resolve_index_workers() -> int:
     return min(32, (os.cpu_count() or 4) * 4)
 
 
-def _verify_and_hash(abs_path: Path) -> tuple[bool, str]:
+def _verify_and_hash(abs_path: Path) -> _ImageInspection:
     """Lee el archivo una sola vez; valida integridad PIL y calcula el SHA-256.
 
-    Devuelve `(True, digest)` si la imagen es válida, o `(False, mensaje_error)` si es
-    corrupta/ilegible. Es una función pura del contenido del archivo (el resultado no
-    depende del orden ni de otras imágenes), así que es segura para ejecutarse en paralelo.
-    Lee los bytes una vez y los reutiliza para PIL (vía BytesIO) y para el hash, evitando
-    la doble lectura de disco del enfoque anterior.
+    Siempre conserva el digest de los bytes si pudieron leerse, incluso cuando PIL
+    rechaza la imagen. Así una exclusión de un archivo inválido también puede quedar
+    fijada por contenido sin una segunda lectura.
     """
     try:
         data = abs_path.read_bytes()
+    except OSError as error:
+        return _ImageInspection(sha256="", valid=False, error=str(error))
+
+    digest = sha256_bytes(data)
+    try:
         with Image.open(io.BytesIO(data)) as img:
             img.verify()
-        return True, hashlib.sha256(data).hexdigest()
-    except Exception as e:  # noqa: BLE001 - cualquier fallo = imagen inutilizable, se omite
-        return False, str(e)
+        return _ImageInspection(sha256=digest, valid=True)
+    except Exception as error:  # noqa: BLE001 - cualquier fallo PIL = imagen inválida
+        return _ImageInspection(sha256=digest, valid=False, error=str(error))
 
 
 def _cap_manifest_per_class(df: pd.DataFrame, max_per_class: int, seed: int) -> pd.DataFrame:
@@ -99,6 +126,124 @@ def _split_output_dir(base: Path, suffix: str | None = None) -> Path:
     return base
 
 
+def _distribution(frame: pd.DataFrame, column: str) -> dict[str, int]:
+    """Cuenta una columna con claves estables y una categoría explícita para nulos."""
+    if column not in frame.columns:
+        return {}
+    values = frame[column].fillna("unknown").astype(str)
+    return {str(key): int(value) for key, value in values.value_counts().sort_index().items()}
+
+
+def _conflict_error(conflicts: dict[str, list[dict[str, str]]]) -> ValueError:
+    """Construye un error explícito con identidad, ruta y etiqueta de cada conflicto."""
+    lines = ["Contenido idéntico con etiquetas conflictivas:"]
+    for digest, samples in sorted(conflicts.items()):
+        lines.append(f"sha256={digest}")
+        for sample in samples:
+            lines.append(
+                "  sample_id={sample_id} image_path={image_path} label={label}".format(**sample)
+            )
+    return ValueError("\n".join(lines))
+
+
+def _audit_payload(
+    *,
+    seed: int,
+    samples_discovered: int,
+    samples_valid: int,
+    exclusions: list[dict[str, str]],
+    exact_duplicates: int,
+    conflicts: dict[str, list[dict[str, str]]],
+    invalid_images: list[dict[str, str]],
+    class_cap_dropped: int = 0,
+    perceptual_duplicates: int = 0,
+    master_manifest: pd.DataFrame | None = None,
+    status: str = "complete",
+) -> dict:
+    """Crea el contenido estable de ``preparation_audit.json``."""
+    conflict_samples = sum(max(len(samples) - 1, 0) for samples in conflicts.values())
+    payload: dict = {
+        "schema_version": 1,
+        "status": status,
+        "seed": seed,
+        "samples_discovered": samples_discovered,
+        "samples_valid": samples_valid,
+        "samples_excluded": len(exclusions),
+        "exact_duplicates": exact_duplicates,
+        "label_conflicts": len(conflicts),
+        "label_conflict_samples": conflict_samples,
+        "invalid_images": len(invalid_images),
+        "class_cap_dropped": class_cap_dropped,
+        "perceptual_duplicates": perceptual_duplicates,
+        "exclusions_by_reason": dict(
+            sorted(Counter(item["reason"] for item in exclusions).items())
+        ),
+        "excluded_samples": exclusions,
+        "invalid_samples": invalid_images,
+        "label_conflict_details": [
+            {"sha256": digest, "samples": samples} for digest, samples in sorted(conflicts.items())
+        ],
+        "artifacts": {"preparation_audit": "preparation_audit.json"},
+    }
+    if master_manifest is not None:
+        payload["artifacts"].update(
+            {
+                "master_manifest": "master_manifest.csv",
+                "train": "train.csv",
+                "val": "val.csv",
+                "test": "test.csv",
+                "split_audit_report": "split_audit_report.csv",
+                "manifest_lock": "manifest.lock.json",
+            }
+        )
+        payload.update(
+            {
+                "samples_eligible": int(len(master_manifest)),
+                "distribution_by_label": _distribution(master_manifest, "label"),
+                "distribution_by_environment": _distribution(master_manifest, "environment"),
+                "distribution_by_source": _distribution(master_manifest, "source_id"),
+            }
+        )
+    return payload
+
+
+def _split_parameters(
+    *,
+    seed: int,
+    allowed_classes: list[str],
+    max_per_class: int | None,
+    group_by_source: bool,
+    deduplicate: bool,
+    dedup_distance: int,
+    allow_incomplete: bool,
+) -> dict:
+    """Parámetros semánticos que determinan membresía de los splits."""
+    return {
+        "seed": seed,
+        "classes": list(allowed_classes),
+        "max_per_class": max_per_class,
+        "group_by_source": group_by_source,
+        "deduplicate_perceptual": deduplicate,
+        "dedup_distance": dedup_distance,
+        "allow_incomplete_splits": allow_incomplete,
+        "ratios": {"train": 0.70, "val": 0.15, "test": 0.15},
+    }
+
+
+def _validate_exclusion(
+    exclusion: Exclusion,
+    inspection: _ImageInspection,
+) -> None:
+    """Verifica que la exclusión siga apuntando exactamente al contenido declarado."""
+    if inspection.sha256 != exclusion.sha256:
+        actual = inspection.sha256 or "unavailable"
+        raise ValueError(
+            "El contenido de la exclusión cambió: "
+            f"image_path={exclusion.image_path} "
+            f"sha256_declarado={exclusion.sha256} sha256_actual={actual}"
+        )
+
+
 def run_data_preparation_pipeline(
     config_path: str,
     baseline: bool = False,
@@ -109,6 +254,7 @@ def run_data_preparation_pipeline(
     deduplicate: bool = False,
     dedup_distance: int = 0,
     allow_incomplete: bool = False,
+    exclusions: str | Path | None = None,
 ) -> None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -161,10 +307,15 @@ def run_data_preparation_pipeline(
     if not raw_image_paths:
         raise ValueError(f"El pipeline no pudo indexar ninguna imagen válida en '{clean_dir}'.")
 
+    exclusion_by_path = load_exclusions(exclusions, (record[3] for record in raw_image_paths))
     all_records: list[dict] = []
-    seen_hashes: set[str] = set()
+    seen_hashes: dict[str, dict[str, str]] = {}
+    excluded_samples: list[dict[str, str]] = []
+    invalid_samples: list[dict[str, str]] = []
+    label_conflicts: dict[str, list[dict[str, str]]] = {}
     duplicates_found = 0
     corrupt_found = 0
+    valid_found = 0
 
     logger.info(
         f"Indexando {len(raw_image_paths)} imágenes con verificación SHA-256 y validación PIL..."
@@ -189,19 +340,83 @@ def run_data_preparation_pipeline(
     # Fase 2 (secuencial, en el mismo orden sorted() del escaneo): dedup determinista. Con los
     # digests ya calculados, conservar la primera copia vista sigue siendo reproducible entre
     # máquinas, idéntico al comportamiento previo - solo que ahora sin el cuello de botella serial.
-    for (class_name, environment, abs_path, rel_path), (ok, value) in zip(raw_image_paths, results):
-        if not ok:
-            tqdm.write(f"Imagen corrupta o ilegible, omitida: {rel_path} - {value}")
-            corrupt_found += 1
+    for (class_name, environment, _abs_path, rel_path), inspection in zip(raw_image_paths, results):
+        sample = {
+            "sample_id": sample_id_for_path(rel_path),
+            "image_path": rel_path,
+            "label": class_name,
+        }
+        exclusion = exclusion_by_path.get(rel_path)
+        if exclusion is not None:
+            _validate_exclusion(exclusion, inspection)
+            excluded_samples.append(
+                {
+                    **sample,
+                    "sha256": inspection.sha256,
+                    "reason": exclusion.reason,
+                }
+            )
+            if not inspection.valid:
+                corrupt_found += 1
+                invalid_samples.append(
+                    {
+                        **sample,
+                        "sha256": inspection.sha256,
+                        "error": inspection.error or "error de lectura desconocido",
+                    }
+                )
+            else:
+                valid_found += 1
             continue
-        if value in seen_hashes:
+        if not inspection.valid:
+            error = inspection.error or "error de lectura desconocido"
+            tqdm.write(f"Imagen corrupta o ilegible, omitida: {rel_path} - {error}")
+            corrupt_found += 1
+            invalid_samples.append(
+                {
+                    **sample,
+                    "sha256": inspection.sha256,
+                    "error": error,
+                }
+            )
+            continue
+
+        valid_found += 1
+        record = {
+            **sample,
+            "environment": environment,
+            "sha256": inspection.sha256,
+        }
+        previous = seen_hashes.get(inspection.sha256)
+        if previous is not None:
+            if previous["label"] != class_name:
+                conflict_samples = label_conflicts.setdefault(inspection.sha256, [previous])
+                conflict_samples.append(sample)
+                continue
             logger.warning(f"Duplicado exacto detectado y omitido: {rel_path}")
             duplicates_found += 1
             continue
-        seen_hashes.add(value)
-        all_records.append(
-            {"image_path": rel_path, "label": class_name, "environment": environment}
+        seen_hashes[inspection.sha256] = sample
+        all_records.append(record)
+
+    if label_conflicts:
+        atomic_write_json(
+            output_dir / "preparation_audit.json",
+            _audit_payload(
+                seed=seed,
+                samples_discovered=len(raw_image_paths),
+                samples_valid=valid_found,
+                exclusions=excluded_samples,
+                exact_duplicates=duplicates_found,
+                conflicts=label_conflicts,
+                invalid_images=invalid_samples,
+                status="failed_label_conflicts",
+            ),
         )
+        raise _conflict_error(label_conflicts)
+
+    if not all_records:
+        raise ValueError("No quedaron imágenes válidas después de exclusiones y validación")
 
     df_manifest = ensure_sample_ids(pd.DataFrame(all_records))
     logger.info(
@@ -218,9 +433,11 @@ def run_data_preparation_pipeline(
             "dataset.classes / baseline.classes en config/dataset.yaml o usa --classes."
         )
 
+    class_cap_dropped = 0
     if max_per_class is not None:
         before = len(df_manifest)
         df_manifest = _cap_manifest_per_class(df_manifest, max_per_class, seed)
+        class_cap_dropped = before - len(df_manifest)
         logger.info(
             f"Límite de {max_per_class} imágenes por clase aplicado: "
             f"{before} -> {len(df_manifest)} imágenes"
@@ -236,17 +453,20 @@ def run_data_preparation_pipeline(
             "excluye esas clases (--classes)."
         )
 
+    perceptual_duplicates = 0
     if deduplicate:
         logger.info("Eliminando casi-duplicados antes de particionar...")
-        df_manifest, dropped = drop_near_duplicates(
+        df_manifest, perceptual_duplicates = drop_near_duplicates(
             df_manifest, get_dataset_root(), max_distance=dedup_distance
         )
-        logger.info("Casi-duplicados descartados: %d", dropped)
+        logger.info("Casi-duplicados descartados: %d", perceptual_duplicates)
 
-    if group_by_source:
+    resolved_sources = df_manifest["image_path"].map(provenance_from_path)
+    if resolved_sources.notna().any():
         df_manifest = df_manifest.copy()
-        df_manifest["source_id"] = df_manifest["image_path"].map(provenance_from_path)
-        unresolved = int(df_manifest["source_id"].isna().sum())
+        df_manifest["source_id"] = resolved_sources
+    if group_by_source:
+        unresolved = int(resolved_sources.isna().sum())
         if unresolved:
             raise SystemExit(
                 f"{unresolved} imágenes sin fuente identificable; el reparto por fuente "
@@ -260,30 +480,85 @@ def run_data_preparation_pipeline(
         )
         splitter = HierarchicalStratifiedSplitter(seed=seed)
 
+    master_columns = list(_MASTER_COLUMNS)
+    if "source_id" in df_manifest.columns:
+        master_columns.append("source_id")
+    master_manifest = write_canonical_csv(
+        output_dir / "master_manifest.csv",
+        df_manifest,
+        master_columns,
+    )
+
     train_df, val_df, test_df = splitter.split(
         df_manifest, train_size=0.70, val_size=0.15, test_size=0.15
     )
 
-    train_df.to_csv(output_dir / "train.csv", index=False)
-    val_df.to_csv(output_dir / "val.csv", index=False)
-    test_df.to_csv(output_dir / "test.csv", index=False)
+    split_columns = list(_SPLIT_COLUMNS)
+    if group_by_source:
+        split_columns.append("source_id")
+    splits = {
+        name: write_canonical_csv(output_dir / f"{name}.csv", frame, split_columns)
+        for name, frame in zip(_SPLIT_NAMES, (train_df, val_df, test_df))
+    }
+    validate_split_integrity(master_manifest, splits)
 
     logger.info(f"Pipeline finalizado. Splits guardados en {output_dir}")
     logger.info(
-        f"Distribución -> Train: {len(train_df)} | Val: {len(val_df)} | Test: {len(test_df)}"
+        "Distribución -> Train: %d | Val: %d | Test: %d",
+        len(splits["train"]),
+        len(splits["val"]),
+        len(splits["test"]),
     )
 
     logger.info("Generando reporte de auditoría del split...")
 
-    train_counts = train_df.groupby(["label", "environment"]).size().rename("train_count")
-    val_counts = val_df.groupby(["label", "environment"]).size().rename("val_count")
-    test_counts = test_df.groupby(["label", "environment"]).size().rename("test_count")
+    report_df = build_split_audit_report(master_manifest, splits)
+    report_sort = ["split", "label", "environment"]
+    if "source_id" in report_df.columns:
+        report_sort.append("source_id")
+    write_canonical_csv(
+        output_dir / "split_audit_report.csv",
+        report_df,
+        [*report_sort, "count"],
+        sort_by=report_sort,
+    )
 
-    report_df = pd.concat([train_counts, val_counts, test_counts], axis=1).fillna(0).astype(int)
-    report_df["total_count"] = report_df.sum(axis=1)
-    report_df = report_df.reset_index()
-    # Junto a los CSV del split, para que los perfiles completo y baseline no se pisen.
-    report_df.to_csv(output_dir / "split_audit_report.csv", index=False)
+    split_parameters = _split_parameters(
+        seed=seed,
+        allowed_classes=list(allowed_classes),
+        max_per_class=max_per_class,
+        group_by_source=group_by_source,
+        deduplicate=deduplicate,
+        dedup_distance=dedup_distance,
+        allow_incomplete=allow_incomplete,
+    )
+    lock = {
+        "schema_version": 1,
+        "seed": seed,
+        "config_sha256": sha256_json(split_parameters),
+        "split_parameters": split_parameters,
+        "master_manifest_sha256": sha256_file(output_dir / "master_manifest.csv"),
+        "train_sha256": sha256_file(output_dir / "train.csv"),
+        "val_sha256": sha256_file(output_dir / "val.csv"),
+        "test_sha256": sha256_file(output_dir / "test.csv"),
+        "exclusions_sha256": sha256_file(exclusions) if exclusions is not None else None,
+    }
+    atomic_write_json(output_dir / "manifest.lock.json", lock)
+    atomic_write_json(
+        output_dir / "preparation_audit.json",
+        _audit_payload(
+            seed=seed,
+            samples_discovered=len(raw_image_paths),
+            samples_valid=valid_found,
+            exclusions=excluded_samples,
+            exact_duplicates=duplicates_found,
+            conflicts=label_conflicts,
+            invalid_images=invalid_samples,
+            class_cap_dropped=class_cap_dropped,
+            perceptual_duplicates=perceptual_duplicates,
+            master_manifest=master_manifest,
+        ),
+    )
 
     logger.info(f"Reporte de auditoría guardado en: {output_dir / 'split_audit_report.csv'}")
 
@@ -351,6 +626,12 @@ if __name__ == "__main__":
         dest="allow_incomplete",
         help="Continúa aunque alguna clase quede fuera de val o test al agrupar por fuente.",
     )
+    parser.add_argument(
+        "--exclusions",
+        type=Path,
+        default=None,
+        help="CSV opcional image_path,sha256,reason de exclusiones lógicas verificadas.",
+    )
     args = parser.parse_args()
     run_data_preparation_pipeline(
         config_path=args.config,
@@ -362,4 +643,5 @@ if __name__ == "__main__":
         deduplicate=args.deduplicate,
         dedup_distance=args.dedup_distance,
         allow_incomplete=args.allow_incomplete,
+        exclusions=args.exclusions,
     )
