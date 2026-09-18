@@ -1,4 +1,3 @@
-import logging
 import os
 
 import pandas as pd
@@ -12,12 +11,7 @@ from src.data.loader import load_and_normalize_image
 
 _DEFAULT_CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
 
-# Reintentos ante imágenes ilegibles antes de asumir que el dataset entero es inaccesible.
-_MAX_FALLBACK_ATTEMPTS = 5
-
 _DEFAULT_MINORITY_RATIO_THRESHOLD = 4.0
-
-logger = logging.getLogger(__name__)
 
 
 def _load_minority_ratio_threshold(config_path: str) -> float:
@@ -146,8 +140,10 @@ class CornDataset(Dataset):
         # superaria el umbral de 4.0.
         if max_per_class:
             self.data_frame = pd.concat(
-                [group.sample(min(len(group), max_per_class), random_state=seed)
-                 for _, group in self.data_frame.groupby("label")],
+                [
+                    group.sample(min(len(group), max_per_class), random_state=seed)
+                    for _, group in self.data_frame.groupby("label")
+                ],
                 ignore_index=True,
             )
 
@@ -157,32 +153,22 @@ class CornDataset(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, int, str]:
         """Carga perezosa: lee, normaliza y transforma la muestra bajo demanda."""
-        # Reintentos acotados: una imagen corrupta no mata el worker, pero una racha de
-        # fallos (dataset inaccesible) sí se propaga.
-        last_error: Exception | None = None
-        for attempt in range(_MAX_FALLBACK_ATTEMPTS):
-            row = self.data_frame.iloc[(idx + attempt) % len(self)]
-            relative = row["image_path"]
-            img_path = self.dataset_root / relative
-            try:
-                if self.image_cache is not None and relative in self.image_cache:
-                    image = self.image_cache.get(relative)
-                else:
-                    image = load_and_normalize_image(img_path)
-                class_name = row["label"]
-                sample_id = row["sample_id"]
-                break
-            except (FileNotFoundError, RuntimeError) as e:
-                last_error = e
-                logger.warning(
-                    f"Imagen no disponible en idx={idx + attempt} ({img_path}): {e}. "
-                    "Probando la siguiente fila."
-                )
-        else:
+        row = self.data_frame.iloc[idx]
+        relative = str(row["image_path"])
+        class_name = str(row["label"])
+        sample_id = str(row["sample_id"])
+        img_path = self.dataset_root / relative
+        try:
+            if self.image_cache is not None and relative in self.image_cache:
+                image = self.image_cache.get(relative)
+            else:
+                image = load_and_normalize_image(img_path)
+        except (FileNotFoundError, RuntimeError) as error:
             raise RuntimeError(
-                f"{_MAX_FALLBACK_ATTEMPTS} imágenes consecutivas ilegibles desde idx={idx}; "
-                "verifica que DATASET_ROOT siga accesible y los splits estén al día."
-            ) from last_error
+                "No se pudo cargar la muestra solicitada: "
+                f"idx={idx} sample_id={sample_id} image_path={relative} "
+                f"label={class_name} resolved_path={img_path}"
+            ) from error
 
         # 2. Mapear la etiqueta de texto a su correspondiente índice entero codificado
         label_idx = self.class_to_idx[class_name]

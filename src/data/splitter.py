@@ -1,5 +1,7 @@
 import logging
+import random
 from abc import ABC, abstractmethod
+from collections import Counter
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -53,23 +55,24 @@ class HierarchicalStratifiedSplitter(DatasetSplitter):
 
 
 class SourceGroupedSplitter(DatasetSplitter):
-    """Reparte fuentes de origen enteras, nunca imágenes sueltas.
+    """Reparte grupos lógicos enteros, nunca imágenes sueltas.
 
-    El splitter estratificado deja cada fuente presente en las tres particiones con la misma
-    proporción, de modo que un modelo puede reconocer la sesión de captura y ese atajo
-    transfiere de entrenamiento a prueba. Aquí una fuente cae entera de un lado, así que el
-    conjunto de prueba mide generalización a un dominio no visto.
+    La columna de grupo puede representar procedencia, planta, sesión u otra unidad lógica.
+    El llenado conserva grupos completos y prioriza cobertura de clases y entornos antes de
+    aproximar los tamaños objetivo. De este modo una desviación de proporción nunca se corrige
+    introduciendo fuga.
 
-    La contrapartida es estructural: una clase presente en menos de tres fuentes no puede
+    La contrapartida es estructural: una clase presente en menos de tres grupos no puede
     aparecer en las tres particiones. El reparto lo detecta y lo reporta en lugar de emitir
     un split silenciosamente incompleto.
     """
 
-    def __init__(self, seed: int = 42, group_column: str = "source_id",
-                 allow_incomplete: bool = False):
+    def __init__(
+        self, seed: int = 42, group_column: str = "source_id", allow_incomplete: bool = False
+    ):
         """
         @param {int} seed Semilla del desempate al ordenar fuentes del mismo tamaño.
-        @param {str} group_column Columna que identifica la fuente de origen.
+        @param {str} group_column Columna que identifica la unidad lógica indivisible.
         @param {bool} allow_incomplete Permite continuar si alguna clase falta en val o test.
         """
         self.seed = seed
@@ -84,53 +87,133 @@ class SourceGroupedSplitter(DatasetSplitter):
         if self.group_column not in data_manifest.columns:
             raise ValueError(
                 f"El manifiesto no tiene la columna '{self.group_column}'; sin ella no se "
-                "puede agrupar por fuente."
+                "puede hacer un reparto agrupado."
             )
+        if data_manifest.empty:
+            raise ValueError("El manifiesto no contiene muestras para repartir")
+        if data_manifest[self.group_column].isna().any():
+            raise ValueError(f"El manifiesto contiene {self.group_column} vacío")
 
-        total = len(data_manifest)
+        working = data_manifest.copy()
+        working[self.group_column] = working[self.group_column].astype(str)
+        if working[self.group_column].str.strip().eq("").any():
+            raise ValueError(f"El manifiesto contiene {self.group_column} vacío")
+
+        total = len(working)
         targets = {"train": train_size * total, "val": val_size * total, "test": test_size * total}
         assigned: dict[str, str] = {}
         current = {name: 0 for name in targets}
+        labels = working["label"].astype(str)
+        environments = (
+            working["environment"].astype(str)
+            if "environment" in working.columns
+            else pd.Series("unknown", index=working.index)
+        )
+        total_labels = Counter(labels)
+        total_environments = Counter(environments)
+        current_labels = {name: Counter() for name in targets}
+        current_environments = {name: Counter() for name in targets}
 
-        # Llenado voraz de mayor a menor: colocar primero las fuentes grandes evita que una
-        # sola desborde una particion pequena al final.
-        sizes = data_manifest[self.group_column].value_counts()
-        for group in sorted(sizes.index, key=lambda g: (-sizes[g], str(g))):
-            deficit = {name: targets[name] - current[name] for name in targets}
-            chosen = max(deficit, key=lambda name: (deficit[name], name == "train"))
-            assigned[group] = chosen
-            current[chosen] += int(sizes[group])
+        sizes = working[self.group_column].value_counts()
+        group_names = sorted(str(group) for group in sizes.index)
+        random.Random(self.seed).shuffle(group_names)
+        tie_rank = {group: rank for rank, group in enumerate(group_names)}
 
-        membership = data_manifest[self.group_column].map(assigned)
-        frames = {name: data_manifest[membership == name].copy() for name in targets}
-
-        classes = set(data_manifest["label"].unique())
-        missing = {name: sorted(classes - set(frame["label"].unique()))
-                   for name, frame in frames.items()}
-        if missing["train"]:
-            raise SystemExit(
-                f"Clases sin ninguna fuente en train: {missing['train']}. El reparto por "
-                "fuente no puede entrenarlas."
+        # Los grupos grandes se colocan primero. La puntuación favorece una clase/entorno que
+        # todavía falta en el candidato y luego minimiza desviaciones de tamaño y distribución.
+        for group in sorted(group_names, key=lambda value: (-int(sizes[value]), tie_rank[value])):
+            group_frame = working[working[self.group_column].eq(group)]
+            group_labels = Counter(group_frame["label"].astype(str))
+            group_environments = Counter(
+                group_frame["environment"].astype(str)
+                if "environment" in group_frame.columns
+                else ["unknown"] * len(group_frame)
             )
+
+            def candidate_score(name: str) -> tuple[float, float, float, int]:
+                label_coverage = sum(
+                    count > 0 and current_labels[name][label] == 0
+                    for label, count in group_labels.items()
+                )
+                environment_coverage = sum(
+                    count > 0 and current_environments[name][environment] == 0
+                    for environment, count in group_environments.items()
+                )
+                coverage_gain = float(label_coverage) + 0.1 * float(environment_coverage)
+
+                new_size = current[name] + len(group_frame)
+                size_cost = abs(new_size - targets[name]) / max(targets[name], 1.0)
+                label_cost = sum(
+                    abs(
+                        current_labels[name][label]
+                        + group_labels[label]
+                        - total_labels[label]
+                        * {"train": train_size, "val": val_size, "test": test_size}[name]
+                    )
+                    / max(total_labels[label], 1)
+                    for label in group_labels
+                )
+                environment_cost = sum(
+                    abs(
+                        current_environments[name][environment]
+                        + group_environments[environment]
+                        - total_environments[environment]
+                        * {"train": train_size, "val": val_size, "test": test_size}[name]
+                    )
+                    / max(total_environments[environment], 1)
+                    for environment in group_environments
+                )
+                return (
+                    -coverage_gain,
+                    size_cost,
+                    label_cost + 0.25 * environment_cost,
+                    ("train", "val", "test").index(name),
+                )
+
+            chosen = min(targets, key=candidate_score)
+            assigned[group] = chosen
+            current[chosen] += len(group_frame)
+            current_labels[chosen].update(group_labels)
+            current_environments[chosen].update(group_environments)
+
+        membership = working[self.group_column].map(assigned)
+        frames = {name: working[membership == name].copy() for name in targets}
+
+        classes = set(working["label"].unique())
+        missing = {
+            name: sorted(classes - set(frame["label"].unique())) for name, frame in frames.items()
+        }
         incomplete = {name: labels for name, labels in missing.items() if labels}
         if incomplete:
-            detail = "; ".join(f"{name}: {labels}" for name, labels in incomplete.items())
+            details = []
+            for split_name, missing_labels in incomplete.items():
+                for label in missing_labels:
+                    class_rows = working[working["label"].eq(label)]
+                    details.append(
+                        f"class={label!r} split={split_name!r} "
+                        f"total_samples={len(class_rows)} "
+                        f"independent_groups={class_rows[self.group_column].nunique()}"
+                    )
             message = (
-                f"Clases ausentes de alguna partición al agrupar por fuente -> {detail}. "
-                "Ocurre cuando una clase tiene menos de tres fuentes, así que no puede estar "
-                "en las tres a la vez."
+                "Cobertura de clases incompleta al conservar grupos indivisibles: "
+                + "; ".join(details)
+                + "."
             )
-            if not self.allow_incomplete:
+            if missing["train"] or not self.allow_incomplete:
                 raise SystemExit(
                     message + " Use allow_incomplete=True para continuar de todos modos, o "
-                    "evalúe esas clases con validación dejando una fuente fuera."
+                    "agregue grupos independientes para las clases indicadas."
                 )
             logger.warning(message)
 
         for name, frame in frames.items():
             groups = sorted(frame[self.group_column].unique())
             logger.info(
-                "%s: %d imágenes (%.1f%%), %d fuentes -> %s",
-                name, len(frame), 100 * len(frame) / total, len(groups), groups,
+                "%s: %d imágenes (%.1f%%), %d grupos -> %s",
+                name,
+                len(frame),
+                100 * len(frame) / total,
+                len(groups),
+                groups,
             )
         return frames["train"], frames["val"], frames["test"]

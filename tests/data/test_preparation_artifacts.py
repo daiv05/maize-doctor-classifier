@@ -24,11 +24,12 @@ _ARTIFACTS = (
 
 def _build_dataset(tmp_path: Path) -> tuple[Path, Path]:
     dataset_root = tmp_path / "dataset"
+    sources = ("maize_field", "maize_desease", "cropdg")
     for label, offset in (("healthy", 0), ("common_rust", 100)):
         directory = dataset_root / "clean" / label / "real"
         directory.mkdir(parents=True)
         for index in range(12):
-            filename = f"{label}_maize_field_real_{index:02x}.png"
+            filename = f"{label}_{sources[index % len(sources)]}_real_{index:02x}.png"
             Image.new(
                 "RGB",
                 (8, 8),
@@ -81,11 +82,21 @@ def test_manifest_lock_integridad_y_reproducibilidad(tmp_path, monkeypatch):
         "environment",
         "sha256",
         "source_id",
+        "explicit_group_id",
+        "group_id",
+        "effective_group_id",
+        "group_origin",
     ]
     row = master.iloc[0]
     assert row["sample_id"] == sample_id_for_path(row["image_path"])
     assert row["sha256"] == sha256_file(dataset_root / row["image_path"])
-    assert row["source_id"] == "maize-in-field-dataset"
+    assert row["source_id"] in {
+        "maize-in-field-dataset",
+        "maize-diseases",
+        "cropdg-unified-multidomain",
+    }
+    assert row["group_origin"] == "inferred"
+    assert row["effective_group_id"] == row["source_id"]
 
     splits = {name: pd.read_csv(first / f"{name}.csv") for name in ("train", "val", "test")}
     id_sets = {name: set(frame["sample_id"]) for name, frame in splits.items()}
@@ -95,7 +106,17 @@ def test_manifest_lock_integridad_y_reproducibilidad(tmp_path, monkeypatch):
     assert set().union(*id_sets.values()) == set(master["sample_id"])
 
     report = pd.read_csv(first / "split_audit_report.csv")
-    assert list(report.columns) == ["split", "label", "environment", "source_id", "count"]
+    assert list(report.columns) == [
+        "split",
+        "label",
+        "environment",
+        "source_id",
+        "explicit_group_id",
+        "group_id",
+        "effective_group_id",
+        "group_origin",
+        "count",
+    ]
     assert int(report["count"].sum()) == len(master)
 
     audit = json.loads((first / "preparation_audit.json").read_text(encoding="utf-8"))
@@ -104,6 +125,9 @@ def test_manifest_lock_integridad_y_reproducibilidad(tmp_path, monkeypatch):
     assert audit["samples_valid"] == 24
     assert audit["samples_eligible"] == 24
     assert audit["label_conflicts"] == 0
+    assert audit["grouping"]["total_groups"] == 3
+    assert audit["grouping"]["group_overlap_count"] == 0
+    assert audit["grouping"]["sha256_overlap_count"] == 0
 
     lock = json.loads((first / "manifest.lock.json").read_text(encoding="utf-8"))
     assert lock["master_manifest_sha256"] == sha256_file(first / "master_manifest.csv")

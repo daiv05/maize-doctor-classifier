@@ -17,9 +17,12 @@ from src.data.deduplicate import drop_near_duplicates
 from src.data.identity import ensure_sample_ids, sample_id_for_path
 from src.data.preparation import (
     Exclusion,
+    apply_effective_groups,
     atomic_write_json,
+    build_group_split_summary,
     build_split_audit_report,
     load_exclusions,
+    load_group_manifest,
     sha256_bytes,
     sha256_file,
     sha256_json,
@@ -27,7 +30,7 @@ from src.data.preparation import (
     write_canonical_csv,
 )
 from src.data.provenance import provenance_from_path
-from src.data.splitter import HierarchicalStratifiedSplitter, SourceGroupedSplitter
+from src.data.splitter import SourceGroupedSplitter
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -38,6 +41,14 @@ _MIN_STRATUM_IMAGES = 7
 _SPLIT_NAMES = ("train", "val", "test")
 _MASTER_COLUMNS = ("sample_id", "image_path", "label", "environment", "sha256")
 _SPLIT_COLUMNS = ("sample_id", "image_path", "label", "environment")
+_GROUP_COLUMNS = (
+    "source_id",
+    "explicit_group_id",
+    "group_id",
+    "effective_group_id",
+    "group_origin",
+)
+_TARGET_RATIOS = {"train": 0.70, "val": 0.15, "test": 0.15}
 
 
 @dataclass(frozen=True)
@@ -158,6 +169,8 @@ def _audit_payload(
     class_cap_dropped: int = 0,
     perceptual_duplicates: int = 0,
     master_manifest: pd.DataFrame | None = None,
+    group_split_summary: dict | None = None,
+    perceptual_validation_enabled: bool = False,
     status: str = "complete",
 ) -> dict:
     """Crea el contenido estable de ``preparation_audit.json``."""
@@ -202,8 +215,17 @@ def _audit_payload(
                 "distribution_by_label": _distribution(master_manifest, "label"),
                 "distribution_by_environment": _distribution(master_manifest, "environment"),
                 "distribution_by_source": _distribution(master_manifest, "source_id"),
+                "grouping": group_split_summary or {},
+                "perceptual_overlap_count": 0 if perceptual_validation_enabled else None,
+                "perceptual_leakage_validation": (
+                    "global_pre_split_deduplication"
+                    if perceptual_validation_enabled
+                    else "not_requested"
+                ),
             }
         )
+        if group_split_summary:
+            payload.update(group_split_summary)
     return payload
 
 
@@ -216,6 +238,7 @@ def _split_parameters(
     deduplicate: bool,
     dedup_distance: int,
     allow_incomplete: bool,
+    group_manifest_sha256: str | None,
 ) -> dict:
     """Parámetros semánticos que determinan membresía de los splits."""
     return {
@@ -226,7 +249,9 @@ def _split_parameters(
         "deduplicate_perceptual": deduplicate,
         "dedup_distance": dedup_distance,
         "allow_incomplete_splits": allow_incomplete,
-        "ratios": {"train": 0.70, "val": 0.15, "test": 0.15},
+        "group_manifest_sha256": group_manifest_sha256,
+        "grouping_column": "effective_group_id",
+        "ratios": dict(_TARGET_RATIOS),
     }
 
 
@@ -255,6 +280,7 @@ def run_data_preparation_pipeline(
     dedup_distance: int = 0,
     allow_incomplete: bool = False,
     exclusions: str | Path | None = None,
+    group_manifest: str | Path | None = None,
 ) -> None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -461,28 +487,32 @@ def run_data_preparation_pipeline(
         )
         logger.info("Casi-duplicados descartados: %d", perceptual_duplicates)
 
-    resolved_sources = df_manifest["image_path"].map(provenance_from_path)
-    if resolved_sources.notna().any():
-        df_manifest = df_manifest.copy()
-        df_manifest["source_id"] = resolved_sources
-    if group_by_source:
-        unresolved = int(resolved_sources.isna().sum())
-        if unresolved:
-            raise SystemExit(
-                f"{unresolved} imágenes sin fuente identificable; el reparto por fuente "
-                "necesita que todas la tengan."
-            )
-        logger.info("Repartiendo por fuente de origen (70% Train, 15% Val, 15% Test)...")
-        splitter = SourceGroupedSplitter(seed=seed, allow_incomplete=allow_incomplete)
-    else:
+    df_manifest = df_manifest.copy()
+    df_manifest["source_id"] = df_manifest["image_path"].map(provenance_from_path)
+    explicit_groups = load_group_manifest(group_manifest, df_manifest)
+    df_manifest = apply_effective_groups(df_manifest, explicit_groups)
+    fallback_samples = int(df_manifest["group_origin"].eq("individual").sum())
+    if fallback_samples:
         logger.info(
-            "Ejecutando división jerárquica estratificada (70% Train, 15% Val, 15% Test)..."
+            "%d muestras sin grupo explícito ni procedencia usarán fallback individual.",
+            fallback_samples,
         )
-        splitter = HierarchicalStratifiedSplitter(seed=seed)
+    if group_by_source and group_manifest is None:
+        logger.info("--group-by-source conservado por compatibilidad; la agrupación es el default.")
+    logger.info(
+        "Repartiendo grupos efectivos completos (70%% Train, 15%% Val, 15%% Test): "
+        "%d explícitos, %d inferidos, %d individuales.",
+        df_manifest.loc[df_manifest["group_origin"].eq("explicit"), "effective_group_id"].nunique(),
+        df_manifest.loc[df_manifest["group_origin"].eq("inferred"), "effective_group_id"].nunique(),
+        fallback_samples,
+    )
+    splitter = SourceGroupedSplitter(
+        seed=seed,
+        group_column="effective_group_id",
+        allow_incomplete=allow_incomplete,
+    )
 
-    master_columns = list(_MASTER_COLUMNS)
-    if "source_id" in df_manifest.columns:
-        master_columns.append("source_id")
+    master_columns = [*_MASTER_COLUMNS, *_GROUP_COLUMNS]
     master_manifest = write_canonical_csv(
         output_dir / "master_manifest.csv",
         df_manifest,
@@ -490,17 +520,21 @@ def run_data_preparation_pipeline(
     )
 
     train_df, val_df, test_df = splitter.split(
-        df_manifest, train_size=0.70, val_size=0.15, test_size=0.15
+        df_manifest, **{f"{name}_size": ratio for name, ratio in _TARGET_RATIOS.items()}
     )
 
-    split_columns = list(_SPLIT_COLUMNS)
-    if group_by_source:
-        split_columns.append("source_id")
+    split_columns = [*_SPLIT_COLUMNS, *_GROUP_COLUMNS]
     splits = {
         name: write_canonical_csv(output_dir / f"{name}.csv", frame, split_columns)
         for name, frame in zip(_SPLIT_NAMES, (train_df, val_df, test_df))
     }
-    validate_split_integrity(master_manifest, splits)
+    overlap_metrics = validate_split_integrity(master_manifest, splits)
+    group_split_summary = build_group_split_summary(
+        master_manifest,
+        splits,
+        _TARGET_RATIOS,
+        overlap_metrics,
+    )
 
     logger.info(f"Pipeline finalizado. Splits guardados en {output_dir}")
     logger.info(
@@ -513,9 +547,7 @@ def run_data_preparation_pipeline(
     logger.info("Generando reporte de auditoría del split...")
 
     report_df = build_split_audit_report(master_manifest, splits)
-    report_sort = ["split", "label", "environment"]
-    if "source_id" in report_df.columns:
-        report_sort.append("source_id")
+    report_sort = ["split", "label", "environment", *_GROUP_COLUMNS]
     write_canonical_csv(
         output_dir / "split_audit_report.csv",
         report_df,
@@ -523,6 +555,7 @@ def run_data_preparation_pipeline(
         sort_by=report_sort,
     )
 
+    group_manifest_sha256 = sha256_file(group_manifest) if group_manifest is not None else None
     split_parameters = _split_parameters(
         seed=seed,
         allowed_classes=list(allowed_classes),
@@ -531,6 +564,7 @@ def run_data_preparation_pipeline(
         deduplicate=deduplicate,
         dedup_distance=dedup_distance,
         allow_incomplete=allow_incomplete,
+        group_manifest_sha256=group_manifest_sha256,
     )
     lock = {
         "schema_version": 1,
@@ -542,6 +576,7 @@ def run_data_preparation_pipeline(
         "val_sha256": sha256_file(output_dir / "val.csv"),
         "test_sha256": sha256_file(output_dir / "test.csv"),
         "exclusions_sha256": sha256_file(exclusions) if exclusions is not None else None,
+        "group_manifest_sha256": group_manifest_sha256,
     }
     atomic_write_json(output_dir / "manifest.lock.json", lock)
     atomic_write_json(
@@ -557,6 +592,8 @@ def run_data_preparation_pipeline(
             class_cap_dropped=class_cap_dropped,
             perceptual_duplicates=perceptual_duplicates,
             master_manifest=master_manifest,
+            group_split_summary=group_split_summary,
+            perceptual_validation_enabled=deduplicate,
         ),
     )
 
@@ -602,9 +639,8 @@ if __name__ == "__main__":
         "--group-by-source",
         action="store_true",
         dest="group_by_source",
-        help="Reparte fuentes de origen enteras en lugar de estratificar por clase y entorno. "
-        "El test pasa a medir generalización a un dominio no visto, a costa de que una clase "
-        "con menos de tres fuentes no pueda estar en las tres particiones.",
+        help="Opción conservada por compatibilidad. El reparto por grupos efectivos completos "
+        "ya es la política predeterminada para evitar fuga de procedencia.",
     )
     parser.add_argument(
         "--deduplicate",
@@ -624,13 +660,20 @@ if __name__ == "__main__":
         "--allow-incomplete-splits",
         action="store_true",
         dest="allow_incomplete",
-        help="Continúa aunque alguna clase quede fuera de val o test al agrupar por fuente.",
+        help="Continúa aunque alguna clase quede fuera de val o test al conservar grupos.",
     )
     parser.add_argument(
         "--exclusions",
         type=Path,
         default=None,
         help="CSV opcional image_path,sha256,reason de exclusiones lógicas verificadas.",
+    )
+    parser.add_argument(
+        "--group-manifest",
+        type=Path,
+        default=None,
+        help="CSV opcional sample_id,group_id o image_path,group_id. El grupo explícito "
+        "prevalece sobre la procedencia inferida.",
     )
     args = parser.parse_args()
     run_data_preparation_pipeline(
@@ -644,4 +687,5 @@ if __name__ == "__main__":
         dedup_distance=args.dedup_distance,
         allow_incomplete=args.allow_incomplete,
         exclusions=args.exclusions,
+        group_manifest=args.group_manifest,
     )
