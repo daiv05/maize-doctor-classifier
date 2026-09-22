@@ -21,7 +21,7 @@ Se conservan completas las clases minoritarias (potasio 266, nitrógeno 523, fó
 limita solo las mayoritarias (healthy, tizones, gusano cogollero). El cap es configurable para permitir experimentar con diferentes tamaños de dataset, pero el valor por defecto es 1 500 imágenes por clase.
 
 ::: warning Corridas de la primera etapa
-Las cifras y métricas de esta sección corresponden a corridas hechas sobre el corpus de **31 622 imágenes**, previo a la ampliación de agosto 2026, y se conservan tal cual como registro de esos experimentos. Sobre el corpus actual (33 438) las minoritarias serían potasio 621, nitrógeno 846 y fósforo 938 - las tres siguen por debajo del tope de 1 500, así que **seguirían quedando íntegras**, pero el total del split baseline y las métricas cambiarían al regenerarlo con `make splits-baseline`.
+Las cifras y métricas de esta sección corresponden a corridas sobre **31 622 imágenes**, previas a la ampliación. En la materialización vigente de 33 429 elegibles, potasio 621, nitrógeno 846 y fósforo 938 siguen por debajo del tope de 1 500; el total y las métricas cambiarían si se regenerara `splits-baseline`.
 :::
 
 ## Modelos seleccionados

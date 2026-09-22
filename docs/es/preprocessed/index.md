@@ -20,9 +20,9 @@ La división separa el dataset en:
 - **15% val**
 - **15% test**
 
-Con una seed fija default de 42 (declarada en `config/dataset.yaml`) para garantizar reproducibilidad exacta entre ejecuciones.
+Con seed 42 declarada en `config/dataset.yaml`. La reproducibilidad material se fija además con `manifest.lock.json`; la seed por sí sola no basta si cambia el corpus o la configuración.
 
-Teniendo en cuenta que en algunas clases se manejan 2 dominios, la estratificación inicialmente se hace por `label + ambiente`, no solo por clase, sin embargo, se prevee que en etapas posteriores se realicen cambios para garantizar mayores pruebas en entornos reales, para validar la generalización del modelo.
+El protocolo principal vigente estratifica por `label + environment`. `source_id` es metadato y puede aparecer en varios splits. La generalización entre fuentes se evalúa por separado con `seed_42_source_grouped` y LOSO; ver [protocolos experimentales](/es/metodologia/protocolos-experimentales).
 
 La división no crea copias físicas de las imágenes, sino que genera tres CSV (`train.csv`, `val.csv` y `test.csv`) con la ruta relativa de cada imagen y su etiqueta. Esto permite que el dataset sea reproducible y que los CSV puedan ser versionados en Git si se desea.
 
@@ -45,7 +45,7 @@ El dataset completo que se tiene a la fecha está lejos de ser uniforme, algunas
 | healthy | 6118 | 1.0x |
 
 ::: warning Cifras de la primera etapa (31 622 imágenes)
-Esta tabla corresponde al split generado **antes** de la ampliación de agosto 2026, que es el que se usó en las corridas documentadas en esta sección. Sobre el corpus actual (33 438 imágenes) los ratios bajaron a `potassium_deficiency` **14.1x**, `nitrogen_deficiency` **10.3x**, `phosphorus_deficiency` **9.3x** y `gray_leaf_spot` **4.5x**.
+Esta tabla corresponde al split **anterior** a la ampliación de agosto. En la materialización vigente de 33 429 elegibles los ratios aproximados son `potassium_deficiency` **14.1x**, `nitrogen_deficiency` **10.3x**, `phosphorus_deficiency` **9.3x** y `gray_leaf_spot` **4.5x**.
 
 **La conclusión operativa no cambia:** son exactamente las mismas cuatro clases las que cruzan el umbral de 4x, y `common_rust` (3.9x) sigue justo por debajo. Al regenerar los splits con `make splits`, la composición de clases minoritarias es idéntica - solo se atenúa la magnitud de la corrección.
 :::
@@ -58,7 +58,9 @@ Antes de llegar a la estrategia actual se evaluaron otras alternativas más simp
 - **Oversampling físico (crear más copias físicas en disco):** se descartó (de momento) porque con técnicas como `WeightedRandomSampler` se logra el mismo efecto en memoria, es reversible y se combina con la augmentation en caliente.
 - **Focal Loss:** se contempla como opción para el pipeline principal si los resultados no mejoran en las clases minoritarias.
 
-### Estrategia planeada: 2 capas complementarias
+### Estrategia histórica considerada: dos capas
+
+El pipeline principal vigente mantiene el `WeightedRandomSampler` **desactivado** cuando usa pérdida ponderada, para no sobrecompensar el mismo desbalance dos veces. El sampler sigue integrado y puede usarse en otros perfiles; la sección siguiente describe el diseño histórico.
 
 Para el pipeline principal se plantea una estrategia de balanceo de **dos capas**:
 

@@ -1,6 +1,6 @@
-# Candidato EfficientNet-Lite0 — corrida `20260921_204608`
+# Baseline principal de desarrollo — EfficientNet-Lite0 `20260921_204608`
 
-Esta corrida es el primer reentrenamiento completo de `EfficientNet-Lite0` sobre la materialización corregida de `seed_42`. El entrenamiento terminó correctamente por *early stopping* y produjo un candidato trazable, pero **no sustituye todavía al modelo TFLite desplegado**.
+Esta corrida es el primer reentrenamiento completo de `EfficientNet-Lite0` sobre la materialización corregida de `seed_42`. Es el **baseline vigente de desarrollo**, pero **no sustituye todavía al modelo TFLite desplegado**.
 
 ## Identidad y reproducibilidad
 
@@ -19,7 +19,7 @@ Esta corrida es el primer reentrenamiento completo de `EfficientNet-Lite0` sobre
 
 La configuración usó lote 32, `learning_rate=1e-4`, `weight_decay=1e-4`, *warmup* de 3 épocas, scheduler coseno, `label_smoothing=0.1`, pesos `sqrt_inverse`, paciencia 8, pesos ImageNet y CLAHE desactivado. No se utilizó sampler ponderado.
 
-## Resultado en prueba
+## Resultado observado
 
 | Métrica | Valor |
 |---|---:|
@@ -28,8 +28,6 @@ La configuración usó lote 32, `learning_rate=1e-4`, `weight_decay=1e-4`, *warm
 | Loss | 0.761194 |
 | Macro F1 con deficiencias agrupadas | 0.978385 |
 | Accuracy con deficiencias agrupadas | 0.984048 |
-
-Frente al `EfficientNet-Lite0` actualmente desplegado (macro F1 0.9468), el candidato mejora aproximadamente 0.0012 en el test estratificado. Esta diferencia por sí sola no justifica sustituir el artefacto móvil: las corridas proceden de materializaciones distintas y falta validar el candidato bajo protocolos de fuente no vista y en el formato exportado.
 
 ## Rendimiento por clase
 
@@ -56,9 +54,13 @@ La clase más débil es deficiencia de potasio. Los errores dominantes fueron ma
 
 Los macro F1 por entorno no son directamente comparables porque no tienen el mismo conjunto de clases con soporte. Por fuente, los rendimientos más bajos aparecen en `Maize Deficiency Scanner` (84.0 %, 25 muestras), `Maize in Field` (83.8 %, 136) y `Maize 2` (86.6 %, 127). Esas fuentes y las confusiones entre deficiencias son los primeros focos para revisión cualitativa.
 
-La calibración del test reporta ECE de 0.1397 y Brier binario de acierto de 0.0380. La confianza media fue 0.8444 en los 4,905 aciertos y 0.6872 en los 110 errores; 15 errores tuvieron confianza igual o superior a 0.90. Esto aconseja calibrar o revisar los umbrales antes de presentar la probabilidad como certeza diagnóstica.
+La calibración del test reporta ECE de 0.1397 y Brier binario de acierto de 0.0380. La confianza media fue 0.8444 en los 4 905 aciertos y 0.6872 en los 110 errores; 15 errores tuvieron confianza igual o superior a 0.90.
 
-## Alcance y decisión de promoción
+## Interpretación
+
+Frente al `EfficientNet-Lite0` históricamente desplegado (Macro-F1 0.9468), el baseline actual difiere aproximadamente +0.0012 en el test estratificado. Las corridas proceden de materializaciones distintas, por lo que esa resta es descriptiva y no demuestra una mejora. Potasio presenta el F1 más bajo del run (0.8242), y las confusiones N/P/K justifican una revisión cualitativa. La calibración aconseja revisar método y umbrales antes de presentar la confianza como certeza diagnóstica.
+
+## Limitaciones y decisión de promoción
 
 `seed_42` mezcla las fuentes conocidas entre train, validación y test; es adecuado para desarrollo *in-distribution*, pero no demuestra generalización a una cámara, parcela o repositorio nuevo. Además, esta materialización garantiza separación por identificador, SHA-256 y grupo efectivo, pero se generó con `deduplicate_perceptual=false`: la posible fuga por imágenes casi duplicadas no fue medida.
 
@@ -70,4 +72,4 @@ Antes de promover el checkpoint se debe:
 4. exportar a TFLite Int8 y comprobar paridad y macro F1 sobre el test completo;
 5. validar latencia, OOD y calibración en el dispositivo objetivo.
 
-Los parámetros y métricas exactos se conservan en [`run_20260921_lite0_summary.json`](./evidencia/run_20260921_lite0_summary.json) y la corrida está registrada en el [manifiesto de auditoría](./evidencia/manifiesto_corridas.csv).
+Los parámetros y métricas exactos se conservan en [`run_20260921_lite0_summary.json`](./evidencia/run_20260921_lite0_summary.json), [`classification_report.csv`](./evidencia/run_20260921_204608_test_classification_report.csv), [`confusion_matrix.csv`](./evidencia/run_20260921_204608_test_confusion_matrix.csv), [`calibration.json`](./evidencia/run_20260921_204608_test_calibration.json), desgloses por [ambiente](./evidencia/run_20260921_204608_test_by_environment.csv) y [fuente](./evidencia/run_20260921_204608_test_by_source.csv), y la corrida está en el [manifiesto de auditoría](./evidencia/manifiesto_corridas.csv).

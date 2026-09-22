@@ -2,6 +2,8 @@
 
 En esta sección se documentan los datasets evaluados para el proyecto. Se busca priorizar fuentes con imágenes en entornos de campo real.
 
+> Esta es una bitácora de repositorios evaluados, no el conteo canónico de `source_id`. El `master_manifest.csv` vigente resuelve 11 fuentes; algunas páginas describen repositorios descartados, solapados o incorporados parcialmente.
+
 > **Alcance actualizado (junio 2026):** El proyecto pasó de 4 a **9 clases objetivo** incorporando plagas (gusano cogollero, necrosis letal), enfermedades foliares (roya común, NCLB, GLS) y deficiencias nutricionales (nitrógeno, fósforo, potasio). `aphids_pest` fue descartada por insuficiencia de datos (~77 imágenes, augmentation no viable); en su lugar se incorporó `lethal_necrosis` (~6 415 imágenes de campo real).
 
 > **Ampliación (agosto 2026, posterior a la primera entrega):** Se incorporaron **cuatro datasets Roboflow adicionales** dirigidos exclusivamente a las clases más escasas del corpus - las tres deficiencias nutricionales y GLS. Aportaron **1 815 imágenes netas** de campo real (1 876 integradas menos 61 duplicados), llevando el total de `clean/` de 31 622 a **33 438**. El impacto se concentra donde más falta hacía: potasio pasó de 266 a 621 imágenes (x2.3) y GLS de 1 119 a 1 930 (x1.7), y el desbalance máximo bajó de 32.9x a **14.1x**. La ampliación además resolvió el sesgo de **fuente única** en las deficiencias, que pasaron de 1 a 4 fuentes cada una. Detalle del procesamiento en [Limpieza y ordenado](/es/cleanup-and-ordered/).

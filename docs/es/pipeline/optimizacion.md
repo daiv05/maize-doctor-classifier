@@ -1,4 +1,6 @@
-# Optimización de Hiperparámetros (Optuna)
+# Optimización histórica de hiperparámetros (Optuna)
+
+**Estado: HISTÓRICO.** Esta página describe los estudios anteriores de 15/25 trials. No documenta el estudio nuevo de 60 trials, que permanece [planificado](/es/experimentos/hpo).
 
 Ajustar a mano los hiperparámetros de una red neuronal —la tasa de aprendizaje, el tamaño del lote, el decaimiento de pesos— suele ser una pérdida de tiempo y recursos. Si se elige una tasa muy alta, el modelo diverge y no aprende; si es muy baja, el entrenamiento avanza con lentitud excesiva y puede estancarse en mínimos locales subóptimos.
 
@@ -16,7 +18,7 @@ Exploramos siete hiperparámetros clave dentro de rangos bien delimitados:
 |---|:---:|---|
 | **`learning_rate`** | $10^{-5}$ a $10^{-3}$ (log-uniforme) | Ritmo de actualización de los pesos con AdamW. |
 | **`batch_size`** | 16, 32 o 64 | Compromiso entre regularización estocástica y paralelismo en GPU. |
-| **`weight_decay`** | $10^{-6}$ a $10^{-2}$ | Regularización $L_2$ para prevenir sobreajuste a fondos o ruido de sensor. |
+| **`weight_decay`** | $10^{-5}$ a $10^{-2}$ | Regularización desacoplada para prevenir sobreajuste. |
 | **`class_weights`** | `none`, `inverse` o `sqrt_inverse` | Estrategia de ponderación para compensar el desbalance de clases. |
 | **`label_smoothing`** | 0.0 a 0.15 | Suavizado de etiquetas para moderar la sobreconfianza de la red. |
 | **`warmup_epochs`** | 1 a 5 épocas | Calentamiento inicial suave para estabilizar las capas preentrenadas. |
@@ -45,4 +47,4 @@ La configuración óptima encontrada sobre `EfficientNet-B0` (Trial #12) logró 
 
 Sin embargo, al probar esa misma configuración sobre la arquitectura desplegada, **`EfficientNet-Lite0`**, el resultado fue el contrario: el Macro F1 bajó a 93.43%. La razón es arquitectónica: `Lite0` prescinde de los bloques de atención Squeeze & Excitation y sustituye las funciones *swish* por operaciones cuantizables, tolerando menos las tasas de aprendizaje agresivas. 
 
-Por esta razón, la decisión de ingeniería fue mantener a **`EfficientNet-Lite0` con su configuración base (Macro F1 de 94.68% en prueba)**, mientras que las otras dos redes adoptaron la configuración optimizada para integrarse al ensamble multimodelo.
+Por esta razón, la decisión histórica fue mantener a **`EfficientNet-Lite0` con su configuración base (Macro-F1 de 94.68 % en prueba)**, mientras las otras redes adoptaron la configuración afinada para el ensamble histórico. No predetermina el resultado del HPO nuevo.

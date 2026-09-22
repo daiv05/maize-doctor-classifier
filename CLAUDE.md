@@ -6,6 +6,15 @@
 - `clean/` es la única fuente de verdad para entrenamiento. Estructura: `clean/<clase>/{lab,real}/`.
 - Los CSV de `splits/` son derivados reproducibles (`make splits` / `make splits-baseline`). No editarlos a mano. Viven en `outputs/splits/` (ver más abajo), no bajo `DATASET_ROOT`.
 
+### Contratos que no deben romperse
+
+- `sample_id = SHA256(ruta relativa normalizada UTF-8)`: identifica la muestra lógica y no depende de sus bytes. El SHA-256 de contenido se calcula durante preparación, nunca dentro de `CornDataset.__getitem__`.
+- `master_manifest.csv`, `manifest.lock.json`, `preparation_audit.json` y `split_audit_report.csv` son el contrato de una materialización; no inferir identidad por número de fila.
+- `CornDataset` devuelve `(image, label, sample_id)` y conserva `ImageCache`, `max_per_class`, selección de `minority_classes`, transforms y `class_to_idx`. Un fallo carga **esa misma muestra o levanta un error trazable**; nunca cambia a `idx+1`, devuelve `None`, filtra en `collate_fn` ni muta el DataFrame.
+- `seed_42` es desarrollo estratificado por `label + environment`; `source_id` es metadato. `seed_42_source_grouped` es un benchmark separado con fuentes indivisibles. No sustituir uno por otro ni llamar LOSO a ninguno.
+- La materialización actual no ejecutó PHash (`deduplicate_perceptual=false`): solo está demostrado el cero solapamiento exacto.
+- Especificaciones canónicas: `docs/es/metodologia/pipeline-datos.md`, `docs/es/metodologia/protocolos-experimentales.md` y `docs/es/pipeline/contratos-runs.md`. Estado y evidencia: `docs/es/experimentos/current-status.md` y `docs/es/tesis/EVIDENCE_REGISTRY.md`.
+
 ## Arquitectura (`src/`)
 
 - **Único punto de entrada a imagen:** `load_and_normalize_image()` (`src/data/loader.py`).

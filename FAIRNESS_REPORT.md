@@ -3,6 +3,8 @@
 **Etapa 2 - Criterio 4:** Análisis de sesgos y ética (15 Puntos)  
 **Módulos del Pipeline:** `src/analysis/fairness.py` | `scripts/pipeline/evaluate_fairness.py` | `src/explainability/gradcam.py`
 
+> **Estado: HISTÓRICO.** Este informe corresponde a la campaña sobre `EfficientNet-B0`/ensamble y a la materialización anterior. No describe el baseline Lite0 `20260921_204608`. Sus cifras se preservan en `docs/es/resultados/evidencia/`; los desgloses actuales de Lite0 están en su ficha. “Equidad por ambiente” tampoco equivale a generalización a una fuente no vista.
+
 ---
 
 ## 1. Resumen Ejecutivo de Equidad Algorítmica
@@ -120,7 +122,7 @@ graph TD
 
 ## 5. Medidas de Mitigación y Salvaguardas para Despliegue
 
-Para neutralizar los riesgos de sesgo demográfico y la **vulnerabilidad crítica de atajos visuales (*Clever Hans*)**, se establece una estrategia en dos niveles:
+La campaña histórica propuso una estrategia en dos niveles. Las propuestas no deben confundirse con garantías ya validadas:
 
 ### 5.1. Mitigaciones Implementadas en el Pipeline Base
 1. **Estratificación Jerárquica Dual (`src/data/splitter.py`):**  
@@ -128,13 +130,13 @@ Para neutralizar los riesgos de sesgo demográfico y la **vulnerabilidad crític
 2. **Pérdida Ponderada `sqrt_inverse` (`src/training/losses.py`):**  
    Compensación matemática del desbalance de clases sin sobre-penalizar las clases mayoritarias, reduciendo el $FNR$ en clases minoritarias.
 3. **Data Augmentation Fotométrico y de Contraste (`src/data/transforms.py`):**  
-   Inclusión de `ColorJitter` (variación de brillo, contraste, saturación) y ecualización adaptativa `CLAHE`, simulando variaciones de luz solar intensa y cámaras de teléfonos de gama baja.
+   `ColorJitter` forma parte de las transformaciones; CLAHE existe como opción y está desactivado en el baseline actual. No se atribuye robustez sin ablación.
 4. **Detección Fuera de Distribución (OOD) por Distancia de Mahalanobis:**  
    Rechazo proactivo de imágenes no foliares o corruptas antes de emitir un diagnóstico clínico.
 
-### 5.2. Mitigaciones Obligatorias contra Atajos Visuales (Clever Hans)
-1. **Desacople Mandatorio de Fondo vía Segmentación Semántica:**  
-   Integración estricta de `maize-doctor-segmenter` como paso frontal en el móvil/API: recortar la lámina foliar y descartar el 100% de los píxeles perimetrales para impedir que el clasificador use el suelo o entorno como atajo.
+### 5.2. Mitigaciones propuestas contra atajos visuales
+1. **Evaluar segmentación semántica con quality gate:**
+   La campaña posterior mostró que el run presegmentado `20260907_163546` cayó a Macro-F1 0.7191. Por ello la segmentación no es obligatoria ni se activa ciegamente: debe compararse contra imagen completa y permitir fallback cuando la máscara sea dudosa.
 2. **Entrenamiento Basado en Parches (*Patch-Based Training*):**  
    Entrenar sobre parches interiores de la hoja ($128 \times 128$ o $224 \times 224$), desacoplando el diagnóstico de la silueta completa y el entorno de captura.
 3. **Data Augmentation Destructivo Perimetral y Swapping:**  

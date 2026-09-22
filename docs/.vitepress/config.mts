@@ -128,14 +128,48 @@ const esDatasetSidebar = [
     ],
   },
   {
+    text: "Metodología y experimentos",
+    items: [
+      { text: "Pipeline de datos", link: "/es/metodologia/pipeline-datos" },
+      { text: "Protocolos experimentales", link: "/es/metodologia/protocolos-experimentales" },
+      { text: "Registro de experimentos", link: "/es/experimentos/" },
+      { text: "Estado actual", link: "/es/experimentos/current-status" },
+      { text: "Plan HPO", link: "/es/experimentos/hpo" },
+      { text: "Entrenamiento formal", link: "/es/experimentos/formal-training" },
+      { text: "Multi-seed", link: "/es/experimentos/multiseed" },
+      { text: "Validación cruzada", link: "/es/experimentos/cross-validation" },
+    ],
+  },
+  {
     text: "Resultados",
     items: [
       { text: "Resumen", link: "/es/resultados/" },
       { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
       { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
       { text: "Evaluación rigurosa y métricas finales", link: "/es/resultados/evaluacion" },
-      { text: "Candidato Lite0 · split corregido", link: "/es/resultados/run-20260921-efficientnet-lite0" },
+      { text: "Baseline Lite0 · split corregido", link: "/es/resultados/run-20260921-efficientnet-lite0" },
+      { text: "Benchmark source-grouped", link: "/es/resultados/run-20260921-source-grouped" },
       { text: "Análisis de sesgos y ética", link: "/es/resultados/equidad" },
+    ],
+  },
+  {
+    text: "Reproducibilidad",
+    items: [
+      { text: "Auditoría documental", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
+      { text: "Procedencia de figuras", link: "/es/reproducibilidad/figuras" },
+      { text: "Auditoría bibliográfica", link: "/es/reproducibilidad/referencias" },
+    ],
+  },
+  {
+    text: "Fuentes para tesis",
+    items: [
+      { text: "Evolución del proyecto", link: "/es/tesis/PROJECT_EVOLUTION" },
+      { text: "Resumen histórico", link: "/es/tesis/PROJECT_HISTORY_SUMMARY" },
+      { text: "Decisiones", link: "/es/tesis/DECISION_LOG" },
+      { text: "Hitos", link: "/es/tesis/MILESTONES" },
+      { text: "Registro de evidencias", link: "/es/tesis/EVIDENCE_REGISTRY" },
+      { text: "Backlog", link: "/es/tesis/RESEARCH_BACKLOG" },
+      { text: "Plantillas de tablas", link: "/es/tesis/TABLE_TEMPLATES" },
     ],
   },
   {
@@ -254,8 +288,19 @@ export default defineConfig({
               { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
               { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
               { text: "Evaluación y métricas finales", link: "/es/resultados/evaluacion" },
-              { text: "Candidato Lite0 · split corregido", link: "/es/resultados/run-20260921-efficientnet-lite0" },
+              { text: "Baseline Lite0 · split corregido", link: "/es/resultados/run-20260921-efficientnet-lite0" },
+              { text: "Benchmark source-grouped", link: "/es/resultados/run-20260921-source-grouped" },
               { text: "Sesgos y ética", link: "/es/resultados/equidad" },
+            ],
+          },
+          {
+            text: "Investigación",
+            items: [
+              { text: "Pipeline y protocolos", link: "/es/metodologia/pipeline-datos" },
+              { text: "Estado experimental", link: "/es/experimentos/current-status" },
+              { text: "Evolución histórica", link: "/es/tesis/PROJECT_EVOLUTION" },
+              { text: "Registro de evidencias", link: "/es/tesis/EVIDENCE_REGISTRY" },
+              { text: "Auditoría documental", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
             ],
           },
           {
@@ -280,6 +325,10 @@ export default defineConfig({
           "/es/pipeline/": esDatasetSidebar,
           "/es/provenance/": esDatasetSidebar,
           "/es/resultados/": esDatasetSidebar,
+          "/es/metodologia/": esDatasetSidebar,
+          "/es/experimentos/": esDatasetSidebar,
+          "/es/reproducibilidad/": esDatasetSidebar,
+          "/es/tesis/": esDatasetSidebar,
           "/es/deployment/": esDatasetSidebar,
         },
         search: {

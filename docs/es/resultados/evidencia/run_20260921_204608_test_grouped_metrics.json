@@ -1,0 +1,11 @@
+{
+  "groups": {
+    "nitrogen_deficiency": "nutrient_deficiency",
+    "phosphorus_deficiency": "nutrient_deficiency",
+    "potassium_deficiency": "nutrient_deficiency"
+  },
+  "ungrouped_accuracy": 0.9780658025922233,
+  "ungrouped_macro_f1": 0.9480021439111501,
+  "grouped_accuracy": 0.9840478564307079,
+  "grouped_macro_f1": 0.9783847968475754
+}

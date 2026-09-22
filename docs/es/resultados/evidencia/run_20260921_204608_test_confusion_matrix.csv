@@ -1,0 +1,10 @@
+,common_rust,fall_armyworm,gray_leaf_spot,healthy,lethal_necrosis,nitrogen_deficiency,northern_corn_leaf_blight,phosphorus_deficiency,potassium_deficiency
+common_rust,334,0,1,0,0,0,4,0,0
+fall_armyworm,0,720,1,6,0,1,0,0,0
+gray_leaf_spot,3,1,265,1,1,0,18,0,0
+healthy,0,4,0,1302,2,1,1,1,0
+lethal_necrosis,0,1,0,3,959,0,0,0,0
+nitrogen_deficiency,0,0,0,0,0,124,0,0,3
+northern_corn_leaf_blight,0,4,12,1,0,1,1003,0,4
+phosphorus_deficiency,0,5,0,0,0,5,0,123,7
+potassium_deficiency,0,0,0,0,0,15,3,0,75

@@ -15,11 +15,31 @@ estos ficheros.
 | `run_afinada_b0_summary.json` | reentrenamiento a presupuesto completo de la segunda |
 | `run_20260921_lite0_summary.json` | primer reentrenamiento de Lite0 sobre el split corregido de 33,429 muestras |
 
+`run_afinada_b0_summary.json` se conserva por integridad histórica, pero su campo interno `model` dice `efficientnet_lite0`; no debe citarse como B0 hasta resolver la discrepancia.
+
+## Baseline de desarrollo actual
+
+| fichero | contenido |
+| --- | --- |
+| `run_20260921_204608_test_classification_report.csv` | métricas de las nueve clases |
+| `run_20260921_204608_test_confusion_matrix.csv` | matriz de confusión exacta |
+| `run_20260921_204608_test_calibration.json` | ECE, Brier binario y confianza por acierto/error |
+| `run_20260921_204608_test_grouped_metrics.json` | métrica secundaria agrupando N/P/K |
+| `run_20260921_204608_test_by_environment.csv` | desglose por ambiente y clase |
+| `run_20260921_204608_test_by_source.csv` | desglose por fuente y clase |
+
+## Benchmark source-grouped
+
+| fichero | contenido |
+| --- | --- |
+| `run_20260921_180112_summary.json` | resumen contractual curado con rutas de origen |
+| `run_20260921_180112_train_history.csv` | historia exacta de 12 épocas |
+
 ## Manifiesto de corridas
 
-`manifiesto_corridas.csv` lista las diez corridas auditadas del pipeline principal que existen en el
+`manifiesto_corridas.csv` lista las once corridas auditadas del pipeline principal que existen en el
 Volume `corn-outputs`, con su ruta en Modal, su configuración completa, sus métricas publicadas
-y el fichero desde el que cada cifra se recomputa. **Las diez verifican de forma exacta.**
+y el fichero desde el que cada cifra se recomputa. **Las once verifican de forma exacta.**
 
 Dos de ellas —`efficientnet_b0/20260910_170120` y `shufflenet_v2_x1_0/20260910_184521`— no
 guardaron `predictions.csv` propio; sus cifras se verifican desde la columna correspondiente de
@@ -49,6 +69,8 @@ python scripts/experiments/manifiesto_auditoria.py
 | `kfold_estratificado_afinada_pliegues.csv` | |
 | `kfold_agrupado_actual_pliegues.csv` | |
 | `kfold_agrupado_afinada_pliegues.csv` | |
+
+El valor `0.6026 ± 0.1240` es Macro-F1 evaluable de la **CV agrupada de cinco pliegues**. No es LOSO ni el holdout source-grouped actual.
 
 ## Equidad
 

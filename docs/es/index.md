@@ -22,7 +22,7 @@ features:
   - title: "Edge AI Offline"
     details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite con cuantización Int8, con objetivo ≤ 20 MB y latencia ≤ 300 ms en CPU Snapdragon serie 6xx o equivalente."
   - title: "Orientado al Campo"
-    details: "Evaluación priorizada sobre imágenes reales de campo. El conjunto de prueba es independiente y de dominio real para garantizar robustez agrícola."
+    details: "Evaluación desagregada por ambiente y fuente. El split principal mezcla fuentes conocidas; la generalización cross-source se mide con protocolos separados."
   - title: "Meta Macro F1 ≥ 0.85"
     details: "Criterio de viabilidad con análisis de matriz de confusión y curvas Precision-Recall por clase, priorizando Recall para minimizar falsos negativos."
 ---
@@ -62,8 +62,8 @@ El problema es que en zonas rurales el acceso a asistencia técnica es limitado,
 | **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | 888 | 5 942 | 6 830 |
 | **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | 513 | 1 417 | 1 930 |
 | **Necrosis letal del maíz (MLN)** | Lethal Necrosis | *MCMV + SCMV* | Moteado clorótico severo, necrosis y muerte progresiva de la planta | 0 | 6 415 | 6 415 |
-| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | 0 | 8 744 | 8 744 |
-| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | 0 | 4 858 | 4 858 |
+| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | 0 | 8 740 | 8 740 |
+| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | 0 | 4 853 | 4 853 |
 
 #### Deficiencias nutricionales
 
@@ -73,9 +73,9 @@ El problema es que en zonas rurales el acceso a asistencia técnica es limitado,
 | **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 938 (pocos datos) | 938 |
 | **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | 0 | 621 (pocos datos) | 621 |
 
-> Conteos post-limpieza y deduplicación en `data/clean/`, **actualizados a agosto 2026**. Total consolidado: **33 438 imágenes** (3 551 lab + 29 887 campo real). Las marcas "(pocos datos)" señalan las clases con menor cantidad de imágenes disponibles. La clase `aphids_pest` (áfidos del maíz) fue evaluada pero descartada por escasez de datos (~77 imágenes); en su lugar se incorporó `lethal_necrosis`.
+> Conteos de la materialización vigente: **33 429 muestras elegibles** (3 551 lab + 29 878 campo real), después de ocho exclusiones verificadas. Las marcas "(pocos datos)" señalan las clases con menor soporte. La instantánea anterior de agosto contenía 33 438 y se conserva como registro histórico.
 
-> **Ampliación posterior a la primera entrega (agosto 2026).** El corpus pasó de **31 622** a **33 438 imágenes** al incorporar cuatro datasets Roboflow dirigidos a las clases más escasas: las tres deficiencias nutricionales y GLS. El desbalance máximo frente a `healthy` bajó de **32.9x** a **14.1x**. Detalle del procesamiento en [Limpieza y ordenado](/es/cleanup-and-ordered/) y análisis actualizado en [EDA](/es/exploratory-data-analysis/).
+> **Evolución histórica.** El corpus pasó de **31 622** a la instantánea ampliada de **33 438 imágenes** al incorporar cuatro datasets Roboflow. El manifest actual descubre 33 437 y deja 33 429 elegibles. Detalle en [Limpieza](/es/cleanup-and-ordered/), [EDA histórica](/es/exploratory-data-analysis/) y [pipeline vigente](/es/metodologia/pipeline-datos).
 
 
 ### Metodología
@@ -86,7 +86,7 @@ El proyecto avanza en fases iterativas siguiendo **CRISP-DM**:
 2. **Comprensión de los datos**: consolidación multi-fuente de datasets públicos; ver [Recopilación de datasets](/es/datasets/)
 3. **Preparación de los datos**: limpieza, estandarización a 224 x 224 px y data augmentation
 4. **Modelado**: transfer learning en PyTorch con modelos preentrenados en ImageNet
-5. **Evaluación**: Macro F1 ≥ 0.85 sobre conjunto de prueba independiente compuesto por imágenes de campo
+5. **Evaluación**: Macro-F1 sobre test retenido, desgloses por fuente/ambiente y protocolos cross-source separados
 6. **Despliegue**: exportación del modelo PyTorch a TFLite (Int8) y PWA con inferencia offline + módulo opcional de sincronización
 
 ### Arquitectura del Sistema

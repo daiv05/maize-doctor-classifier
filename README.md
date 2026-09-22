@@ -27,17 +27,18 @@ Una aplicación móvil que, dada una fotografía de hoja de maíz, identifica la
 
 ## Resultados principales
 
-Las tres cifras que delimitan el alcance real del sistema, medidas sobre el conjunto de prueba independiente de **5 015 imágenes**:
+Las cifras siguientes pertenecen a protocolos y momentos distintos; el estado se muestra para evitar compararlas como si fueran una sola tabla de clasificación:
 
 | Configuración evaluada | Macro F1 | Accuracy | Entorno de aplicación |
 |---|:---:|:---:|---|
-| **`EfficientNet-Lite0` (desplegada)** | **0.9468** | **97.91 %** | Inferencia local offline en la app (3.56 MB, ~60 ms) |
-| **Ensamble Soft Voting (3 modelos)** | **0.9567** | **98.29 %** | Inferencia en servidor cuando hay conectividad |
-| **Generalización a fuente no vista** | **0.6026 ± 0.1240** | **76.4 %** | Comportamiento honesto ante cámaras y parcelas desconocidas |
+| **`EfficientNet-Lite0` `20260921_204608`** | **0.9480** | **97.81 %** | Baseline vigente de desarrollo; `seed_42` estratificado |
+| `EfficientNet-Lite0` `20260812_221429` | 0.9468 | 97.91 % | HISTÓRICO: artefacto desplegado en móvil |
+| Ensamble Soft Voting (3 modelos) | 0.9567 | 98.29 % | HISTÓRICO: test estratificado, inferencia en servidor |
+| CV agrupada por fuente, configuración base | 0.6026 ± 0.1240 | 79.69 % ± 11.95 pp | HISTÓRICO: cinco pliegues, 5–8 clases evaluables |
 
-La distancia entre 0.9468 y 0.6026 es la brecha de dominio: dentro de las condiciones conocidas el modelo es sobresaliente, pero una parcela completamente nueva introduce una caída medible que solo se amortigua recolectando datos locales.
+La distancia entre el protocolo estratificado y la CV agrupada muestra una brecha de dominio histórica. No es una comparación pareada del baseline actual ni un resultado LOSO: cambian particiones, soporte de clases y unidad aislada.
 
-**Estabilidad entre semillas.** La configuración de producción entrenada con tres semillas da 0.9468 (s=42, la desplegada), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430 con σ = 0.0049. Las mejoras por hiperparámetros o ensamble valen entre 1 y 2 σ; cambiar la estrategia de partición (estratificada frente a agrupada por fuente) mueve más de 66 σ. Cómo se parten los datos pesa mucho más que cualquier ajuste fino.
+**Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430 con σ = 0.0049. Este estudio no sustituye el multi-seed pendiente de la configuración que resulte del HPO nuevo.
 
 **Equidad.** Macro F1 de 0.9298 en campo real frente a 0.8865 en laboratorio sobre clases con soporte, con un *disparate impact ratio* de 0.9534, por encima de la regla del 80 %. Detalle completo en [FAIRNESS_REPORT.md](FAIRNESS_REPORT.md).
 
@@ -55,8 +56,8 @@ La distancia entre 0.9468 y 0.6026 es la brecha de dominio: dentro de las condic
 | Tizón foliar del norte *(NCLB)* | *Exserohilum turcicum* | Lesiones alargadas grisáceas | 888 | 5 942 | 6 830 |
 | Mancha gris *(GLS)* | *Cercospora zeae-maydis* | Lesiones rectangulares grises | 513 | 1 417 | 1 930 |
 | Necrosis letal *(MLN)* | Complejo viral (MCMV + potyvirus) | Rayado clorótico, necrosis progresiva y muerte de la planta | 0 | 6 415 | 6 415 |
-| Hoja sana *(Healthy)* | - | Sin síntomas visibles | 0 | 8 744 | 8 744 |
-| Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | 0 | 4 858 | 4 858 |
+| Hoja sana *(Healthy)* | - | Sin síntomas visibles | 0 | 8 740 | 8 740 |
+| Gusano cogollero *(Fall Armyworm)* | *Spodoptera frugiperda* | Daño por masticación, excrementos en cogollo | 0 | 4 853 | 4 853 |
 
 > `aphids_pest` (áfidos) se evaluó pero se descartó del alcance: solo ~77 imágenes disponibles, insuficientes para augmentation viable.
 
@@ -70,9 +71,7 @@ La distancia entre 0.9468 y 0.6026 es la brecha de dominio: dentro de las condic
 
 > "(escasa)" señala clases con pocas imágenes disponibles, candidatas prioritarias a data augmentation.
 
-Los conteos corresponden al corpus ampliado: **33 438 imágenes** (3 551 lab + 29 887 campo real), tras incorporar cuatro datasets Roboflow dirigidos a GLS y a las tres deficiencias nutricionales (+1 815 netas) y deduplicar con PHash. El desbalance máximo bajó de 32.9x a **14.1x**.
-
-La cifra anterior describe el inventario documentado del corpus. La materialización de entrenamiento vigente contiene **33 429 muestras elegibles**: el generador descarta una imagen que no supera la validación de integridad y excluye explícitamente ocho archivos pertenecientes a cuatro conflictos de contenido idéntico con etiquetas distintas. El split resultante es 23 400 / 5 014 / 5 015 y no presenta solapamientos exactos entre particiones. Esta ejecución no activó la deduplicación perceptual, por lo que la ausencia de imágenes casi duplicadas debe validarse por separado.
+Los conteos de la tabla corresponden a la materialización vigente: **33 437 archivos descubiertos y válidos**, ocho exclusiones explícitas por cuatro conflictos de contenido idéntico con etiquetas distintas y **33 429 muestras elegibles** (3 551 lab + 29 878 campo real). El split resultante es 23 400 / 5 014 / 5 015 y no presenta solapamientos de `sample_id`, SHA-256 ni grupo efectivo. Esta ejecución no activó deduplicación perceptual, por lo que no demuestra ausencia de imágenes casi duplicadas. El inventario de **33 438** se conserva en páginas históricas como la instantánea ampliada de agosto anterior a estas exclusiones.
 
 ---
 
@@ -90,7 +89,7 @@ La cifra anterior describe el inventario documentado del corpus. La materializac
 
 ## Datasets
 
-Se consolidaron **8 fuentes de datos públicas** para construir el corpus de entrenamiento:
+El catálogo inicial documentó **8 repositorios públicos principales**; el `master_manifest.csv` vigente resuelve **11 valores de `source_id`** después de la consolidación y ampliaciones. Catálogo histórico principal:
 
 | Dataset | Dominio | Imágenes (maíz) | Licencia |
 |---|---|---|---|
@@ -120,7 +119,7 @@ Una partición estratificada clásica deja que imágenes del mismo repositorio c
 El proyecto avanza en fases iterativas siguiendo el marco **CRISP-DM**:
 
 1. **Comprensión del negocio**: definición del problema agrícola y restricciones de despliegue
-2. **Comprensión de datos**: consolidación y auditoría de 8 fuentes públicas
+2. **Comprensión de datos**: consolidación y auditoría; 11 `source_id` en el manifest vigente
 3. **Preparación**: limpieza, estandarización (224x224 px), deduplicación, augmentation
 4. **Modelado**: baselines para comparar barato, luego pipeline principal con optimización bayesiana
 5. **Evaluación**: Macro F1 ≥ 0.85 en conjunto independiente, validación cruzada y auditoría de equidad
@@ -184,7 +183,7 @@ make explain-errors-baselines [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]
 ```bash
 make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]
                 [EXPORT_FORMATS=onnx,tflite]          # alias: make train
-make tune-main [N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median]   # Optuna HPO
+make tune-main N_TRIALS=60 MAIN_EPOCHS=30 PRUNER=median MAIN_MODELS=efficientnet_lite0  # fase HPO planificada
 make tune-dashboard                                          # optuna-dashboard en el puerto 8080
 make evaluate-ensemble [MODELS=<lista>]                      # voto suave sobre test.csv; alias: make ensemble
 make cross-validate [MODEL=<nombre> K_FOLDS=<n>]             # alias: make kfold
@@ -239,6 +238,20 @@ make modal-provenance-leak / modal-loso / modal-aligned-loso / modal-pull-proven
 
 ---
 
+## Documentación canónica
+
+- [Pipeline de datos, identidad y manifests](docs/es/metodologia/pipeline-datos.md)
+- [Protocolos experimentales](docs/es/metodologia/protocolos-experimentales.md)
+- [Registro y estado de experimentos](docs/es/experimentos/index.md)
+- [Baseline actual `20260921_204608`](docs/es/resultados/run-20260921-efficientnet-lite0.md)
+- [Evolución histórica](docs/es/tesis/PROJECT_EVOLUTION.md) y [resumen ejecutivo](docs/es/tesis/PROJECT_HISTORY_SUMMARY.md)
+- [Registro de evidencias para tesis](docs/es/tesis/EVIDENCE_REGISTRY.md)
+- [Auditoría documental](docs/es/reproducibilidad/auditoria-documental-2026-09-22.md)
+
+Los informes y páginas históricas se preservan con su contexto; no sustituyen estas fuentes vigentes.
+
+---
+
 ## Equipo
 
 | Nombre | Carné |
@@ -284,7 +297,7 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 
 ## Estado del Proyecto
 
-- [x] Documentación de datasets consolidados (8 fuentes, 9 clases)
+- [x] Documentación de datasets consolidados (11 `source_id` vigentes, 9 clases)
 - [x] Scripts de limpieza y organización de datos en `data/clean/`
 - [x] Análisis exploratorio de datos (EDA)
 - [x] Pipeline de preparación de datos (splits estratificados, perfil baseline configurable)
@@ -308,6 +321,6 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 
 El código de este repositorio se distribuye bajo la licencia MIT. Ver [LICENSE](LICENSE).
 
-La licencia MIT cubre **el código, no los datos**. Los 8 datasets consolidados conservan sus licencias originales, varias de ellas más restrictivas: `Maize in Field`, `Maize Diseases` y `CropDG Unified Multidomain` son CC BY-NC-SA 4.0, que prohíbe el uso comercial y obliga a compartir los derivados en los mismos términos. Cualquier redistribución del corpus, de los splits o de artefactos derivados de esas fuentes queda sujeta a esos términos, no a MIT. La licencia de cada fuente está documentada en la tabla de datasets y en su página individual.
+La licencia MIT cubre **el código, no los datos**. Las fuentes consolidadas conservan sus licencias originales, varias de ellas más restrictivas. Cualquier redistribución del corpus, de los splits o de artefactos derivados queda sujeta a esos términos, no a MIT. La licencia declarada de cada fuente está en su página individual y la auditoría bibliográfica señala qué metadatos faltan verificar.
 
 Proyecto académico desarrollado en la Universidad de El Salvador.

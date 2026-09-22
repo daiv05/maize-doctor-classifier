@@ -26,7 +26,7 @@ Todo el almacenamiento se organiza alrededor de dos volúmenes persistentes en l
 Para mantener la experiencia de desarrollo simple, los comandos de la nube se integraron en el mismo `Makefile` del proyecto, usando el prefijo `modal-` para distinguirlos de las corridas locales:
 
 ```bash
-# Entrenar la arquitectura de producción en GPU remota
+# Entrenar una arquitectura del pipeline principal en GPU remota
 make modal-train-main MAIN_MODELS=efficientnet_lite0 MAIN_EPOCHS=60
 
 # Correr análisis de explicabilidad multimodal en la nube

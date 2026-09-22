@@ -1,8 +1,8 @@
-# Evaluación Rigurosa y Métricas Finales
+# Evaluación histórica: validación cruzada 2×2
 
 Evaluar un modelo de visión artificial exige distinguir entre dos preguntas muy diferentes: qué tan bien clasifica fotos similares a las que ya vio, y qué tan bien generaliza cuando se enfrenta a un campo o cámara totalmente desconocidos.
 
-En esta sección se presentan los resultados del protocolo de validación cruzada y el análisis comparativo entre la partición estratificada tradicional y la partición agrupada por procedencia.
+Esta sección conserva el experimento histórico de validación cruzada de cinco pliegues. No es la evaluación final del baseline `20260921_204608`, no es LOSO y no es el holdout `seed_42_source_grouped`.
 
 ---
 
@@ -14,9 +14,9 @@ Al evaluar el modelo desplegado (`EfficientNet-Lite0`), obtenemos dos cifras com
 |---|:---:|---|---|
 | **Rendimiento en prueba retenida** | **0.9468** | Partición estratificada estándar (5,015 fotos) | Rendimiento óptimo en condiciones y cámaras conocidas. |
 | **Ensamble en prueba retenida** | **0.9567** | Partición estratificada estándar (5,015 fotos) | Consenso multimodelo de máxima fidelidad diagnóstica. |
-| **Generalización fuera de fuente** | **`0.6026 ± 0.1240`** | Validación cruzada agrupada por procedencia | Comportamiento honesto frente a fuentes y parcelas nunca vistas. |
+| **Generalización entre fuentes** | **`0.6026 ± 0.1240`** | CV de cinco pliegues agrupada por procedencia | Macro-F1 evaluable; cada pliegue contiene 5–8 clases. |
 
-La diferencia de **0.34 puntos de Macro F1** entre la evaluación estándar y la evaluación agrupada es el coste medido de la brecha de dominio en la patología vegetal.
+La diferencia de aproximadamente **0.34 puntos** es evidencia histórica de cambio de dominio, pero no una estimación causal ni una comparación del baseline actual: las métricas proceden de protocolos y soportes distintos.
 
 ---
 
@@ -42,6 +42,6 @@ Este hallazgo es fundamental: demuestra que en proyectos de aprendizaje profundo
 
 En la partición estratificada tradicional, el intervalo de confianza es sumamente estrecho ($\pm 0.0099$). Sin embargo, esa aparente precisión no describe la robustez del modelo, sino la homogeneidad del protocolo: como las 14 fuentes están repartidas en todos los pliegues, cada pliegue es esencialmente el mismo experimento repetido cinco veces.
 
-En cambio, bajo la partición agrupada por fuente, el intervalo se amplía a $\pm 0.1240$. Esa dispersión mayor refleja la variabilidad genuina del mundo real: cuando el modelo evalúa una fuente con buena iluminación y síntomas claros, el F1 ronda el 0.75; cuando evalúa una fuente con pocas fotos o tonos complejos, el rendimiento baja. 
+En cambio, bajo la partición agrupada por fuente, el intervalo se amplía a $\pm 0.1240$. Esa dispersión refleja sensibilidad a qué fuentes quedan retenidas. El Macro-F1 publicado es “evaluable” porque solo 5–8 clases tienen soporte según el pliegue.
 
-Aceptar y reportar esa variabilidad es el estándar de honestidad que distingue a este proyecto de aproximaciones académicas que sobreestiman su capacidad de despliegue.
+La lectura válida es metodológica: fuente y soporte deben declararse junto a la media. Los resultados actuales y LOSO se reportan por separado en [protocolos experimentales](/es/metodologia/protocolos-experimentales).

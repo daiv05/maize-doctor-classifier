@@ -101,6 +101,8 @@ Ampliación de agosto 2026 (cuatro datasets Roboflow adicionales):
 
 ## Resultados obtenidos
 
+> **Instantánea histórica.** Esta sección documenta la ampliación de agosto (33 438). La preparación contractual vigente descubre 33 437 archivos y, tras ocho exclusiones cross-label, utiliza 33 429 muestras. No se reescriben las cifras siguientes porque explican la evolución del corpus.
+
 Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión por calidad, el volumen neto de imágenes útiles integradas en `data/clean/` por clase es el siguiente:
 
 | Clase                        | Lab    | Real   | Total  |
@@ -600,4 +602,3 @@ Sobre los otros dos hallazgos:
 ::: tip Por qué hizo falta PHash y no bastaba el SHA-256
 Solo esos **5** grupos son copias exactas; los **56** restantes son *near-duplicates* - mismo contenido visual pero bytes distintos (reencodings, recortes, recompresión). `create_splits.py` deduplica por SHA-256 al generar los splits, así que habría atrapado los 5 exactos pero **no** los 56 restantes, que habrían provocado *data leakage* entre train y validación.
 :::
-

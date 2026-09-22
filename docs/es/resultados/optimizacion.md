@@ -1,4 +1,6 @@
-# Resultados de Optimización de Hiperparámetros
+# Resultados históricos de optimización de hiperparámetros
+
+**Estado: HISTÓRICO.** Corresponde a los estudios anteriores de 15/25 trials y a la materialización de esa etapa. El HPO de 60 trials está pendiente.
 
 Uno de los resultados más ilustrativos de esta etapa fue descubrir que una configuración de hiperparámetros que resulta fantástica para un modelo puede perjudicar a otro, incluso si ambos pertenecen a la misma familia conceptual.
 
@@ -32,4 +34,4 @@ La discrepancia entre `B0` y `Lite0` tiene una explicación arquitectónica dire
 - **Sensibilidad al ritmo de aprendizaje:** Al carecer de mecanismos de recalibración de canales, la red ligera es mucho más sensible a tasas de aprendizaje elevadas, sufriendo oscilaciones en los gradientes que terminan degradando el aprendizaje en las clases minoritarias.
 - **Dinámica de convergencia:** Mientras que los modelos con atención alcanzan su pico antes de la época 25, `Lite0` converge de forma más pausada y continua, alcanzando su mejor rendimiento en la **época 35** bajo los hiperparámetros base (tasa de $10^{-4}$ y lote de 32).
 
-Este contraste confirmó la decisión de producción: **`EfficientNet-Lite0` se mantiene en sus valores por defecto (Macro F1 de 0.9468)**, garantizando la máxima fidelidad en el modelo que se exporta a la aplicación móvil, mientras que `B0` y `ShuffleNet` adoptan la configuración optimizada para sumar potencia al ensamble.
+Este contraste sustentó la decisión histórica de despliegue: **`EfficientNet-Lite0` conservó sus valores por defecto (Macro-F1 0.9468)**, mientras `B0` y `ShuffleNet` adoptaron la configuración afinada para el ensamble. No es el resultado del HPO nuevo.

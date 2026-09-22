@@ -1,0 +1,9 @@
+{
+  "ece": 0.13965634900931703,
+  "brier_binary_hit": 0.03795809690241717,
+  "mean_confidence_hits": 0.8443789594034901,
+  "mean_confidence_misses": 0.6871912866830826,
+  "n_hits": 4905,
+  "n_misses": 110,
+  "num_classes": 9
+}

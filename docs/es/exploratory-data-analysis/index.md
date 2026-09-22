@@ -4,15 +4,15 @@ El EDA busca responder tres preguntas antes de diseñar el pipeline de entrenami
 
 El análisis completo y reproducible, con todo el código, está en la notebook [`notebooks/01_eda.ipynb`](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb). Esta página resume los hallazgos y las decisiones que se derivaron de ellos.
 
-::: tip Actualización — agosto 2026 (posterior a la primera entrega)
-Esta página refleja el corpus **ampliado**: cuatro datasets Roboflow adicionales dirigidos a las clases más escasas llevaron el dataset de **31 622** a **33 438 imágenes**, y el desbalance máximo de **32.9x** a **14.1x**. Los cambios afectan sobre todo a las secciones de [distribución de clases](#_1-distribucion-de-clases), [fuente de origen](#distribucion-por-fuente-de-origen) y [sesgos](#_6-sesgos-identificados).
+::: warning Instantánea histórica — agosto de 2026
+Esta página y sus figuras reflejan el corpus ampliado de **33 438 imágenes**, anterior a las exclusiones contractuales vigentes. No es el EDA de `master_manifest.csv` actual, que contiene 33 429 muestras elegibles. Los cambios históricos llevaron el dataset desde **31 622** imágenes y el desbalance máximo desde **32.9x** a **14.1x**.
 
 La versión de la primera entrega se conserva congelada en `reports/firts-phase/` (notebook `.ipynb` + salida estática `.html`). El detalle del procesamiento está en [Limpieza y ordenado](/es/cleanup-and-ordered/).
 :::
 
 ## Composición del dataset
 
-El dataset consolidado en `data/clean/` contiene **33 438 imágenes** distribuidas en **9 clases**, procedentes de 10 fuentes públicas. Cada imagen pertenece a un entorno de captura: `lab` (fondo controlado, iluminación artificial) o `real` (campo abierto, iluminación solar).
+La instantánea analizada contenía **33 438 imágenes** en **9 clases**, inferidas entonces desde 10 fuentes públicas. El manifest vigente resuelve 11 `source_id`; ambos conteos no son intercambiables.
 
 #### Enfermedades foliares
 
