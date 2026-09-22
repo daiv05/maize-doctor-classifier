@@ -78,7 +78,13 @@ def seed_dataset(force: bool = False) -> None:
     secrets=[modal.Secret.from_name("hf")],
     timeout=2 * 3600,
 )
-def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int = 0) -> None:
+def make_splits(
+    baseline: bool = False,
+    no_cap: bool = False,
+    max_per_class: int = 0,
+    allow_incomplete: bool = False,
+    group_by_source: bool = False,
+) -> None:
     """
     Genera los splits CSV en el Volume corn-outputs.
 
@@ -89,6 +95,9 @@ def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int
     @param {bool} baseline Genera seed_42_baseline (perfil capado) en vez de seed_42.
     @param {bool} no_cap Sin tope por clase; solo aplica junto con baseline.
     @param {int} max_per_class Tope por clase; 0 usa el default del YAML. Solo con baseline.
+    @param {bool} allow_incomplete Permite splits sin cobertura completa de clases cuando
+        los grupos de procedencia indivisibles hacen imposible cubrir train/val/test.
+    @param {bool} group_by_source Genera el benchmark estricto seed_42_source_grouped.
     """
     dataset_vol.reload()
     command = [sys.executable, "scripts/pipeline/create_splits.py"]
@@ -98,6 +107,10 @@ def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int
             command.append("--no-cap")
         elif max_per_class:
             command += ["--max-per-class", str(max_per_class)]
+    if allow_incomplete:
+        command.append("--allow-incomplete-splits")
+    if group_by_source:
+        command.append("--group-by-source")
 
     run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
@@ -361,12 +374,16 @@ def optuna_dashboard_modal():
     outputs_vol.reload()
     db_path = Path("/outputs/tuning/optuna_study.db")
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.Popen([
-        "optuna-dashboard",
-        f"sqlite:///{db_path}",
-        "--port", "8080",
-        "--host", "0.0.0.0",
-    ])
+    subprocess.Popen(
+        [
+            "optuna-dashboard",
+            f"sqlite:///{db_path}",
+            "--port",
+            "8080",
+            "--host",
+            "0.0.0.0",
+        ]
+    )
 
 
 @app.function(
@@ -390,7 +407,8 @@ def evaluate_ensemble_modal(
     command = [
         sys.executable,
         "scripts/pipeline/evaluate_ensemble.py",
-        "--num-workers", str(num_workers),
+        "--num-workers",
+        str(num_workers),
         "--models",
         *models.split(),
         "--batch-size",
@@ -442,7 +460,8 @@ def cross_validate_modal(
     command = [
         sys.executable,
         "scripts/pipeline/cross_validate.py",
-        "--num-workers", str(num_workers),
+        "--num-workers",
+        str(num_workers),
         "--model",
         model,
         "--k-folds",
@@ -498,8 +517,10 @@ def fairness_report_modal(
     command = [
         sys.executable,
         "scripts/pipeline/evaluate_fairness.py",
-        "--subgroup-column", subgroup_column,
-        "--num-workers", str(num_workers),
+        "--subgroup-column",
+        subgroup_column,
+        "--num-workers",
+        str(num_workers),
         "--model",
         model,
         "--batch-size",

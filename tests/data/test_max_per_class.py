@@ -7,6 +7,14 @@ from src.data.dataset import CornDataset, compute_minority_classes
 _CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
 
 
+@pytest.fixture(autouse=True)
+def isolated_dataset_root(tmp_path, monkeypatch):
+    """Estos tests solo inspeccionan el manifiesto y no dependen del corpus local."""
+    root = tmp_path / "dataset"
+    root.mkdir()
+    monkeypatch.setattr("src.data.dataset.get_dataset_root", lambda: root)
+
+
 @pytest.fixture
 def split_csv(tmp_path):
     """Split desbalanceado donde el tope comprimiria los ratios por debajo del umbral."""
@@ -22,8 +30,11 @@ def split_csv(tmp_path):
         "potassium_deficiency": 430,
     }
     rows = [
-        {"image_path": f"clean/{label}/real/{label}_src_real_{index}.jpg",
-         "label": label, "environment": "real"}
+        {
+            "image_path": f"clean/{label}/real/{label}_src_real_{index}.jpg",
+            "label": label,
+            "environment": "real",
+        }
         for label, total in counts.items()
         for index in range(total)
     ]
@@ -72,12 +83,9 @@ def test_sin_tope_el_dataset_queda_intacto(split_csv):
 
 def test_el_tope_es_reproducible(split_csv):
     """Misma semilla, mismo subconjunto: las corridas deben ser comparables entre si."""
-    primero = CornDataset(csv_path=str(split_csv), config_path=_CONFIG,
-                          max_per_class=1500, seed=7)
-    segundo = CornDataset(csv_path=str(split_csv), config_path=_CONFIG,
-                          max_per_class=1500, seed=7)
-    distinto = CornDataset(csv_path=str(split_csv), config_path=_CONFIG,
-                           max_per_class=1500, seed=8)
+    primero = CornDataset(csv_path=str(split_csv), config_path=_CONFIG, max_per_class=1500, seed=7)
+    segundo = CornDataset(csv_path=str(split_csv), config_path=_CONFIG, max_per_class=1500, seed=7)
+    distinto = CornDataset(csv_path=str(split_csv), config_path=_CONFIG, max_per_class=1500, seed=8)
 
     assert primero.data_frame.image_path.tolist() == segundo.data_frame.image_path.tolist()
     assert primero.data_frame.image_path.tolist() != distinto.data_frame.image_path.tolist()

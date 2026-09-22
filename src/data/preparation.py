@@ -259,12 +259,17 @@ def load_group_manifest(
 def apply_effective_groups(
     manifest: pd.DataFrame,
     explicit_groups: Mapping[str, str],
+    *,
+    fallback_to_source: bool = True,
 ) -> pd.DataFrame:
-    """Aplica prioridad grupo explícito > procedencia > identidad individual.
+    """Resuelve grupos lógicos para particiones agrupadas o estratificadas.
 
     ``group_origin`` conserva de dónde salió la decisión y ``effective_group_id`` mantiene
     literalmente el ID resuelto. Así, dos filas con el mismo ID lógico siguen perteneciendo
     al mismo grupo aunque una lo declare explícitamente y otra lo obtenga por procedencia.
+    Cuando ``fallback_to_source`` es falso, la procedencia sigue documentada en ``source_id``
+    pero cada muestra queda como grupo individual; esto permite el split de desarrollo
+    estratificado sin confundirlo con el benchmark estricto por fuente.
     """
     result = manifest.copy()
     if "source_id" not in result.columns:
@@ -273,6 +278,8 @@ def apply_effective_groups(
     result["explicit_group_id"] = result["sample_id"].map(explicit_groups)
     has_explicit = result["explicit_group_id"].notna()
     has_source = result["source_id"].notna() & result["source_id"].astype(str).str.strip().ne("")
+    if not fallback_to_source:
+        has_source = pd.Series(False, index=result.index)
 
     result["group_origin"] = "individual"
     result.loc[has_source, "group_origin"] = "inferred"

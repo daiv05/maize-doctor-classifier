@@ -24,7 +24,8 @@ from src.data.identity import unpack_batch
 from src.data.transforms import CornTransformFactory
 from src.export.common import load_checkpoint_for_export, resolve_export_inputs
 from src.models.feature_exposed import FeatureExposedModel
-from src.training.common import resolve_run_dir, select_device
+from src.training.common import select_device
+from src.training.runs import read_run_contract
 
 
 def _load_ood_stats(path: Path) -> dict:
@@ -32,15 +33,13 @@ def _load_ood_stats(path: Path) -> dict:
     num_classes = data["num_classes"]
     feature_dim = data["feature_dim"]
     pca_dim = data["pca_dim"]
-    means = np.frombuffer(
-        base64.b64decode(data["mean_per_class_b64"]), dtype=np.float32
-    ).reshape(num_classes, pca_dim)
+    means = np.frombuffer(base64.b64decode(data["mean_per_class_b64"]), dtype=np.float32).reshape(
+        num_classes, pca_dim
+    )
     inv_covariance = np.frombuffer(
         base64.b64decode(data["inv_covariance_b64"]), dtype=np.float32
     ).reshape(pca_dim, pca_dim)
-    background_mean = np.frombuffer(
-        base64.b64decode(data["background_mean_b64"]), dtype=np.float32
-    )
+    background_mean = np.frombuffer(base64.b64decode(data["background_mean_b64"]), dtype=np.float32)
     background_inv_covariance = np.frombuffer(
         base64.b64decode(data["background_inv_covariance_b64"]), dtype=np.float32
     ).reshape(pca_dim, pca_dim)
@@ -71,9 +70,7 @@ def _mahalanobis_scores(feature: np.ndarray, stats: dict) -> tuple[float, float,
     normalized = _l2_normalize(feature[None, :])[0]
     reduced = _apply_pca(normalized[None, :], stats["pca_mean"], stats["pca_components"])[0]
     diffs = reduced[None, :] - stats["means"]
-    class_distance = float(
-        np.einsum("ij,jk,ik->i", diffs, stats["inv_covariance"], diffs).min()
-    )
+    class_distance = float(np.einsum("ij,jk,ik->i", diffs, stats["inv_covariance"], diffs).min())
     background_distance = float(
         _mahalanobis_to_mean(
             reduced[None, :], stats["background_mean"], stats["background_inv_covariance"]
@@ -82,12 +79,9 @@ def _mahalanobis_scores(feature: np.ndarray, stats: dict) -> tuple[float, float,
     return class_distance, background_distance, class_distance - background_distance
 
 
-def _synthetic_ood_images(image_size: tuple[int, int]) -> dict[str, torch.Tensor]:
+def _synthetic_ood_images(image_size: tuple[int, int], transform) -> dict[str, torch.Tensor]:
     """Genera tensores sinteticos fuera de dominio (mismo preprocess que una foto real)."""
     h, w = image_size
-    factory = CornTransformFactory(target_size=image_size)
-    transform = factory.get_pipeline("test")
-
     from PIL import Image
 
     rng = np.random.default_rng(42)
@@ -137,9 +131,25 @@ def main() -> None:
     run_dir = checkpoint_path.parent
     config_path = Path(args.config)
 
-    class_to_idx, idx_to_class, image_size = resolve_export_inputs(run_dir, args.model, config_path)
+    class_to_idx, _, image_size = resolve_export_inputs(run_dir, args.model, config_path)
+    run_contract = read_run_contract(run_dir)
+    factory = CornTransformFactory.from_contract(
+        run_contract["preprocessing"], config_path=str(config_path)
+    )
+    test_csv = None
+    if args.n_legit_samples > 0:
+        from src.export.data import resolve_test_csv
+
+        test_csv = resolve_test_csv(run_dir, args.splits_dir)
     device = select_device()
-    base_model = load_checkpoint_for_export(checkpoint_path, args.model, class_to_idx, device)
+    base_model = load_checkpoint_for_export(
+        checkpoint_path,
+        args.model,
+        class_to_idx,
+        device,
+        image_size=image_size,
+        splits_dir=test_csv.parent if test_csv is not None else None,
+    )
     model = FeatureExposedModel(base_model, args.model).to(device)
     model.eval()
 
@@ -147,7 +157,7 @@ def main() -> None:
     print(f"threshold={stats['threshold']:.4f}\n")
 
     print("=== Imagenes sinteticas fuera de dominio (esperado: distancia > threshold) ===")
-    synthetic = _synthetic_ood_images(image_size)
+    synthetic = _synthetic_ood_images(image_size, factory.get_pipeline("test"))
     ood_flagged = 0
     for name, tensor in synthetic.items():
         with torch.no_grad():
@@ -162,11 +172,15 @@ def main() -> None:
 
     if args.n_legit_samples > 0:
         print("\n=== Muestra de imagenes legitimas de test (esperado: distancia <= threshold) ===")
-        from src.export.data import build_test_loader, resolve_test_csv
+        from src.export.data import build_test_loader
 
-        test_csv = resolve_test_csv(run_dir, args.splits_dir)
         loader, _ = build_test_loader(
-            test_csv, config_path, class_to_idx, image_size, batch_size=1
+            test_csv,
+            config_path,
+            class_to_idx,
+            image_size,
+            batch_size=1,
+            preprocessing_contract=run_contract["preprocessing"],
         )
         evaluated = 0
         false_positives = 0
@@ -185,16 +199,12 @@ def main() -> None:
             print("  No se pudo leer ninguna imagen legitima (DATASET_ROOT inaccesible?).")
         else:
             fp_rate = false_positives / evaluated
-            print(
-                f"  Evaluadas: {evaluated}, falsos positivos: {false_positives} "
-                f"({fp_rate:.1%})"
-            )
+            print(f"  Evaluadas: {evaluated}, falsos positivos: {false_positives} ({fp_rate:.1%})")
 
     if args.extra_images:
         from src.data.loader import load_and_normalize_image
 
         print("\n=== Imagenes reales sueltas (--extra-images) ===")
-        factory = CornTransformFactory(target_size=image_size)
         transform = factory.get_pipeline("test")
         for spec in args.extra_images:
             image_path, _, label = spec.partition(":")

@@ -1,6 +1,6 @@
 # Resultados del Pipeline Principal
 
-Esta sección reúne las métricas definitivas del pipeline principal de la Etapa 2, evaluadas sobre el conjunto de prueba independiente de **5,015 imágenes** retenidas y respaldadas por predicciones auditable por imagen.
+Esta sección reúne las métricas definitivas del pipeline principal de la Etapa 2, evaluadas sobre el conjunto de prueba independiente de **5,015 imágenes** retenidas y respaldadas por predicciones auditables por imagen.
 
 Más allá de presentar tablas numéricas, el objetivo de estos resultados es ofrecer un balance transparente: qué tanto ganamos optimizando modelos, en qué medida el ensamble mejora la bioseguridad del diagnóstico y cuál es el impacto real cuando enfrentamos los modelos a fuentes de datos que nunca vieron durante el entrenamiento.
 
@@ -17,6 +17,12 @@ Para entender el alcance real del sistema desarrollado, basta comparar tres magn
 | **Generalización a fuente no vista** | **`0.6026 ± 0.1240`** | **76.4 %** | Comportamiento honesto frente a cámaras y parcelas desconocidas. |
 
 La distancia entre el primer número (0.9468) y el tercero (0.6026) sintetiza la brecha de dominio en agricultura: dentro de las condiciones conocidas de los datasets el modelo es sobresaliente, pero la variabilidad de un campo completamente nuevo introduce una caída medible que solo se amortigua recolectando datos locales.
+
+## Reentrenamiento sobre el split corregido
+
+El `EfficientNet-Lite0` de la corrida `20260921_204608` es el primer candidato entrenado sobre la materialización corregida de `seed_42` (33,429 imágenes). Alcanzó **0.9480 de macro F1** y **97.81 % de accuracy** en las 5,015 imágenes de prueba. Este resultado todavía **no reemplaza al modelo móvil desplegado**: pertenece al protocolo estratificado dentro de fuentes conocidas y requiere completar las validaciones de fuente no vista, duplicados perceptuales, exportación y dispositivo antes de promoverse.
+
+La ficha completa incluye hashes, métricas por clase, calibración y errores dominantes: [auditoría del candidato `20260921_204608`](/es/resultados/run-20260921-efficientnet-lite0).
 
 ---
 
@@ -44,4 +50,5 @@ Cómo se evalúa y cómo se estructuran los datos pesa veintisiete veces más qu
 - **[Optimización e hiperparámetros](/es/resultados/optimizacion):** Comparativa del impacto de Optuna entre las tres arquitecturas y por qué `Lite0` conservó sus valores base.
 - **[Modelos avanzados y ensamble](/es/resultados/ensamble):** Desglose del voto suave, ganancias en recall (95.06 %) y análisis por clase.
 - **[Evaluación rigurosa y métricas finales](/es/resultados/evaluacion):** El experimento cruzado 2×2 entre particiones y análisis de estabilidad.
+- **[Candidato EfficientNet-Lite0 `20260921_204608`](/es/resultados/run-20260921-efficientnet-lite0):** Reentrenamiento sobre el split corregido, trazabilidad y diagnóstico de errores.
 - **[Análisis de sesgos y ética](/es/resultados/equidad):** Pruebas de oclusión espacial (Clever Hans), equidad entre laboratorio y campo real, y auditoría con Grad-CAM y SHAP.

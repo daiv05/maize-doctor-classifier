@@ -17,6 +17,7 @@ from src.export.common import load_checkpoint_for_export, resolve_export_inputs
 from src.export.data import build_test_loader, resolve_split_csv
 from src.models.feature_exposed import FeatureExposedModel
 from src.training.common import select_device
+from src.training.runs import read_run_contract
 
 
 def _load_ood_stats(path: Path) -> dict:
@@ -24,15 +25,13 @@ def _load_ood_stats(path: Path) -> dict:
     num_classes = data["num_classes"]
     feature_dim = data["feature_dim"]
     pca_dim = data["pca_dim"]
-    means = np.frombuffer(
-        base64.b64decode(data["mean_per_class_b64"]), dtype=np.float32
-    ).reshape(num_classes, pca_dim)
+    means = np.frombuffer(base64.b64decode(data["mean_per_class_b64"]), dtype=np.float32).reshape(
+        num_classes, pca_dim
+    )
     inv_covariance = np.frombuffer(
         base64.b64decode(data["inv_covariance_b64"]), dtype=np.float32
     ).reshape(pca_dim, pca_dim)
-    background_mean = np.frombuffer(
-        base64.b64decode(data["background_mean_b64"]), dtype=np.float32
-    )
+    background_mean = np.frombuffer(base64.b64decode(data["background_mean_b64"]), dtype=np.float32)
     background_inv_covariance = np.frombuffer(
         base64.b64decode(data["background_inv_covariance_b64"]), dtype=np.float32
     ).reshape(pca_dim, pca_dim)
@@ -55,9 +54,7 @@ def _relative_mahalanobis_distance(feature: np.ndarray, stats: dict) -> float:
     normalized = _l2_normalize(feature[None, :])[0]
     reduced = _apply_pca(normalized[None, :], stats["pca_mean"], stats["pca_components"])[0]
     diffs = reduced[None, :] - stats["means"]
-    class_distance = float(
-        np.einsum("ij,jk,ik->i", diffs, stats["inv_covariance"], diffs).min()
-    )
+    class_distance = float(np.einsum("ij,jk,ik->i", diffs, stats["inv_covariance"], diffs).min())
     background_distance = _mahalanobis_to_mean(
         reduced[None, :], stats["background_mean"], stats["background_inv_covariance"]
     )[0]
@@ -79,16 +76,31 @@ def main() -> None:
     config_path = Path(args.config)
 
     class_to_idx, _, image_size = resolve_export_inputs(run_dir, args.model, config_path)
+    run_contract = read_run_contract(run_dir)
+    val_csv = resolve_split_csv(run_dir, args.splits_dir, "val")
     device = select_device()
-    base_model = load_checkpoint_for_export(checkpoint_path, args.model, class_to_idx, device)
+    base_model = load_checkpoint_for_export(
+        checkpoint_path,
+        args.model,
+        class_to_idx,
+        device,
+        image_size=image_size,
+        splits_dir=val_csv.parent,
+    )
     model = FeatureExposedModel(base_model, args.model).to(device)
     model.eval()
 
     stats = _load_ood_stats(Path(args.ood_stats))
     print(f"pca_dim={stats['means'].shape[1]}  threshold={stats['threshold']:.2f}")
 
-    val_csv = resolve_split_csv(run_dir, args.splits_dir, "val")
-    loader, _ = build_test_loader(val_csv, config_path, class_to_idx, image_size, batch_size=1)
+    loader, _ = build_test_loader(
+        val_csv,
+        config_path,
+        class_to_idx,
+        image_size,
+        batch_size=1,
+        preprocessing_contract=run_contract["preprocessing"],
+    )
 
     distances = []
     for batch in loader:
@@ -103,7 +115,10 @@ def main() -> None:
     print(f"\nDistribucion de distancias en val (n={len(distances)}):")
     for p in [1, 5, 25, 50, 75, 90, 95, 99, 99.5, 100]:
         print(f"  p{p:5.1f}: {np.percentile(distances, p):12.2f}")
-    print(f"  min={distances.min():.2f}  max={distances.max():.2f}  mean={distances.mean():.2f}  std={distances.std():.2f}")
+    print(
+        f"  min={distances.min():.2f}  max={distances.max():.2f}  "
+        f"mean={distances.mean():.2f}  std={distances.std():.2f}"
+    )
 
 
 if __name__ == "__main__":

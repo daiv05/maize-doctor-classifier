@@ -30,7 +30,7 @@ from src.data.preparation import (
     write_canonical_csv,
 )
 from src.data.provenance import provenance_from_path
-from src.data.splitter import SourceGroupedSplitter
+from src.data.splitter import HierarchicalStratifiedSplitter, SourceGroupedSplitter
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -239,6 +239,7 @@ def _split_parameters(
     dedup_distance: int,
     allow_incomplete: bool,
     group_manifest_sha256: str | None,
+    split_strategy: str,
 ) -> dict:
     """Parámetros semánticos que determinan membresía de los splits."""
     return {
@@ -250,7 +251,13 @@ def _split_parameters(
         "dedup_distance": dedup_distance,
         "allow_incomplete_splits": allow_incomplete,
         "group_manifest_sha256": group_manifest_sha256,
-        "grouping_column": "effective_group_id",
+        "split_strategy": split_strategy,
+        "grouping_column": (
+            "effective_group_id" if split_strategy != "stratified_label_environment" else None
+        ),
+        "stratify_columns": (
+            ["label", "environment"] if split_strategy == "stratified_label_environment" else []
+        ),
         "ratios": dict(_TARGET_RATIOS),
     }
 
@@ -285,6 +292,13 @@ def run_data_preparation_pipeline(
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
+    if exclusions is None:
+        configured_exclusions = config.get("paths", {}).get("exclusions_file")
+        if configured_exclusions:
+            exclusions = Path(configured_exclusions)
+            if not exclusions.is_absolute():
+                exclusions = Path(config_path).resolve().parent / exclusions
+
     dataset_root = get_dataset_root()
     if not dataset_root.exists():
         raise SystemExit(
@@ -302,7 +316,12 @@ def run_data_preparation_pipeline(
 
     clean_dir = dataset_root / config["paths"]["raw_dir"]
     base_output_dir = get_output_root() / config["paths"]["split_output_dir"]
-    output_dir = _split_output_dir(base_output_dir, suffix="baseline" if baseline else None)
+    suffix_parts = []
+    if baseline:
+        suffix_parts.append("baseline")
+    if group_by_source:
+        suffix_parts.append("source_grouped")
+    output_dir = _split_output_dir(base_output_dir, suffix="_".join(suffix_parts) or None)
     seed = config["dataset"]["seed"]
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -490,27 +509,45 @@ def run_data_preparation_pipeline(
     df_manifest = df_manifest.copy()
     df_manifest["source_id"] = df_manifest["image_path"].map(provenance_from_path)
     explicit_groups = load_group_manifest(group_manifest, df_manifest)
-    df_manifest = apply_effective_groups(df_manifest, explicit_groups)
+    grouped_split = group_by_source or group_manifest is not None
+    df_manifest = apply_effective_groups(
+        df_manifest,
+        explicit_groups,
+        fallback_to_source=grouped_split,
+    )
     fallback_samples = int(df_manifest["group_origin"].eq("individual").sum())
-    if fallback_samples:
+    if grouped_split and fallback_samples:
         logger.info(
             "%d muestras sin grupo explícito ni procedencia usarán fallback individual.",
             fallback_samples,
         )
-    if group_by_source and group_manifest is None:
-        logger.info("--group-by-source conservado por compatibilidad; la agrupación es el default.")
-    logger.info(
-        "Repartiendo grupos efectivos completos (70%% Train, 15%% Val, 15%% Test): "
-        "%d explícitos, %d inferidos, %d individuales.",
-        df_manifest.loc[df_manifest["group_origin"].eq("explicit"), "effective_group_id"].nunique(),
-        df_manifest.loc[df_manifest["group_origin"].eq("inferred"), "effective_group_id"].nunique(),
-        fallback_samples,
-    )
-    splitter = SourceGroupedSplitter(
-        seed=seed,
-        group_column="effective_group_id",
-        allow_incomplete=allow_incomplete,
-    )
+    if grouped_split:
+        split_strategy = "source_grouped" if group_by_source else "explicit_grouped"
+        logger.info(
+            "Repartiendo grupos efectivos completos (70%% Train, 15%% Val, 15%% Test): "
+            "%d explícitos, %d inferidos, %d individuales.",
+            df_manifest.loc[
+                df_manifest["group_origin"].eq("explicit"), "effective_group_id"
+            ].nunique(),
+            df_manifest.loc[
+                df_manifest["group_origin"].eq("inferred"), "effective_group_id"
+            ].nunique(),
+            fallback_samples,
+        )
+        splitter = SourceGroupedSplitter(
+            seed=seed,
+            group_column="effective_group_id",
+            allow_incomplete=allow_incomplete,
+        )
+    else:
+        split_strategy = "stratified_label_environment"
+        if allow_incomplete:
+            logger.warning("--allow-incomplete-splits no tiene efecto en el reparto estratificado.")
+        logger.info(
+            "Repartiendo por imagen con estratificación label+environment "
+            "(70%% Train, 15%% Val, 15%% Test)."
+        )
+        splitter = HierarchicalStratifiedSplitter(seed=seed)
 
     master_columns = [*_MASTER_COLUMNS, *_GROUP_COLUMNS]
     master_manifest = write_canonical_csv(
@@ -535,6 +572,7 @@ def run_data_preparation_pipeline(
         _TARGET_RATIOS,
         overlap_metrics,
     )
+    group_split_summary["split_strategy"] = split_strategy
 
     logger.info(f"Pipeline finalizado. Splits guardados en {output_dir}")
     logger.info(
@@ -565,6 +603,7 @@ def run_data_preparation_pipeline(
         dedup_distance=dedup_distance,
         allow_incomplete=allow_incomplete,
         group_manifest_sha256=group_manifest_sha256,
+        split_strategy=split_strategy,
     )
     lock = {
         "schema_version": 1,
@@ -639,8 +678,8 @@ if __name__ == "__main__":
         "--group-by-source",
         action="store_true",
         dest="group_by_source",
-        help="Opción conservada por compatibilidad. El reparto por grupos efectivos completos "
-        "ya es la política predeterminada para evitar fuga de procedencia.",
+        help="Genera un benchmark estricto manteniendo cada fuente completa en un solo split. "
+        "Se guarda con sufijo _source_grouped; el default estratifica por label+environment.",
     )
     parser.add_argument(
         "--deduplicate",

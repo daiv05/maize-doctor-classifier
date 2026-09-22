@@ -22,12 +22,12 @@ import src.models.baselines.ghostnet  # noqa: F401 - registra modelos
 import src.models.baselines.mobilenet  # noqa: F401 - registra modelos
 import src.models.baselines.shufflenet  # noqa: F401 - registra modelos
 from src.config import PROJECT_ROOT, get_output_root
-from src.data.dataset import resolve_class_mapping
 from src.data.loader import load_and_normalize_image
 from src.explainability.stability import pairwise_stability, reconstruct_mask_and_weight_map
 from src.explainability.visual_report import render_visual_explanation
 from src.models.registry import MODEL_REGISTRY
 from src.training.common import resolve_run_dir
+from src.training.runs import load_validated_run
 
 _OUTPUT_DIR = get_output_root() / "baselines"
 
@@ -63,15 +63,11 @@ def main() -> None:
 
     use_baseline = args.baseline if args.baseline is not None else lime_cfg["baseline"]
     splits_dir = get_output_root() / "splits" / ("seed_42_baseline" if use_baseline else "seed_42")
-    classes = cfg["baseline"]["classes"] if use_baseline else cfg["dataset"]["classes"]
     if not splits_dir.exists():
         raise SystemExit(
             f"El directorio de splits no existe: {splits_dir}\n"
             "Genera los splits primero con: make splits  (o make splits-baseline)"
         )
-
-    class_to_idx, idx_to_class = resolve_class_mapping(splits_dir / "train.csv", classes)
-    target_size = tuple(cfg["dataset"]["target_size"])
 
     run_dir = resolve_run_dir(_OUTPUT_DIR, args.model, args.run)
     checkpoint_path = run_dir / "best.pth"
@@ -79,9 +75,16 @@ def main() -> None:
         raise SystemExit(f"Sin checkpoint completo en {run_dir}")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = MODEL_REGISTRY.build(args.model, num_classes=len(class_to_idx)).to(device)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-    model.eval()
+    loaded = load_validated_run(
+        checkpoint_path,
+        expected_model=args.model,
+        splits_dir=splits_dir,
+        device=device,
+        config_path=str(PROJECT_ROOT / "config" / "dataset.yaml"),
+    )
+    model = loaded.model
+    idx_to_class = {index: name for name, index in loaded.class_to_idx.items()}
+    target_size = loaded.input_size
 
     output_dir = Path(args.output_dir) if args.output_dir else run_dir / "lime_stability"
     image = load_and_normalize_image(Path(args.image))
@@ -100,6 +103,7 @@ def main() -> None:
             num_features=lime_cfg["num_features"],
             seed=seed,
             device=device,
+            validation_transform=loaded.factory.get_pipeline("inference"),
         )
         mask, weight_map = reconstruct_mask_and_weight_map(
             output_path.with_suffix(".json"), output_path.with_suffix(".npy")

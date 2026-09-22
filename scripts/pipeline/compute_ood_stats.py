@@ -44,6 +44,7 @@ from src.export.data import build_test_loader, resolve_split_csv
 from src.models import list_models
 from src.models.feature_exposed import FeatureExposedModel
 from src.training.common import resolve_run_dir, select_device
+from src.training.runs import read_run_contract
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ def _parse_args() -> argparse.Namespace:
         default=0.99,
         dest="explained_variance",
         help="Fraccion de varianza a retener al reducir el feature vector via PCA "
-        "antes de ajustar la gaussiana (default: 0.99). Ver docs/es/deep-learning/ood-detection.md.",
+        "antes de ajustar la gaussiana (default: 0.99). Ver la documentación de OOD.",
     )
     parser.add_argument(
         "--percentile",
@@ -133,7 +134,9 @@ def _l2_normalize(features: np.ndarray) -> np.ndarray:
     return features / norms
 
 
-def _fit_pca(features: np.ndarray, explained_variance: float = 0.99) -> tuple[np.ndarray, np.ndarray, float]:
+def _fit_pca(
+    features: np.ndarray, explained_variance: float = 0.99
+) -> tuple[np.ndarray, np.ndarray, float]:
     """
     Ajusta PCA sobre `features` (ya L2-normalizadas) y devuelve las componentes que
     explican al menos `explained_variance` de la varianza total.
@@ -157,7 +160,9 @@ def _fit_pca(features: np.ndarray, explained_variance: float = 0.99) -> tuple[np
     return mean, vt[:k], float(cumulative[k - 1])
 
 
-def _apply_pca(features: np.ndarray, pca_mean: np.ndarray, pca_components: np.ndarray) -> np.ndarray:
+def _apply_pca(
+    features: np.ndarray, pca_mean: np.ndarray, pca_components: np.ndarray
+) -> np.ndarray:
     """
     Proyecta `features` al espacio reducido por PCA.
 
@@ -284,19 +289,31 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
         checkpoint_path = run_dir / "best.pth"
 
     class_to_idx, idx_to_class, image_size = resolve_export_inputs(run_dir, model_name, config_path)
+    run_contract = read_run_contract(run_dir)
     num_classes = len(class_to_idx)
     device = select_device()
 
-    base_model = load_checkpoint_for_export(checkpoint_path, model_name, class_to_idx, device)
+    train_csv = resolve_split_csv(run_dir, args.splits_dir, "train")
+    val_csv = resolve_split_csv(run_dir, args.splits_dir, "val")
+    base_model = load_checkpoint_for_export(
+        checkpoint_path,
+        model_name,
+        class_to_idx,
+        device,
+        image_size=image_size,
+        splits_dir=train_csv.parent,
+    )
     model = FeatureExposedModel(base_model, model_name).to(device)
     model.eval()
 
-    train_csv = resolve_split_csv(run_dir, args.splits_dir, "train")
-    val_csv = resolve_split_csv(run_dir, args.splits_dir, "val")
-
     logger.info("Extrayendo features de train (%s)...", train_csv)
     train_loader, _ = build_test_loader(
-        train_csv, config_path, class_to_idx, image_size, args.batch_size
+        train_csv,
+        config_path,
+        class_to_idx,
+        image_size,
+        args.batch_size,
+        preprocessing_contract=run_contract["preprocessing"],
     )
     train_features, train_labels = _extract_features(model, train_loader, device)
     train_features = _l2_normalize(train_features)
@@ -315,7 +332,9 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
     train_reduced = _apply_pca(train_features, pca_mean, pca_components)
 
     means = _compute_class_means(train_reduced, train_labels, num_classes)
-    covariance = _regularize_covariance(_compute_pooled_covariance(train_reduced, train_labels, means))
+    covariance = _regularize_covariance(
+        _compute_pooled_covariance(train_reduced, train_labels, means)
+    )
     inv_covariance = np.linalg.pinv(covariance)
 
     background_mean = train_reduced.mean(axis=0)
@@ -327,7 +346,14 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
     background_inv_covariance = np.linalg.pinv(background_covariance)
 
     logger.info("Extrayendo features de val (%s) para calibrar el umbral...", val_csv)
-    val_loader, _ = build_test_loader(val_csv, config_path, class_to_idx, image_size, args.batch_size)
+    val_loader, _ = build_test_loader(
+        val_csv,
+        config_path,
+        class_to_idx,
+        image_size,
+        args.batch_size,
+        preprocessing_contract=run_contract["preprocessing"],
+    )
     val_features, val_labels = _extract_features(model, val_loader, device)
     val_features = _l2_normalize(val_features)
     val_reduced = _apply_pca(val_features, pca_mean, pca_components)

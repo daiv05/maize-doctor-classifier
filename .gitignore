@@ -9,8 +9,10 @@
 
 .temp/
 cache/
+.cache/
 .vite/
 dist/
+build/
 node_modules/
 /data
 /outputs/
@@ -30,12 +32,24 @@ yarn-error.log*
 
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
 
-venv
-
-# Python
+# Python: entornos, bytecode, tooling y cobertura
+.venv/
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
 
 /tmp/**
 
@@ -44,5 +58,3 @@ __pycache__/
 !/experiments/**/input/.gitkeep
 /experiments/**/output/
 /experiments/**/comparisons/
-
-.ruff_cache/outputs/smoke*/

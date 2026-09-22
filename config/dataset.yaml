@@ -1,6 +1,7 @@
 paths:
   raw_dir: "clean" # relativo a DATASET_ROOT
   split_output_dir: "splits/seed_42" # relativo a outputs/
+  exclusions_file: "dataset_exclusions.csv" # relativo a este archivo de configuración
 
 dataset:
   target_size: [224, 224]

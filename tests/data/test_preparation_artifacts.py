@@ -55,8 +55,9 @@ def _configure(monkeypatch, dataset_root: Path, output_root: Path) -> None:
     monkeypatch.setattr(create_splits, "_resolve_index_workers", lambda: 1)
 
 
-def _output(output_root: Path) -> Path:
-    return output_root / "splits" / "seed_42"
+def _output(output_root: Path, suffix: str | None = None) -> Path:
+    name = "seed_42" if suffix is None else f"seed_42_{suffix}"
+    return output_root / "splits" / name
 
 
 def test_manifest_lock_integridad_y_reproducibilidad(tmp_path, monkeypatch):
@@ -95,8 +96,8 @@ def test_manifest_lock_integridad_y_reproducibilidad(tmp_path, monkeypatch):
         "maize-diseases",
         "cropdg-unified-multidomain",
     }
-    assert row["group_origin"] == "inferred"
-    assert row["effective_group_id"] == row["source_id"]
+    assert row["group_origin"] == "individual"
+    assert row["effective_group_id"] == row["sample_id"]
 
     splits = {name: pd.read_csv(first / f"{name}.csv") for name in ("train", "val", "test")}
     id_sets = {name: set(frame["sample_id"]) for name, frame in splits.items()}
@@ -104,6 +105,12 @@ def test_manifest_lock_integridad_y_reproducibilidad(tmp_path, monkeypatch):
     assert id_sets["train"].isdisjoint(id_sets["test"])
     assert id_sets["val"].isdisjoint(id_sets["test"])
     assert set().union(*id_sets.values()) == set(master["sample_id"])
+    assert {name: len(frame) for name, frame in splits.items()} == {
+        "train": 16,
+        "val": 4,
+        "test": 4,
+    }
+    assert all(set(frame["label"]) == {"healthy", "common_rust"} for frame in splits.values())
 
     report = pd.read_csv(first / "split_audit_report.csv")
     assert list(report.columns) == [
@@ -125,11 +132,13 @@ def test_manifest_lock_integridad_y_reproducibilidad(tmp_path, monkeypatch):
     assert audit["samples_valid"] == 24
     assert audit["samples_eligible"] == 24
     assert audit["label_conflicts"] == 0
-    assert audit["grouping"]["total_groups"] == 3
+    assert audit["grouping"]["total_groups"] == 24
+    assert audit["grouping"]["split_strategy"] == "stratified_label_environment"
     assert audit["grouping"]["group_overlap_count"] == 0
     assert audit["grouping"]["sha256_overlap_count"] == 0
 
     lock = json.loads((first / "manifest.lock.json").read_text(encoding="utf-8"))
+    assert lock["split_parameters"]["split_strategy"] == "stratified_label_environment"
     assert lock["master_manifest_sha256"] == sha256_file(first / "master_manifest.csv")
     for name in ("train", "val", "test"):
         assert lock[f"{name}_sha256"] == sha256_file(first / f"{name}.csv")
@@ -189,13 +198,15 @@ def test_group_by_source_conserva_fuentes_disjuntas(tmp_path, monkeypatch):
 
     create_splits.run_data_preparation_pipeline(str(config_path), group_by_source=True)
 
-    output = _output(output_root)
+    output = _output(output_root, "source_grouped")
     parts = {name: pd.read_csv(output / f"{name}.csv") for name in ("train", "val", "test")}
     sources_by_split = {name: set(frame["source_id"]) for name, frame in parts.items()}
     assert sources_by_split["train"].isdisjoint(sources_by_split["val"])
     assert sources_by_split["train"].isdisjoint(sources_by_split["test"])
     assert sources_by_split["val"].isdisjoint(sources_by_split["test"])
     assert all(set(frame["label"]) == {"healthy", "common_rust"} for frame in parts.values())
+    lock = json.loads((output / "manifest.lock.json").read_text(encoding="utf-8"))
+    assert lock["split_parameters"]["split_strategy"] == "source_grouped"
 
 
 def test_contenido_igual_con_labels_distintas_aborta_con_detalle(tmp_path, monkeypatch):
@@ -246,6 +257,29 @@ def test_exclusion_valida_es_logica_y_verificada(tmp_path, monkeypatch):
     assert target.read_bytes() == original_bytes
     assert audit["samples_excluded"] == 1
     assert audit["exclusions_by_reason"] == {"revisión manual": 1}
+
+
+def test_exclusion_configurada_se_resuelve_relativa_al_yaml(tmp_path, monkeypatch):
+    dataset_root, config_path = _build_dataset(tmp_path)
+    target = dataset_root / "clean/healthy/real/healthy_maize_field_real_00.png"
+    relative = target.relative_to(dataset_root).as_posix()
+    exclusions = config_path.parent / "dataset_exclusions.csv"
+    pd.DataFrame(
+        [{"image_path": relative, "sha256": sha256_file(target), "reason": "revisión manual"}]
+    ).to_csv(exclusions, index=False)
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config["paths"]["exclusions_file"] = exclusions.name
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+    output_root = tmp_path / "outputs"
+    _configure(monkeypatch, dataset_root, output_root)
+
+    create_splits.run_data_preparation_pipeline(str(config_path))
+
+    output = _output(output_root)
+    master = pd.read_csv(output / "master_manifest.csv")
+    lock = json.loads((output / "manifest.lock.json").read_text(encoding="utf-8"))
+    assert relative not in set(master["image_path"])
+    assert lock["exclusions_sha256"] == sha256_file(exclusions)
 
 
 def test_exclusion_falla_si_el_contenido_cambio(tmp_path, monkeypatch):

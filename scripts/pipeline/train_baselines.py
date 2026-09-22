@@ -31,6 +31,7 @@ from src.training.common import (
     worker_init_fn,
 )
 from src.training.loop import fit, run_epoch
+from src.training.runs import build_run_contract, load_validated_run
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -216,25 +217,56 @@ def _train_model(
     )
     write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
 
-    write_summary(
-        run_dir,
-        {
-            "model": model_name,
-            "run_id": run_id,
-            "num_classes": len(class_to_idx),
-            "class_to_idx": class_to_idx,
-            "image_size": list(target_size),
-            "splits_dir": str(splits_dir),
-            "epochs": args.epochs,
-            "batch_size": batch_size,
-            "learning_rate": args.learning_rate,
-            "weight_decay": args.weight_decay,
-            "pretrained": not args.no_pretrained,
-            "best_epoch": best_epoch,
-            "best_val_macro_f1": best_val_macro_f1,
-            "test": test_metrics,
-        },
+    historical_summary = {
+        "model": model_name,
+        "run_id": run_id,
+        "num_classes": len(class_to_idx),
+        "class_to_idx": class_to_idx,
+        "image_size": list(target_size),
+        "splits_dir": str(splits_dir),
+        "epochs": args.epochs,
+        "batch_size": batch_size,
+        "learning_rate": args.learning_rate,
+        "weight_decay": args.weight_decay,
+        "pretrained": not args.no_pretrained,
+        "best_epoch": best_epoch,
+        "best_val_macro_f1": best_val_macro_f1,
+        "test": test_metrics,
+    }
+    effective_factory = factory or CornTransformFactory(target_size=target_size)
+    sampler = getattr(train_loader, "sampler", None)
+    sampler_name = type(sampler).__name__ if sampler is not None else None
+    hyperparameters = {
+        "learning_rate": args.learning_rate,
+        "batch_size": batch_size,
+        "weight_decay": args.weight_decay,
+        "optimizer": "AdamW",
+        "scheduler": "none",
+        "epochs": args.epochs,
+        "patience": None,
+        "dropout": None,
+        "loss": "CrossEntropyLoss",
+        "sampler": sampler_name,
+        "pretrained": not args.no_pretrained,
+    }
+    metrics = {
+        "best_validation": {"epoch": best_epoch, "macro_f1": best_val_macro_f1},
+        "test": test_metrics,
+    }
+    contract = build_run_contract(
+        run_dir=run_dir,
+        model_name=model_name,
+        seed=seed,
+        hyperparameters=hyperparameters,
+        preprocessing=effective_factory.to_contract(),
+        training_preprocessing=effective_factory.training_contract(),
+        class_to_idx=class_to_idx,
+        splits_dir=splits_dir,
+        best_epoch=best_epoch,
+        metrics=metrics,
+        historical_fields=historical_summary,
     )
+    write_summary(run_dir, contract)
     update_latest_pointer(output_dir, model_name, run_id)
     logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
     logger.info("[%s] Run completado en %s", model_name, run_dir)
@@ -269,9 +301,13 @@ def _generate_lime_reports(
 
     lime_cfg = cfg["lime"]
     test_df = pd.read_csv(splits_dir / "test.csv")
-    model = build_model(model_name, num_classes=len(idx_to_class), pretrained=False).to(device)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-    model.eval()
+    loaded = load_validated_run(
+        checkpoint_path,
+        expected_model=model_name,
+        expected_num_classes=len(idx_to_class),
+        device=device,
+    )
+    model = loaded.model
 
     explain_model_visual(
         model=model,

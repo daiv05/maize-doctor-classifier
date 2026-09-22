@@ -72,6 +72,8 @@ La distancia entre 0.9468 y 0.6026 es la brecha de dominio: dentro de las condic
 
 Los conteos corresponden al corpus ampliado: **33 438 imágenes** (3 551 lab + 29 887 campo real), tras incorporar cuatro datasets Roboflow dirigidos a GLS y a las tres deficiencias nutricionales (+1 815 netas) y deduplicar con PHash. El desbalance máximo bajó de 32.9x a **14.1x**.
 
+La cifra anterior describe el inventario documentado del corpus. La materialización de entrenamiento vigente contiene **33 429 muestras elegibles**: el generador descarta una imagen que no supera la validación de integridad y excluye explícitamente ocho archivos pertenecientes a cuatro conflictos de contenido idéntico con etiquetas distintas. El split resultante es 23 400 / 5 014 / 5 015 y no presenta solapamientos exactos entre particiones. Esta ejecución no activó la deduplicación perceptual, por lo que la ausencia de imágenes casi duplicadas debe validarse por separado.
+
 ---
 
 ## Objetivos Técnicos

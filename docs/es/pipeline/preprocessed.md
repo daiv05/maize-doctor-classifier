@@ -17,6 +17,21 @@ Cada imagen que ingresa al flujo pasa por una secuencia de transformación deter
 
 La partición de los datos (`seed_42`) se realiza de forma estratificada considerando conjuntamente la clase agronómica y el entorno (`label + environment`). De este modo nos aseguramos de que la proporción entre fotos de campo real y fotos de laboratorio se mantenga equilibrada tanto en el conjunto de entrenamiento (70%) como en los conjuntos de validación (15%) y prueba retenida (15%).
 
+La materialización vigente, regenerada después de corregir los conflictos de integridad del corpus, contiene:
+
+| Partición | Muestras | Proporción |
+|---|---:|---:|
+| Entrenamiento | 23,400 | 69.9991 % |
+| Validación | 5,014 | 14.9990 % |
+| Prueba | 5,015 | 15.0019 % |
+| **Total** | **33,429** | **100 %** |
+
+Los tres CSV conservan las nueve clases. La auditoría de esta materialización verificó cero solapamientos por `sample_id`, SHA-256 y `effective_group_id` entre particiones. Ocho archivos involucrados en cuatro pares de contenido idéntico con etiquetas contradictorias se excluyen explícitamente mediante `config/dataset_exclusions.csv`; no se elimina ni se reasigna ninguna muestra de forma silenciosa durante el entrenamiento.
+
+`source_id` se conserva como metadato de procedencia y puede aparecer en las tres particiones de `seed_42`: este split mide rendimiento dentro de las fuentes conocidas, no generalización a una fuente nueva. Para ese segundo escenario existe el protocolo opt-in `seed_42_source_grouped`, activado con `--group-by-source`, que mantiene cada `effective_group_id` en una sola partición. Como algunas clases solo existen en pocas fuentes, ese benchmark puede requerir `--allow-incomplete-splits` y no sustituye al split principal.
+
+La generación actual calcula SHA-256 y evita duplicados exactos, pero fue ejecutada con `deduplicate_perceptual=false`. Por tanto, los controles anteriores no demuestran ausencia de imágenes casi duplicadas; esa comprobación debe realizarse aparte antes de interpretar el resultado como robustez frente a variaciones visuales cercanas.
+
 ---
 
 ## Estrategia frente al desbalance de clases

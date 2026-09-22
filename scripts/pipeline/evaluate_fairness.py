@@ -1,14 +1,15 @@
-"""Script CLI de Evaluación de Sesgos, Equidad y Control de Atajos Visuales (Criterio 4 - Rúbrica Etapa 2).
+"""CLI de evaluación de sesgos, equidad y control de atajos visuales.
 
 Ejecuta la auditoría de equidad algorítmica:
 1. Evaluación desagregada por entorno (lab vs real).
-2. Cálculo de métricas de disparidad (Δ_F1, Disparate Impact Ratio DIR, tasas de falsos negativos FNR).
+2. Cálculo de métricas de disparidad (Δ_F1, DIR y tasas de falsos negativos).
 3. Test de control negativo contra atajos visuales (Shortcut Learning / Efecto Clever Hans).
 4. Generación de mapas de activación visual con Grad-CAM.
 5. Exportación de artefactos estructurados (CSV, JSON, PNG) y reporte en Markdown.
 
 Uso:
-    python scripts/pipeline/evaluate_fairness.py --model efficientnet_b0 --run-gradcam --run-shortcut-test
+    python scripts/pipeline/evaluate_fairness.py --model efficientnet_b0 \
+        --run-gradcam --run-shortcut-test
 """
 
 from __future__ import annotations
@@ -17,38 +18,36 @@ import argparse
 import json
 import logging
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import f1_score
 import torch
 import torch.nn as nn
-import yaml
 from PIL import Image
+from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 
-from collections import Counter
-
-from src.analysis.predictions import write_per_image_predictions
-from src.data.provenance import source_from_path
 from src.analysis.fairness import (
     compute_disparity_metrics,
     compute_subgroup_metrics,
-    evaluate_background_shortcut,
     evaluate_dual_shortcut_audit,
     plot_disaggregated_confusion_matrices,
     plot_subgroup_disparity_bars,
 )
+from src.analysis.predictions import write_per_image_predictions
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root, set_global_seed
 from src.data.dataset import CornDataset
 from src.data.identity import align_manifest_to_sample_ids, ensure_sample_ids, unpack_batch
+from src.data.provenance import source_from_path
 from src.data.transforms import CornTransformFactory
 from src.explainability.gradcam import GradCAM, build_gradcam_overlay, get_target_layer
-from src.models import build_model, list_models, resolve_input_size
+from src.models import list_models
 from src.training.common import select_device
+from src.training.runs import load_validated_run, resolve_checkpoint
 
 logging.basicConfig(
     level=logging.INFO,
@@ -59,7 +58,7 @@ logger = logging.getLogger("fairness_audit")
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Auditoría de Equidad, Sesgos y Control de Atajos Visuales (Criterio 4 - Etapa 2)."
+        description="Auditoría de equidad, sesgos y control de atajos visuales."
     )
     parser.add_argument(
         "--model",
@@ -70,7 +69,12 @@ def _parse_args() -> argparse.Namespace:
         "--checkpoint",
         default=None,
         dest="checkpoint_path",
-        help="Ruta al checkpoint .pt del modelo entrenado. Si no se especifica, busca en outputs/main/ o outputs/baselines/.",
+        help="Ruta al checkpoint entrenado. Si se omite, usa latest.json de main/baselines.",
+    )
+    parser.add_argument(
+        "--run",
+        default=None,
+        help="run_id explícito; por defecto resuelve latest.json.",
     )
     parser.add_argument(
         "--splits-dir",
@@ -121,7 +125,7 @@ def _parse_args() -> argparse.Namespace:
         default="environment",
         dest="subgroup_column",
         help="Columna que define los subgrupos de la auditoria. 'source_id' se deriva de "
-             "la ruta si no esta en el manifiesto.",
+        "la ruta si no esta en el manifiesto.",
     )
     parser.add_argument(
         "--num-workers",
@@ -129,63 +133,21 @@ def _parse_args() -> argparse.Namespace:
         default=8,
         dest="num_workers",
         help="Procesos de carga del DataLoader. La decodificacion JPEG es el cuello "
-             "medido del entrenamiento; 0 la deja en el proceso principal.",
+        "medido del entrenamiento; 0 la deja en el proceso principal.",
     )
     return parser.parse_args()
 
 
-def _resolve_checkpoint(model_name: str, explicit_path: str | None) -> Path:
-    """Resuelve el checkpoint entrenado.  Falla con ``sys.exit(1)`` si no se
-    encuentra ninguno — nunca devuelve ``None``."""
-    if explicit_path:
-        p = Path(explicit_path)
-        if p.exists():
-            return p
-        logger.error("Checkpoint especificado no encontrado: %s", explicit_path)
-        sys.exit(1)
-
-    output_root = get_output_root()
-    for pipeline_dir in ["main", "baselines"]:
-        parent = output_root / pipeline_dir / model_name
-        if not parent.exists():
-            continue
-        latest_json = parent / "latest.json"
-        if latest_json.exists():
-            try:
-                with open(latest_json, "r", encoding="utf-8") as f:
-                    meta = json.load(f)
-                run_id = meta.get("run_id") or meta.get("run")
-                if run_id:
-                    for name in ["best.pth", "best.pt"]:
-                        p = parent / run_id / name
-                        if p.exists():
-                            logger.info("Checkpoint auto-descubierto: %s", p)
-                            return p
-            except Exception:
-                pass
-
-        for name in ["best.pth", "best.pt"]:
-            for cand in [
-                parent / "latest" / "checkpoints" / name,
-                parent / "latest" / name,
-                parent / name,
-            ]:
-                if cand.exists():
-                    logger.info("Checkpoint auto-descubierto: %s", cand)
-                    return cand
-
-        pts = list(parent.rglob("best.pth")) + list(parent.rglob("best.pt"))
-        if pts:
-            chosen = sorted(pts, key=lambda p: p.stat().st_mtime, reverse=True)[0]
-            logger.info("Checkpoint auto-descubierto: %s", chosen)
-            return chosen
-
-    logger.error(
-        "No se encontró ningún checkpoint entrenado para '%s'. "
-        "Entrena primero o pasa --checkpoint.",
+def _resolve_checkpoint(
+    model_name: str, explicit_path: str | None, run_id: str | None = None
+) -> Path:
+    """Resuelve por checkpoint explícito, run_id o latest.json, sin fallback por mtime."""
+    return resolve_checkpoint(
         model_name,
+        get_output_root(),
+        explicit_checkpoint=explicit_path,
+        run_id=run_id,
     )
-    sys.exit(1)
 
 
 def _generate_gradcam_panel(
@@ -218,7 +180,9 @@ def _generate_gradcam_panel(
         logger.warning("No se encontraron muestras suficientes para Grad-CAM.")
         return
 
-    fig, axes = plt.subplots(len(selected_samples), 3, figsize=(12, 3.5 * len(selected_samples)), dpi=150)
+    fig, axes = plt.subplots(
+        len(selected_samples), 3, figsize=(12, 3.5 * len(selected_samples)), dpi=150
+    )
     if len(selected_samples) == 1:
         axes = np.expand_dims(axes, 0)
 
@@ -229,8 +193,6 @@ def _generate_gradcam_panel(
         img_path = dataset_root / img_rel_path
         true_label = row["label"]
         env = row["environment"]
-        true_idx = class_to_idx.get(true_label, 0)
-
         if not img_path.exists():
             continue
 
@@ -254,7 +216,9 @@ def _generate_gradcam_panel(
 
         # Columna 1: Imagen Original
         axes[row_idx, 0].imshow(img_np01)
-        axes[row_idx, 0].set_title(f"Original ({env})\nReal: {true_label}", fontsize=9, fontweight="bold")
+        axes[row_idx, 0].set_title(
+            f"Original ({env})\nReal: {true_label}", fontsize=9, fontweight="bold"
+        )
         axes[row_idx, 0].axis("off")
 
         # Columna 2: Mapa de Calor Grad-CAM
@@ -270,16 +234,30 @@ def _generate_gradcam_panel(
             .numpy()
         )
         axes[row_idx, 1].imshow(upsampled_cam, cmap="jet")
-        axes[row_idx, 1].set_title(f"Mapa Grad-CAM (Atención)\nPred: {pred_label} ({pred_conf*100:.1f}%)", fontsize=9, fontweight="bold")
+        axes[row_idx, 1].set_title(
+            f"Mapa Grad-CAM (Atención)\nPred: {pred_label} ({pred_conf * 100:.1f}%)",
+            fontsize=9,
+            fontweight="bold",
+        )
         axes[row_idx, 1].axis("off")
 
         # Columna 3: Superposición (Overlay)
         axes[row_idx, 2].imshow(overlay)
         status = "CORRECTO" if true_label == pred_label else "ERROR"
-        axes[row_idx, 2].set_title(f"Superposición [{status}]\nAtención del modelo (Pred: {pred_label})", fontsize=9, fontweight="bold", color="green" if status == "CORRECTO" else "red")
+        axes[row_idx, 2].set_title(
+            f"Superposición [{status}]\nAtención del modelo (Pred: {pred_label})",
+            fontsize=9,
+            fontweight="bold",
+            color="green" if status == "CORRECTO" else "red",
+        )
         axes[row_idx, 2].axis("off")
 
-    plt.suptitle(f"Auditoría Visual Grad-CAM: Explicabilidad y Atajos Visuales ({model_name})", fontsize=13, fontweight="bold", y=1.00)
+    plt.suptitle(
+        f"Auditoría Visual Grad-CAM: Explicabilidad y Atajos Visuales ({model_name})",
+        fontsize=13,
+        fontweight="bold",
+        y=1.00,
+    )
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, bbox_inches="tight")
@@ -291,7 +269,11 @@ def main() -> None:
     args = _parse_args()
     set_global_seed(args.seed)
 
-    splits_dir = Path(args.splits_dir) if args.splits_dir else (get_output_root() / "splits" / f"seed_{args.seed}")
+    splits_dir = (
+        Path(args.splits_dir)
+        if args.splits_dir
+        else (get_output_root() / "splits" / f"seed_{args.seed}")
+    )
     test_csv_path = splits_dir / "test.csv"
     if not test_csv_path.exists():
         logger.error("No se encontró test.csv en %s. Ejecuta primero 'make splits'.", splits_dir)
@@ -306,52 +288,35 @@ def main() -> None:
         test_df["environment"] = "unknown"
 
     # Resolver checkpoint primero (falla si no existe)
-    ckpt_path = _resolve_checkpoint(args.model, args.checkpoint_path)
+    ckpt_path = _resolve_checkpoint(args.model, args.checkpoint_path, args.run)
 
-    # Mapeo de clases desde summary.json del checkpoint (fuente de verdad)
-    summary_path = ckpt_path.parent / "summary.json"
-    if summary_path.exists():
-        with open(summary_path, "r", encoding="utf-8") as f:
-            summary_data = json.load(f)
-        if "class_to_idx" in summary_data:
-            class_to_idx = {str(k): int(v) for k, v in summary_data["class_to_idx"].items()}
-            idx_to_class = {idx: name for name, idx in class_to_idx.items()}
-            class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
-            logger.info("Mapeo de clases cargado desde summary.json del checkpoint.")
-        else:
-            class_names = sorted(test_df["label"].unique().tolist())
-            class_to_idx = {name: idx for idx, name in enumerate(class_names)}
-            idx_to_class = {idx: name for name, idx in class_to_idx.items()}
-            logger.warning("summary.json sin class_to_idx; reconstruyendo desde test.csv.")
-    else:
-        class_names = sorted(test_df["label"].unique().tolist())
-        class_to_idx = {name: idx for idx, name in enumerate(class_names)}
-        idx_to_class = {idx: name for name, idx in class_to_idx.items()}
-        logger.warning("No se encontró summary.json; reconstruyendo mapeo de clases desde test.csv.")
+    config_path = Path(args.config)
+    device = select_device()
+    loaded = load_validated_run(
+        ckpt_path,
+        expected_model=args.model,
+        splits_dir=splits_dir,
+        device=device,
+        config_path=str(config_path),
+    )
+    class_to_idx = loaded.class_to_idx
+    idx_to_class = {index: name for name, index in class_to_idx.items()}
+    class_names = [idx_to_class[index] for index in range(len(idx_to_class))]
+    input_size = loaded.input_size
+    factory = loaded.factory
+    eval_transform = factory.get_pipeline("test")
 
     logger.info("Iniciando Auditoría de Equidad (Fairness Report) para: %s", args.model)
     logger.info("Clases a auditar (%d): %s", len(class_names), class_names)
-    logger.info("Total muestras en Test Set: %d (Lab: %d, Real: %d)", len(test_df), (test_df['environment'] == 'lab').sum(), (test_df['environment'] == 'real').sum())
+    logger.info(
+        "Total muestras en Test Set: %d (Lab: %d, Real: %d)",
+        len(test_df),
+        (test_df["environment"] == "lab").sum(),
+        (test_df["environment"] == "real").sum(),
+    )
 
-    config_path = Path(args.config)
-    with open(config_path, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
-    base_target_size = tuple(cfg["dataset"]["target_size"])
-
-    device = select_device()
-    input_size = resolve_input_size(args.model, fallback=base_target_size)
-    factory = CornTransformFactory(config_path=str(config_path), target_size=input_size)
-    eval_transform = factory.get_pipeline("test")
-
-    # Instanciar y cargar modelo con pesos entrenados (strict=True)
-    model = build_model(args.model, num_classes=len(class_names), pretrained=False)
     logger.info("Cargando pesos entrenados desde: %s", ckpt_path)
-    checkpoint = torch.load(ckpt_path, map_location=device)
-    state_dict = checkpoint.get("model_state_dict", checkpoint)
-    model.load_state_dict(state_dict, strict=True)
-
-    model = model.to(device)
-    model.eval()
+    model = loaded.model
 
     # DataLoader de prueba
     test_dataset = CornDataset(
@@ -401,15 +366,31 @@ def main() -> None:
 
     logger.info("=== RESULTADOS DESAGREGADOS POR ENTORNO ===")
     for grp, m in subgroup_metrics["subgroups"].items():
-        logger.info("Subgrupo [%s] (N=%d) -> Macro F1: %.4f | Accuracy: %.4f | Precision: %.4f | Recall: %.4f", grp, m["sample_count"], m["macro_f1"], m["accuracy"], m["macro_precision"], m["macro_recall"])
+        logger.info(
+            "Subgrupo [%s] (N=%d) -> F1: %.4f | Accuracy: %.4f | Precision: %.4f | Recall: %.4f",
+            grp,
+            m["sample_count"],
+            m["macro_f1"],
+            m["accuracy"],
+            m["macro_precision"],
+            m["macro_recall"],
+        )
 
     logger.info("=== MÉTRICAS DE DISPARIDAD Y EQUIDAD ===")
     if disparity_metrics.get("evaluable", True):
         logger.info("Delta Macro F1 (|Real - Lab|): %.4f", disparity_metrics["delta_macro_f1"])
         logger.info("Delta Accuracy (|Real - Lab|): %.4f", disparity_metrics["delta_accuracy"])
-        logger.info("Disparate Impact Ratio (DIR, %s): %.4f (Regla 80%% cumplida: %s)", disparity_metrics.get("dir_metric", "macro_f1"), disparity_metrics["disparate_impact_ratio"], disparity_metrics["four_fifths_rule_passed"])
+        logger.info(
+            "Disparate Impact Ratio (DIR, %s): %.4f (Regla 80%% cumplida: %s)",
+            disparity_metrics.get("dir_metric", "macro_f1"),
+            disparity_metrics["disparate_impact_ratio"],
+            disparity_metrics["four_fifths_rule_passed"],
+        )
     else:
-        logger.info("Métricas de disparidad no evaluables: %s", disparity_metrics.get("note", "Menos de 2 subgrupos"))
+        logger.info(
+            "Métricas de disparidad no evaluables: %s",
+            disparity_metrics.get("note", "Menos de 2 subgrupos"),
+        )
 
     # 2. Control Negativo y Control Inverso contra Atajos Visuales (Clever Hans Audit)
     dual_shortcut_results: dict[str, Any] = {}
@@ -424,13 +405,40 @@ def main() -> None:
         p_res = dual_shortcut_results["peripheral_occlusion"]
 
         logger.info("=== RESULTADOS TEST DE CONTROL NEGATIVO (OCLUSIÓN CENTRAL 60%%) ===")
-        logger.info("Confianza Original Media: %.4f -> Confianza sin Centro: %.4f (Caída: %.4f)", c_res["mean_original_confidence"], c_res["mean_masked_confidence"], c_res["confidence_drop"])
-        logger.info("Retención de Confianza en Clase Original: %.4f (Atajo detectado: %s, Riesgo: %s)", c_res["confidence_retention"], c_res["shortcut_detected"], c_res["risk_level"])
-        logger.info("Exactitud Original: %.4f -> Exactitud sin Centro: %.4f (Caída Acc: %.4f, Flips: %.4f)", c_res["accuracy_original"], c_res["accuracy_masked"], c_res["accuracy_drop"], c_res["flip_rate"])
+        logger.info(
+            "Confianza Original Media: %.4f -> Confianza sin Centro: %.4f (Caída: %.4f)",
+            c_res["mean_original_confidence"],
+            c_res["mean_masked_confidence"],
+            c_res["confidence_drop"],
+        )
+        logger.info(
+            "Retención de Confianza en Clase Original: %.4f (Atajo detectado: %s, Riesgo: %s)",
+            c_res["confidence_retention"],
+            c_res["shortcut_detected"],
+            c_res["risk_level"],
+        )
+        logger.info(
+            "Exactitud Original: %.4f -> Exactitud sin Centro: %.4f (Caída Acc: %.4f, Flips: %.4f)",
+            c_res["accuracy_original"],
+            c_res["accuracy_masked"],
+            c_res["accuracy_drop"],
+            c_res["flip_rate"],
+        )
 
         logger.info("=== RESULTADOS CONTROL INVERSO (OCLUSIÓN PERIFÉRICA 40%% - SOLO CENTRO) ===")
-        logger.info("Confianza Original Media: %.4f -> Confianza solo Centro: %.4f (Caída: %.4f)", p_res["mean_original_confidence"], p_res["mean_masked_confidence"], p_res["confidence_drop"])
-        logger.info("Exactitud Original: %.4f -> Exactitud solo Centro: %.4f (Caída Acc: %.4f, Flips: %.4f)", p_res["accuracy_original"], p_res["accuracy_masked"], p_res["accuracy_drop"], p_res["flip_rate"])
+        logger.info(
+            "Confianza Original Media: %.4f -> Confianza solo Centro: %.4f (Caída: %.4f)",
+            p_res["mean_original_confidence"],
+            p_res["mean_masked_confidence"],
+            p_res["confidence_drop"],
+        )
+        logger.info(
+            "Exactitud original: %.4f -> solo centro: %.4f (Caída Acc: %.4f, Flips: %.4f)",
+            p_res["accuracy_original"],
+            p_res["accuracy_masked"],
+            p_res["accuracy_drop"],
+            p_res["flip_rate"],
+        )
         logger.info("Diagnóstico Final de Atajos: %s", dual_shortcut_results["diagnostic_summary"])
 
     # 3. Visualizaciones
@@ -505,22 +513,31 @@ def main() -> None:
     for fuente, grupo in predicciones.groupby("source_id"):
         con_soporte = sorted(grupo.y_true.unique())
         mayoritaria = grupo.y_true.value_counts().iloc[0] / len(grupo)
-        por_fuente.append({
-            "source_id": fuente,
-            "n": len(grupo),
-            "clases_con_soporte": len(con_soporte),
-            "accuracy": float((grupo.y_true == grupo.y_pred).mean()),
-            "accuracy_clase_mayoritaria": float(mayoritaria),
-            "macro_f1_evaluable": float(
-                f1_score(grupo.y_true, grupo.y_pred, average="macro",
-                         labels=con_soporte, zero_division=0)
-            ),
-        })
+        por_fuente.append(
+            {
+                "source_id": fuente,
+                "n": len(grupo),
+                "clases_con_soporte": len(con_soporte),
+                "accuracy": float((grupo.y_true == grupo.y_pred).mean()),
+                "accuracy_clase_mayoritaria": float(mayoritaria),
+                "macro_f1_evaluable": float(
+                    f1_score(
+                        grupo.y_true,
+                        grupo.y_pred,
+                        average="macro",
+                        labels=con_soporte,
+                        zero_division=0,
+                    )
+                ),
+            }
+        )
     tabla_fuente = pd.DataFrame(por_fuente).sort_values("n", ascending=False)
     tabla_fuente.to_csv(output_dir / "fairness_by_source.csv", index=False)
     logger.info(
         "Desglose por procedencia: %d fuentes | accuracy min %.4f max %.4f",
-        len(tabla_fuente), tabla_fuente.accuracy.min(), tabla_fuente.accuracy.max(),
+        len(tabla_fuente),
+        tabla_fuente.accuracy.min(),
+        tabla_fuente.accuracy.max(),
     )
 
     # Control nulo de la ablacion: sin el, el acierto sobre imagenes ocluidas no se puede
@@ -546,7 +563,9 @@ def main() -> None:
     with open(output_dir / "fairness_metrics.json", "w", encoding="utf-8") as f:
         json.dump(full_report_data, f, indent=2, ensure_ascii=False)
 
-    logger.info("Auditoría de Equidad finalizada exitosamente. Artefactos exportados a: %s", output_dir)
+    logger.info(
+        "Auditoría de Equidad finalizada exitosamente. Artefactos exportados a: %s", output_dir
+    )
 
 
 if __name__ == "__main__":

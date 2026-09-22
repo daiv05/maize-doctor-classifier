@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 
 import cv2
@@ -9,6 +10,9 @@ from PIL import Image
 from src.config import PROJECT_ROOT
 
 _DEFAULT_CONFIG = str(PROJECT_ROOT / "config" / "dataset.yaml")
+_IMAGENET_MEAN = [0.485, 0.456, 0.406]
+_IMAGENET_STD = [0.229, 0.224, 0.225]
+_PREPROCESSING_SCHEMA_VERSION = 1
 
 
 class CornCLAHETransform:
@@ -63,8 +67,8 @@ class CornTrainingTransforms(TransformPipelineFactory):
 
     def __init__(self, target_size: tuple[int, int]):
         self.target_size = target_size
-        self.mean = [0.485, 0.456, 0.406]
-        self.std = [0.229, 0.224, 0.225]
+        self.mean = list(_IMAGENET_MEAN)
+        self.std = list(_IMAGENET_STD)
 
     def create_transforms(self) -> T.Compose:
         return T.Compose(
@@ -95,8 +99,8 @@ class CornMinorityTransforms(TransformPipelineFactory):
 
     def __init__(self, target_size: tuple[int, int]):
         self.target_size = target_size
-        self.mean = [0.485, 0.456, 0.406]
-        self.std = [0.229, 0.224, 0.225]
+        self.mean = list(_IMAGENET_MEAN)
+        self.std = list(_IMAGENET_STD)
 
     def create_transforms(self) -> T.Compose:
         return T.Compose(
@@ -123,8 +127,8 @@ class CornValidationTransforms(TransformPipelineFactory):
 
     def __init__(self, target_size: tuple[int, int]):
         self.target_size = target_size
-        self.mean = [0.485, 0.456, 0.406]
-        self.std = [0.229, 0.224, 0.225]
+        self.mean = list(_IMAGENET_MEAN)
+        self.std = list(_IMAGENET_STD)
 
     def create_transforms(self) -> T.Compose:
         return T.Compose(
@@ -159,14 +163,101 @@ class CornTransformFactory:
         self.target_size = target_size
 
         clahe_config = config.get("clahe", {})
+        self.clahe_config = {
+            "enabled": bool(clahe),
+            "clip_limit": float(clahe_config.get("clip_limit", 2.0)),
+            "tile_grid": int(clahe_config.get("tile_grid", 8)),
+        }
         self.clahe_transform = (
             CornCLAHETransform(
-                clip_limit=float(clahe_config.get("clip_limit", 2.0)),
-                tile_grid=int(clahe_config.get("tile_grid", 8)),
+                clip_limit=self.clahe_config["clip_limit"],
+                tile_grid=self.clahe_config["tile_grid"],
             )
             if clahe
             else None
         )
+
+    def to_contract(self) -> dict:
+        """Serializa únicamente el preprocesamiento determinista usado en inferencia.
+
+        Las augmentations aleatorias de ``train`` y ``minority`` no forman parte del
+        contrato de entrada del modelo. Se registran aparte como una política informativa
+        para que ningún consumidor intente reproducirlas durante inferencia.
+        """
+        return {
+            "schema_version": _PREPROCESSING_SCHEMA_VERSION,
+            "purpose": "inference",
+            "loader": {"exif_transpose": True, "color_mode": "RGB"},
+            "resize": {
+                "operation": "resize",
+                "target_size": list(self.target_size),
+                "aspect_ratio": "stretch",
+                "interpolation": "bilinear",
+                "antialias": True,
+            },
+            "normalization": {
+                "operation": "zscore",
+                "mean": list(_IMAGENET_MEAN),
+                "std": list(_IMAGENET_STD),
+            },
+            "clahe": dict(self.clahe_config),
+        }
+
+    def training_contract(self) -> dict:
+        """Describe la relación del pipeline de entrenamiento con el de inferencia."""
+        return {
+            "schema_version": _PREPROCESSING_SCHEMA_VERSION,
+            "inference_contract_sha256_required": True,
+            "random_augmentations_contractual_for_inference": False,
+            "pipelines": ["train", "minority"],
+        }
+
+    @classmethod
+    def from_contract(
+        cls, contract: dict, config_path: str | None = None
+    ) -> "CornTransformFactory":
+        """Reconstruye la factory y rechaza contratos inválidos o no soportados."""
+        if not isinstance(contract, dict):
+            raise ValueError("El contrato de preprocessing debe ser un objeto JSON.")
+        resize = contract.get("resize")
+        normalization = contract.get("normalization")
+        clahe = contract.get("clahe")
+        size = resize.get("target_size") if isinstance(resize, dict) else None
+        if (
+            contract.get("schema_version") != _PREPROCESSING_SCHEMA_VERSION
+            or contract.get("purpose") != "inference"
+            or not isinstance(size, list)
+            or len(size) != 2
+            or any(type(value) is not int or value <= 0 for value in size)
+            or not isinstance(normalization, dict)
+            or not isinstance(clahe, dict)
+            or type(clahe.get("enabled")) is not bool
+            or type(clahe.get("tile_grid")) is not int
+            or clahe["tile_grid"] <= 0
+            or type(clahe.get("clip_limit")) not in (int, float)
+            or not math.isfinite(clahe["clip_limit"])
+            or clahe["clip_limit"] <= 0
+        ):
+            raise ValueError("Contrato de preprocessing inválido.")
+
+        factory = cls(
+            config_path=config_path or _DEFAULT_CONFIG,
+            target_size=(size[0], size[1]),
+            clahe=clahe["enabled"],
+        )
+        factory.clahe_config = {
+            "enabled": clahe["enabled"],
+            "clip_limit": float(clahe["clip_limit"]),
+            "tile_grid": clahe["tile_grid"],
+        }
+        if factory.clahe_config["enabled"]:
+            factory.clahe_transform = CornCLAHETransform(
+                clip_limit=factory.clahe_config["clip_limit"],
+                tile_grid=factory.clahe_config["tile_grid"],
+            )
+        if factory.to_contract() != contract:
+            raise ValueError("Contrato de preprocessing no soportado por esta versión.")
+        return factory
 
     def get_pipeline(self, stage: str) -> T.Compose:
         """Retorna el pipeline de transformación correspondiente a la etapa."""

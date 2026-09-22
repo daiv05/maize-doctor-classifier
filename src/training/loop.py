@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.data.identity import IdentifiedValues, unpack_batch
+from src.data.preparation import atomic_write_json
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +61,7 @@ def run_epoch(
     optimizer: torch.optim.Optimizer | None = None,
     desc: str = "",
     clip_grad_norm: float | None = None,
-) -> tuple[
-    dict[str, float], IdentifiedValues[int], IdentifiedValues[int], IdentifiedValues[float]
-]:
+) -> tuple[dict[str, float], IdentifiedValues[int], IdentifiedValues[int], IdentifiedValues[float]]:
     """
     Ejecuta una pasada completa sobre el loader, entrenando si se pasa optimizer.
 
@@ -217,6 +216,16 @@ def fit(
         history.append(row)
         if run_dir is not None:
             torch.save(model.state_dict(), run_dir / "last.pth")
+            atomic_write_json(
+                run_dir / "training_state.json",
+                {
+                    "schema_version": 1,
+                    "status": "running",
+                    "best_epoch": best_epoch,
+                    "best_metric": best_val_macro_f1,
+                    "last_epoch": epoch,
+                },
+            )
 
         logger.info(
             "[%s] epoch %s/%s train_f1=%.4f val_f1=%.4f",
@@ -238,8 +247,22 @@ def fit(
         model.load_state_dict(best_state_dict)
         logger.info(
             "[%s] Restaurado mejor estado (época %d, val_f1=%.4f)",
-            model_name, best_epoch, best_val_macro_f1,
+            model_name,
+            best_epoch,
+            best_val_macro_f1,
         )
         del best_state_dict  # Liberar memoria
+
+    if run_dir is not None and history:
+        atomic_write_json(
+            run_dir / "training_state.json",
+            {
+                "schema_version": 1,
+                "status": "complete",
+                "best_epoch": best_epoch,
+                "best_metric": best_val_macro_f1,
+                "last_epoch": history[-1]["epoch"],
+            },
+        )
 
     return history

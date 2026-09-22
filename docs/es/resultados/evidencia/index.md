@@ -13,12 +13,13 @@ estos ficheros.
 | `optuna_b0_presupuesto_completo_trials.csv` | los 15 trials de ese barrido |
 | `run_afinada_lite0_summary.json` | reentrenamiento a presupuesto completo de la primera |
 | `run_afinada_b0_summary.json` | reentrenamiento a presupuesto completo de la segunda |
+| `run_20260921_lite0_summary.json` | primer reentrenamiento de Lite0 sobre el split corregido de 33,429 muestras |
 
 ## Manifiesto de corridas
 
-`manifiesto_corridas.csv` lista las ocho corridas del pipeline principal que existen en el
+`manifiesto_corridas.csv` lista las diez corridas auditadas del pipeline principal que existen en el
 Volume `corn-outputs`, con su ruta en Modal, su configuración completa, sus métricas publicadas
-y el fichero desde el que cada cifra se recomputa. **Las ocho verifican de forma exacta.**
+y el fichero desde el que cada cifra se recomputa. **Las diez verifican de forma exacta.**
 
 Dos de ellas —`efficientnet_b0/20260910_170120` y `shufflenet_v2_x1_0/20260910_184521`— no
 guardaron `predictions.csv` propio; sus cifras se verifican desde la columna correspondiente de

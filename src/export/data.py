@@ -79,6 +79,7 @@ def build_test_loader(
     image_size: tuple[int, int],
     batch_size: int = 32,
     num_workers: int = 0,
+    preprocessing_contract: dict | None = None,
 ) -> tuple[DataLoader, pd.Series]:
     """
     Construye el DataLoader del split de test y la serie de entornos alineada.
@@ -94,16 +95,21 @@ def build_test_loader(
     @param {int} num_workers Workers del DataLoader.
     @returns {tuple[DataLoader, pd.Series]} Loader y entornos por imagen.
     """
-    factory = CornTransformFactory(config_path=str(config_path), target_size=image_size)
+    factory = (
+        CornTransformFactory.from_contract(
+            preprocessing_contract,
+            config_path=str(config_path),
+        )
+        if preprocessing_contract is not None
+        else CornTransformFactory(config_path=str(config_path), target_size=image_size)
+    )
     dataset = CornDataset(
         csv_path=str(test_csv),
         config_path=str(config_path),
         transform=factory.get_pipeline("test"),
         class_to_idx=class_to_idx,
     )
-    loader = DataLoader(
-        dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
-    )
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     # Se lee del DataFrame del propio dataset, no del CSV: si algún día CornDataset
     # filtra filas, la serie sigue alineada con lo que entrega el loader.
     frame = dataset.data_frame

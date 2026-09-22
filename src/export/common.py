@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
@@ -10,8 +9,9 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
+from src.data.preparation import atomic_write_json, sha256_file
 from src.export.parity import ParityResult, validate_onnx_parity, validate_tflite_parity
-from src.models import build_model
+from src.training.runs import load_validated_run, read_run_contract
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,10 @@ _PARITY_DEFAULTS = {
 
 class ExportDependencyError(RuntimeError):
     """Falta una dependencia opcional (onnxruntime / litert-torch) para exportar o validar."""
+
+
+class ExportIntegrityError(RuntimeError):
+    """El artefacto exportado o su metadata no coincide con el run contractual."""
 
 
 @dataclass
@@ -97,20 +101,14 @@ def parse_export_formats(raw: str | list[str] | None) -> list[str]:
     return list(seen)
 
 
-def _load_state_dict(checkpoint_path: Path, device: torch.device) -> dict[str, torch.Tensor]:
-    checkpoint = torch.load(checkpoint_path, map_location=device)
-    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
-        checkpoint = checkpoint["model_state_dict"]
-    if not isinstance(checkpoint, dict):
-        raise SystemExit(f"Checkpoint invalido: {checkpoint_path}")
-    return checkpoint
-
-
 def load_checkpoint_for_export(
     checkpoint_path: Path,
     model_name: str,
     class_to_idx: dict[str, int],
     device: torch.device,
+    *,
+    image_size: tuple[int, int] | None = None,
+    splits_dir: Path | None = None,
 ) -> torch.nn.Module:
     """
     Reconstruye un modelo del registry y carga los pesos de un checkpoint, en eval().
@@ -121,12 +119,16 @@ def load_checkpoint_for_export(
     @param {torch.device} device Dispositivo destino del modelo.
     @returns {torch.nn.Module} Modelo cargado, en modo eval().
     """
-    if not checkpoint_path.exists():
-        raise SystemExit(f"No existe el checkpoint: {checkpoint_path}")
-    model = build_model(model_name, num_classes=len(class_to_idx), pretrained=False).to(device)
-    model.load_state_dict(_load_state_dict(checkpoint_path, device))
-    model.eval()
-    return model
+    loaded = load_validated_run(
+        checkpoint_path,
+        expected_model=model_name,
+        expected_num_classes=len(class_to_idx),
+        expected_class_to_idx=class_to_idx,
+        expected_input_size=image_size,
+        splits_dir=splits_dir,
+        device=device,
+    )
+    return loaded.model
 
 
 def resolve_export_inputs(
@@ -141,16 +143,14 @@ def resolve_export_inputs(
     @returns {tuple} class_to_idx, idx_to_class, image_size (h, w).
     @throws {SystemExit} Si no existe summary.json en run_dir.
     """
-    summary_path = run_dir / "summary.json"
-    if not summary_path.exists():
-        raise SystemExit(
-            f"No existe {summary_path}. La exportacion requiere un run completo "
-            f"con summary.json (modelo '{model_name}')."
+    summary = read_run_contract(run_dir)
+    if summary["model"] != model_name:
+        raise ValueError(
+            f"El run {summary['run_id']} es de {summary['model']!r}, no de {model_name!r}."
         )
-    summary = json.loads(summary_path.read_text())
-    class_to_idx = {str(name): int(idx) for name, idx in summary["class_to_idx"].items()}
+    class_to_idx = dict(summary["class_to_idx"])
     idx_to_class = {idx: name for name, idx in class_to_idx.items()}
-    image_size = summary.get("image_size")
+    image_size = summary["architecture"]["input_size"]
     if not (isinstance(image_size, list) and len(image_size) == 2):
         raise SystemExit(f"summary.json en {run_dir} no tiene 'image_size' valido.")
     return class_to_idx, idx_to_class, (int(image_size[0]), int(image_size[1]))
@@ -175,9 +175,9 @@ def _library_versions(formats: list[str]) -> dict[str, str]:
         try:
             import litert_torch
 
-            versions["litert_torch"] = getattr(
-                litert_torch, "__version__", None
-            ) or getattr(litert_torch.version, "__version__", "desconocida")
+            versions["litert_torch"] = getattr(litert_torch, "__version__", None) or getattr(
+                litert_torch.version, "__version__", "desconocida"
+            )
         except (ImportError, AttributeError):
             pass
         try:
@@ -311,8 +311,19 @@ def write_labels_json(
         "image_size": list(image_size),
         "labels": labels,
     }
+    summary_path = run_dir / "summary.json"
+    if summary_path.is_file():
+        summary = read_run_contract(run_dir)
+        payload.update(
+            {
+                "run_id": summary["run_id"],
+                "checkpoint_sha256": summary["checkpoint_sha256"],
+                "class_to_idx": summary["class_to_idx"],
+                "preprocessing": summary["preprocessing"],
+            }
+        )
     output_path = export_dir / "labels.json"
-    output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
+    atomic_write_json(output_path, payload)
     return output_path
 
 
@@ -395,20 +406,6 @@ def export_model(
     )
 
 
-def _sha256_file(path: Path) -> str:
-    """
-    Calcula el digest SHA-256 de un archivo, leyendo en bloques para no cargarlo entero en memoria.
-
-    @param {Path} path Archivo a hashear.
-    @returns {str} Digest hexadecimal.
-    """
-    digest = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
     """
     Persiste <run_dir>/export/export_summary.json (o ..._<quant>.json si se cuantizó).
@@ -423,6 +420,7 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
     export_dir.mkdir(parents=True, exist_ok=True)
 
     payload = {
+        "schema_version": 1,
         "run_id": run_dir.name,
         "model": report.model_name,
         "exported_at": report.exported_at,
@@ -431,12 +429,10 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
         "formats": [
             {
                 "format": f.format,
-                "output_path": (
-                    str(f.output_path.relative_to(run_dir)) if f.output_path else None
-                ),
+                "output_path": (str(f.output_path.relative_to(run_dir)) if f.output_path else None),
                 "succeeded": f.succeeded,
                 "error": f.error,
-                "sha256": _sha256_file(f.output_path) if f.output_path else None,
+                "sha256": sha256_file(f.output_path) if f.output_path else None,
                 "parity": (
                     None
                     if f.parity is None
@@ -461,11 +457,78 @@ def write_export_summary(run_dir: Path, report: ExportReport) -> Path:
             for f in report.formats
         ],
     }
+    training_summary_path = run_dir / "summary.json"
+    if training_summary_path.is_file():
+        training_summary = read_run_contract(run_dir)
+        payload.update(
+            {
+                "run_id": training_summary["run_id"],
+                "checkpoint_sha256": training_summary["checkpoint_sha256"],
+                "class_to_idx": training_summary["class_to_idx"],
+                "preprocessing": training_summary["preprocessing"],
+            }
+        )
     name = (
         "export_summary.json"
         if report.quantize is None
         else f"export_summary_{report.quantize}.json"
     )
     summary_path = export_dir / name
-    summary_path.write_text(json.dumps(payload, indent=2))
+    atomic_write_json(summary_path, payload)
     return summary_path
+
+
+def validate_export_artifact(
+    run_dir: Path,
+    model_path: Path,
+    format_name: str,
+    quantize: str | None,
+) -> dict:
+    """Rechaza un export modificado o desvinculado del contrato antes de inferencia."""
+    name = "export_summary.json" if quantize is None else f"export_summary_{quantize}.json"
+    metadata_path = run_dir / "export" / name
+    if not metadata_path.is_file():
+        raise ExportIntegrityError(f"Falta metadata contractual del export: {metadata_path}")
+    try:
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ExportIntegrityError(
+            f"Metadata de export inválida en {metadata_path}: {error}"
+        ) from error
+    if payload.get("schema_version") != 1:
+        raise ExportIntegrityError(
+            f"Esquema de export incompatible en {metadata_path}: {payload.get('schema_version')!r}."
+        )
+    run = read_run_contract(run_dir)
+    for metadata_field in ("run_id", "checkpoint_sha256", "class_to_idx", "preprocessing"):
+        if payload.get(metadata_field) != run[metadata_field]:
+            raise ExportIntegrityError(
+                f"Metadata de export incompatible en {metadata_field}: "
+                f"esperado {run[metadata_field]!r}, "
+                f"encontrado {payload.get(metadata_field)!r}."
+            )
+    entry = next(
+        (item for item in payload.get("formats", []) if item.get("format") == format_name),
+        None,
+    )
+    if entry is None or not entry.get("succeeded"):
+        raise ExportIntegrityError(f"No hay export exitoso registrado para {format_name}.")
+    output_path = entry.get("output_path")
+    if not isinstance(output_path, str) or Path(output_path).is_absolute():
+        raise ExportIntegrityError(f"Ruta exportada insegura en {metadata_path}: {output_path!r}.")
+    expected_path = run_dir / output_path
+    if run_dir.resolve() not in expected_path.resolve().parents:
+        raise ExportIntegrityError(f"La ruta exportada escapa del run: {output_path!r}.")
+    if expected_path.resolve() != model_path.resolve():
+        raise ExportIntegrityError(
+            f"Ruta exportada distinta: esperada {expected_path}, solicitada {model_path}."
+        )
+    if not model_path.is_file():
+        raise ExportIntegrityError(f"No existe el artefacto exportado: {model_path}")
+    actual_hash = sha256_file(model_path)
+    if actual_hash != entry.get("sha256"):
+        raise ExportIntegrityError(
+            f"SHA-256 del export no coincide para {model_path}: "
+            f"esperado {entry.get('sha256')}, actual {actual_hash}."
+        )
+    return payload

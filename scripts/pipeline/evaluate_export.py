@@ -21,11 +21,13 @@ from src.export.common import (
     parse_export_formats,
     parse_quantize,
     resolve_export_inputs,
+    validate_export_artifact,
 )
 from src.export.data import build_test_loader, resolve_test_csv
 from src.export.evaluate import evaluate_exported_model, write_evaluation
 from src.models import list_models
 from src.training.common import resolve_run_dir, select_device
+from src.training.runs import read_run_contract, validate_run_contract
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -89,20 +91,36 @@ def _evaluate_one(args: argparse.Namespace, model_name: str, output_dir: Path) -
     quantize = parse_quantize(args.quantize)
 
     run_dir = resolve_run_dir(output_dir, model_name, args.run)
-    class_to_idx, idx_to_class, image_size = resolve_export_inputs(
-        run_dir, model_name, config_path
-    )
+    class_to_idx, idx_to_class, image_size = resolve_export_inputs(run_dir, model_name, config_path)
+    run_contract = read_run_contract(run_dir)
     device = select_device()
 
     test_csv = resolve_test_csv(run_dir, args.splits_dir)
+    validate_run_contract(
+        run_dir,
+        expected_model=model_name,
+        expected_input_size=image_size,
+        expected_class_to_idx=class_to_idx,
+        splits_dir=test_csv.parent,
+    )
     test_loader, environments = build_test_loader(
-        test_csv, config_path, class_to_idx, image_size, args.batch_size
+        test_csv,
+        config_path,
+        class_to_idx,
+        image_size,
+        args.batch_size,
+        preprocessing_contract=run_contract["preprocessing"],
     )
 
     torch_model = None
     if not args.no_torch_baseline:
         torch_model = load_checkpoint_for_export(
-            run_dir / "best.pth", model_name, class_to_idx, device
+            run_dir / "best.pth",
+            model_name,
+            class_to_idx,
+            device,
+            image_size=image_size,
+            splits_dir=test_csv.parent,
         )
 
     print(f"\nModelo: {model_name}  (cuantizacion: {quantize or 'none'})")
@@ -115,6 +133,8 @@ def _evaluate_one(args: argparse.Namespace, model_name: str, output_dir: Path) -
             print(f"  [FALTA] {format_name}: no existe {model_path}")
             failed = True
             continue
+
+        validate_export_artifact(run_dir, model_path, format_name, quantize)
 
         evaluation, frame = evaluate_exported_model(
             model_path,

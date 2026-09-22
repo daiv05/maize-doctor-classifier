@@ -1,8 +1,10 @@
 # Entrenamiento de Producción (Pipeline Principal)
 
-Se entrenaron tres arquitecturas sobre el corpus completo del proyecto (**33,433 imágenes** repartidas en las 9 clases del cultivo de maíz). **`EfficientNet-Lite0` es la arquitectura desplegada**: es la que se exporta a TFLite y la que ejecuta la aplicación móvil. `EfficientNet-B0` y `ShuffleNet-V2-x1.0` se entrenan como comparación y como miembros del ensamble.
+Se entrenaron tres arquitecturas sobre el corpus completo del proyecto. La materialización vigente de `seed_42` contiene **33,429 imágenes** repartidas en las 9 clases del cultivo de maíz. **`EfficientNet-Lite0` es la arquitectura desplegada**: es la que se exporta a TFLite y la que ejecuta la aplicación móvil. `EfficientNet-B0` y `ShuffleNet-V2-x1.0` se entrenan como comparación y como miembros del ensamble.
 
 El objetivo de esta fase es converger a los checkpoints definitivos de alto rendimiento (`best.pth`) que alimentarán el **Ensamble Multimodelo**, la **Auditoría de Equidad (Fairness)** y la **Exportación a Dispositivos Móviles (TFLite/Edge)**.
+
+Cada entrenamiento nuevo genera además un `summary.json` v1 y hashes verificables del split, la configuración y el checkpoint. El formato, la carga segura y la migración de runs históricos se describen en [Contratos versionados de runs y artefactos](/es/pipeline/contratos-runs).
 
 ---
 
@@ -15,10 +17,12 @@ A diferencia de los baselines (que operaron sobre un subconjunto capado a 10,020
 
 | Partición | Proporción | Muestras | Propósito |
 |---|:---:|:---:|---|
-| **Entrenamiento (`train.csv`)** | 70.0 % | **23,403** | Ajuste de gradientes mediante AdamW |
-| **Validación (`val.csv`)** | 15.0 % | **5,015** | Monitoreo por época, scheduler y early stopping |
+| **Entrenamiento (`train.csv`)** | 70.0 % | **23,400** | Ajuste de gradientes mediante AdamW |
+| **Validación (`val.csv`)** | 15.0 % | **5,014** | Monitoreo por época, scheduler y early stopping |
 | **Prueba (`test.csv`)** | 15.0 % | **5,015** | Evaluación final retenida (no vista en entrenamiento) |
-| **Total Corpus** | **100 %** | **33,433** | 9 clases patológicas y nutricionales |
+| **Total Corpus** | **100 %** | **33,429** | 9 clases patológicas y nutricionales |
+
+Este split es estratificado por `label + environment`; las fuentes se conservan como metadato y pueden aparecer a ambos lados de la partición. Los resultados históricos de producción que aparecen más abajo corresponden a una materialización anterior de 33,433 imágenes y se mantienen para documentar el artefacto que hoy está desplegado. El primer reentrenamiento sobre el split corregido se registra por separado como [candidato `20260921_204608`](/es/resultados/run-20260921-efficientnet-lite0).
 
 ---
 

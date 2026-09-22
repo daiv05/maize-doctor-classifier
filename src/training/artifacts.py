@@ -14,6 +14,7 @@ import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
 from src.data.identity import align_manifest_to_sample_ids, dataset_manifest, sample_ids_from
+from src.data.preparation import atomic_write_json
 from src.data.provenance import provenance_from_path
 from src.training.evaluation import (
     compute_calibration_metrics,
@@ -153,4 +154,11 @@ def write_summary(run_dir: Path, payload: dict) -> None:
     @param {Path} run_dir Directorio del run.
     @param {dict} payload Configuracion y metricas del run.
     """
-    (run_dir / "summary.json").write_text(json.dumps(payload, indent=2, default=str))
+    if payload.get("schema_version") is not None:
+        from src.training.runs import write_run_contract
+
+        write_run_contract(run_dir, payload)
+    else:
+        # Compatibilidad para utilidades/tests que escriben JSON auxiliares; los nuevos
+        # runs pasan siempre por write_run_contract y su esquema estricto.
+        atomic_write_json(run_dir / "summary.json", payload)

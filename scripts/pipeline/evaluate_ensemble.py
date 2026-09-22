@@ -1,17 +1,17 @@
 """Evaluación y Comparativa de Ensamble por Soft Voting (Criterio 2 - Rúbrica Etapa 2).
 
-Evalúa las arquitecturas canónicas de forma individual y conjunta sobre el split de prueba (test.csv)
-para calcular el techo de rendimiento teórico del ensamble frente a los modelos individuales.
+Evalúa las arquitecturas canónicas de forma individual y conjunta sobre el split de
+prueba para calcular el techo de rendimiento del ensamble frente a los modelos individuales.
 
 Uso:
     python scripts/pipeline/evaluate_ensemble.py
-    python scripts/pipeline/evaluate_ensemble.py --models efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
+    python scripts/pipeline/evaluate_ensemble.py --models efficientnet_b0 \
+        shufflenet_v2_x1_0 efficientnet_lite0
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import sys
 from pathlib import Path
@@ -22,17 +22,29 @@ import numpy as np
 import pandas as pd
 import torch
 import yaml
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from torch.utils.data import DataLoader
 
-from src.config import PROJECT_ROOT, get_output_root, set_global_seed
 from src.analysis.predictions import write_per_image_predictions
+from src.config import PROJECT_ROOT, get_output_root, set_global_seed
 from src.data.dataset import CornDataset
 from src.data.identity import align_manifest_to_sample_ids, unpack_batch
-from src.data.transforms import CornTransformFactory
-from src.models import build_model
+from src.data.preparation import atomic_write_json
 from src.models.ensemble import SoftVotingEnsemble
 from src.training.common import select_device
+from src.training.runs import (
+    RunContractError,
+    ensemble_member_entry,
+    load_validated_run,
+    resolve_checkpoint,
+    validate_ensemble_runs,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,6 +64,13 @@ def _parse_args() -> argparse.Namespace:
         nargs="+",
         default=DEFAULT_CANONICAL_MODELS,
         help="Modelos a incluir en el ensamble.",
+    )
+    parser.add_argument(
+        "--ensemble-policy",
+        choices=["normal", "cross_validation", "loso"],
+        default="normal",
+        dest="ensemble_policy",
+        help="Política contractual de splits entre miembros.",
     )
     parser.add_argument(
         "--checkpoints",
@@ -96,44 +115,17 @@ def _parse_args() -> argparse.Namespace:
         default=8,
         dest="num_workers",
         help="Procesos de carga del DataLoader. La decodificacion JPEG es el cuello "
-             "medido del entrenamiento; 0 la deja en el proceso principal.",
+        "medido del entrenamiento; 0 la deja en el proceso principal.",
     )
     return parser.parse_args()
 
 
 def _find_checkpoint(model_name: str, output_root: Path) -> Path | None:
-    """Busca el checkpoint más reciente en outputs/main/ o outputs/baselines/."""
-    for pipeline_dir in ["main", "baselines"]:
-        parent = output_root / pipeline_dir / model_name
-        if not parent.exists():
-            continue
-        latest_json = parent / "latest.json"
-        if latest_json.exists():
-            try:
-                with open(latest_json, "r", encoding="utf-8") as f:
-                    meta = json.load(f)
-                run_id = meta.get("run_id") or meta.get("run")
-                if run_id:
-                    for name in ["best.pth", "best.pt"]:
-                        p = parent / run_id / name
-                        if p.exists():
-                            return p
-            except Exception:
-                pass
-
-        for name in ["best.pth", "best.pt"]:
-            for cand in [
-                parent / "latest" / "checkpoints" / name,
-                parent / "latest" / name,
-                parent / name,
-            ]:
-                if cand.exists():
-                    return cand
-
-        pts = list(parent.rglob("best.pth")) + list(parent.rglob("best.pt"))
-        if pts:
-            return sorted(pts, key=lambda p: p.stat().st_mtime, reverse=True)[0]
-    return None
+    """Resuelve exclusivamente mediante ``latest.json``; nunca por mtime."""
+    try:
+        return resolve_checkpoint(model_name, output_root)
+    except RunContractError:
+        return None
 
 
 def evaluate_predictions(
@@ -207,7 +199,9 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not splits_dir.exists():
-        logger.error("El directorio de splits no existe: %s\nGenera los splits primero.", splits_dir)
+        logger.error(
+            "El directorio de splits no existe: %s\nGenera los splits primero.", splits_dir
+        )
         sys.exit(1)
 
     with open(config_path, "r", encoding="utf-8") as f:
@@ -239,44 +233,32 @@ def main() -> None:
                 sys.exit(1)
             checkpoint_paths.append(found)
 
-    # 2. Validar consistencia de class_to_idx entre miembros del ensamble
-    reference_class_to_idx: dict[str, int] | None = None
-    for name, ckpt in zip(model_names, checkpoint_paths):
-        summary_path = ckpt.parent / "summary.json"
-        if summary_path.exists():
-            with open(summary_path, "r", encoding="utf-8") as f:
-                summary = json.load(f)
-            if "class_to_idx" in summary:
-                member_mapping = {str(k): int(v) for k, v in summary["class_to_idx"].items()}
-                if reference_class_to_idx is None:
-                    reference_class_to_idx = member_mapping
-                    logger.info(
-                        "Mapeo de clases obtenido de summary.json de '%s': %s",
-                        name, list(member_mapping.keys()),
-                    )
-                elif member_mapping != reference_class_to_idx:
-                    logger.error(
-                        "Inconsistencia en class_to_idx entre miembros del ensamble.\n"
-                        "  Referencia: %s\n  %s tiene: %s",
-                        reference_class_to_idx, name, member_mapping,
-                    )
-                    sys.exit(1)
-        else:
-            logger.warning("No se encontró summary.json para '%s' en %s", name, ckpt.parent)
+    # 2. Validar todos los contratos y hashes antes de construir el primer modelo del ensemble.
+    loaded_runs = [
+        load_validated_run(
+            checkpoint,
+            expected_model=name,
+            splits_dir=splits_dir if args.ensemble_policy == "normal" else None,
+            device=device,
+            config_path=str(config_path),
+        )
+        for name, checkpoint in zip(model_names, checkpoint_paths)
+    ]
+    validate_ensemble_runs(
+        loaded_runs,
+        policy=args.ensemble_policy,
+        shared_input=True,
+    )
+    reference_class_to_idx = loaded_runs[0].class_to_idx
 
     # 3. Preparar Dataset de Test
-    factory = CornTransformFactory(config_path=str(config_path), target_size=(224, 224), clahe=False)
+    factory = loaded_runs[0].factory
     test_dataset = CornDataset(
         csv_path=str(splits_dir / "test.csv"),
         config_path=str(config_path),
         transform=factory.get_pipeline("test"),
-        **(dict(class_to_idx=reference_class_to_idx) if reference_class_to_idx else {}),
+        class_to_idx=reference_class_to_idx,
     )
-    if reference_class_to_idx is None:
-        reference_class_to_idx = test_dataset.class_to_idx
-        logger.warning(
-            "No se encontró summary.json en ningún miembro; usando mapeo del dataset de test."
-        )
     class_to_idx = reference_class_to_idx
     idx_to_class = {v: k for k, v in class_to_idx.items()}
     class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
@@ -290,22 +272,11 @@ def main() -> None:
     )
 
     # 3. Cargar Modelos Individuales y Construir Ensamble
-    loaded_models: list[torch.nn.Module] = []
-    for name, ckpt in zip(model_names, checkpoint_paths):
-        model = build_model(name, num_classes=len(class_to_idx), pretrained=False)
-        checkpoint_data = torch.load(ckpt, map_location=device)
-        state_dict = (
-            checkpoint_data["model_state_dict"]
-            if isinstance(checkpoint_data, dict) and "model_state_dict" in checkpoint_data
-            else checkpoint_data
-        )
-        model.load_state_dict(state_dict, strict=True)
-        logger.info("Cargado checkpoint para %s desde %s", name, ckpt)
-        model.eval()
-        model.to(device)
-        loaded_models.append(model)
+    loaded_models = [run.model for run in loaded_runs]
 
-    ensemble = SoftVotingEnsemble(models=loaded_models, weights=args.weights, model_names=model_names)
+    ensemble = SoftVotingEnsemble(
+        models=loaded_models, weights=args.weights, model_names=model_names
+    )
 
     # 4. Evaluación Individual y del Ensamble
     logger.info("=== EVALUANDO MODELOS INDIVIDUALES Y ENSAMBLE SOBRE TEST SET ===")
@@ -340,7 +311,9 @@ def main() -> None:
     # 5. Métricas Individuales
     comparison_table: list[dict[str, Any]] = []
     for model_name in model_names:
-        m_metrics = evaluate_predictions(all_targets, individual_predictions[model_name], class_names)
+        m_metrics = evaluate_predictions(
+            all_targets, individual_predictions[model_name], class_names
+        )
         results_per_model[model_name] = m_metrics
         comparison_table.append(
             {
@@ -375,9 +348,7 @@ def main() -> None:
     # 7. Guardar Artefactos
     df_comparison = pd.DataFrame(comparison_table)
     df_comparison.to_csv(output_dir / "ensemble_comparison.csv", index=False)
-    inference_manifest = align_manifest_to_sample_ids(
-        test_dataset.data_frame, inference_sample_ids
-    )
+    inference_manifest = align_manifest_to_sample_ids(test_dataset.data_frame, inference_sample_ids)
     destino_predicciones = write_per_image_predictions(
         destination=output_dir / "ensemble_predictions.csv",
         sample_ids=inference_sample_ids,
@@ -392,17 +363,25 @@ def main() -> None:
         predicciones[f"pred_{model_name}"] = individual_predictions[model_name]
     predicciones.to_csv(destino_predicciones, index=False)
 
+    normalized_weights = [float(weight) for weight in ensemble.weights.cpu().tolist()]
     summary = {
+        "schema_version": 1,
+        "policy": args.ensemble_policy,
         "models_included": model_names,
-        "weights": [float(w) for w in ensemble.weights.cpu().tolist()],
+        "weights": normalized_weights,
+        "class_to_idx": class_to_idx,
+        "preprocessing": loaded_runs[0].summary["preprocessing"],
+        "members": [
+            ensemble_member_entry(run, weight)
+            for run, weight in zip(loaded_runs, normalized_weights)
+        ],
         "metrics_per_model": results_per_model,
         "best_individual_macro_f1": round(best_single_f1, 4),
         "ensemble_macro_f1": round(ens_metrics["macro_f1"], 4),
         "ensemble_gain_delta": round(delta_vs_best, 4),
         "total_test_samples": len(all_targets),
     }
-    with open(output_dir / "ensemble_summary.json", "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2)
+    atomic_write_json(output_dir / "ensemble_summary.json", summary)
 
     # Guardar matriz de confusión
     cm_path = output_dir / "confusion_matrix_ensemble.png"
@@ -410,7 +389,11 @@ def main() -> None:
 
     logger.info("=== RESULTADOS DEL ENSAMBLE ===")
     logger.info("Mejor Modelo Individual Macro F1: %.4f", best_single_f1)
-    logger.info("Soft Voting Ensemble Macro F1:    %.4f (Delta: %+.4f)", ens_metrics["macro_f1"], delta_vs_best)
+    logger.info(
+        "Soft Voting Ensemble Macro F1:    %.4f (Delta: %+.4f)",
+        ens_metrics["macro_f1"],
+        delta_vs_best,
+    )
     logger.info("Accuracy del Ensamble:            %.4f", ens_metrics["accuracy"])
     logger.info("Artefactos guardados en: %s", output_dir)
 
