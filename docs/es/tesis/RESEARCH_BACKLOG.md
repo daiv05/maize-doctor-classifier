@@ -2,9 +2,9 @@
 
 | Prioridad | Línea | Criterio de cierre | Estado |
 |---:|---|---|---|
-| 1 | Optuna EfficientNet-Lite0, 60 trials | estudio persistido, trials exportados, test sin uso | PENDIENTE |
-| 2 | Entrenamiento formal tuned | run contractual + checkpoint/hash + test único | PENDIENTE |
-| 3 | Multi-seed | seeds predeclaradas, media/SD y runs individuales | PENDIENTE |
+| 1 | Optuna EfficientNet-Lite0, 25 intentos (enmienda de 60) | SQLite y trials auditados; test único después de selection lock | COMPLETADO; [resultado y límites](./HPO_BASELINE_COMPARISON.md) |
+| 2 | Multi-seed baseline frente a HPO trial 0 | 5 pares predeclarados, validation-only, media/SD y runs individuales | IMPLEMENTADO; 0/10; reanudación prevista 2026-10-01; [protocolo](../experimentos/multiseed.md) |
+| 3 | Entrenamiento formal posterior | decisión sustentada + run contractual + protocolo nuevo | PENDIENTE; no autorizado en esta fase |
 | 4 | Auditoría perceptual | candidatos entre splits revisados; tasa/decisión documentada | PENDIENTE |
 | 5 | CV estratificada vigente | K y protocolo fijados; resultados por pliegue | PENDIENTE |
 | 6 | Source-grouped final | holdout y/o CV agrupada del modelo elegido | PENDIENTE |

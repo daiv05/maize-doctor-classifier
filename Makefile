@@ -217,6 +217,20 @@ tune:
 
 tune-main: tune
 
+# Protocolo formal, mismo motor Optuna; nunca usa los estudios históricos de tuning/.
+.PHONY: hpo-main modal-hpo-preflight modal-hpo-smoke modal-hpo
+hpo-main:
+	$(PYTHON) scripts/pipeline/tune.py --formal-hpo $(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),)
+
+modal-hpo-preflight:
+	$(MODAL) run scripts/modal/train.py::tune_main --formal-hpo --preflight-only
+
+modal-hpo-smoke:
+	$(MODAL) run scripts/modal/train.py::tune_main --formal-hpo --smoke
+
+modal-hpo:
+	$(MODAL) run --detach scripts/modal/train.py::tune_main --formal-hpo --continue-study
+
 tune-dashboard:
 	$(PYTHON) -c "from optuna_dashboard._cli import main; main()" sqlite:///outputs/tuning/optuna_study.db --port 8080
 

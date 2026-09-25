@@ -27,6 +27,7 @@ from src.training.artifacts import (
     write_predictions_csv,
     write_summary,
     write_test_outputs,
+    write_validation_outputs,
 )
 from src.training.common import (
     build_run_dir,
@@ -100,6 +101,11 @@ def _parse_args() -> argparse.Namespace:
         help="Aplica CLAHE como preprocesamiento en los cuatro pipelines.",
     )
     parser.add_argument("--no-pretrained", action="store_true", dest="no_pretrained")
+    parser.add_argument(
+        "--skip-test",
+        action="store_true",
+        help="Solo train/validation; no construye dataset/loader de test. Incompatible con export.",
+    )
     parser.add_argument("--num-workers", type=int, default=4, dest="num_workers")
     parser.add_argument(
         "--max-per-class",
@@ -148,6 +154,8 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     """Entrena cada modelo solicitado y persiste sus artefactos de run."""
     args = _parse_args()
+    if args.skip_test and args.export_formats:
+        raise SystemExit("--skip-test no permite --export (la paridad requiere test).")
     if args.epochs < 1:
         raise SystemExit("--epochs debe ser mayor o igual a 1.")
 
@@ -196,11 +204,15 @@ def main() -> None:
             transform=factory.get_pipeline("val"),
             class_to_idx=class_to_idx,
         )
-        test_dataset = CornDataset(
-            csv_path=str(splits_dir / "test.csv"),
-            config_path=str(config_path),
-            transform=factory.get_pipeline("test"),
-            class_to_idx=class_to_idx,
+        test_dataset = (
+            None
+            if args.skip_test
+            else CornDataset(
+                csv_path=str(splits_dir / "test.csv"),
+                config_path=str(config_path),
+                transform=factory.get_pipeline("test"),
+                class_to_idx=class_to_idx,
+            )
         )
 
         pin_memory = device.type == "cuda"
@@ -219,12 +231,16 @@ def main() -> None:
             num_workers=args.num_workers,
             pin_memory=pin_memory,
         )
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.num_workers,
-            pin_memory=pin_memory,
+        test_loader = (
+            None
+            if args.skip_test
+            else DataLoader(
+                test_dataset,
+                batch_size=args.batch_size,
+                shuffle=False,
+                num_workers=args.num_workers,
+                pin_memory=pin_memory,
+            )
         )
 
         run_id = generate_run_id()
@@ -290,14 +306,22 @@ def main() -> None:
         if best_path.exists():
             model.load_state_dict(torch.load(best_path, map_location=device))
 
-        test_metrics, labels, predictions, probs = run_epoch(
-            model, test_loader, criterion, device, desc=f"{model_name} test"
-        )
-        write_test_outputs(run_dir, idx_to_class, labels, predictions)
-        predictions_df = write_predictions_csv(
-            run_dir, test_dataset, idx_to_class, labels, predictions, probs
-        )
-        write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
+        validation_metrics = None
+        test_metrics = None
+        if args.skip_test:
+            validation_metrics, labels, predictions, probs = run_epoch(
+                model, val_loader, criterion, device, desc=f"{model_name} best validation"
+            )
+            write_validation_outputs(run_dir, val_dataset, idx_to_class, labels, predictions, probs)
+        else:
+            test_metrics, labels, predictions, probs = run_epoch(
+                model, test_loader, criterion, device, desc=f"{model_name} test"
+            )
+            write_test_outputs(run_dir, idx_to_class, labels, predictions)
+            predictions_df = write_predictions_csv(
+                run_dir, test_dataset, idx_to_class, labels, predictions, probs
+            )
+            write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
         historical_summary = {
             "pipeline": "main",
             "model": model_name,
@@ -350,6 +374,12 @@ def main() -> None:
             },
             "test": test_metrics,
         }
+        if args.skip_test:
+            historical_summary.pop("test")
+            historical_summary["test_used"] = False
+            historical_summary["evaluation_mode"] = "validation_only"
+            metrics.pop("test")
+            metrics["best_validation"].update(validation_metrics)
         contract = build_run_contract(
             run_dir=run_dir,
             model_name=model_name,
@@ -365,7 +395,8 @@ def main() -> None:
         )
         write_summary(run_dir, contract)
         update_latest_pointer(output_dir, model_name, run_id)
-        logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
+        if test_metrics is not None:
+            logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
 
         if args.export_formats:
             from src.export.common import (

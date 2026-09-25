@@ -94,3 +94,59 @@
 - **Decisión:** 60 trials de Optuna, objetivo Macro-F1 de validación en `seed_42`, test no usado.
 - **Impacto:** el resultado de test se reserva para entrenamiento formal.
 - **Evidencia:** `docs/es/experimentos/hpo.md`.
+
+## DEC-012 — Protocolo ejecutable HPO Lite0, 60 intentos
+
+- **Fecha:** 2026-09-22, implementación previa a los resultados.
+- **Problema:** el baseline actual es sólido, pero falta optimización sistemática sobre los splits vigentes.
+- **Alternativas:** ajuste manual, grid search y Optuna.
+- **Decisión:** reutilizar Optuna TPE, 60 intentos totales, validation Macro-F1 como único objetivo, semilla 42; seis dimensiones y AdamW/cosine fijos.
+- **Razón:** búsqueda reproducible sobre variables continuas y discretas, con SQLite y estado RNG del sampler para reanudar.
+- **Pruning:** MedianPruner, startup=5, warmup=8, interval=1; patience=8, máximo 60 épocas.
+- **Test:** la nueva solicitud precisa DEC-011: se evalúa una vez el checkpoint exacto del HPO winner después del selection lock. El entrenamiento formal posterior es otro experimento. Ningún trial utiliza test.
+- **Estado:** implementado y en validación técnica; no declara 60 trials completos ni mejora.
+- **Evidencia:** `scripts/pipeline/tune.py`, `src/training/tuning_study.py`, `tests/training/test_hpo_protocol.py`, [protocolo](../experimentos/hpo.md).
+
+## DEC-013 — Enmienda de presupuesto HPO: 60 → 25
+
+- **Fecha:** 2026-09-23, enmienda durante la ejecución.
+- **Alcance:** reducción del número máximo de intentos; se mantienen el objetivo y el espacio de búsqueda.
+- **Decisión:** 25 intentos totales incluyendo COMPLETE, PRUNED y FAIL, conservando IDs y RNG de TPE.
+- **Estado al cambio:** trials 0 y 1 completos; trial 2 interrumpido al detener la app para migrar. Se conserva como FAIL; no se repite su ID ni se presenta como entrenamiento completo.
+- **Alcance:** splits, dataset, transforms, modelo, lógica de entrenamiento y máximo de 60 épocas intactos. El test sigue reservado para el ganador bloqueado al agotar los 25 intentos.
+- **Transparencia:** se habían observado métricas parciales de validation. No presentar el nuevo presupuesto como prefijado desde el inicio. DEC-012 permanece como historial del plan original.
+- **Respaldo:** SQLite, código y preflight originales en `budget_revisions/60-to-25/`; comparación de tablas de trials y RNG antes/después sin cambios.
+- **Evidencia:** [enmienda y hashes](../reproducibilidad/evidencia/hpo_budget_amendment_25.json), [smoke revisado](../reproducibilidad/evidencia/hpo_smoke_complete_25.json), [continuidad entre workspaces](../reproducibilidad/hpo-continuidad.md).
+
+<!-- hpo-lite0-seed42-completed -->
+
+## Cierre de DEC-012/DEC-013 — Resultado experimental (2026-09-24)
+
+Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validation Macro-F1 0.957292225; baseline 0.956086266; delta +0.120596 pp.
+
+[Configuración seleccionada y resultados](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md).
+
+## DEC-014 — Interpretar el HPO sin promoverlo por validación solamente
+
+- **Fecha:** revisión documental del 2026-09-24.
+- **Evidencia:** +0.120596 pp en Macro-F1 de validación, pero −0.487707 pp en Macro-F1 de test frente al baseline vigente.
+- **Criterio de reporte:** conservar trial 0 como ganador contractual por validación; no reordenar candidatos ni reabrir la búsqueda después de observar test.
+- **Límite:** no afirmar superioridad de generalización, significancia estadística ni aptitud de producción. No reemplazar automáticamente el baseline/checkpoint desplegado.
+- **Fases futuras:** entrenamiento formal, multi-seed, CV/LOSO y calibración requieren un protocolo posterior; no se ejecutaron en este cierre.
+- **Trazabilidad:** [comparación y fuentes](./HPO_BASELINE_COMPARISON.md).
+
+## DEC-015 — Comparación pareada multi-seed, exclusivamente validation
+
+- **Fecha:** 2026-09-24. **Rama:** dev-abner2.
+- **Diseño:** baseline 20260921_204608 frente a HPO trial 0,
+  seeds 42/123/2026/3407/7777, diez slots, split seed_42 congelado.
+- **Implementación:** reutiliza train.py/fit; `--skip-test` explícito preserva
+  el flujo general; export bloqueado en ese modo. Sin cambios en CornDataset.
+- **No reutilización histórica:** equivalencia completa no verificable para
+  ambos antecedentes; no mezclar diagnósticos/entornos incompletos.
+- **Recuperación:** saltar completos íntegros; intentos interrumpidos requieren
+  diagnóstico, pues el loop no permite restauración completa por época.
+- **Calendario:** reanudación manual prevista para el 2026-10-01, precedida de
+  verificación de fuentes, manifiestos y resultados existentes. Sin lanzamiento automático.
+- **Estado:** implementación validada localmente; 0/10 runs. No conclusión
+  experimental ni promoción. [Protocolo y comandos](../experimentos/multiseed.md).

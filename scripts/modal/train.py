@@ -311,7 +311,8 @@ def train_main(
         "/outputs": outputs_vol,
     },
     secrets=[modal.Secret.from_name("hf")],
-    timeout=8 * 3600,
+    timeout=24 * 3600,
+    max_containers=1,
 )
 def tune_main(
     models: str = "efficientnet_b0",
@@ -325,6 +326,11 @@ def tune_main(
     splits_dir: str = "",
     num_workers: int = 32,
     study_name_prefix: str = "tune",
+    formal_hpo: bool = False,
+    preflight_only: bool = False,
+    smoke: bool = False,
+    max_new_trials: int = 2,
+    continue_study: bool = False,
 ) -> None:
     """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).
 
@@ -334,6 +340,11 @@ def tune_main(
     """
     dataset_vol.reload()
     outputs_vol.reload()
+    if formal_hpo:
+        models, n_trials, epochs = "efficientnet_lite0", 25, 60
+        baseline_macro_f1 = 0.9560862657056215
+        if pruner != "median":
+            raise ValueError("HPO formal requiere MedianPruner.")
     command = [
         sys.executable,
         "scripts/pipeline/tune.py",
@@ -356,9 +367,29 @@ def tune_main(
         command += ["--timeout", str(timeout)]
     if splits_dir:
         command += ["--splits-dir", splits_dir]
+    if formal_hpo:
+        command += ["--formal-hpo", "--max-new-trials", str(max_new_trials)]
+    if preflight_only:
+        command.append("--preflight-only")
+    if smoke:
+        command.append("--smoke")
 
-    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
-    outputs_vol.commit()
+    try:
+        run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
+    finally:
+        # También conserva FAIL y trazas cuando el subproceso aborta.
+        outputs_vol.commit()
+    if formal_hpo and continue_study and not preflight_only and not smoke:
+        import json
+
+        study_dir = Path("/outputs/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1")
+        summary = json.loads((study_dir / "study_summary.json").read_text())
+        if summary["n_recorded"] < n_trials:
+            call = tune_main.spawn(
+                formal_hpo=True, num_workers=num_workers, splits_dir=splits_dir,
+                max_new_trials=max_new_trials, continue_study=True,
+            )
+            print(f"Continuación secuencial: {call.object_id}", flush=True)
 
 
 @app.function(

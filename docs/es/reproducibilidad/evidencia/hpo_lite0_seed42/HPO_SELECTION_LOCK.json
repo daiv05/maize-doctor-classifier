@@ -1,0 +1,98 @@
+{
+  "best_hyperparameters": {
+    "batch_size": 16,
+    "clahe": false,
+    "class_weights": "none",
+    "epochs": 60,
+    "label_smoothing": 0.075,
+    "learning_rate": 8.468008575248323e-05,
+    "warmup_epochs": 1,
+    "weight_decay": 0.005669849511478858
+  },
+  "best_hyperparameters_sha256": "b79c368bf2105646014732c1fe26ee6e942ace486349630782eb074eb1cf194c",
+  "best_trial": 0,
+  "best_validation_macro_f1": 0.9572922254288656,
+  "direction": "maximize",
+  "n_trials_requested": 25,
+  "objective": "best_validation_macro_f1",
+  "schema_version": 1,
+  "search_space": {
+    "batch_size": {
+      "choices": [
+        16,
+        32,
+        64
+      ],
+      "type": "categorical"
+    },
+    "clahe": {
+      "choices": [
+        false
+      ],
+      "searched": false,
+      "type": "categorical"
+    },
+    "class_weights": {
+      "choices": [
+        "sqrt_inverse",
+        "inverse",
+        "none"
+      ],
+      "type": "categorical"
+    },
+    "dropout": {
+      "fixed": null,
+      "reason": "factory default; run loader does not restore custom dropout"
+    },
+    "label_smoothing": {
+      "choices": [
+        0.0,
+        0.025,
+        0.05,
+        0.075,
+        0.1,
+        0.125,
+        0.15
+      ],
+      "type": "categorical"
+    },
+    "learning_rate": {
+      "high": 0.003,
+      "log": true,
+      "low": 1e-05,
+      "type": "float"
+    },
+    "optimizer": {
+      "fixed": "AdamW"
+    },
+    "scheduler": {
+      "fixed": "cosine"
+    },
+    "warmup_epochs": {
+      "high": 5,
+      "low": 1,
+      "type": "int"
+    },
+    "weight_decay": {
+      "high": 0.01,
+      "log": true,
+      "low": 1e-07,
+      "type": "float"
+    }
+  },
+  "selection_timestamp": "2026-09-24T02:08:49.348749+00:00",
+  "split_hashes": {
+    "manifest.lock.json": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "master_manifest.csv": "64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163",
+    "test.csv": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724",
+    "train.csv": "231048178f3450bf84925f8d19eb5a672669ee9f2658a23fe87d88d6e9949434",
+    "val.csv": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5"
+  },
+  "split_identifier": "seed_42",
+  "study_name": "efficientnet_lite0_seed42_hpo_v1",
+  "test_observed_before_selection": false,
+  "winner_checkpoint": "trials/trial_000/best.pth",
+  "winner_checkpoint_sha256": "ae39a1c4a8b757021ec2c34a856d6fb484bf801a6adc3bfb71860d58e9d81471",
+  "winner_config_sha256": "0e6c7488549a3639ffb1d031202ecb5acae0f4b938a24af69715048efae2173c",
+  "winner_summary_sha256": "b84009ee4b963230fc7f411f82270dda371987c69f50e8788b2a73e7fe9af781"
+}

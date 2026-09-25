@@ -1,0 +1,15 @@
+environment,class,n,accuracy,macro_f1,f1
+lab,__all__,533,0.9643527204502814,0.9364655298370996,
+lab,common_rust,323,,,0.9984496124031008
+lab,gray_leaf_spot,77,,,0.881578947368421
+lab,northern_corn_leaf_blight,133,,,0.929368029739777
+real,__all__,4482,0.9765729585006694,0.9127776726117486,
+real,common_rust,16,,,0.6896551724137931
+real,fall_armyworm,728,,,0.9829584185412407
+real,gray_leaf_spot,212,,,0.9408983451536643
+real,healthy,1311,,,0.9904906808672499
+real,lethal_necrosis,963,,,0.9953198127925117
+real,nitrogen_deficiency,127,,,0.8949416342412452
+real,northern_corn_leaf_blight,892,,,0.9802816901408451
+real,phosphorus_deficiency,140,,,0.9363295880149812
+real,potassium_deficiency,93,,,0.8041237113402062

@@ -54,4 +54,39 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 - Una métrica por ambiente o fuente debe indicar su soporte y las clases evaluables.
 - `0.6026 ± 0.1240` significa **CV agrupada por fuente**, no LOSO ni el holdout source-grouped actual.
 - El resultado agrupando N/P/K responde a otra taxonomía y se reporta separado del Macro-F1 de nueve clases.
-- Los valores futuros del HPO, entrenamiento formal, multi-seed, CV/LOSO final, exportación y dispositivo permanecen `PENDIENTE` hasta añadir sus artefactos aquí.
+- Entrenamiento formal, multi-seed, CV/LOSO final, exportación y dispositivo permanecen `PENDIENTE` hasta añadir sus artefactos aquí. El HPO de 25 intentos queda cerrado en la sección siguiente; no completa esas fases.
+
+<!-- hpo-lite0-seed42-completed -->
+
+## HPO formal Lite0 — 2026-09-24
+
+Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validation Macro-F1 0.957292225; baseline 0.956086266; delta +0.120596 pp.
+
+[Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md). Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.
+
+Resultado final: **8 COMPLETE / 15 PRUNED / 2 FAIL**. Test único: Macro-F1
+0.9431250727951999, accuracy 0.9752741774675973; no supera el Macro-F1 test del
+baseline (0.9480021439111501). [Interpretación y límites](./HPO_BASELINE_COMPARISON.md).
+
+| Evidencia añadida al cierre | SHA-256 | Alcance |
+|---|---|---|
+| [Summary original del baseline](../reproducibilidad/evidencia/hpo_baseline_summary.json) | `20bb0945574913ffa8c736fecbcf25d932e6b87ce3e7a7c59d98439558432346` | Comparación descriptiva de validación/test; no cambia el ganador |
+
+La revisión comprobó concordancia SQLite/CSV, enmienda 60 → 25, código archivado,
+splits inmutables, ganador por validación, hash del checkpoint y los siete archivos
+de test. El marcador final registra una evaluación y su lock previo; no se volvió
+a inferir sobre test durante la revisión/documentación.
+
+## Multi-seed pareado — preparación 2026-09-24
+
+[Protocolo, auditoría, calendario y comandos](../experimentos/multiseed.md).
+Implementación validation-only; seeds 42/123/2026/3407/7777 para baseline y HPO
+trial 0. Estado: **0/10 runs**, sin nuevas métricas experimentales.
+
+Artefactos locales bajo `outputs/multiseed/efficientnet_lite0_baseline_vs_hpo/`:
+`PROTOCOL.json`, `PREFLIGHT.json`, `source_snapshot.zip`, `REPORT_HASHES.json` y
+`MULTISEED_SUMMARY.json`, `MULTISEED_RESULTS.csv`, `MULTISEED_REPORT.md`.
+El reporte explicita pendientes; no importa resultados históricos como nuevos.
+JUnit de 146 pruebas en `outputs/multiseed-checks/tests.xml`.
+La reanudación manual está prevista para el 2026-10-01. No se inició entrenamiento
+ni se ejecutó inferencia del test real durante la preparación.

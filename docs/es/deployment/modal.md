@@ -1,18 +1,18 @@
 # Entrenamiento en la nube con Modal
 
-Entrenar redes convolucionales sobre más de 33,000 imágenes en alta resolución y correr análisis de explicabilidad con miles de perturbaciones no es algo que se deba hacer en una computadora portátil. Intentarlo en una máquina local sin GPU dedicada significaría esperar días enteros por cada experimento, con el riesgo constante de sobrecalentamientos o interrupciones.
-
-La alternativa tradicional en la nube —alquilar una máquina virtual con GPU en AWS o GCP— tiene su propia trampa: hay que configurar controladores de Nvidia, instalar dependencias a mano y, sobre todo, acordarse de apagar la instancia. Un olvido de fin de semana con una GPU potente encendida puede agotar el presupuesto del proyecto sin haber entrenado nada.
-
-Para resolver esto utilizamos **Modal**, una plataforma de cómputo en la nube basada en contenedores bajo demanda.
+El proyecto utiliza Modal para ejecutar entrenamientos y análisis de explicabilidad
+en contenedores con GPU. Los scripts remotos invocan los mismos pipelines que la
+ejecución local; la configuración de la imagen y los volúmenes se comparte en
+`scripts/modal/_common.py`.
 
 ---
 
 ## Cómo encaja en nuestro flujo de trabajo
 
-La gran ventaja de Modal es su modelo de servidor efímero (*serverless*). Escribimos el código de entrenamiento en Python exactamente igual que para local, pero le indicamos a Modal qué recursos de hardware necesita cada función (por ejemplo, una GPU NVIDIA A10G de 24 GB de memoria y 8 núcleos de procesador). 
-
-Cuando lanzamos un comando, Modal realiza el aprovisionamiento en segundos: levanta el contenedor, monta el código, ejecuta el entrenamiento y se destruye automáticamente en cuanto termina. La facturación se calcula por segundo exacto de uso, garantizando que nunca se pague por recursos ociosos.
+Cada función remota declara sus recursos de GPU, CPU y memoria. Al ejecutarse,
+el contenedor recibe el código y monta los volúmenes necesarios. Los resultados
+que deban conservarse se escriben en almacenamiento persistente y se confirman
+antes de finalizar la invocación.
 
 Todo el almacenamiento se organiza alrededor de dos volúmenes persistentes en la nube que actúan como discos duros compartidos:
 

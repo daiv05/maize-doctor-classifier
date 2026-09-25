@@ -1,0 +1,24 @@
+{
+  "artifact_hashes": {
+    "predictions.csv": "35e8e3330c9920c575ef40d0f18a1c7ccba763ee2e895b4eacd2d9fc332494ca",
+    "test_by_environment.csv": "c84d683c5baf851900a467ced01c1b1b902d2a67b8bbbca413d862fd91ae4d94",
+    "test_by_source.csv": "db596e7638149669051c5d993d6f0e8057015d1bc67fbdce73306d831457548b",
+    "test_calibration.json": "8549512f27a8fdfac627e9a10c47709581efee62e0f4aa05a6ea3bb02fb70f9a",
+    "test_classification_report.csv": "22f0de098467517fb862f1ecc44a8b1461f972272934ac5696609d5e1c8e6018",
+    "test_confusion_matrix.csv": "5a14a3fbb74de433a74221e62e8c18f1bac089b96f062fce9ec318bdc79a6107",
+    "test_grouped_metrics.json": "4b5912a5ea594cb3cb4ef2bddb0f014eb5e018f518727d1fcf983999c0ce2b51"
+  },
+  "best_trial": 0,
+  "checkpoint_sha256": "ae39a1c4a8b757021ec2c34a856d6fb484bf801a6adc3bfb71860d58e9d81471",
+  "evaluation_count": 1,
+  "finished_at": "2026-09-24T02:11:14.833376+00:00",
+  "metrics": {
+    "accuracy": 0.9752741774675973,
+    "loss": 0.4534392108945761,
+    "macro_f1": 0.9431250727951999
+  },
+  "schema_version": 1,
+  "selection_lock_sha256": "8cf49a675cfa7d2b59f7f664c841aceba8232684000b8212561142a4310c86ca",
+  "study_name": "efficientnet_lite0_seed42_hpo_v1",
+  "test_used_during_hpo": false
+}

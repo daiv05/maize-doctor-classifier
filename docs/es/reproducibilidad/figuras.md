@@ -88,3 +88,14 @@ Estas nueve imágenes son ilustraciones del catálogo, no muestras declaradas de
 ## Acción pendiente
 
 Para cerrar una fila `REVISAR`, registrar commit del generador, comando, hash o ruta del artefacto de entrada, run/protocolo y hash de la imagen final. No reasignar una figura histórica a `20260921_204608` por similitud visual.
+
+<!-- hpo-lite0-seed42-completed -->
+
+## HPO Lite0 seed42 — 2026-09-24
+
+Study `efficientnet_lite0_seed42_hpo_v1`; generador `src/training/tuning.py::save_optimization_plots`; fuente `study.db`/`trials.csv`. Código exacto en `source_code.zip`.
+
+| figure | SHA256 |
+| --- | --- |
+| parameter_importance.png | 95c61e4b41dbcd40ed9ff983ab4d7606f13f4bcd39d8ab6f2e8cf92fe87d6c92 |
+| optimization_history.png | 6f134caffabab5aaff8bdf774de2ce8312a0b3f154009391dbce2c7a80fbac60 |

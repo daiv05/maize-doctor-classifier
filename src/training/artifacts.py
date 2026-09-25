@@ -69,6 +69,8 @@ def write_predictions_csv(
     labels: list[int],
     predictions: list[int],
     probs: list[float],
+    *,
+    filename: str = "predictions.csv",
 ) -> pd.DataFrame:
     """
     Escribe predictions.csv con una fila por imagen de test.
@@ -109,8 +111,35 @@ def write_predictions_csv(
     if "environment" in manifest.columns:
         frame["environment"] = manifest["environment"].tolist()
     frame["source_id"] = [provenance_from_path(path) for path in frame["image_path"]]
-    frame.to_csv(run_dir / "predictions.csv", index=False)
+    frame.to_csv(run_dir / filename, index=False)
     return frame
+
+
+def write_validation_outputs(run_dir, dataset, idx_to_class, labels, predictions, probs):
+    """Diagnóstico del checkpoint elegido, con las métricas e identidad existentes."""
+    frame = write_predictions_csv(
+        run_dir,
+        dataset,
+        idx_to_class,
+        labels,
+        predictions,
+        probs,
+        filename="validation_predictions.csv",
+    )
+    mapping = {name: index for index, name in idx_to_class.items()}
+    diagnostics = {
+        "calibration": compute_calibration_metrics(frame, mapping),
+        "per_class": classification_report(
+            frame["label"],
+            frame["pred_label"],
+            labels=list(mapping),
+            output_dict=True,
+            zero_division=0,
+        ),
+        "npk_grouped": compute_grouped_metrics(frame, NPK_GROUPS),
+    }
+    atomic_write_json(run_dir / "validation_diagnostics.json", diagnostics)
+    return diagnostics
 
 
 def write_extended_metrics(

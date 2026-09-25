@@ -111,4 +111,32 @@ El run `20260921_204608` es el **baseline principal de desarrollo**: mejor époc
 | 2026-09-18 | sustitución silenciosa | fail-fast misma muestra | `600ebb9` | no cambia `idx` | tests fail-fast | VIGENTE |
 | 2026-09-18 a 22 | integridad/run drift | manifests y contratos | `711bd10`, `96be6f1` | hashes y validación | locks/summaries | VIGENTE |
 | 2026-09-21 | source grouping grueso | separar desarrollo/cross-source | dos protocolos | 0.4007 vs 0.9480, no comparables | runs `180112`/`204608` | VIGENTE |
-| Próxima fase | seleccionar HP actuales | Optuna 60 trials sin test | plan documentado | sin resultado | `experimentos/hpo.md` | PENDIENTE |
+| 2026-09-23/24 | seleccionar HP actuales | enmienda Optuna 60 → 25; selección sin test | SQLite, RNG, lock y test único | +0.120596 pp en val; −0.487707 pp en test | `HPO_BASELINE_COMPARISON.md` | COMPLETADO; no acredita mejora de generalización |
+| 2026-09-24 | medir estabilidad entre semillas | comparar baseline y HPO con cinco seeds pareadas | runner validation-only, contratos y tests | implementación validada; 0/10 runs | [Protocolo multi-seed](../experimentos/multiseed.md) | EJECUCIÓN PENDIENTE; reanudación prevista 2026-10-01 |
+
+<!-- hpo-lite0-seed42-completed -->
+
+## 2026-09-24 — HPO formal EfficientNet-Lite0
+
+Se completó Optuna con 25 intentos para optimizar sistemáticamente el baseline. Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validation Macro-F1 0.957292225; baseline 0.956086266; delta +0.120596 pp.
+
+Se exploraron LR, WD, smoothing, batch, pesos de clase y warmup; test permaneció cerrado hasta congelar ganador/checkpoint. [Parámetros, test final y evidencia](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md).
+
+Los 25 intentos se distribuyeron en 8 completos, 15 podados y 2 interrumpidos.
+Test Macro-F1 fue 0.943125073 frente a 0.948002144 del baseline: la pequeña mejora
+de validación no se trasladó al holdout. No se cambió al ganador tras observar test.
+El cierre ocurrió el 24 de septiembre en UTC (23 de septiembre, 20:11 en El Salvador).
+[Comparación y límites](./HPO_BASELINE_COMPARISON.md).
+
+## 2026-09-24 — Preparación de la comparación multi-seed
+
+Se fijaron las configuraciones del baseline `20260921_204608` y del trial 0 del
+HPO para compararlas con las semillas 42, 123, 2026, 3407 y 7777 sobre el mismo
+split. La implementación reutiliza el entrenamiento principal y añade una opción
+explícita para omitir test. La verificación local comprende 146 pruebas aprobadas,
+incluidas regresiones de datos, contratos y un smoke con imágenes sintéticas.
+
+La ejecución se retomará manualmente a partir del 1 de octubre de 2026. Hasta
+entonces no hay nuevas métricas experimentales ni una configuración seleccionada
+para la fase siguiente. Se conservan el protocolo, los hashes y el archivo de
+código; antes de entrenar se comprobará que sigan correspondiendo al estado efectivo.

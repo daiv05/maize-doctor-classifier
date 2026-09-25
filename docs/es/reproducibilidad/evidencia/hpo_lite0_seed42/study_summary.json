@@ -1,0 +1,146 @@
+{
+  "artifacts": {
+    "best_hyperparameters": "best_hyperparameters.json",
+    "figures": "figures/",
+    "importance": "hyperparameter_importance.csv",
+    "study_storage": "study.db",
+    "top_10": "top_10_trials.csv",
+    "trials": "trials.csv"
+  },
+  "baseline_macro_f1": 0.9560862657056215,
+  "baseline_value": 0.9560862657056215,
+  "best_params": {
+    "batch_size": 16,
+    "clahe": false,
+    "class_weights": "none",
+    "epochs": 60,
+    "label_smoothing": 0.075,
+    "learning_rate": 8.468008575248323e-05,
+    "warmup_epochs": 1,
+    "weight_decay": 0.005669849511478858
+  },
+  "best_trial_number": 0,
+  "best_val_macro_f1": 0.9572922254288656,
+  "best_value": 0.9572922254288656,
+  "convergence": {
+    "best_at_10": 0.9572922254288656,
+    "best_at_20": 0.9572922254288656,
+    "best_at_25": 0.9572922254288656
+  },
+  "direction": "maximize",
+  "early_stopping_patience": 8,
+  "environment": {
+    "cuda_available": true,
+    "cuda_runtime": "12.6",
+    "executable": "/usr/local/bin/python",
+    "gpu": "NVIDIA A10G",
+    "optuna": "4.9.0",
+    "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+    "python": "3.11.12",
+    "pytorch": "2.12.1+cu126",
+    "timm": "1.0.29",
+    "torchvision": "0.27.1+cu126"
+  },
+  "improvement": {
+    "absolute": 0.00120595972324411,
+    "percentage_points": 0.120595972324411,
+    "relative_percent": 0.12613503263265413
+  },
+  "improvement_delta": 0.00120595972324411,
+  "improvement_pct": 0.12613503263265413,
+  "max_epochs": 60,
+  "model": "efficientnet_lite0",
+  "n_complete": 8,
+  "n_failed": 2,
+  "n_pruned": 15,
+  "n_recorded": 25,
+  "n_trials_requested": 25,
+  "objective": "best_validation_macro_f1",
+  "parallel_workers": 1,
+  "pruner": "MedianPruner",
+  "pruner_config": {
+    "interval_steps": 1,
+    "n_startup_trials": 5,
+    "n_warmup_steps": 8
+  },
+  "sampler": "TPESampler",
+  "sampler_seed": 42,
+  "schema_version": 1,
+  "search_space": {
+    "batch_size": {
+      "choices": [
+        16,
+        32,
+        64
+      ],
+      "type": "categorical"
+    },
+    "clahe": {
+      "choices": [
+        false
+      ],
+      "searched": false,
+      "type": "categorical"
+    },
+    "class_weights": {
+      "choices": [
+        "sqrt_inverse",
+        "inverse",
+        "none"
+      ],
+      "type": "categorical"
+    },
+    "dropout": {
+      "fixed": null,
+      "reason": "factory default; run loader does not restore custom dropout"
+    },
+    "label_smoothing": {
+      "choices": [
+        0.0,
+        0.025,
+        0.05,
+        0.075,
+        0.1,
+        0.125,
+        0.15
+      ],
+      "type": "categorical"
+    },
+    "learning_rate": {
+      "high": 0.003,
+      "log": true,
+      "low": 1e-05,
+      "type": "float"
+    },
+    "optimizer": {
+      "fixed": "AdamW"
+    },
+    "scheduler": {
+      "fixed": "cosine"
+    },
+    "warmup_epochs": {
+      "high": 5,
+      "low": 1,
+      "type": "int"
+    },
+    "weight_decay": {
+      "high": 0.01,
+      "log": true,
+      "low": 1e-07,
+      "type": "float"
+    }
+  },
+  "seed": 42,
+  "split_hashes": {
+    "manifest.lock.json": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "master_manifest.csv": "64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163",
+    "test.csv": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724",
+    "train.csv": "231048178f3450bf84925f8d19eb5a672669ee9f2658a23fe87d88d6e9949434",
+    "val.csv": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5"
+  },
+  "split_identifier": "seed_42",
+  "status": "complete",
+  "study_name": "efficientnet_lite0_seed42_hpo_v1",
+  "test_used_during_hpo": false,
+  "training_seed": 42
+}

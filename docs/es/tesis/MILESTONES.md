@@ -17,6 +17,27 @@
 | M13 | 2026-09-21 | separación desarrollo/cross-source | auditorías + run `180112` | VIGENTE |
 | M14 | 2026-09-21 | baseline estratificado actual | run `20260921_204608` | VIGENTE |
 | M15 | 2026-09-22 | contratos de runs y auditoría documental | `96be6f1` + este corte | VIGENTE |
-| M16 | pendiente | Optuna 60 trials | plan HPO | PENDIENTE |
-| M17 | pendiente | entrenamiento formal y multi-seed | plantillas | PENDIENTE |
+| M16 | 2026-09-24 | Optuna 25 trials | HPO_REPORT.md | COMPLETADO |
+| M17 | preparación: 2026-09-24 | comparación multi-seed previa al entrenamiento formal | [protocolo y verificación local](../experimentos/multiseed.md) | 0/10 runs; reanudación prevista 2026-10-01 |
 | M18 | pendiente | CV/source-grouped/LOSO final | protocolo | PENDIENTE |
+
+<!-- hpo-lite0-seed42-completed -->
+
+## M16 — cierre verificado (2026-09-24)
+
+**COMPLETADO: HPO Optuna 25 trials.** Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validation Macro-F1 0.957292225; baseline 0.956086266; delta +0.120596 pp.
+
+Son 8 completos, 15 podados y 2 interrumpidos. Test Macro-F1 = 0.943125073,
+inferior al baseline 0.948002144. Completar M16 significa cerrar el protocolo y
+su evidencia, **no demostrar superioridad en test ni completar M17/M18**.
+La fecha de cierre usa UTC; en El Salvador fue el 2026-09-23 a las 20:11.
+
+[Evidencia](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md).
+
+## M17 — Preparación validada; ejecución pendiente
+
+Baseline y HPO trial 0 se compararán mediante cinco semillas emparejadas, sin
+evaluar test ni cambiar los splits. La implementación está validada localmente;
+el hito experimental se cerrará únicamente con diez runs verificadas, sus métricas
+de validación y el análisis pareado. La reanudación manual está prevista para el
+1 de octubre de 2026. El entrenamiento formal posterior queda fuera de esta fase.

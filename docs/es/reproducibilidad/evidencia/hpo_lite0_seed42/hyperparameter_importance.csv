@@ -1,0 +1,7 @@
+parameter,importance
+warmup_epochs,0.5230223819484335
+class_weights,0.15078756519290984
+label_smoothing,0.10966500603116726
+learning_rate,0.10323305886347904
+batch_size,0.086419501737774
+weight_decay,0.026872486226236312
