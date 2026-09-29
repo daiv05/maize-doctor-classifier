@@ -5,16 +5,6 @@
 **Estado al 2026-09-24: COMPLETADO; 25 intentos y test único del ganador verificados.**
 Los estudios históricos de 15/25 trials no cuentan como evidencia de esta fase.
 
-### Enmienda autorizada del presupuesto — 2026-09-23
-
-El número máximo de intentos se redujo de 60 a **25 en total**.
-No son 25 adicionales. Se conservan study, trials, estado RNG de TPE,
-splits, espacio de búsqueda, objetivo, 60 épocas máximas y evaluación única del ganador.
-La decisión se tomó con resultados parciales de validation ya observados; debe
-presentarse como una enmienda posterior al inicio, no como un presupuesto prefijado.
-
-Se detuvo la app anterior y se respaldó SQLite: trials 0 y 1 completos; trial 2
-interrumpido, recuperado como FAIL sin reutilizar su ID. El siguiente es trial 3.
 `BUDGET_AMENDMENT.json` registra autorización, protocolos anterior/nuevo, hashes,
 trials al corte y RNG. `budget_revisions/60-to-25/` conserva DB, código y evidencias
 anteriores. Los archivos del dataset, modelo y lógica del objetivo no cambiaron.
@@ -92,7 +82,7 @@ escritora simultánea contra el mismo estudio: SQLite sobre Volume no es un dise
 multiworker. La función limita sus contenedores a uno y la CLI usa bloqueo de proceso.
 
 ```bash
-MODAL=modal  # CLI disponible en el entorno de ejecución
+MODAL=/home/desarrolloab/Documentos/ML/corn-leaf-desease-project/.venv-modal/bin/modal
 make modal-hpo-preflight MODAL="$MODAL"
 make modal-hpo-smoke MODAL="$MODAL"
 make modal-hpo MODAL="$MODAL"
@@ -257,8 +247,4 @@ Test único posterior al lock. [Entrega completa, Top 10 y hashes](../reproducib
 Test: Macro-F1 **0.943125073**, accuracy **0.975274177**, ECE **0.060041622**.
 El baseline obtuvo Macro-F1 test 0.948002144: **el HPO no lo superó en test**.
 No se infiere mejora de generalización ni se cambia la selección utilizando test.
-[Comparación completa, N/P/K y auditoría](../tesis/HPO_BASELINE_COMPARISON.md).
-
-Siguiente fase implementada: [comparación multi-seed baseline/HPO](./multiseed.md),
-sin nuevo HPO ni inferencia de test. Diez runs pendientes; reanudación manual
-prevista para el 1 de octubre de 2026.
+[Comparación completa, N/P/K, auditoría y costo reportado](../tesis/HPO_BASELINE_COMPARISON.md).

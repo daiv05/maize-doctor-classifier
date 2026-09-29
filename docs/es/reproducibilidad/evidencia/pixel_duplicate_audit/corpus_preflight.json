@@ -1,0 +1,10 @@
+{
+  "contractually_excluded_rows": 8,
+  "eligible_manifest_rows": 33429,
+  "errors": [],
+  "files_expected": 33437,
+  "files_found_and_sha_verified": 33437,
+  "missing_or_unreadable": 0,
+  "sha256_mismatch": 0,
+  "status": "passed"
+}
