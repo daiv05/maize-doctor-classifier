@@ -1,0 +1,52 @@
+{
+  "status": "complete_descriptive",
+  "corpus": "corn-clean:/clean",
+  "splits": "corn-outputs:/splits/seed_42",
+  "split_hashes": {
+    "master_manifest.csv": "64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163",
+    "manifest.lock.json": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "train.csv": "231048178f3450bf84925f8d19eb5a672669ee9f2658a23fe87d88d6e9949434",
+    "val.csv": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5",
+    "test.csv": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724"
+  },
+  "prediction_sha256": {
+    "validation_baseline": "5f99c851971e802de36a4e0ea0a2d10e3472e51352087d81aecba6bee8de1a22",
+    "validation_hpo_trial_0": "6cdc43dc8f6fc2975121433245a5538e103c6fd696b171e242a4a783b1525c5a",
+    "test_baseline": "2658802ca96b8e50dc7565775b56c9dcc645945574b4a563144f997c3730c176",
+    "test_hpo_trial_0": "35e8e3330c9920c575ef40d0f18a1c7ccba763ee2e895b4eacd2d9fc332494ca"
+  },
+  "n_eligible": 33429,
+  "split_counts": {
+    "train": 23400,
+    "test": 5015,
+    "validation": 5014
+  },
+  "n_sources": 11,
+  "source_label_association": {
+    "n": 33429,
+    "sources": 11,
+    "classes": 9,
+    "chi2_descriptive": 67673.21389545317,
+    "cramers_v": 0.5030390675454248,
+    "entropy_bits_by_source": {
+      "corn-leaf-diseases-classification-roboflow": -0.0,
+      "corn-leaf-roboflow": 2.4887553911893465,
+      "cropdg-unified-multidomain": 1.5118903721502979,
+      "maize-2-roboflow": 1.578868834772721,
+      "maize-beans-tomatoes-africa": 1.955743615628855,
+      "maize-deficiency-scanner-roboflow": 1.5099005415718163,
+      "maize-diseases": 1.2269635128521303,
+      "maize-in-field-dataset": 1.1518192158354594,
+      "maize-leaf-roboflow": -0.0,
+      "maize-nutrient-deficiency": 1.9492938659027903,
+      "multicrop-disease-maiz": 1.413825437224812
+    }
+  },
+  "mean_source_macro_f1": {
+    "validation_baseline": 0.9596988643177675,
+    "validation_hpo_trial_0": 0.9534381762615152,
+    "test_baseline": 0.9363448873130288,
+    "test_hpo_trial_0": 0.9372277671676797
+  },
+  "interpretation": "Post-hoc descriptive analysis; no model selection on test"
+}

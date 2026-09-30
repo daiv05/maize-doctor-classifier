@@ -1,0 +1,7 @@
+source_id,class,holdout_support,train_without_source,other_source_count,other_sources,historical_val_support,historical_val_f1,loso_precision,loso_recall,loso_f1,delta_loso_minus_historical_val
+maize-diseases,common_rust,1192,737,2,maize-in-field-dataset;multicrop-disease-maiz,171,0.997067448680352,1.0,1.0,1.0,0.00293255131964798
+maize-diseases,healthy,4741,2835,4,corn-leaf-roboflow;cropdg-unified-multidomain;maize-beans-tomatoes-africa;maize-nutrient-deficiency,729,1.0,0.9995749202975558,0.991984813330521,0.9957654033453314,-0.004234596654668632
+maize-diseases,northern_corn_leaf_blight,1056,4025,4,corn-leaf-roboflow;cropdg-unified-multidomain;maize-beans-tomatoes-africa;maize-in-field-dataset,147,0.9966101694915254,0.9731232622798888,0.9943181818181818,0.9836065573770492,-0.013003612114476204
+multicrop-disease-maiz,common_rust,958,916,2,maize-diseases;maize-in-field-dataset,151,1.0,0.9475247524752476,0.9989561586638832,0.972560975609756,-0.027439024390244038
+multicrop-disease-maiz,fall_armyworm,1627,2276,2,corn-leaf-roboflow;maize-beans-tomatoes-africa,251,0.996,0.9549180327868853,0.8592501536570375,0.9045616305402784,-0.09143836945972161
+multicrop-disease-maiz,lethal_necrosis,3231,2202,1,maize-beans-tomatoes-africa,462,0.9956521739130434,0.9991452991452991,0.7236149798823893,0.8393466164063902,-0.1563055575066532

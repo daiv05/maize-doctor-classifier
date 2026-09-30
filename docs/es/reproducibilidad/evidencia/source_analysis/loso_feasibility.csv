@@ -1,0 +1,12 @@
+source_id,holdout_approx,train_remaining,classes_present,n_classes_present,classes_without_remaining_train,n_classes_without_remaining_train,all_nine_classes_in_remaining_train
+maize-beans-tomatoes-africa,12136,14913,fall_armyworm;healthy;lethal_necrosis;northern_corn_leaf_blight,4,,0,True
+maize-diseases,6989,18519,common_rust;healthy;northern_corn_leaf_blight,3,,0,True
+multicrop-disease-maiz,5816,19328,common_rust;fall_armyworm;lethal_necrosis,3,,0,True
+corn-leaf-roboflow,2919,21319,fall_armyworm;healthy;nitrogen_deficiency;northern_corn_leaf_blight;phosphorus_deficiency;potassium_deficiency,6,,0,True
+cropdg-unified-multidomain,2562,21624,gray_leaf_spot;healthy;northern_corn_leaf_blight,3,,0,True
+maize-in-field-dataset,852,22807,common_rust;gray_leaf_spot;northern_corn_leaf_blight,3,,0,True
+maize-2-roboflow,846,22807,nitrogen_deficiency;phosphorus_deficiency;potassium_deficiency,3,,0,True
+corn-leaf-diseases-classification-roboflow,480,23058,gray_leaf_spot,1,,0,True
+maize-nutrient-deficiency,340,23159,healthy;nitrogen_deficiency;phosphorus_deficiency;potassium_deficiency,4,,0,True
+maize-leaf-roboflow,331,23173,gray_leaf_spot,1,,0,True
+maize-deficiency-scanner-roboflow,158,23293,nitrogen_deficiency;phosphorus_deficiency;potassium_deficiency,3,,0,True

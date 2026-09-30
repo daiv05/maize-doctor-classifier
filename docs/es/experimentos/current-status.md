@@ -12,6 +12,8 @@ Punto de corte: **29 de septiembre de 2026**. No implica que todo artefacto hist
 - Benchmark source-grouped `20260921_180112`, útil como resultado negativo/domain shift.
 - Identidad `sample_id`, SHA-256 de archivo, manifests/locks y contratos de runs.
 - [Auditoría de píxeles](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md): 33 429 elegibles, cero grupos duplicados exactos, cero cross-split y 0 % del test afectado. Cuatro conflictos de etiqueta entre ocho exclusiones contractuales; no hubo conflictos nuevos.
+- [Análisis por fuente](../reproducibilidad/evidencia/source_analysis/SOURCE_ANALYSIS.md): 11 fuentes, asociación descriptiva source-label V de Cramér 0.5030 y rendimiento desagregado baseline/HPO en validation y test post-hoc. No se cambió la selección del modelo.
+- [LOSO baseline de dos fuentes](../reproducibilidad/evidencia/loso_baseline/LOSO_RESULTS.md): dos entrenamientos seed 42 completos, locks antes de holdout; Macro-F1 externo 0.993124 (`maize-diseases`) y 0.905490 (`multicrop-disease-maiz`). No hubo HPO ni trabajos posteriores.
 - Experimentos históricos de baselines, HPO reducido, ensamble, CV, procedencia/LOSO, equidad, XAI, segmentación y exportación.
 
 ## Interpretación del HPO cerrado
@@ -40,9 +42,10 @@ No se volvió a evaluar test ni se seleccionó una configuración para la fase s
 | Auditorías sample_id y file_sha256 | COMPLETADAS |
 | Auditoría pixel_sha256 | COMPLETADA |
 | Integridad exacta de seed_42 | CONFIRMADA para duplicados exactos |
-| Análisis por fuente | PENDIENTE |
+| Análisis por fuente | COMPLETADO; descriptivo, sin LOSO |
 | Multi-seed | PENDIENTE; protocolo y runner preparados, 0/10 runs |
 | LOSO final | PENDIENTE |
+| LOSO baseline de dos fuentes | COMPLETADO; 2/2 entrenamientos y 2/2 evaluaciones externas |
 | Cross-validation final | PENDIENTE |
 | Entrenamiento formal | PENDIENTE |
 | Evaluación final | PENDIENTE |
@@ -55,7 +58,7 @@ fuga exacta de píxeles entre los splits actuales.
 
 ## Pendiente
 
-- análisis por fuente y entrenamiento formal con la configuración elegida;
+- decidir si se repite con varias semillas `multicrop-disease-maiz` para medir estabilidad de la caída LOSO;
 - completar la comparación multi-seed baseline/HPO preparada;
 - CV estratificada y source-grouped repetidas sobre la materialización vigente;
 - LOSO final y benchmark cross-source del modelo elegido;
