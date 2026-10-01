@@ -27,7 +27,7 @@ Esta sección reúne las consultas y dificultades más comunes reportadas por pr
 ## Preguntas Frecuentes (FAQ)
 
 ### ¿DoctorMaiz requiere conexión a internet para dar un diagnóstico?
-**No.** La red neuronal de visión artificial (`efficientnet_lite0`) corre de forma autónoma dentro del procesador del teléfono mediante TensorFlow Lite. Puedes estar en la montaña más aislada sin señal de celular y obtendrás el diagnóstico en menos de 100 milisegundos. Solo se requiere conexión para consultar el clima en vivo, sincronizar con la nube o aportar fotos al dataset.
+**No.** La red neuronal de visión artificial (`efficientnet_lite0`) corre de forma autónoma dentro del procesador del teléfono mediante TensorFlow Lite. Puedes estar en la montaña más aislada sin señal de celular y obtendrás el diagnóstico en aproximadamente **60 milisegundos**. Solo se requiere conexión para consultar el clima en vivo, sincronizar con la nube o aportar fotos al dataset.
 
 ### ¿Por qué la aplicación me muestra el mensaje "No Reconocida"?
 El mensaje *"No Reconocida"* no es un error de la app: es una **salvaguarda de seguridad fitosanitaria** activada por el detector OOD (*Out-Of-Distribution*). Significa que la foto no cumple con los patrones visuales de una hoja de maíz analizable. Ocurre comúnmente si:
