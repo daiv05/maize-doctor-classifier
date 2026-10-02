@@ -1,0 +1,10 @@
+class,maize-diseases_excluded,multicrop-disease-maiz_excluded
+common_rust,737,916
+fall_armyworm,3397,2276
+gray_leaf_spot,1351,1351
+healthy,2835,6118
+lethal_necrosis,4490,2202
+nitrogen_deficiency,592,592
+northern_corn_leaf_blight,4025,4781
+phosphorus_deficiency,657,657
+potassium_deficiency,435,435

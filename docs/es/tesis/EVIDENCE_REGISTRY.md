@@ -58,7 +58,7 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 - Una métrica por ambiente o fuente debe indicar su soporte y las clases evaluables.
 - `0.6026 ± 0.1240` significa **CV agrupada por fuente**, no LOSO ni el holdout source-grouped actual.
 - El resultado agrupando N/P/K responde a otra taxonomía y se reporta separado del Macro-F1 de nueve clases.
-- Entrenamiento formal, multi-seed, CV/LOSO final, exportación y dispositivo permanecen `PENDIENTE` hasta añadir sus artefactos aquí. El HPO de 25 intentos queda cerrado en la sección siguiente; no completa esas fases.
+- El multi-seed baseline/LOSO de tres semillas ya está cerrado más abajo. Siguen pendientes el estudio pareado baseline/HPO (0/10 runs), CV/LOSO final general, entrenamiento formal, exportación y dispositivo. El HPO de 25 intentos no completa esas fases.
 
 <!-- hpo-lite0-seed42-completed -->
 
@@ -92,5 +92,47 @@ Artefactos locales bajo `outputs/multiseed/efficientnet_lite0_baseline_vs_hpo/`:
 `MULTISEED_SUMMARY.json`, `MULTISEED_RESULTS.csv`, `MULTISEED_REPORT.md`.
 El reporte explicita pendientes; no importa resultados históricos como nuevos.
 JUnit de 146 pruebas en `outputs/multiseed-checks/tests.xml`.
-La reanudación manual está prevista para el 2026-10-01. No se inició entrenamiento
-ni se ejecutó inferencia del test real durante la preparación.
+Este plan sigue separado del estudio baseline/LOSO ya cerrado y conserva 0/10 runs.
+No se ejecutó inferencia del test real durante su preparación.
+
+## Multi-seed baseline/LOSO — cerrado 2026-10-01
+
+[Informe completo y límites](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md).
+Nueve resultados: tres `seed=42` reutilizados y seis entrenamientos nuevos
+(seeds 123 y 2026 por escenario), sin HPO, ensamble, CV ni entrenamiento
+formal. El primer intento de `maize-diseases/seed_123` fue interrumpido,
+se preservó fuera de `runs/` y no contribuye a ningún agregado; el segundo
+terminó y es el resultado válido.
+
+Los seis `selection.lock.json` nuevos preceden a cualquier test/holdout
+nuevo. Seis guards registran `evaluation_count=1`, con predicciones
+reconciliadas por `sample_id`, hash del checkpoint y resultados calculados
+de nuevo desde el CSV. Los dos LOSO históricos tienen locks previos al
+holdout; el baseline histórico no tiene un lock pre-test documentado y no se
+le atribuyó uno retroactivamente. El
+[registro por evaluación](../reproducibilidad/evidencia/multiseed_source_stability/evaluation_registry.csv)
+guarda timestamps, IDs y hashes; los tres conteos históricos sin guard nuevo
+quedan sin valor formal.
+
+| Afirmación | Evidencia | SHA-256 |
+|---|---|---|
+| Baseline estándar: test Macro-F1 0.943489 ± 0.005158; accuracy 0.976205 ± 0.002722; n=3, SD muestral | [baseline_multiseed.csv](../reproducibilidad/evidencia/multiseed_source_stability/baseline_multiseed.csv) | `04f90fc453775aa74d7762d19e34c67801c7e5671d4ee6b9657e02006aad71ae` |
+| LOSO maize-diseases: Macro-F1 0.993264 ± 0.000600; multicrop-disease-maiz: 0.901906 ± 0.004422; n=3 | [loso_multiseed.csv](../reproducibilidad/evidencia/multiseed_source_stability/loso_multiseed.csv) | `4b8c3ffbd360d8e01917138eec7f8f384ba90205215af15984cc61e2bfc79350` |
+| F1 por clase, incluida lethal_necrosis en multicrop: 0.845444 ± 0.005487 | [loso_class_multiseed.csv](../reproducibilidad/evidencia/multiseed_source_stability/loso_class_multiseed.csv) | `4749a7943edf61a6298762942d7e9327c2d87eda1765d0a65ef9bb29bb783815` |
+| Media, mediana, SD ddof=1, rango y comparaciones descriptivas | [multiseed_summary.json](../reproducibilidad/evidencia/multiseed_source_stability/multiseed_summary.json) | `2a259cb6a92add4bc2c187987001c7d70106b5dd047bd1b1f9b3bd64efe5515d` |
+| Orden lock→evaluación, conteo de las seis runs nuevas y procedencia | [evaluation_registry.csv](../reproducibilidad/evidencia/multiseed_source_stability/evaluation_registry.csv) | `00d31902d04945a885d2f437f9bbba0ee148bffacde455d8bcbe327603318ad8` |
+| Rutas y hashes de los nueve checkpoints, manifests, predicciones y locks | [manifest_references.json](../reproducibilidad/evidencia/multiseed_source_stability/manifest_references.json) | `eca316fc57c22384ebf2bc0f012f1c9d9a5fae65ed72c4198c5173dec621d8b5` |
+
+Los locks de manifests son
+`0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8`
+(estándar),
+`6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07`
+(maize-diseases) y
+`d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b`
+(multicrop-disease-maiz). El
+[preflight de integridad](../reproducibilidad/evidencia/multiseed_source_stability/integrity_preflight.json)
+registró cero solapamientos por `sample_id`, SHA de archivo y SHA de píxel
+en cada escenario. Esto descarta fuga **exacta** en la materialización
+vigente, no casi duplicados ni atajos de fuente. El resultado multicrop es
+compatible con sensibilidad a la exclusión de esa fuente, sin atribución
+causal.

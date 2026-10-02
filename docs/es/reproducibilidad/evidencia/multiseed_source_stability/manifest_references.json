@@ -1,0 +1,92 @@
+{
+  "baseline/seed_123": {
+    "checkpoint_sha256": "19a9f860352fc8812f7d4d3f9aedef68ff4b52175e0b48ee757a133d409cb053",
+    "final_predictions_sha256": "a7805401da68cb3743deadae25c3a5786ca76253842951e6a69650fc2fa2f3aa",
+    "run_id": "20261001_140756",
+    "run_path": "outputs/multiseed/source_stability/baseline/seed_123/runs/efficientnet_lite0/20261001_140756",
+    "selection_lock_sha256": "896d67fdcbe6d4baf3c1ed0c2636afaffde8231bcc6ccc5766dd4584a50dbc4f",
+    "selection_lock_status": "pre_final",
+    "split_lock_sha256": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "validation_predictions_sha256": "9944debf537cca9a6bf56c21549fb1b4e5fe891e6e3f7ce933ec13e62fd20d93"
+  },
+  "baseline/seed_2026": {
+    "checkpoint_sha256": "6a2b302307101cd55414e7633d8755c5e584d5cceb4734ff241e8c0b5829ba51",
+    "final_predictions_sha256": "6e5466869fe63c9318ab664410732e93ac942bc5da0ea361696591d05576a424",
+    "run_id": "20261001_145025",
+    "run_path": "outputs/multiseed/source_stability/baseline/seed_2026/runs/efficientnet_lite0/20261001_145025",
+    "selection_lock_sha256": "e5ced649790d8bebadbd525012ce6b8b63f0053f4533837b7f9293ab00a814f3",
+    "selection_lock_status": "pre_final",
+    "split_lock_sha256": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "validation_predictions_sha256": "16f84e63ca79c4f8c54de122b34b3c61c34b193ba262e005c5afe69f1dfa44c7"
+  },
+  "baseline/seed_42": {
+    "checkpoint_sha256": "860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859",
+    "final_predictions_sha256": "2658802ca96b8e50dc7565775b56c9dcc645945574b4a563144f997c3730c176",
+    "run_id": "20260921_204608",
+    "run_path": "outputs/archives/DoctorMaiz_efficientnet_lite0_20260921_204608/efficientnet_lite0/20260921_204608",
+    "selection_lock_sha256": null,
+    "selection_lock_status": "not_pre_final_historical",
+    "split_lock_sha256": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "validation_predictions_sha256": "5f99c851971e802de36a4e0ea0a2d10e3472e51352087d81aecba6bee8de1a22"
+  },
+  "maize-diseases/seed_123": {
+    "checkpoint_sha256": "4f2d8e86ac7eb1ddd57f3593f8a187c983931f860247fbcca6d5be1a24a7e345",
+    "final_predictions_sha256": "62e616a74fa02db51439bc7cfbe48284b4a87c7a9669b220063edbe352c74401",
+    "run_id": "20261001_160256",
+    "run_path": "outputs/loso/efficientnet_lite0_baseline/maize-diseases/seed_123/runs/efficientnet_lite0/20261001_160256",
+    "selection_lock_sha256": "47132297de0fb92892157305843390d3a2cae1ca2cfa9c8efa65291b50d5fa62",
+    "selection_lock_status": "pre_final",
+    "split_lock_sha256": "6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07",
+    "validation_predictions_sha256": "c6e69c9dbfb154bba2029daf7bfaf54cff13867fb9bd3c70fc10c91ac81622a8"
+  },
+  "maize-diseases/seed_2026": {
+    "checkpoint_sha256": "50199b9d3a46709f6d1cdc57142593ec883782ca94a22f3ea7e0740a44e292f6",
+    "final_predictions_sha256": "47e78fbd03741a551e921cbbb52001f9fa78cdcb66a62136e42f43e4db9a7a20",
+    "run_id": "20261001_163145",
+    "run_path": "outputs/loso/efficientnet_lite0_baseline/maize-diseases/seed_2026/runs/efficientnet_lite0/20261001_163145",
+    "selection_lock_sha256": "b380dd360cb015bb5953e0713023488b02b9a256a848c7678a9e30e14630e7eb",
+    "selection_lock_status": "pre_final",
+    "split_lock_sha256": "6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07",
+    "validation_predictions_sha256": "2ef664730fb9e61bc6331b40b5f0639688d53bf8aae5cf085d1f1149388023d7"
+  },
+  "maize-diseases/seed_42": {
+    "checkpoint_sha256": "b16b1ef8bb4285f65be020272845b6c927057103bf177a290311f186de101dcc",
+    "final_predictions_sha256": "ddd7e382fc9da4c233caec158027f642e8aced6f7e587ebdf9cbb232a2a0d6ba",
+    "run_id": "20260930_144843",
+    "run_path": "outputs/loso/efficientnet_lite0_baseline/maize-diseases/seed_42/runs/efficientnet_lite0/20260930_144843",
+    "selection_lock_sha256": "1a8c202ed20cacb14d8f1c5dcc25996c1832dd20665e3caf17929b9c23860a80",
+    "selection_lock_status": "historical_pre_final",
+    "split_lock_sha256": "6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07",
+    "validation_predictions_sha256": "f9ebe21984bd456bc890e21bfddeccea11b647c9a5a1256f0288fd9d513ea053"
+  },
+  "multicrop-disease-maiz/seed_123": {
+    "checkpoint_sha256": "3bb36aeb4b4328f0552a606a76d8b8455a7a1fea1c5fc288784dfa8be35b0863",
+    "final_predictions_sha256": "a4df26f14c7c92f9e2ff2f9d966b3d27474a10cd94d5541086a524a081d91293",
+    "run_id": "20261001_170150",
+    "run_path": "outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_123/runs/efficientnet_lite0/20261001_170150",
+    "selection_lock_sha256": "c4f244e88996c67069bf2bb37d69ab1b5f623338a18a873286f4b7a3d1598d7b",
+    "selection_lock_status": "pre_final",
+    "split_lock_sha256": "d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b",
+    "validation_predictions_sha256": "070a61e79c80fed2d2fa9a7c4ea2bf1d8559e2be9a45c63e629623bb17630b96"
+  },
+  "multicrop-disease-maiz/seed_2026": {
+    "checkpoint_sha256": "d38fc9f91adffc6943abcdf72bb8ef4951ca18c98bc2f1be6de3d723bc193c43",
+    "final_predictions_sha256": "f4ab6adc83862b273a0610084267634b60cfca3c087525715217cdfb1f5b02b5",
+    "run_id": "20261001_173226",
+    "run_path": "outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_2026/runs/efficientnet_lite0/20261001_173226",
+    "selection_lock_sha256": "84adfb5858b19d7081003a9ae0900aa55e9efd301b784ecccc7ea8863889dbc3",
+    "selection_lock_status": "pre_final",
+    "split_lock_sha256": "d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b",
+    "validation_predictions_sha256": "baffe159b4b61ecca31b2b85bcd895391c857f0fbca4f9fa3232a3ef85e77c5f"
+  },
+  "multicrop-disease-maiz/seed_42": {
+    "checkpoint_sha256": "bd778a28d251fd1b45960f3caec8f5b51d0ed0178c4e4f46e06d2b40948e4517",
+    "final_predictions_sha256": "3b77bcbc708086e21b3140df97d75e6b4a66a92f799856b79c3d1cb52cd18ed8",
+    "run_id": "20260930_145541",
+    "run_path": "outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_42/runs/efficientnet_lite0/20260930_145541",
+    "selection_lock_sha256": "a137e5f21c5adef9a53872f1da5d94b49a3011a3cc4a84048a20794c2437b162",
+    "selection_lock_status": "historical_pre_final",
+    "split_lock_sha256": "d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b",
+    "validation_predictions_sha256": "e69bc6c9f6be9960696ebe6effbf7ef3d856c5df3f0d703beecb10944a1206d6"
+  }
+}
