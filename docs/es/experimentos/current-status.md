@@ -1,6 +1,6 @@
 # Estado experimental actual
 
-Punto de corte: **1 de octubre de 2026**. No implica que todo artefacto histórico se haya repetido sobre el corpus vigente.
+Punto de corte: **2 de octubre de 2026**. No implica que todo artefacto histórico se haya repetido sobre el corpus vigente.
 
 ## Completado
 
@@ -15,6 +15,8 @@ Punto de corte: **1 de octubre de 2026**. No implica que todo artefacto históri
 - [Análisis por fuente](../reproducibilidad/evidencia/source_analysis/SOURCE_ANALYSIS.md): 11 fuentes, asociación descriptiva source-label V de Cramér 0.5030 y rendimiento desagregado baseline/HPO en validation y test post-hoc. No se cambió la selección del modelo.
 - [LOSO baseline de dos fuentes](../reproducibilidad/evidencia/loso_baseline/LOSO_RESULTS.md): dos entrenamientos seed 42 completos, locks antes de holdout; Macro-F1 externo 0.993124 (`maize-diseases`) y 0.905490 (`multicrop-disease-maiz`).
 - [Estabilidad de baseline y LOSO con tres semillas](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md): tres runs 42 reutilizadas, seis entrenamientos nuevos y seis evaluaciones finales únicas tras selection lock. Baseline test Macro-F1 0.943489 ± 0.005158; LOSO maize-diseases 0.993264 ± 0.000600; LOSO multicrop-disease-maiz 0.901906 ± 0.004422 (SD muestral, n=3).
+- [Ensamble histórico bajo LOSO multicrop](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md): tres Lite0 reutilizados, seis entrenamientos nuevos B0/ShuffleNet y tres evaluaciones únicas. Macro-F1 ensamble 0.928446 ± 0.004168 frente a B0 0.923978 ± 0.009443; Δ pareado +0.004468 ± 0.007993, positivo en dos seeds y negativo en una. Resultado mixto, no ventaja robusta demostrada.
+- [Síntesis experimental](../tesis/EXPERIMENTAL_RESULTS_SUMMARY.md) y [respaldo de modelos](../tesis/MODEL_PACKAGE_README.md): resultados consolidados sin elección de arquitectura; 18 checkpoints cotejados con hashes de evidencia. Los paquetes `.tar.gz` se verificaron; la generación de RAR reales queda pendiente de la utilidad `rar`, no instalada en este entorno.
 - Experimentos históricos de baselines, HPO reducido, ensamble, CV, procedencia/LOSO, equidad, XAI, segmentación y exportación.
 
 ## Interpretación del HPO cerrado
@@ -57,7 +59,11 @@ En ese plan pareado separado no se evaluó test ni se seleccionó una configurac
 | Baseline multi-seed (42/123/2026) | COMPLETADO; tres test finales, el de seed 42 histórico |
 | LOSO multi-seed de dos fuentes (42/123/2026) | COMPLETADO; tres holdouts por fuente |
 | Comparación baseline/HPO multi-seed | PENDIENTE; 0/10 runs |
-| Ensamble bajo LOSO | PENDIENTE |
+| Ensamble histórico bajo LOSO multicrop (42/123/2026) | COMPLETADO; resultado mixto frente a B0 |
+| Cinco observaciones originales | COMPLETADAS/CERRADAS en el alcance documentado; límites indicados abajo |
+| Documentación consolidada de resultados | COMPLETADA; sin selección de ganador |
+| Respaldo local de modelos | COMPLETADO; 18 checkpoints VERIFICADOS y 8 TAR.GZ probados; RAR pendientes de utilidad externa |
+| Selección de modelo definitivo | PENDIENTE; decisión posterior del equipo |
 | LOSO final general | PENDIENTE; no equivale a los dos LOSO multi-seed ya cerrados |
 | LOSO baseline de dos fuentes | COMPLETADO; 2/2 entrenamientos y 2/2 evaluaciones externas |
 | Cross-validation final | PENDIENTE |
@@ -73,7 +79,7 @@ fuga exacta de píxeles entre los splits actuales.
 ## Pendiente
 
 - analizar los errores persistentes de `lethal_necrosis` sin ajustar el modelo con el holdout;
-- diseñar, sin ejecutar aún, una prueba pre-registrada del ensamble bajo exclusión de fuente;
+- decisión posterior del equipo sobre la configuración definitiva, sin reajustar usando el holdout LOSO;
 - completar la comparación multi-seed baseline/HPO preparada;
 - CV estratificada y source-grouped repetidas sobre la materialización vigente;
 - LOSO final y benchmark cross-source del modelo elegido;
@@ -84,3 +90,13 @@ fuga exacta de píxeles entre los splits actuales.
 - comparación controlada `full_image` frente a perspectivas segmentadas con *quality gate*.
 
 El orden y los criterios de salida se mantienen en [Backlog de investigación](../tesis/RESEARCH_BACKLOG.md).
+
+## Cierre de las cinco observaciones
+
+1. **Una sola semilla:** completada para baseline estándar y dos LOSO prioritarios con seeds 42/123/2026; se reporta SD muestral.
+2. **Procedencia y fuentes:** analizadas las dos fuentes prioritarias; `multicrop-disease-maiz` mantiene la caída LOSO en tres seeds. La asociación no prueba causalidad.
+3. **Grupos píxel-idénticos con etiquetas contradictorias:** cerrada para la materialización vigente; los conflictos históricos no se reprodujeron entre las 33.429 muestras elegibles y cuatro conflictos conocidos quedan en exclusiones contractuales.
+4. **Duplicados exactos train/test:** cerrada para `seed_42` vigente; cero solapamiento exacto y 0 % del test afectado, no una garantía sobre casi duplicados.
+5. **Ensamble fuera de fuente:** medido y cerrado con resultado mixto bajo LOSO multicrop; mejora en dos de tres seeds, empeora en una y presenta peor ECE que B0. El control adicional `maize-diseases` queda pendiente por requerir dos entrenamientos nuevos, pero no es necesario para responder la observación principal.
+
+La selección de configuración definitiva, el entrenamiento formal y su evaluación final siguen pendientes. Este cierre documental no recomienda un modelo concreto ni inicia esas fases.

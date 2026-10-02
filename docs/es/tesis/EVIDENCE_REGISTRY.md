@@ -59,6 +59,7 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 - `0.6026 ± 0.1240` significa **CV agrupada por fuente**, no LOSO ni el holdout source-grouped actual.
 - El resultado agrupando N/P/K responde a otra taxonomía y se reporta separado del Macro-F1 de nueve clases.
 - El multi-seed baseline/LOSO de tres semillas ya está cerrado más abajo. Siguen pendientes el estudio pareado baseline/HPO (0/10 runs), CV/LOSO final general, entrenamiento formal, exportación y dispositivo. El HPO de 25 intentos no completa esas fases.
+- El ensamble histórico ya se midió bajo LOSO multicrop con tres seeds: resultado mixto frente a B0 y peor ECE. No equivale a validación general de transferencia ni a selección del modelo formal.
 
 <!-- hpo-lite0-seed42-completed -->
 
@@ -136,3 +137,31 @@ en cada escenario. Esto descarta fuga **exacta** en la materialización
 vigente, no casi duplicados ni atajos de fuente. El resultado multicrop es
 compatible con sensibilidad a la exclusión de esa fuente, sin atribución
 causal.
+
+## Ensamble histórico bajo LOSO multicrop — cerrado 2026-10-02
+
+El [informe completo](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md) documenta la regla original (promedio de tres softmax con pesos iguales), la exclusión de los checkpoints históricos del holdout LOSO, nueve locks de componente previos a evaluación (tres Lite0 previos y seis nuevos), tres guards `evaluation_count=1`, seis entrenamientos nuevos y tres Lite0 reutilizados. La app de entrenamiento y la de evaluación terminaron; un intento B0/seed 42 interrumpido se conserva y no entra al resultado. No hubo ajuste usando el holdout.
+
+| Afirmación | Evidencia | SHA-256 |
+|---|---|---|
+| Tres deltas pareados de Macro-F1 ensamble − B0: +0,012737, −0,003216, +0,003883; media +0,004468 ± 0,007993, n=3, SD muestral | [resultados por seed](../reproducibilidad/evidencia/ensemble_loso/ensemble_loso_results.csv) y [resumen](../reproducibilidad/evidencia/ensemble_loso/ensemble_loso_summary.json) | CSV `5a3d12f1b679a7c304f493087c57670cb00c0b70ee0210759047da474f55dbba`; JSON `be4320c64c9349a5abf224de244cf9bdf5827b39ac6daf315524bf7e582e8c7c` |
+| Componentes y métricas globales, incluido ECE medio B0 0,044573 frente a ensamble 0,089088 | [componentes](../reproducibilidad/evidencia/ensemble_loso/ensemble_component_results.csv) | `bf89b7d5b3c5ecdc27c3fed1f33e833f8943c75dc53d105715311c1ef1688d41` |
+| Precision, recall, F1 y soporte por clase/modelo/seed; LN recall ensamble 0,802538 ± 0,010260 | [clases](../reproducibilidad/evidencia/ensemble_loso/ensemble_loso_class_metrics.csv) | `526db4ac4d8161917fe3e6a5b197eb8161c0b5ca864a92fde48879c156866d1d` |
+| Timestamps lock→guard→resultado, conteo único y hashes de predicciones | [registro](../reproducibilidad/evidencia/ensemble_loso/ensemble_evaluation_registry.csv) | `7beb03b4e5c06e78502f348f4b549927ed517bd6695d31332c6f4d0b7f67b8da` |
+| Nueve rutas de checkpoints y sus SHA-256, manifest LOSO y materialización congelada | [referencias](../reproducibilidad/evidencia/ensemble_loso/manifest_checkpoint_references.json) | `45100d2b766be46a95f7a6e229031a35d6e5de509f126874215ff70c884c1c28` |
+
+Los CSV completos de predicción, checkpoints, locks y guards permanecen en `corn-outputs:/ensemble_loso/multicrop-disease-maiz/`; la copia local se ignora en Git bajo `outputs/ensemble_loso/multicrop-disease-maiz/`. La observación 5 se considera **resuelta con resultado mixto**: dos seeds favorecen al ensamble y una a B0. Los deltas del test estándar histórico y el LOSO actual son descriptivos y no estrictamente comparables porque cambiaron materialización y clases presentes.
+
+## Síntesis y respaldo documental — 2026-10-02
+
+La [síntesis experimental](EXPERIMENTAL_RESULTS_SUMMARY.md) reúne resultados sin elegir modelo. El [índice de respaldo](evidencia/model_package/MODEL_INDEX.csv) enumera 18 checkpoints `best.pth` cotejados con el SHA-256 de su evidencia: los 16 del inventario principal y dos B0/ShuffleNet históricos. La [comparación por run](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) conserva test, LOSO, ECE y clases únicamente cuando existe registro. El [archivo de checksums](evidencia/model_package/MODEL_CHECKSUMS.sha256) permite verificar los modelos al reunir las carpetas del respaldo.
+
+| Artefacto | SHA-256 | Alcance |
+|---|---|---|
+| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `3958d3c0c4acac3defd10ba6474bfbba27e30e8cd901a041a5d1ebd55a6366cf` | Protocolo, resultados, cinco observaciones y límites; sin recomendación de ganador |
+| [Guía del paquete](MODEL_PACKAGE_README.md) | `b4651678a814b51773e37ed059684e4a3bcf13c8eacc142c73605ac22bba6fcb` | Contenido, carga, integridad y formato de distribución |
+| [MODEL_INDEX.csv](evidencia/model_package/MODEL_INDEX.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
+| [MODEL_COMPARISON_RESULTS.csv](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |
+| [MODEL_CHECKSUMS.sha256](evidencia/model_package/MODEL_CHECKSUMS.sha256) | `77940bbbfd9dd8a5a37ee2a65fec618ed28187b7debb45e95370684c4149bb1f` | Comprobación local de los 18 `best.pth` |
+
+El respaldo físico está en `outputs/doctor_maiz_models/` y ocho archivos `.tar.gz` verificados en `outputs/doctor_maiz_model_archives/`. Estas rutas son locales e ignoradas por Git; se comparten por separado. La utilidad `rar` no está instalada: no se crearon RAR ni se les atribuye prueba `rar t` o checksum. `CREATE_RARS.sh` quedó preparado para producirlos y comprobarlos cuando esté disponible. La selección de arquitectura, el entrenamiento formal y la evaluación formal final siguen pendientes de decisión del equipo.
