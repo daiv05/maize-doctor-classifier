@@ -142,6 +142,56 @@ const esDatasetSidebar = [
       { text: "GPU en Modal", link: "/es/deployment/modal" },
       { text: "App React Native", link: "/es/deployment/react-native" },
       { text: "Prototipo en dispositivo", link: "/es/deployment/prototipo" },
+      { text: "Documentación App Móvil", link: "/es/app/" },
+    ],
+  },
+];
+
+const esAppSidebar = [
+  {
+    text: "DoctorMaiz App",
+    items: [
+      { text: "Visión General", link: "/es/app/" },
+    ],
+  },
+  {
+    text: "Guía de Inicio",
+    collapsed: false,
+    items: [
+      { text: "Instalación y Requisitos", link: "/es/app/guia-inicio/instalacion" },
+      { text: "Primeros Pasos y Cuentas", link: "/es/app/guia-inicio/primeros-pasos" },
+    ],
+  },
+  {
+    text: "Operaciones en Campo",
+    collapsed: false,
+    items: [
+      { text: "Escaneo Guiado en Surco", link: "/es/app/operaciones-campo/escaneo-guiado" },
+      { text: "Diagnóstico y Severidad", link: "/es/app/operaciones-campo/diagnostico-severidad" },
+      { text: "Monitoreo Agroclimático", link: "/es/app/operaciones-campo/monitoreo-agroclimatico" },
+      { text: "Mapa y Cobertura Satelital", link: "/es/app/operaciones-campo/mapa-cobertura" },
+      { text: "Aporte al Dataset Nacional", link: "/es/app/operaciones-campo/ciencia-ciudadana" },
+    ],
+  },
+  {
+    text: "Sanidad Vegetal",
+    collapsed: false,
+    items: [
+      { text: "Catálogo de Enfermedades", link: "/es/app/catalogo-enfermedades/" },
+    ],
+  },
+  {
+    text: "Arquitectura Técnica",
+    collapsed: false,
+    items: [
+      { text: "Pipeline de Inferencia Edge", link: "/es/app/arquitectura-tecnica/pipeline-inferencia" },
+      { text: "Base de Datos y Persistencia", link: "/es/app/arquitectura-tecnica/base-datos-offline" },
+    ],
+  },
+  {
+    text: "Soporte y FAQ",
+    items: [
+      { text: "Preguntas Frecuentes", link: "/es/app/faq" },
     ],
   },
 ];
@@ -155,6 +205,18 @@ export default defineConfig({
 
   markdown: {
     math: true,
+    config: (md) => {
+      const defaultFence = md.renderer.rules.fence!;
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const token = tokens[idx];
+        const info = token.info.trim();
+        if (info === "mermaid") {
+          const code = encodeURIComponent(token.content);
+          return `<MermaidChart code="${code}" />`;
+        }
+        return defaultFence(tokens, idx, options, env, self);
+      };
+    },
   },
 
   lastUpdated: true,
@@ -260,10 +322,16 @@ export default defineConfig({
               { text: "GPU en Modal", link: "/es/deployment/modal" },
               { text: "App React Native", link: "/es/deployment/react-native" },
               { text: "Prototipo en dispositivo", link: "/es/deployment/prototipo" },
+              { text: "Documentación App Móvil", link: "/es/app/" },
             ],
+          },
+          {
+            text: "App Móvil",
+            link: "/es/app/",
           },
         ],
         sidebar: {
+          "/es/app/": esAppSidebar,
           "/es/": esDatasetSidebar,
           "/es/datasets/": esDatasetSidebar,
           "/es/cleanup-and-ordered/": esDatasetSidebar,
