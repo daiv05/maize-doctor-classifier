@@ -1,0 +1,309 @@
+\chapter{An\'alisis y Dise\~no de la Soluci\'on}
+
+\section{Metodolog\'ia de Trabajo y Gobernanza MLOps}
+
+Para garantizar que los hallazgos cient\'ificos de esta investigaci\'on sean verificables y reproducibles, se adopt\'o una metodolog\'ia de ingenier\'ia de software y operaciones de aprendizaje autom\'atico (\textit{MLOps}) basada en contratos de datos inmutables y trazabilidad criptogr\'afica. En proyectos de visi\'on artificial complejos, los errores silenciosos de preparaci\'on —tales como la fuga de datos (\textit{data leakage}), la reordenaci\'on no determinista de lotes o la sustituci\'on inadvertida de im\'agenes corruptas— invalidan cualquier conclusi\'on te\'orica.
+
+La arquitectura de datos de DoctorMaiz desacopla tres conceptos fundamentales:
+\begin{enumerate}
+\item \textbf{Identidad (\texttt{sample\_id}):} Cada fotograf\'ia del corpus posee un identificador \'unico e inmutable calculado como $\text{SHA-256}(\text{ruta l\'ogica normalizada en UTF-8})$. Esto previene que el orden de lectura en el disco o la asignaci\'on estoc\'astica de hilos (\textit{workers}) altere la identidad de la muestra.
+\item \textbf{Integridad (\texttt{sha256}):} Se calcula el hash criptogr\'afico SHA-256 directo sobre los bytes crudos del archivo de imagen. Esto permite auditar de forma autom\'atica si un archivo sufri\'o alteraciones, corrupci\'on o recomposici\'on entre distintas versiones de entrenamiento.
+\item \textbf{Procedencia y Grupo (\texttt{source\_id} y \texttt{effective\_group\_id}):} Cada registro conserva el v\'inculo con su repositorio de origen, c\'amara y sesi\'on de captura, permitiendo construir particiones estratificadas por fuente sin filtrar datos asociados.
+\end{enumerate}
+
+Todos los conjuntos de entrenamiento, validaci\'on y prueba quedaron sellados mediante manifiestos contractuales (\texttt{manifest.lock.json}), garantizando cero solapamientos de muestras cross-split.
+
+\section{Clases Agron\'omicas Objetivo}
+
+El sistema clasifica el estado de salud de la hoja de ma\'iz en nueve categor\'ias mutuamente excluyentes (Tabla~\ref{tab:taxonomia}), abarcando los principales pat\'ogenos f\'ungicos, virales, plagas insectiles y deficiencias nutricionales de impacto econ\'omico en Centroam\'erica.
+
+\begin{table}[H]
+\caption{Taxonom\'ia agron\'omica de las nueve clases integradas en DoctorMaiz}
+\label{tab:taxonomia}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.2cm}}
+\toprule
+\textbf{Clase Agron\'omica} & \textbf{Agente Causal / Tipo} & \textbf{S\'intoma Primario} & \textbf{Riesgo / Impacto en Rendimiento} \\
+\midrule
+\textbf{Roya Com\'un} & \textit{Puccinia sorghi} (Hongo) & P\'ustulas pulverulentas casta\~no-rojizas en ambas caras. & P\'erdida del 15\% al 30\% en \'areas h\'umedas y altas. \\
+\textbf{Tiz\'on Foliar (NCLB)} & \textit{Exserohilum turcicum} (Hongo) & Lesiones alargadas en forma de cigarro o huso (grises). & Necrosis masiva, p\'erdidas de hasta 50\% antes de floraci\'on. \\
+\textbf{Mancha Gris (GLS)} & \textit{Cercospora zeae-maydis} (Hongo) & Manchas rectangulares delimitadas por venas secundarias. & Destrucci\'on del follaje superior, reducci\'on del grano hasta 40\%. \\
+\textbf{Necrosis Letal (MLN)} & Complejo viral sin\'ergico (MCMV + Potyvirus) & Clorosis severa, moteado, necrosis marginal y secado total. & \textbf{P\'erdida del 100\% de la cosecha}; patolog\'ia de bioseguridad cr\'itica. \\
+\textbf{Gusano Cogollero} & \textit{Spodoptera frugiperda} (Plaga/Insecto) & Perforaciones irregulares y excrementos en el cogollo. & Destrucci\'on meristem\'atica; ca\'ida de rendimiento del 20\% al 60\%. \\
+\textbf{Deficiencia de Nitr\'ogeno} & Desbalance nutricional abi\'otico & Clorosis en ``V'' invertida desde la punta hacia la base. & Reducci\'on de porte, espigas peque\~nas y bajo llenado. \\
+\textbf{Deficiencia de F\'osforo} & Desbalance nutricional abi\'otico & Coloraci\'on p\'urpura o rojiza en bordes de hojas j\'ovenes. & Retraso radicular y esterilidad parcial de la mazorca. \\
+\textbf{Deficiencia de Potasio} & Desbalance nutricional abi\'otico & Clorosis y necrosis marginal desde el \'apice foliar. & Acame o volcamiento del tallo y grano liviano. \\
+\textbf{Planta Sana (Healthy)} & Control agron\'omico & L\'amina foliar verde homog\'enea sin lesiones ni plagas. & Crecimiento \'optimo seg\'un potencial gen\'etico del cultivar. \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/common_rust.jpg}
+\caption*{a) Roya Com\'un}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/northern_corn_leaf_blight.jpg}
+\caption*{b) Tiz\'on Foliar}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/gray_leaf_spot.jpg}
+\caption*{c) Mancha Gris}
+\end{minipage}
+
+\vspace{0.3cm}
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/lethal_necrosis.jpg}
+\caption*{d) Necrosis Letal}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/fall_armyworm.jpg}
+\caption*{e) Gusano Cogollero}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/nitrogen_deficiency.jpg}
+\caption*{f) Deficiencia N}
+\end{minipage}
+
+\vspace{0.3cm}
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/phosphorus_deficiency.jpg}
+\caption*{g) Deficiencia P}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/potassium_deficiency.jpg}
+\caption*{h) Deficiencia K}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.31\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/dataset-classes/healthy.jpg}
+\caption*{i) Planta Sana}
+\end{minipage}
+\caption{Cat\'alogo fotogr\'afico de las nueve clases agron\'omicas presentes en el corpus.}
+\label{fig:clases_mosaico}
+\end{figure}
+
+\section{Recopilaci\'on, Depuraci\'on y Auditor\'ia de Datos}
+
+El corpus final se conform\'o mediante la integraci\'on de \textbf{33~429 im\'agenes elegibles} provenientes de 11 fuentes internacionales consolidadas (Tabla~\ref{tab:fuentes_dataset}). Para resolver el cuello de botella identificado en la primera fase del proyecto —donde la deficiencia de potasio colapsaba a un $F_1$ de 0.49 debido a la escasez extrema de muestras—, se incorporaron cuatro repositorios dirigidos a deficiencias minerales.
+
+\begin{table}[H]
+\caption{Fuentes de datos recopiladas y distribuci\'on de muestras}
+\label{tab:fuentes_dataset}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{p{4.5cm}ccp{5.5cm}}
+\toprule
+\textbf{Identificador de Fuente (\texttt{source\_id})} & \textbf{Muestras} & \textbf{Entorno} & \textbf{Patolog\'ias Principales Aportadas} \\
+\midrule
+\texttt{plantvillage} & 3~852 & Laboratorio & Roya com\'un, mancha gris, tiz\'on foliar y sana. \\
+\texttt{cgiar-wheat-rust-maize} & 6~989 & Campo Real & Roya y tiz\'on bajo iluminaci\'on natural africana. \\
+\texttt{multicrop-disease-maiz} & 5~816 & Campo Real & Necrosis letal (MLN), roya y cogollero. \\
+\texttt{maize-leaf-pests} & 4~820 & Campo Real & Da\~no por cogollero y perforaciones de insectos. \\
+\texttt{crop-deficiency-npk} & 1~840 & Campo / Lab & Clorosis por deficiencias de N, P y K. \\
+\texttt{brazilian-corn-disease} & 2~410 & Campo Real & Mancha gris y tiz\'on en h\'ibridos tropicales. \\
+Otras fuentes complementarias (5) & 7~702 & Mixto & Refuerzo de clases minoritarias y control sano. \\
+\midrule
+\textbf{Total Elegible Auditado} & \textbf{33~429} & — & \textbf{9 clases agron\'omicas} \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+\subsection{Data Profiling y An\'alisis Exploratorio de Datos (EDA)}
+El an\'alisis exploratorio evidenci\'o tres retos estructurales:
+\begin{itemize}
+\item \textbf{Desbalance intr\'inseco:} La clase sana concentra cerca de 8~700 im\'agenes y el tiz\'on foliar cerca de 6~800, mientras que la deficiencia de potasio cuenta con 621 ejemplares (desbalance de 14.1:1 en el corpus vigente, frente a 32.9:1 antes de la ampliaci\'on).
+\item \textbf{Heterogeneidad de resoluci\'on y c\'amaras:} Las resoluciones van desde sensores r\'usticos de $256\times256$ p\'ixeles hasta capturas semiprofesionales de $4000\times3000$ p\'ixeles (Figura~\ref{fig:eda_distribuciones}).
+\item \textbf{Asociaci\'on espuria fuente-clase:} La asociaci\'on estad\'istica entre la procedencia y la etiqueta arroj\'o una \textbf{V de Cram\'er de 0.5030}, indicando que ciertas fuentes p\'ublicas aportan exclusivamente una sola patolog\'ia, lo que puede favorecer que las redes utilicen señales del entorno además de la lesión foliar. Esta relación es descriptiva y no establece una causa.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/eda/eda_01_distribucion_clases.png}
+\caption{Distribuci\'on de muestras por clase.}
+\label{fig:eda_clases}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/eda/eda_02_lab_vs_real.png}
+\caption{Proporci\'on Laboratorio vs. Campo Real.}
+\label{fig:eda_lab_real}
+\end{minipage}
+\caption{An\'alisis exploratorio de distribuci\'on y balance ambiental del corpus.}
+\label{fig:eda_distribuciones}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/eda/eda_02b_heatmap_fuente_clase.png}
+\caption{Matriz de contingencia fuente vs. patolog\'ia.}
+\label{fig:eda_heatmap}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+\centering
+\includegraphics[width=\linewidth]{images/eda/eda_03_resoluciones.png}
+\caption{Distribuci\'on de resoluciones espaciales.}
+\label{fig:eda_resoluciones}
+\end{minipage}
+\caption{Concentraci\'on de procedencia y heterogeneidad geom\'etrica en las im\'agenes.}
+\end{figure}
+
+\subsection{Auditor\'ia Criptogr\'afica de P\'ixeles}
+Para descartar que la precisi\'on reportada se inflara por duplicados id\'enticos en entrenamiento y prueba, se ejecut\'o la auditor\'ia \texttt{PIXEL\_DUPLICATE\_AUDIT}. Se calcularon hashes SHA-256 directos sobre el contenido decodificado en memoria. Se descubrieron \'unicamente cuatro grupos de im\'agenes (ocho archivos en total) con etiquetas contradictorias entre repositorios, los cuales fueron purgados de inmediato. Las \textbf{33~429 muestras finales no presentan un solo duplicado id\'entico cross-split}.
+
+La partici\'on de desarrollo oficial (\texttt{seed\_42}) qued\'o estructurada en un reparto estratificado 70/15/15:
+\begin{itemize}
+\item \textbf{Entrenamiento:} 23~400 im\'agenes.
+\item \textbf{Validaci\'on:} 5~014 im\'agenes.
+\item \textbf{Prueba independiente (Test retenido):} 5~015 im\'agenes.
+\end{itemize}
+
+\noindent\textbf{Limitaci\'on de la partici\'on de desarrollo.} La partici\'on \texttt{seed\_42} es estratificada por \texttt{label + environment} y mezcla las fuentes conocidas entre entrenamiento, validaci\'on y prueba. Esta configuraci\'on es adecuada para desarrollo \textit{in-distribution}, pero no demuestra generalizaci\'on a una c\'amara, parcela o repositorio nuevo. Adem\'as, la materializaci\'on se gener\'o con \texttt{deduplicate\_perceptual=false}, por lo que la posible fuga por im\'agenes casi duplicadas no fue medida en este trabajo. La evaluaci\'on agrupada por fuente y el estudio \textit{leave-one-source-out} se presentan en el cap\'itulo de resultados.
+
+\section{Arquitecturas y B\'usqueda de Hiperpar\'ametros}
+
+\subsection{Familias Convolucionales Seleccionadas}
+Se seleccionaron tres redes convolucionales modernas de alta eficiencia, representativas de diversas hip\'otesis inductivas:
+\begin{enumerate}
+\item \textbf{EfficientNet-Lite0 (Modelo m\'ovil desplegado):} Variante dise\~nada espec\'ificamente para inferencia m\'ovil y cuantizaci\'on. Elimina las activaciones no lineales complejas (\textit{swish}) sustituy\'endolas por ReLU6, y suprime los bloques de atenci\'on \textit{Squeeze-and-Excitation} (SE) \cite{hu2018} para mantener compatibilidad plena con aceleradores de enteros (3.38 millones de par\'ametros) \cite{tan2019}.
+\item \textbf{EfficientNet-B0 (Referencia de capacidad):} Arquitectura balanceada con escalado compuesto y bloques SE con atenci\'on por canal (4.02 millones de par\'ametros).
+\item \textbf{ShuffleNet-V2-x1.0 (Eficiencia extrema):} Basada en divisi\'on de canales (\textit{Channel Split}) y barajado (\textit{Channel Shuffle}) para maximizar el flujo de informaci\'on minimizando los accesos a memoria DRAM (1.26 millones de par\'ametros) \cite{ma2018}.
+\end{enumerate}
+
+\subsection{Espacio de B\'usqueda y Poda Temprana}
+La optimizaci\'on de hiperpar\'ametros se formul\'o mediante un estudio bayesiano en \textbf{Optuna} \cite{optuna2019} con el estimador de \'arbol de Parzen multivariado (TPE). La funci\'on objetivo maximiz\'o el Macro $F_1$ sobre el conjunto de validaci\'on oficial. Para no desperdiciar horas de GPU en configuraciones no prometedoras, se incorpor\'o el algoritmo \textbf{MedianPruner}: a partir de la \'epoca 8 (periodo de calentamiento), si el Macro $F_1$ de un ensayo se sit\'ua por debajo de la mediana hist\'orica de los ensayos precedentes, el entrenamiento se detiene autom\'aticamente (\textit{PRUNED}).
+
+El espacio de exploraci\'on abarc\'o siete par\'ametros cr\'iticos (Tabla~\ref{tab:hpo_espacio}).
+
+\begin{table}[H]
+\caption{Espacio de b\'usqueda de hiperpar\'ametros explorado con Optuna}
+\label{tab:hpo_espacio}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{lp{4.2cm}X}
+\toprule
+\textbf{Hiperpar\'ametro} & \textbf{Rango / Opciones} & \textbf{Fundamento Ingenieril} \\
+\midrule
+\texttt{learning\_rate} & Log-uniforme: $[10^{-5}, 3\times10^{-3}]$ & Control de convergencia en optimizador AdamW. \\
+\texttt{batch\_size} & Categ\'orico: $\{16, 32, 64\}$ & Estabilidad del gradiente estoc\'astico y saturaci\'on de GPU. \\
+\texttt{weight\_decay} & Log-uniforme: $[10^{-6}, 10^{-2}]$ & Regularizaci\'on $L_2$ para mitigar memorizaci\'on de fondos. \\
+\texttt{class\_weights} & $\{\text{none}, \text{inv}, \text{sqrt\_inv}\}$ & Ponderaci\'on de p\'erdida para compensar desbalance de clases. \\
+\texttt{label\_smoothing} & Uniforme: $[0.0, 0.15]$ & Calibraci\'on probabil\'istica y prevenci\'on de sobreconfianza. \\
+\texttt{warmup\_epochs} & Entero: $[1, 5]$ & Calentamiento lineal para proteger pesos preentrenados. \\
+\texttt{clahe} & Fijo en \texttt{False} & Ecualizaci\'on adaptativa excluida de la b\'usqueda; se evalu\'o aparte. \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+\subsection{Ensamble Multimodelo por Soft Voting}
+Para mitigar el riesgo de diagn\'osticos err\'oneos causados por las zonas ciegas de una sola arquitectura, se implement\'o un ensamble heterog\'eneo por votaci\'on suave. El ensamble calcula el vector de probabilidades promedio:
+\begin{equation}
+P_{\text{ens}}(y = c \mid x) = \frac{1}{M} \sum_{m=1}^{M} P_m(y = c \mid x)
+\end{equation}
+donde $M=3$ corresponde a las tres redes entrenadas independientemente y $c \in \{1, \dots, 9\}$. La decisi\'on final se obtiene por consenso m\'aximo: $\hat{y} = \arg\max_c P_{\text{ens}}(y = c \mid x)$.
+
+\section{Despliegue en Dispositivo M\'ovil}
+
+\subsection{Cuantizaci\'on a Enteros de 8 Bits (Int8)}
+Para permitir que \texttt{EfficientNet-Lite0} opere en tel\'efonos sin unidad de procesamiento neuronal (\textit{NPU}), se realiz\'o una cuantizaci\'on posterior al entrenamiento (\textit{Post-Training Quantization}, PTQ) \cite{jacob2018} hacia enteros de 8 bits, exportando el modelo mediante litert-torch. El esquema es simétrico (punto cero $Z = 0$) y dinámico: las escalas de activación se calculan en tiempo de ejecución, por lo que no requiere un conjunto de calibración. En el backbone, cada canal de salida $c$ tiene su propia escala $S_c$, que mapea los pesos en coma flotante $W_{f,c,i}$ a enteros con signo:
+\begin{equation}
+S_c = \frac{\max_i \lvert W_{f,c,i} \rvert}{127}, \qquad q_{c,i} = \operatorname{clip}\!\left(\left\lfloor \frac{W_{f,c,i}}{S_c} \right\rceil,\; -127,\; 127\right)
+\end{equation}
+La capa lineal final usa una única escala por tensor, porque el kernel de TFLite para \texttt{FULLY\_CONNECTED} dinámico aplica una sola escala. Con escalas por canal, los logits de esa capa quedan multiplicados por una constante distinta por clase sin que el runtime lo señale. Cuantizar todas las capas por tensor, en cambio, degrada las convoluciones \textit{depthwise} de EfficientNet, cuyos pesos tienen rangos muy distintos entre canales; por ello el backbone se cuantiza por canal. La operaci\'on permite que las multiplicaciones de matrices de convoluci\'on se resuelvan con instrucciones vectoriales enteras en la CPU m\'ovil. El consumo energ\'etico no fue medido en este trabajo.
+
+\subsection{Detector de Anomal\'ias Fuera de Distribuci\'on (OOD)}
+Las redes neuronales pueden emitir clasificaciones con alta confianza cuando reciben im\'agenes que no pertenecen a ninguna de sus clases, por ejemplo suelo, calzado o malezas, porque la confianza softmax solo mide la elecci\'on entre las etiquetas conocidas \cite{lee2018}. Para detectar este caso, DoctorMaiz extrae el vector de activaci\'on de la capa previa a la clasificaci\'on ($d = 1~280$ dimensiones), reduce su dimensionalidad mediante PCA a 186 componentes que retienen el 99\,\% de la varianza y eval\'ua la \textbf{Distancia Relativa de Mahalanobis (RMD)} \cite{ren2021}. La distancia resta un modelo de fondo global para no penalizar caracter\'isticas gen\'ericas de cualquier fotograf\'ia:
+El vector se normaliza a norma L2 unitaria antes de proyectarlo \cite{mahalanobispp2025}. La puntuaci\'on es
+\begin{equation}
+\text{RMD}(z) = D_M\!\left(z \,\middle|\, \mu_{c^*}, \Sigma\right) - D_M\!\left(z \,\middle|\, \mu_0, \Sigma_0\right)
+\end{equation}
+donde $\mu_{c^*}$ es el centroide de la clase m\'as cercana, $\Sigma$ es la covarianza agrupada entre clases y $\mu_0$, $\Sigma_0$ describen una gaussiana de fondo sobre todo el conjunto de entrenamiento. Ambas covarianzas se regularizan con un t\'ermino ridge proporcional a su traza antes de invertirlas.
+
+El umbral se calibra sobre el conjunto de validaci\'on, no visto durante el entrenamiento, como el percentil 95 de la puntuaci\'on de cada hoja v\'alida. En el modelo desplegado vale aproximadamente $31$. Las pruebas sint\'eticas (pantallas negras, ruido aleatorio) superaron valores de 300 y las fotograf\'ias reales de campo quedaron por debajo del umbral. Si la puntuaci\'on supera el umbral, la aplicaci\'on muestra la advertencia \textbf{«Imagen no reconocida»} y no emite diagn\'ostico.
+
+\subsection{Mitigaci\'on en la Interfaz: Marco Gu\'ia y Severidad}
+Como se demostrar\'a en el cap\'itulo de resultados, el software no puede eliminar por completo los atajos de fondo de los repositorios p\'ublicos. Por ello, la soluci\'on integr\'o dos innovaciones directas en la aplicaci\'on:
+\begin{enumerate}
+\item \textbf{C\'amara con marco gu\'ia foliar y recorte autom\'atico:} La interfaz superpone una silueta ergon\'omica de la hoja con la instrucci\'on expl\'icita: \textit{«Ac\'erquese a 20--30 cm y llene el marco»}. La aplicaci\'on recorta la imagen capturada a la regi\'on delimitada por el marco gu\'ia antes de pasar la matriz al modelo, de modo que el \'area enviada corresponde a la hoja y no al entorno completo.
+\item \textbf{Gu\'ia de severidad en lenguaje campesino:} Dado que los modelos de clasificaci\'on no pueden predecir el porcentaje de \'area foliar comprometida, la app despliega debajo de la etiqueta una escala visual de tres niveles (baja, moderada, cr\'itica) basada en manuales homologados del CIMMYT e Iowa State, descrita en t\'erminos coloquiales y recomendando bioinsumos accesibles en el agroservicio local.
+\end{enumerate}
+
+\section{Arquitectura General del Sistema}
+
+La Figura~\ref{fig:arquitectura_flujo} sintetiza la arquitectura de extremo a extremo que conecta la fase de experimentaci\'on con el despliegue m\'ovil y la extensi\'on institucional.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.7cm and 0.9cm,
+    stage/.style={
+        rectangle, rounded corners=4pt, draw=gray!50, line width=0.8pt,
+        minimum width=2.9cm, minimum height=1.35cm, text width=2.7cm,
+        align=center, font=\footnotesize, fill=gray!4
+    },
+    phase/.style={font=\scriptsize\bfseries\itshape, text=gray!60!black},
+    arrow/.style={-{Latex[length=2.8mm]}, line width=1pt, draw=gray!60}
+]
+% --- Fila 1: entrenamiento ---
+\node[phase] (lbl1) {Fase de entrenamiento y selecci\'on};
+\node[stage, fill=blue!6, draw=blue!55!black, below=0.35cm of lbl1, xshift=-3.3cm] (datos)
+  {\textbf{Fuentes p\'ublicas}\\[2pt]33~429 im\'agenes\\11 fuentes};
+\node[stage, fill=blue!6, draw=blue!55!black, right=of datos] (pipe)
+  {\textbf{Pipeline MLOps}\\[2pt]Deduplicaci\'on\\y contratos};
+\node[stage, fill=blue!6, draw=blue!55!black, right=of pipe] (optuna)
+  {\textbf{Optuna en GPU}\\[2pt]Poda temprana\\(25 intentos)};
+\node[stage, fill=blue!6, draw=blue!55!black, right=of optuna] (lite0)
+  {\textbf{EfficientNet-Lite0}\\[2pt]Configuraci\'on oficial\\[2pt]{\scriptsize run 20260921}};
+\draw[arrow] (datos) -- (pipe);
+\draw[arrow] (pipe) -- (optuna);
+\draw[arrow] (optuna) -- (lite0);
+
+% --- Fila 2: despliegue ---
+\node[phase, below=1.3cm of datos, xshift=1.2cm] (lbl2) {Fase de despliegue m\'ovil};
+\node[stage, fill=green!6, draw=green!45!black, below=0.35cm of lbl2, xshift=-3.3cm] (quant)
+  {\textbf{Cuantizaci\'on Int8}\\[2pt]PTQ con litert-torch\\(3.56~MB)};
+\node[stage, fill=green!6, draw=green!45!black, right=of quant] (app)
+  {\textbf{App DoctorMaiz}\\[2pt]React Native\\y Fast-TFLite};
+\node[stage, fill=green!6, draw=green!45!black, right=of app] (ood)
+  {\textbf{Captura y OOD}\\[2pt]Marco gu\'ia y\\distancia RMD};
+\node[stage, fill=green!6, draw=green!45!black, right=of ood] (off)
+  {\textbf{Inferencia local}\\[2pt]CPU, sin conexi\'on\\(sincronizaci\'on opcional)};
+\draw[arrow] (quant) -- (app);
+\draw[arrow] (app) -- (ood);
+\draw[arrow] (ood) -- (off);
+
+% --- Conexi\'on entre filas ---
+\draw[arrow, dashed] (lite0.south) |- ++(0,-0.55) -| (quant.north);
+\end{tikzpicture}
+\caption{Diagrama de flujo arquitect\'onico integral del sistema DoctorMaiz.}
+\label{fig:arquitectura_flujo}
+\end{figure}

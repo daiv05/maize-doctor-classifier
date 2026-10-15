@@ -1,0 +1,21 @@
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {1.1}{\ignorespaces Criterios de \'exito del proyecto, agrupados por tema}}{11}{table.caption.3}%
+\contentsline {table}{\numberline {1.2}{\ignorespaces Cronograma consolidado de actividades y fases del proyecto (CRISP-DM)}}{14}{table.caption.5}%
+\contentsline {table}{\numberline {1.3}{\ignorespaces Presupuesto proyectado: C\'alculo del salario base por rol (280 horas)}}{15}{table.caption.6}%
+\contentsline {table}{\numberline {1.4}{\ignorespaces Presupuesto proyectado: Cargas y prestaciones patronales sobre el salario base}}{15}{table.caption.7}%
+\contentsline {table}{\numberline {1.5}{\ignorespaces Presupuesto: Infraestructura Cloud y Licencias}}{16}{table.caption.8}%
+\contentsline {table}{\numberline {1.6}{\ignorespaces Resumen presupuestario global de la investigaci\'on}}{16}{table.caption.9}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Taxonom\'ia agron\'omica de las nueve clases integradas en DoctorMaiz}}{18}{table.caption.10}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Fuentes de datos recopiladas y distribuci\'on de muestras}}{20}{table.caption.12}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces Espacio de b\'usqueda de hiperpar\'ametros explorado con Optuna}}{23}{table.caption.15}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Comparativa cuantitativa: Baseline sin Optuna vs. Configuraci\'on Optimizada (Optuna)}}{29}{table.caption.19}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Desempe\~no cuantitativo del Ensamble vs. Modelos Individuales en Prueba (5~015 im\'agenes)}}{30}{table.caption.20}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Desglose de rendimiento agron\'omico por clase en el conjunto de prueba independiente}}{31}{table.caption.23}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Resultados del experimento cruzado $2\times 2$ de validaci\'on cruzada en 5 pliegues}}{32}{table.caption.24}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Tasa de falsos negativos ($FNR$) desagregada por clase y entorno}}{33}{table.caption.27}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Auditor\'ia de ablaci\'on espacial con control nulo en el conjunto de prueba}}{34}{table.caption.28}%
+\contentsline {table}{\numberline {3.7}{\ignorespaces Latencias operativas medidas en hardware f\'isico (Motorola edge 40 neo)}}{37}{table.caption.32}%
+\contentsline {table}{\numberline {3.8}{\ignorespaces Hashes SHA-256 de los pesos f\'isicos de los modelos respaldados}}{49}{table.caption.39}%

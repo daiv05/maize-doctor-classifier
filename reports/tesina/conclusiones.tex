@@ -1,0 +1,164 @@
+\chapter*{Conclusiones y Recomendaciones}
+\addcontentsline{toc}{chapter}{Conclusiones y Recomendaciones}
+
+\section*{Conclusiones}
+
+La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema integral, cient\'ificamente riguroso y desplegado operativamente en dispositivos m\'oviles para el agro salvadore\~no. A partir de los resultados cuantitativos y cualitativos obtenidos, se concluye:
+
+\begin{enumerate}
+\item \textbf{Rendimiento del modelo en partici\'on estratificada:} El ensamble heterog\'eneo por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de \textbf{0.9567}, una exactitud de \textbf{98.29\%} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba. Estos resultados son de una sola semilla y de una partici\'on que mezcla fuentes; se presentan como resultado hist\'orico de la configuraci\'on desplegada, no como validaci\'on de generalizaci\'on.
+\item \textbf{Recall de necrosis letal (MLN):} En la partici\'on estratificada, el ensamble clasific\'o correctamente los 963 casos de MLN del conjunto de prueba. Bajo validaci\'on con fuente no vista, el recall de MLN baja a un rango de 0.79 a 0.81, por lo que la ausencia de falsos negativos no se generaliza y debe seguir monitoreada en campo.
+\item \textbf{Generalizaci\'on entre fuentes:} La validaci\'on agrupada por procedencia reduce el Macro $F_1$ de 0.9311 a \textbf{0.6026} sobre las clases evaluables en cada pliegue. La diferencia supera la variabilidad entre semillas, pero no permite atribuirla a un factor \'unico. El ahorro de horas de GPU frente a una b\'usqueda sin poda temprana no fue medido.
+\item \textbf{Capacidades del diagn\'ostico:} El \textit{Disparate Impact Ratio} entre laboratorio y campo real es \textbf{0.9778}, por encima del umbral de 0.80. La ablaci\'on espacial mostr\'o que, al ocluir el centro de la hoja, el modelo conserva un \textbf{79.46\%} de exactitud, y al ocluir la periferia cae a \textbf{42.25\%}. Esto indica sensibilidad al contexto de la escena; el an\'alisis de equidad registra un nivel de riesgo m\'as alto que el de la prueba central, y se reporta as\'i para su revisi\'on.
+\item \textbf{Soluci\'on integral en hardware rural:} La cuantizaci\'on a 8 bits produjo un archivo de \textbf{3.56~MB}. En un smartphone f\'isico Motorola edge 40 neo, la inferencia tom\'o aproximadamente \textbf{60~milisegundos} en una ejecuci\'on de referencia, y la aplicaci\'on opera sin conexi\'on para la clasificaci\'on. La exactitud de la versi\'on cuantizada sobre el conjunto de prueba completo no fue medida.
+\item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia para la captura y un detector OOD basado en distancia de Mahalanobis relativa, con umbral calibrado al percentil 95. Su efecto sobre el sesgo de procedencia no ha sido medido.
+\end{enumerate}
+
+\section*{Recomendaciones}
+
+\begin{enumerate}
+\item \textbf{Transici\'on a ensayos de validaci\'on en campo:} Desplegar un programa piloto de validaci\'on participativa con cooperativas agr\'icolas y ADESCOs en los departamentos de Caba\~nas, Moraz\'an y Ahuachap\'an para evaluar la adopci\'on del marco gu\'ia bajo luz solar intensa y condiciones reales de campo.
+\item \textbf{Consolidaci\'on del Banco Soberano de Datos:} Integrar de forma prioritaria las primeras 1~000 fotograf\'ias capturadas en milpas salvadore\~nas a trav\'es del m\'odulo de contribuci\'on comunitaria, permitiendo un reentrenamiento focalizado para cerrar la brecha de dominio detectada en la evaluaci\'on fuera de fuente.
+\item \textbf{Anotaci\'on patom\'etrica para modelos ordinales de severidad:} Establecer un convenio t\'ecnico con fitopat\'ologos del CENTA para calificar un subconjunto de im\'agenes con escalas homologadas de severidad (Cobb modificada, Vieira, Brito), sentando las bases para cabezas de regresi\'on ordinal que predigan el grado de da\~no adem\'as de la clase.
+\item \textbf{Adopci\'on y custodia institucional en el Estado salvadore\~no:} Promover que el Ministerio de Agricultura y Ganader\'ia adopte formalmente el c\'odigo y pesos de DoctorMaiz bajo gobernanza de c\'odigo abierto, asegurando que el conocimiento generado pertenezca a la sociedad y no a intereses corporativos transnacionales.
+\end{enumerate}
+
+% ----------------------------------------------------------------------
+% BIBLIOGRAFÍA
+% ----------------------------------------------------------------------
+\newpage
+\begin{thebibliography}{99}
+\addcontentsline{toc}{chapter}{Bibliograf\'ia}
+
+\bibitem{ahmad2023a}
+Ahmad, A., El Gamal, A., \& Saraswat, D. (2023). Toward generalization of deep learning-based plant disease identification under controlled and field conditions. \textit{IEEE Access}, 11, 9042--9057.
+
+\bibitem{baya2024}
+Baya, J., et al. (2024). A mobile-based system for maize leaf disease detection and classification using machine learning algorithms and deep learning: A case study of ZeaWatch. \textit{Smart Agricultural Technology}, 7, 100412.
+
+\bibitem{bcr2023}
+Banco Central de Reserva de El Salvador (BCR). (2023). \textit{Revista Econ\'omica: Aporte Agropecuario al Producto Interno Bruto 2022-2023}. San Salvador: BCR.
+
+\bibitem{centa2022}
+Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal ``Enrique \'Alvarez C\'ordova'' (CENTA). (2022). \textit{Gu\'ia t\'ecnica del cultivo de ma\'iz en El Salvador}. San Salvador: CENTA / Gerencia de Investigaci\'on y Transferencia.
+
+\bibitem{deng2009}
+Deng, J., Dong, W., Socher, R., Li, L.-J., Li, K., \& Fei-Fei, L. (2009). ImageNet: A large-scale hierarchical image database. En \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)} (pp. 248--255).
+
+\bibitem{gulrajani2021}
+Gulrajani, I., \& Lopez-Paz, D. (2021). In search of lost domain generalization. En \textit{International Conference on Learning Representations (ICLR)}.
+
+\bibitem{howard2017}
+Howard, A. G., et al. (2017). MobileNets: Efficient convolutional neural networks for mobile vision applications. \textit{arXiv preprint arXiv:1704.04861}.
+
+\bibitem{hu2018}
+Hu, J., Shen, L., \& Sun, G. (2018). Squeeze-and-excitation networks. En \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)} (pp. 7132--7141).
+
+\bibitem{jacob2018}
+Jacob, B., Kligys, S., Chen, B., Zhu, M., Tang, M., Howard, A., Adam, H., \& Kalenichenko, D. (2018). Quantization and training of neural networks for efficient integer-arithmetic-only inference. En \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)} (pp. 2704--2713).
+
+\bibitem{lee2018}
+Lee, K., Lee, K., Lee, H., \& Shin, J. (2018). A simple unified framework for detecting out-of-distribution samples and adversarial attacks. En \textit{Advances in Neural Information Processing Systems (NeurIPS)}, 31.
+
+\bibitem{lundberg2017}
+Lundberg, S. M., \& Lee, S.-I. (2017). A unified approach to interpreting model predictions. En \textit{Advances in Neural Information Processing Systems (NeurIPS)}, 30, 4765--4774.
+
+\bibitem{ma2018}
+Ma, N., Zhang, X., Zheng, H.-T., \& Sun, J. (2018). ShuffleNet V2: Practical guidelines for efficient CNN architecture design. En \textit{Proceedings of the European Conference on Computer Vision (ECCV)} (pp. 116--131).
+
+\bibitem{mag2023}
+Ministerio de Agricultura y Ganader\'ia (MAG). (2023). \textit{Anuario de Estad\'isticas Agropecuarias y Seguridad Alimentaria en El Salvador 2022-2023}. San Salvador: MAG / Direcci\'on General de Econom\'ia Agropecuaria.
+
+\bibitem{molnar2022}
+Molnar, C. (2022). \textit{Interpretable Machine Learning: A Guide for Making Black Box Models Explainable} (2nd ed.). Munich: Christoph Molnar.
+
+\bibitem{optuna2019}
+Akiba, T., Sano, S., Yanase, T., Ohta, T., \& Koyama, M. (2019). Optuna: A next-generation hyperparameter optimization framework. En \textit{ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)} (pp. 2623--2631).
+
+\bibitem{mahalanobispp2025}
+Ren, J., et al. (2025). Mahalanobis++: Improving OOD detection via feature normalization. \textit{arXiv preprint arXiv:2505.18032}.
+
+\bibitem{ren2021}
+Ren, J., Fort, S., Liu, J., Roy, A. G., Padhy, S., \& Lakshminarayanan, B. (2021). A simple fix to Mahalanobis distance for improving near-OOD detection. \textit{arXiv preprint arXiv:2106.09022}.
+
+\bibitem{ribeiro2016}
+Ribeiro, M. T., Singh, S., \& Guestrin, C. (2016). ``Why should I trust you?'': Explaining the predictions of any classifier. En \textit{ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)} (pp. 1135--1144).
+
+\bibitem{selvaraju2017}
+Selvaraju, R. R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., \& Batra, D. (2017). Grad-CAM: Visual explanations from deep networks via gradient-based localization. En \textit{Proceedings of the IEEE International Conference on Computer Vision (ICCV)} (pp. 618--626).
+
+\bibitem{tan2019}
+Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. En \textit{International Conference on Machine Learning (ICML)} (pp. 6105--6114).
+
+\end{thebibliography}
+
+% ----------------------------------------------------------------------
+% GLOSARIO
+% ----------------------------------------------------------------------
+\newpage
+\chapter*{Glosario de T\'erminos}
+\addcontentsline{toc}{chapter}{Glosario de T\'erminos}
+
+\begin{description}
+\item[Clever Hans Effect:] Fen\'omeno en el cual un modelo de aprendizaje autom\'atico alcanza una aparente alta precisi\'on apoy\'andose en correlaciones espurias o atajos del entorno (fondos, sensores, marcas de agua) en lugar de las caracter\'isticas intr\'insecas de la clase.
+\item[Cosine Annealing:] Esquema de planificaci\'on de tasa de aprendizaje que reduce gradualmente el paso de optimizaci\'on siguiendo la curva de un coseno hasta un m\'inimo establecido, facilitando que el optimizador escape de m\'inimos locales.
+\item[Disparate Impact Ratio (DIR):] M\'etrica de equidad algor\'itmica que cuantifica el cociente entre la tasa favorable del grupo minoritario y la del grupo mayoritario. Un valor inferior a 0.80 denota sesgo o trato dispar regulatorio.
+\item[Edge AI:] Paradigma de inteligencia artificial donde los modelos entrenados se ejecutan directamente en hardware local (dispositivos m\'oviles, microcontroladores) sin enviar datos a servidores en la nube.
+\item[Macro $F_1$-Score:] Media aritm\'etica no ponderada del valor $F_1$ calculado independientemente para cada clase. Asigna el mismo peso relativo a clases minoritarias y mayoritarias, siendo la m\'etrica est\'andar ante conjuntos desbalanceados.
+\item[MLOps (Machine Learning Operations):] Conjunto de pr\'acticas de ingenier\'ia de software destinadas a automatizar, versionar y garantizar la reproducibilidad y monitoreo de pipelines de aprendizaje autom\'atico en producci\'on.
+\item[Necrosis Letal del Ma\'iz (MLN):] Complejo viral devastador provocado por la coinfecci\'on sin\'ergica del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus (como SCMV), capaz de destruir el 100\% de una plantaci\'on.
+\item[Out-of-Distribution (OOD):] Condici\'on que presentan aquellas muestras alimentadas a un clasificador cuyas caracter\'isticas estad\'isticas provienen de una distribuci\'on ajena a la utilizada durante el entrenamiento (ej. fotografiar una piedra o una mano frente a un modelo de hojas).
+\item[Post-Training Quantization (PTQ):] T\'ecnica de optimizaci\'on que convierte los pesos y activaciones de una red neuronal entrenada en coma flotante (FP32) a enteros de precisi\'on reducida (Int8), disminuyendo el tama\~no del modelo y la latencia en CPU.
+\item[Soft Voting:] Mecanismo de ensamble multimodelo que promedia las probabilidades continuas asignadas por cada red individual mediante la funci\'on Softmax, seleccionando la clase con el m\'aximo consenso medio.
+\end{description}
+
+% ----------------------------------------------------------------------
+% ANEXOS
+% ----------------------------------------------------------------------
+\newpage
+\chapter*{Anexos}
+\addcontentsline{toc}{chapter}{Anexos}
+
+\section*{Anexo A: Registro de Enlaces y Repositorios Abiertos del Proyecto}
+
+El c\'odigo fuente \'integro, los pesos exportados, los pipelines de entrenamiento y los artefactos de evaluaci\'on de \textbf{DoctorMaiz} se encuentran p\'ublicamente accesibles bajo licencias de c\'odigo abierto:
+
+\begin{itemize}
+\item \textbf{Clasificador Principal (Entrenamiento, HPO y Exportaci\'on):}\par
+\url{https://github.com/daiv05/maize-doctor-classifier}
+\item \textbf{Aplicaci\'on M\'ovil Nativa DoctorMaiz (React Native Offline):}\par
+\url{https://github.com/Edenilson-Molina/maize-doctor-app}
+\item \textbf{Segmentador Foliar YOLO (Detecci\'on y M\'ascaras de Instancia):}\par
+\url{https://github.com/abner-rivas/maize-doctor-segmenter-leaf}
+\item \textbf{API de Sincronizaci\'on y Extensi\'on Centralizada:}\par
+\url{https://github.com/daiv05/maize-doctor-api}
+\item \textbf{Sitio Web y Documentaci\'on T\'ecnica del Proyecto:}\par
+\url{https://doctor-maiz.deras.dev/es}
+\item \textbf{Dataset Consolidado de 33K Im\'agenes en Hugging Face:}\par
+\url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}
+\item \textbf{Repositorio de Checkpoints y Modelos Exportados en Google Drive:}\par
+\url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
+\end{itemize}
+
+\section*{Anexo B: Inventario Criptogr\'afico de Checkpoints Respaldados}
+
+La Tabla~\ref{tab:anexo_checkpoints} detalla los hashes SHA-256 de los principales checkpoints f\'isicos que sustentan la reproducibilidad de la tesina.
+
+\begin{table}[H]
+\caption{Hashes SHA-256 de los pesos f\'isicos de los modelos respaldados}
+\label{tab:anexo_checkpoints}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{p{4.0cm}cp{7.5cm}}
+\toprule
+\textbf{Modelo / Protocolo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del Checkpoint (\texttt{best.pth})} \\
+\midrule
+EfficientNet-Lite0 Base (42, oficial) & 12.92 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
+EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.56 MB & \path{0a77ad7937f73e24b795288c68741d14dd00226ffe546d5ddf5b99125fbef24d} \\
+EfficientNet-B0 Referencia & 16.36 MB & Pendiente de verificaci\'on \\
+ShuffleNet-V2-x1.0 Referencia & 5.2 MB & Pendiente de verificaci\'on \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
