@@ -6,19 +6,20 @@
 La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema integral, cient\'ificamente riguroso y desplegado operativamente en dispositivos m\'oviles para el agro salvadore\~no. A partir de los resultados cuantitativos y cualitativos obtenidos, se concluye:
 
 \begin{enumerate}
-\item \textbf{Rendimiento del modelo en partici\'on estratificada:} El ensamble heterog\'eneo por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de \textbf{0.9567}, una exactitud de \textbf{98.29\%} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba. Estos resultados son de una sola semilla y de una partici\'on que mezcla fuentes; se presentan como resultado hist\'orico de la configuraci\'on desplegada, no como validaci\'on de generalizaci\'on.
-\item \textbf{Recall de necrosis letal (MLN):} En la partici\'on estratificada, el ensamble clasific\'o correctamente los 963 casos de MLN del conjunto de prueba. Bajo validaci\'on con fuente no vista, el recall de MLN baja a un rango de 0.79 a 0.81, por lo que la ausencia de falsos negativos no se generaliza y debe seguir monitoreada en campo.
-\item \textbf{Generalizaci\'on entre fuentes:} La validaci\'on agrupada por procedencia reduce el Macro $F_1$ de 0.9311 a \textbf{0.6026} sobre las clases evaluables en cada pliegue. La diferencia supera la variabilidad entre semillas, pero no permite atribuirla a un factor \'unico. El ahorro de horas de GPU frente a una b\'usqueda sin poda temprana no fue medido.
-\item \textbf{Capacidades del diagn\'ostico:} El \textit{Disparate Impact Ratio} entre laboratorio y campo real es \textbf{0.9778}, por encima del umbral de 0.80. La ablaci\'on espacial mostr\'o que, al ocluir el centro de la hoja, el modelo conserva un \textbf{79.46\%} de exactitud, y al ocluir la periferia cae a \textbf{42.25\%}. Esto indica sensibilidad al contexto de la escena; el an\'alisis de equidad registra un nivel de riesgo m\'as alto que el de la prueba central, y se reporta as\'i para su revisi\'on.
-\item \textbf{Soluci\'on integral en hardware rural:} La cuantizaci\'on a 8 bits produjo un archivo de \textbf{3.56~MB}. En un smartphone f\'isico Motorola edge 40 neo, la inferencia tom\'o aproximadamente \textbf{60~milisegundos} en una ejecuci\'on de referencia, y la aplicaci\'on opera sin conexi\'on para la clasificaci\'on. La exactitud de la versi\'on cuantizada sobre el conjunto de prueba completo no fue medida.
+\item \textbf{Rendimiento del modelo en partici\'on estratificada:} El ensamble heterog\'eneo por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de \textbf{0.9567}, una exactitud de \textbf{98.29\%} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba. Este resultado es hist\'orico, de una sola semilla y de una partici\'on que mezcla fuentes; no es el modelo desplegado ni una validaci\'on de generalizaci\'on. El modelo desplegado (EfficientNet-Lite0, run \texttt{20260812\_221429}) alcanz\'o un Macro $F_1$ de \textbf{0.9468}, tambi\'en hist\'orico. El baseline de desarrollo vigente (run \texttt{20260921\_204608}) obtuvo \textbf{0.9480} con una sola semilla.
+\item \textbf{Recall de necrosis letal (MLN):} En la partici\'on estratificada, el ensamble clasific\'o correctamente los 963 casos de MLN del conjunto de prueba. Bajo validaci\'on con fuente no vista (LOSO sobre \texttt{multicrop-disease-maiz}, tres semillas), el recall de MLN del ensamble baja a 0.79--0.81 y el del modelo EfficientNet-Lite0 a 0.72--0.74. La ausencia de falsos negativos no se generaliza y debe seguir monitoreada en campo.
+\item \textbf{Generalizaci\'on entre fuentes:} Con validaci\'on cruzada de cinco pliegues, el Macro $F_1$ pasa de 0.9311 (partici\'on estratificada) a 0.6026 $\pm$ 0.1240 (IC95, clases evaluables por pliegue) agrupando por procedencia; este es un resultado hist\'orico. Con LOSO en tres semillas, el modelo sin \texttt{multicrop-disease-maiz} obtiene 0.9933 $\pm$ 0.0006 en \texttt{maize-diseases} y 0.9019 $\pm$ 0.0044 en \texttt{multicrop-disease-maiz}. La diferencia no permite atribuirse a un factor \'unico. El ahorro de horas de GPU frente a una b\'usqueda sin poda temprana no fue medido.
+\item \textbf{Capacidades del diagn\'ostico:} El \textit{Disparate Impact Ratio} entre laboratorio y campo real, comparando las tres clases compartidas, es \textbf{0.9604} sobre Macro $F_1$ y \textbf{0.9901} sobre exactitud, por encima del umbral de 0.80. La ablaci\'on espacial mostr\'o que, al ocluir el centro de la hoja, el modelo conserva un \textbf{79.46\%} de exactitud, y al ocluir la periferia cae a \textbf{42.25\%}. Esto indica sensibilidad al contexto de la escena. El nivel de riesgo global del an\'alisis de equidad se registra como \texttt{CRITICAL} en la evidencia, y se reporta as\'i para su revisi\'on.
+\item \textbf{Prototipo offline medido en un tel\'efono de gama media:} La cuantizaci\'on a 8 bits del modelo hist\'orico produjo un archivo de \textbf{3.56~MB}. En un smartphone f\'isico Motorola edge 40 neo, la mediana de inferencia fue de \textbf{60~milisegundos}, y la aplicaci\'on clasifica sin conexi\'on. La evaluaci\'on en dispositivo del checkpoint vigente est\'a pendiente, y la exactitud de la versi\'on cuantizada sobre el conjunto de prueba completo no fue medida.
 \item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia para la captura y un detector OOD basado en distancia de Mahalanobis relativa, con umbral calibrado al percentil 95. Su efecto sobre el sesgo de procedencia no ha sido medido.
+\item \textbf{Segmentaci\'on de la hoja, como l\'inea experimental:} Un segmentador YOLO entrenado en un repositorio independiente obtuvo, en validaci\'on, un IoU medio de 0.98122 sobre 150 hojas enfermas, con una sola semilla. Un modelo entrenado sobre un corpus enmascarado alcanz\'o un Macro $F_1$ de 0.7191 en prueba, sin pareamiento con el conjunto original. La aplicaci\'on instalada no aplica segmentaci\'on; la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
 \end{enumerate}
 
 \section*{Recomendaciones}
 
 \begin{enumerate}
 \item \textbf{Transici\'on a ensayos de validaci\'on en campo:} Desplegar un programa piloto de validaci\'on participativa con cooperativas agr\'icolas y ADESCOs en los departamentos de Caba\~nas, Moraz\'an y Ahuachap\'an para evaluar la adopci\'on del marco gu\'ia bajo luz solar intensa y condiciones reales de campo.
-\item \textbf{Consolidaci\'on del Banco Soberano de Datos:} Integrar de forma prioritaria las primeras 1~000 fotograf\'ias capturadas en milpas salvadore\~nas a trav\'es del m\'odulo de contribuci\'on comunitaria, permitiendo un reentrenamiento focalizado para cerrar la brecha de dominio detectada en la evaluaci\'on fuera de fuente.
+\item \textbf{Consolidaci\'on del dataset colaborativo (propuesta):} Como meta propuesta, integrar de forma prioritaria las primeras 1~000 fotograf\'ias capturadas en milpas salvadore\~nas a trav\'es del m\'odulo de contribuci\'on, permitiendo un reentrenamiento focalizado para cerrar la brecha de dominio detectada en la evaluaci\'on fuera de fuente.
 \item \textbf{Anotaci\'on patom\'etrica para modelos ordinales de severidad:} Establecer un convenio t\'ecnico con fitopat\'ologos del CENTA para calificar un subconjunto de im\'agenes con escalas homologadas de severidad (Cobb modificada, Vieira, Brito), sentando las bases para cabezas de regresi\'on ordinal que predigan el grado de da\~no adem\'as de la clase.
 \item \textbf{Adopci\'on y custodia institucional en el Estado salvadore\~no:} Promover que el Ministerio de Agricultura y Ganader\'ia adopte formalmente el c\'odigo y pesos de DoctorMaiz bajo gobernanza de c\'odigo abierto, asegurando que el conocimiento generado pertenezca a la sociedad y no a intereses corporativos transnacionales.
 \end{enumerate}
@@ -33,9 +34,6 @@ La presente investigaci\'on consolida la transici\'on desde una prueba de concep
 \bibitem{ahmad2023a}
 Ahmad, A., El Gamal, A., \& Saraswat, D. (2023). Toward generalization of deep learning-based plant disease identification under controlled and field conditions. \textit{IEEE Access}, 11, 9042--9057.
 
-\bibitem{baya2024}
-Baya, J., et al. (2024). A mobile-based system for maize leaf disease detection and classification using machine learning algorithms and deep learning: A case study of ZeaWatch. \textit{Smart Agricultural Technology}, 7, 100412.
-
 \bibitem{bcr2023}
 Banco Central de Reserva de El Salvador (BCR). (2023). \textit{Revista Econ\'omica: Aporte Agropecuario al Producto Interno Bruto 2022-2023}. San Salvador: BCR.
 
@@ -44,9 +42,6 @@ Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal ``Enrique \'Alvarez C\'o
 
 \bibitem{deng2009}
 Deng, J., Dong, W., Socher, R., Li, L.-J., Li, K., \& Fei-Fei, L. (2009). ImageNet: A large-scale hierarchical image database. En \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)} (pp. 248--255).
-
-\bibitem{gulrajani2021}
-Gulrajani, I., \& Lopez-Paz, D. (2021). In search of lost domain generalization. En \textit{International Conference on Learning Representations (ICLR)}.
 
 \bibitem{howard2017}
 Howard, A. G., et al. (2017). MobileNets: Efficient convolutional neural networks for mobile vision applications. \textit{arXiv preprint arXiv:1704.04861}.
@@ -68,9 +63,6 @@ Ma, N., Zhang, X., Zheng, H.-T., \& Sun, J. (2018). ShuffleNet V2: Practical gui
 
 \bibitem{mag2023}
 Ministerio de Agricultura y Ganader\'ia (MAG). (2023). \textit{Anuario de Estad\'isticas Agropecuarias y Seguridad Alimentaria en El Salvador 2022-2023}. San Salvador: MAG / Direcci\'on General de Econom\'ia Agropecuaria.
-
-\bibitem{molnar2022}
-Molnar, C. (2022). \textit{Interpretable Machine Learning: A Guide for Making Black Box Models Explainable} (2nd ed.). Munich: Christoph Molnar.
 
 \bibitem{optuna2019}
 Akiba, T., Sano, S., Yanase, T., Ohta, T., \& Koyama, M. (2019). Optuna: A next-generation hyperparameter optimization framework. En \textit{ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)} (pp. 2623--2631).
@@ -124,19 +116,19 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 El c\'odigo fuente \'integro, los pesos exportados, los pipelines de entrenamiento y los artefactos de evaluaci\'on de \textbf{DoctorMaiz} se encuentran p\'ublicamente accesibles bajo licencias de c\'odigo abierto:
 
 \begin{itemize}
-\item \textbf{Clasificador Principal (Entrenamiento, HPO y Exportaci\'on):}\par
+\item \textbf{Clasificador (\textit{pipeline} de entrenamiento, evaluaci\'on y exportaci\'on):}\par
 \url{https://github.com/daiv05/maize-doctor-classifier}
-\item \textbf{Aplicaci\'on M\'ovil Nativa DoctorMaiz (React Native Offline):}\par
+\item \textbf{Aplicaci\'on m\'ovil \textbf{DoctorMaiz} (React Native, inferencia \textit{offline}):}\par
 \url{https://github.com/Edenilson-Molina/maize-doctor-app}
-\item \textbf{Segmentador Foliar YOLO (Detecci\'on y M\'ascaras de Instancia):}\par
+\item \textbf{Segmentador foliar (detecci\'on y segmentaci\'on de instancias de hoja):}\par
 \url{https://github.com/abner-rivas/maize-doctor-segmenter-leaf}
-\item \textbf{API de Sincronizaci\'on y Extensi\'on Centralizada:}\par
+\item \textbf{API (cuenta de usuario, sincronizaci\'on opcional y avisos de actualizaci\'on):}\par
 \url{https://github.com/daiv05/maize-doctor-api}
-\item \textbf{Sitio Web y Documentaci\'on T\'ecnica del Proyecto:}\par
+\item \textbf{Sitio web y documentaci\'on t\'ecnica:}\par
 \url{https://doctor-maiz.deras.dev/es}
-\item \textbf{Dataset Consolidado de 33K Im\'agenes en Hugging Face:}\par
+\item \textbf{Dataset consolidado en Hugging Face:}\par
 \url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}
-\item \textbf{Repositorio de Checkpoints y Modelos Exportados en Google Drive:}\par
+\item \textbf{Artefactos de evaluaci\'on y modelos exportados:}\par
 \url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
 \end{itemize}
 

@@ -10,6 +10,9 @@ hero:
     alt: DoctorMaiz
   actions:
     - theme: brand
+      text: Empezando
+      link: /es/guia/
+    - theme: alt
       text: Ver Datasets
       link: /es/datasets/
     - theme: alt
@@ -75,7 +78,7 @@ El problema es que en zonas rurales el acceso a asistencia técnica es limitado,
 
 > Conteos de la materialización vigente: **33 429 muestras elegibles** (3 551 lab + 29 878 campo real), después de ocho exclusiones verificadas. Las marcas "(pocos datos)" señalan las clases con menor soporte. La instantánea anterior de agosto contenía 33 438 y se conserva como registro histórico.
 
-> **Evolución histórica.** El corpus pasó de **31 622** a la instantánea ampliada de **33 438 imágenes** al incorporar cuatro datasets Roboflow. El manifest actual descubre 33 437 y deja 33 429 elegibles. Detalle en [Limpieza](/es/cleanup-and-ordered/), [EDA histórica](/es/exploratory-data-analysis/) y [pipeline vigente](/es/metodologia/pipeline-datos).
+> **Evolución histórica.** El corpus pasó de **31 623** a la instantánea ampliada de **33 438 imágenes** al incorporar cuatro datasets Roboflow. El manifest actual descubre 33 437 y deja 33 429 elegibles. Detalle en [Limpieza](/es/cleanup-and-ordered/), [EDA histórica](/es/exploratory-data-analysis/) y [pipeline vigente](/es/metodologia/pipeline-datos).
 
 
 ### Metodología

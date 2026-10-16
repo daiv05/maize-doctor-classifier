@@ -1,5 +1,7 @@
 # Auditoría de duplicados exactos por píxeles
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 ## Identidad y cobertura
 
 - Estado: complete; fecha UTC: 2026-09-29T18:20:00.910892+00:00.

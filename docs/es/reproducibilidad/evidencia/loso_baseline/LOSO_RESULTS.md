@@ -1,5 +1,7 @@
 # Resultado LOSO baseline EfficientNet-Lite0
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Fecha: 30 de septiembre de 2026. Se completaron **dos** entrenamientos seed 42,
 sin HPO, otras semillas ni otros folds. El [protocolo y sus hashes](LOSO_REPORT.md)
 se fijaron antes de entrenar. Para cada run se eligió `best.pth` únicamente por

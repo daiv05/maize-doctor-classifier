@@ -15,7 +15,7 @@ Para entender el alcance real del sistema desarrollado, basta comparar tres magn
 | **Baseline Lite0 `20260921_204608`** | **0.9480** | **97.81 %** | VIGENTE: desarrollo con `seed_42` estratificado. |
 | Lite0 desplegado `20260812_221429` | 0.9468 | 97.91 % | HISTÓRICO: aplicación móvil. |
 | Ensamble Soft Voting (3 modelos) | 0.9567 | 98.29 % | HISTÓRICO: test estratificado. |
-| CV agrupada por fuente, configuración base | 0.6026 ± 0.1240 | 79.69 % ± 11.95 pp | HISTÓRICO: cinco pliegues, 5–8 clases evaluables. |
+| CV agrupada por fuente, configuración base | 0.6026 (IC95 ±0.1240) | 79.69 % (IC95 ±11.95 pp) | HISTÓRICO: cinco pliegues, 5–8 clases evaluables. |
 
 La caída de la CV agrupada evidencia sensibilidad histórica al dominio de origen. No es LOSO ni el holdout `seed_42_source_grouped`, y no debe restarse directamente al baseline actual como si fuera una comparación pareada.
 
@@ -40,9 +40,9 @@ El siguiente análisis es **HISTÓRICO** y corresponde a la configuración enton
 
 Este análisis de dispersión nos dejó una lección metodológica muy valiosa:
 - Las mejoras obtenidas ajustando hiperparámetros o combinando modelos en ensamble oscilan entre 1 y 2 desviaciones estándar ($\pm 0.005$ a $+0.009$). Son mejoras útiles y bienvenidas, pero modestas.
-- En cambio, la decisión de **cómo partir los datos** (partición estratificada tradicional frente a partición agrupada por fuente) mueve la aguja en más de **66 desviaciones estándar** (una caída de 0.33).
+- En cambio, la decisión de **cómo partir los datos** (partición estratificada tradicional frente a partición agrupada por fuente) produce una caída de 0.33, unas **41 veces** la desviación muestral de los pliegues estratificados (0.0080; `kfold_estratificado_actual_pliegues.csv`).
 
-En aquel experimento, el protocolo tuvo un efecto mucho mayor que el ajuste fino. La cifra “66 desviaciones” es una comparación descriptiva entre estudios históricos, no un test causal.
+En aquel experimento, el protocolo tuvo un efecto mucho mayor que el ajuste fino. La comparación en desviaciones es descriptiva entre estudios históricos, no un test causal.
 
 ---
 

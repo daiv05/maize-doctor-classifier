@@ -14,7 +14,7 @@ Al evaluar el modelo desplegado (`EfficientNet-Lite0`), obtenemos dos cifras com
 |---|:---:|---|---|
 | **Rendimiento en prueba retenida** | **0.9468** | Partición estratificada estándar (5,015 fotos) | Rendimiento óptimo en condiciones y cámaras conocidas. |
 | **Ensamble en prueba retenida** | **0.9567** | Partición estratificada estándar (5,015 fotos) | Consenso multimodelo de máxima fidelidad diagnóstica. |
-| **Generalización entre fuentes** | **`0.6026 ± 0.1240`** | CV de cinco pliegues agrupada por procedencia | Macro-F1 evaluable; cada pliegue contiene 5–8 clases. |
+| **Generalización entre fuentes** | **`0.6026`** (IC95 ±0.1240) | CV de cinco pliegues agrupada por procedencia | Macro-F1 evaluable; cada pliegue contiene 5–8 clases. |
 
 La diferencia de aproximadamente **0.34 puntos** es evidencia histórica de cambio de dominio, pero no una estimación causal ni una comparación del baseline actual: las métricas proceden de protocolos y soportes distintos.
 
@@ -28,7 +28,7 @@ Para separar el impacto de los hiperparámetros del impacto de la partición de 
 
 | Configuración de hiperparámetros | Partición estratificada estándar | Partición agrupada por fuente | Caída de rendimiento |
 |---|:---:|:---:|:---:|
-| **Configuración de producción** | 0.9311 ± 0.0099 | **`0.6026 ± 0.1240`** | **−0.3286** |
+| **Configuración de producción** | 0.9311 (IC95 ±0.0099) | **`0.6026`** (IC95 ±0.1240) | **−0.3286** |
 | **Configuración de B0** | 0.9463 ± 0.0052 | 0.6499 ± 0.1508 | −0.2964 |
 | *Presencia de fuentes en validación* | *14 de 14 (100 % solapadas)* | *0 solapadas con entrenamiento* | — |
 

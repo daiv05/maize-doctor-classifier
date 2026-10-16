@@ -11,7 +11,7 @@ Llevar una arquitectura de aprendizaje profundo moderna a un teléfono móvil qu
 
 ## De PyTorch a TensorFlow Lite Int8
 
-El modelo final seleccionado para producción es **`efficientnet_lite0`**, una variante concebida para prescindir de activaciones complejas (como *swish* o *hard-swish*) y maximizar la compatibilidad con unidades de procesamiento de punto fijo en chips móviles.
+El modelo exportado a la app es **`efficientnet_lite0`** (checkpoint histórico `20260812_221429`), una variante concebida para prescindir de activaciones complejas (como *swish* o *hard-swish*) y maximizar la compatibilidad con unidades de procesamiento de punto fijo en chips móviles.
 
 | Modelo / Formato | Precisión Numérica | Tamaño en Disco | Latencia Mediana (CPU) | Retención de Macro F1 |
 |---|:---:|:---:|:---:|:---:|

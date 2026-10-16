@@ -1,6 +1,6 @@
 # Resultados históricos de optimización de hiperparámetros
 
-**Estado: HISTÓRICO.** Corresponde a los estudios anteriores de 15/25 trials y a la materialización de esa etapa. El HPO de 60 trials está pendiente.
+**Estado: HISTÓRICO.** Corresponde a los estudios anteriores de 15/25 trials y a la materialización de esa etapa. El HPO formal se cerró con 25 intentos (2026-09-24); ver [HPO formal](/es/experimentos/hpo).
 
 Uno de los resultados más ilustrativos de esta etapa fue descubrir que una configuración de hiperparámetros que resulta fantástica para un modelo puede perjudicar a otro, incluso si ambos pertenecen a la misma familia conceptual.
 

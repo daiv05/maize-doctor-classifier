@@ -1,5 +1,7 @@
 # Estabilidad entre semillas del baseline y de dos exclusiones de fuente
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Protocolo iniciado el 1 de octubre de 2026 en `dev-abner2`. La pregunta es doble:
 cuánto varía el baseline al cambiar la semilla de entrenamiento y si el resultado
 LOSO observado con la semilla 42 persiste en otras inicializaciones. Este estudio

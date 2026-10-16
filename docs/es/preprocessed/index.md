@@ -44,7 +44,7 @@ El dataset completo que se tiene a la fecha está lejos de ser uniforme, algunas
 | northern_corn_leaf_blight | 4774 | 1.3x |
 | healthy | 6118 | 1.0x |
 
-::: warning Cifras de la primera etapa (31 622 imágenes)
+::: warning Cifras de la primera etapa (31 623 imágenes)
 Esta tabla corresponde al split **anterior** a la ampliación de agosto. En la materialización vigente de 33 429 elegibles los ratios aproximados son `potassium_deficiency` **14.1x**, `nitrogen_deficiency` **10.3x**, `phosphorus_deficiency` **9.3x** y `gray_leaf_spot` **4.5x**.
 
 **La conclusión operativa no cambia:** son exactamente las mismas cuatro clases las que cruzan el umbral de 4x, y `common_rust` (3.9x) sigue justo por debajo. Al regenerar los splits con `make splits`, la composición de clases minoritarias es idéntica - solo se atenúa la magnitud de la corrección.

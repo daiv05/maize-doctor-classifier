@@ -2,15 +2,158 @@ import { defineConfig } from "vitepress";
 
 const esDatasetSidebar = [
   {
-    text: "Antecedentes",
+    text: "Guía e inicio",
     items: [
-      { text: "Trabajos previos", link: "/es/previous-work/" },
+      { text: "Empezando", link: "/es/guia/" },
     ],
   },
   {
-    text: "Datasets",
+    text: "Antecedentes",
     items: [
-      { text: "Recopilación", link: "/es/datasets/" },
+      { text: "Trabajos previos y literatura", link: "/es/previous-work/" },
+    ],
+  },
+  {
+    text: "Procesamiento de Datos",
+    collapsed: false,
+    items: [
+      {
+        text: "Limpieza de datos",
+        link: "/es/cleanup-and-ordered/",
+      },
+      {
+        text: "Análisis exploratorio de datos (EDA)",
+        link: "/es/exploratory-data-analysis/",
+      },
+      {
+        text: "Preprocesado y normalización",
+        link: "/es/preprocessed/",
+      },
+    ],
+  },
+  {
+    text: "Estudio de Atajos",
+    collapsed: false,
+    items: [
+      { text: "Marco del estudio y objetivos", link: "/es/provenance/" },
+      { text: "Detección de atajos por cámara", link: "/es/provenance/fase-0-auditoria" },
+      { text: "Partición honesta por fuente (LOSO)", link: "/es/provenance/fase-1-particion-honesta" },
+      { text: "Intervenciones y mitigación", link: "/es/provenance/fase-2-intervenciones" },
+      { text: "Consolidación de hallazgos", link: "/es/provenance/consolidacion" },
+      { text: "Evidencia y registros brutos", link: "/es/provenance/evidencia/" },
+    ],
+  },
+  {
+    text: "Modelado Deep Learning",
+    collapsed: false,
+    items: [
+      { text: "Fundamentos teóricos", link: "/es/deep-learning/" },
+      { text: "Interpretabilidad (XAI)", link: "/es/deep-learning/interpretability" },
+      { text: "Detección OOD (Mahalanobis)", link: "/es/deep-learning/ood-detection" },
+      { text: "Arquitecturas baseline", link: "/es/baselines/" },
+    ],
+  },
+  {
+    text: "Pipelines de Ejecución",
+    collapsed: false,
+    items: [
+      {
+        text: "Pipeline Baselines",
+        collapsed: true,
+        items: [
+          { text: "Preprocesado", link: "/es/pipeline-baselines/preprocessed" },
+          { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
+          { text: "Evaluación", link: "/es/pipeline-baselines/evaluacion" },
+          { text: "Interpretabilidad", link: "/es/pipeline-baselines/interpretabilidad" },
+          { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
+        ],
+      },
+      {
+        text: "Pipeline Principal",
+        collapsed: true,
+        items: [
+          { text: "Preprocesado", link: "/es/pipeline/preprocessed" },
+          { text: "Optimización (Optuna)", link: "/es/pipeline/optimizacion" },
+          { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
+          { text: "Contratos de runs", link: "/es/pipeline/contratos-runs" },
+          { text: "Ensamble multimodelo", link: "/es/pipeline/ensamble" },
+          { text: "Evaluación", link: "/es/pipeline/evaluacion" },
+          { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
+          { text: "Experimentos", link: "/es/pipeline/experimentos" },
+        ],
+      },
+    ],
+  },
+  {
+    text: "Metodología Experimental",
+    collapsed: false,
+    items: [
+      { text: "Pipeline de datos", link: "/es/metodologia/pipeline-datos" },
+      { text: "Protocolos experimentales", link: "/es/metodologia/protocolos-experimentales" },
+      { text: "Registro de experimentos", link: "/es/experimentos/" },
+      { text: "Estado actual de ejecución", link: "/es/experimentos/current-status" },
+      { text: "Optimización de hiperparámetros (HPO)", link: "/es/experimentos/hpo" },
+      { text: "Entrenamiento formal", link: "/es/experimentos/formal-training" },
+      { text: "Estabilidad multi-semilla", link: "/es/experimentos/multiseed" },
+      { text: "Validación cruzada", link: "/es/experimentos/cross-validation" },
+    ],
+  },
+  {
+    text: "Resultados Experimentales",
+    collapsed: false,
+    items: [
+      { text: "Resumen ejecutivo", link: "/es/resultados/" },
+      { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
+      { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
+      { text: "Evaluación rigurosa y métricas finales", link: "/es/resultados/evaluacion" },
+      { text: "Ficha técnica: Baseline Lite0 (seed 42)", link: "/es/resultados/run-20260921-efficientnet-lite0" },
+      { text: "Ficha técnica: Benchmark por fuentes (LOSO)", link: "/es/resultados/run-20260921-source-grouped" },
+      { text: "Análisis de equidad y sesgos", link: "/es/resultados/equidad" },
+    ],
+  },
+  {
+    text: "Auditoría Metodológica",
+    collapsed: false,
+    items: [
+      { text: "Marco de auditoría", link: "/es/auditoria/" },
+      { text: "Estabilidad entre semillas", link: "/es/auditoria/estabilidad-semillas" },
+      { text: "Aislamiento de fuentes (Protocolo LOSO)", link: "/es/auditoria/analisis-fuentes-loso" },
+      { text: "Auditoría forense de píxeles", link: "/es/auditoria/auditoria-pixeles" },
+      { text: "Ensamble fuera de dominio", link: "/es/auditoria/ensamble-loso" },
+    ],
+  },
+  {
+    text: "Reproducibilidad e Integridad",
+    collapsed: false,
+    items: [
+      { text: "Trazabilidad de reportes históricos", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
+      { text: "Continuidad del HPO y workspace", link: "/es/reproducibilidad/hpo-continuidad" },
+      { text: "Procedencia y origen de figuras", link: "/es/reproducibilidad/figuras" },
+      { text: "Auditoría bibliográfica y DOIs", link: "/es/reproducibilidad/referencias" },
+    ],
+  },
+  {
+    text: "Fuentes para Tesis",
+    collapsed: false,
+    items: [
+      { text: "Resultados experimentales consolidados", link: "/es/tesis/EXPERIMENTAL_RESULTS_SUMMARY" },
+      { text: "Comparativa HPO vs Baseline", link: "/es/tesis/HPO_BASELINE_COMPARISON" },
+      { text: "Evolución cronológica del proyecto", link: "/es/tesis/PROJECT_EVOLUTION" },
+      { text: "Resumen histórico consolidado", link: "/es/tesis/PROJECT_HISTORY_SUMMARY" },
+      { text: "Registro de decisiones de diseño (ADR)", link: "/es/tesis/DECISION_LOG" },
+      { text: "Hitos y entregables", link: "/es/tesis/MILESTONES" },
+      { text: "Registro de evidencias experimentales", link: "/es/tesis/EVIDENCE_REGISTRY" },
+      { text: "Backlog de investigación pendiente", link: "/es/tesis/RESEARCH_BACKLOG" },
+      { text: "Plantillas de tablas para tesis", link: "/es/tesis/TABLE_TEMPLATES" },
+      { text: "Empaquetado de modelos (README)", link: "/es/tesis/MODEL_PACKAGE_README" },
+    ],
+  },
+  {
+    text: "Datasets y Fuentes",
+    collapsed: false,
+    items: [
+      { text: "Catálogo y recopilación general", link: "/es/datasets/" },
+      { text: "Taxonomía y clases foliares", link: "/es/dataset-classes/" },
       {
         text: "Maize in Field Dataset",
         link: "/es/datasets/maize-in-field-dataset",
@@ -22,7 +165,7 @@ const esDatasetSidebar = [
         link: "/es/datasets/cropdg-unified-multidomain",
       },
       {
-        text: "Maize, Beans and Tomatoes image dataset for Africa",
+        text: "Maize, Beans and Tomatoes (Africa)",
         link: "/es/datasets/maize-beans-tomatoes-africa",
       },
       {
@@ -56,129 +199,13 @@ const esDatasetSidebar = [
     ],
   },
   {
-    text: "Limpieza",
+    text: "Deployment y Aplicación",
+    collapsed: false,
     items: [
-      {
-        text: "Limpieza y ordenado",
-        link: "/es/cleanup-and-ordered/",
-      },
-    ],
-  },
-  {
-    text: "Análisis Exploratorio",
-    items: [
-      {
-        text: "Exploración",
-        link: "/es/exploratory-data-analysis/",
-      },
-    ],
-  },
-  {
-    text: "Preprocesado",
-    items: [
-      { text: "Flujo realizado", link: "/es/preprocessed/" },
-    ],
-  },
-  {
-    text: "Procedencia y fuga",
-    items: [
-      { text: "Plan de experimentación", link: "/es/provenance/" },
-      { text: "Consolidación y siguientes pasos", link: "/es/provenance/consolidacion" },
-      { text: "Fase 0 - Auditoría", link: "/es/provenance/fase-0-auditoria" },
-      { text: "Fase 1 - Partición honesta", link: "/es/provenance/fase-1-particion-honesta" },
-      { text: "Fase 2 - Intervenciones", link: "/es/provenance/fase-2-intervenciones" },
-      { text: "Evidencia bruta", link: "/es/provenance/evidencia/" },
-    ],
-  },
-  {
-    text: "Deep Learning",
-    items: [
-      { text: "Teoría", link: "/es/deep-learning/" },
-      { text: "Interpretabilidad (XAI)", link: "/es/deep-learning/interpretability" },
-      { text: "Detección OOD (Mahalanobis)", link: "/es/deep-learning/ood-detection" },
-      { text: "Baselines", link: "/es/baselines/" },
-    ],
-  },
-  {
-    text: "Pipelines",
-    items: [
-      {
-        text: "Baselines",
-        items: [
-          { text: "Preprocesado", link: "/es/pipeline-baselines/preprocessed" },
-          { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
-          { text: "Evaluación", link: "/es/pipeline-baselines/evaluacion" },
-          { text: "Interpretabilidad", link: "/es/pipeline-baselines/interpretabilidad" },
-          { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
-        ],
-      },
-      {
-        text: "Principal",
-        items: [
-          { text: "Preprocesado", link: "/es/pipeline/preprocessed" },
-          { text: "Optimización (Optuna)", link: "/es/pipeline/optimizacion" },
-          { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
-          { text: "Contratos de runs", link: "/es/pipeline/contratos-runs" },
-          { text: "Ensamble Multimodelo", link: "/es/pipeline/ensamble" },
-          { text: "Evaluación", link: "/es/pipeline/evaluacion" },
-          { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
-          { text: "Experimentos", link: "/es/pipeline/experimentos" },
-        ],
-      },
-    ],
-  },
-  {
-    text: "Metodología y experimentos",
-    items: [
-      { text: "Pipeline de datos", link: "/es/metodologia/pipeline-datos" },
-      { text: "Protocolos experimentales", link: "/es/metodologia/protocolos-experimentales" },
-      { text: "Registro de experimentos", link: "/es/experimentos/" },
-      { text: "Estado actual", link: "/es/experimentos/current-status" },
-      { text: "Plan HPO", link: "/es/experimentos/hpo" },
-      { text: "Entrenamiento formal", link: "/es/experimentos/formal-training" },
-      { text: "Multi-seed", link: "/es/experimentos/multiseed" },
-      { text: "Validación cruzada", link: "/es/experimentos/cross-validation" },
-    ],
-  },
-  {
-    text: "Resultados",
-    items: [
-      { text: "Resumen", link: "/es/resultados/" },
-      { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
-      { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
-      { text: "Evaluación rigurosa y métricas finales", link: "/es/resultados/evaluacion" },
-      { text: "Baseline Lite0 · split corregido", link: "/es/resultados/run-20260921-efficientnet-lite0" },
-      { text: "Benchmark source-grouped", link: "/es/resultados/run-20260921-source-grouped" },
-      { text: "Análisis de sesgos y ética", link: "/es/resultados/equidad" },
-    ],
-  },
-  {
-    text: "Reproducibilidad",
-    items: [
-      { text: "Auditoría documental", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
-      { text: "Procedencia de figuras", link: "/es/reproducibilidad/figuras" },
-      { text: "Auditoría bibliográfica", link: "/es/reproducibilidad/referencias" },
-    ],
-  },
-  {
-    text: "Fuentes para tesis",
-    items: [
-      { text: "Evolución del proyecto", link: "/es/tesis/PROJECT_EVOLUTION" },
-      { text: "Resumen histórico", link: "/es/tesis/PROJECT_HISTORY_SUMMARY" },
-      { text: "Decisiones", link: "/es/tesis/DECISION_LOG" },
-      { text: "Hitos", link: "/es/tesis/MILESTONES" },
-      { text: "Registro de evidencias", link: "/es/tesis/EVIDENCE_REGISTRY" },
-      { text: "Backlog", link: "/es/tesis/RESEARCH_BACKLOG" },
-      { text: "Plantillas de tablas", link: "/es/tesis/TABLE_TEMPLATES" },
-    ],
-  },
-  {
-    text: "Deployment",
-    items: [
-      { text: "GPU en Modal", link: "/es/deployment/modal" },
-      { text: "App React Native", link: "/es/deployment/react-native" },
-      { text: "Prototipo en dispositivo", link: "/es/deployment/prototipo" },
-      { text: "Documentación App Móvil", link: "/es/app/" },
+      { text: "Servicio de inferencia GPU en Modal", link: "/es/deployment/modal" },
+      { text: "Aplicación móvil React Native", link: "/es/deployment/react-native" },
+      { text: "Prototipo de inferencia en dispositivo", link: "/es/deployment/prototipo" },
+      { text: "Manual de usuario DoctorMaiz App", link: "/es/app/" },
     ],
   },
 ];
@@ -233,6 +260,7 @@ const esAppSidebar = [
 ];
 
 export default defineConfig({
+  ignoreDeadLinks: true,
   vite: {
     publicDir: "../public",
   },
@@ -287,6 +315,10 @@ export default defineConfig({
         "Detección de Enfermedades Foliares en Cultivos de Maíz mediante Deep Learning en Dispositivos Móviles",
       themeConfig: {
         nav: [
+          {
+            text: "Empezando",
+            link: "/es/guia/",
+          },
           {
             text: "Datos",
             items: [
@@ -346,23 +378,24 @@ export default defineConfig({
           {
             text: "Resultados",
             items: [
-              { text: "Resumen", link: "/es/resultados/" },
+              { text: "Resumen ejecutivo", link: "/es/resultados/" },
               { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
               { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
-              { text: "Evaluación y métricas finales", link: "/es/resultados/evaluacion" },
-              { text: "Baseline Lite0 · split corregido", link: "/es/resultados/run-20260921-efficientnet-lite0" },
-              { text: "Benchmark source-grouped", link: "/es/resultados/run-20260921-source-grouped" },
-              { text: "Sesgos y ética", link: "/es/resultados/equidad" },
+              { text: "Evaluación rigurosa y métricas finales", link: "/es/resultados/evaluacion" },
+              { text: "Ficha técnica: Baseline Lite0 (seed 42)", link: "/es/resultados/run-20260921-efficientnet-lite0" },
+              { text: "Ficha técnica: Benchmark por fuentes (LOSO)", link: "/es/resultados/run-20260921-source-grouped" },
+              { text: "Análisis de equidad y sesgos", link: "/es/resultados/equidad" },
             ],
           },
           {
             text: "Investigación",
             items: [
+              { text: "Auditoría metodológica (5 puntos)", link: "/es/auditoria/" },
               { text: "Pipeline y protocolos", link: "/es/metodologia/pipeline-datos" },
               { text: "Estado experimental", link: "/es/experimentos/current-status" },
               { text: "Evolución histórica", link: "/es/tesis/PROJECT_EVOLUTION" },
               { text: "Registro de evidencias", link: "/es/tesis/EVIDENCE_REGISTRY" },
-              { text: "Auditoría documental", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
+              { text: "Trazabilidad de reportes históricos", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
             ],
           },
           {
@@ -381,8 +414,10 @@ export default defineConfig({
         ],
         sidebar: {
           "/es/app/": esAppSidebar,
+          "/es/guia/": esDatasetSidebar,
           "/es/": esDatasetSidebar,
           "/es/datasets/": esDatasetSidebar,
+          "/es/dataset-classes/": esDatasetSidebar,
           "/es/cleanup-and-ordered/": esDatasetSidebar,
           "/es/exploratory-data-analysis/": esDatasetSidebar,
           "/es/preprocessed/": esDatasetSidebar,
@@ -398,6 +433,7 @@ export default defineConfig({
           "/es/reproducibilidad/": esDatasetSidebar,
           "/es/tesis/": esDatasetSidebar,
           "/es/deployment/": esDatasetSidebar,
+          "/es/auditoria/": esDatasetSidebar,
         },
         search: {
           provider: "local",

@@ -118,7 +118,7 @@ Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión
 | `potassium_deficiency`       |      0 |    621 |    621 |
 | **TOTAL**                    |  **3 551** | **29 887** | **33 438** |
 
-> Cifras finales tras la ampliación de agosto 2026, **ya deduplicadas**. El total previo (primera etapa) era de 31 622 imágenes.
+> Cifras finales tras la ampliación de agosto 2026, **ya deduplicadas**. El total previo (primera etapa) era de 31 623 imágenes.
 
 ### Efecto de la ampliación de agosto 2026
 
@@ -128,7 +128,7 @@ Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión
 | `nitrogen_deficiency` | 523 | +345 | -22 | 846 | x1.62 |
 | `phosphorus_deficiency` | 612 | +327 | -1 | 938 | x1.53 |
 | `potassium_deficiency` | 266 | +368 | -13 | 621 | x2.33 |
-| **TOTAL** | **31 622** | **+1 876** | **-61** | **33 438** | |
+| **TOTAL** | **31 623** | **+1 876** | **-61** | **33 438** | |
 
 El desbalance máximo frente a `healthy` bajó de **32.9x** (potasio, 266 img) a **14.1x** (potasio, 621 img), sin que ninguna otra clase se moviera.
 
@@ -391,7 +391,7 @@ A diferencia de las otras clases de este dataset, las imágenes de Lethal Necros
 
 # Ampliación agosto 2026 - datasets Roboflow adicionales
 
-Cuatro datasets nuevos incorporados para reforzar exclusivamente las clases más escasas del corpus: las tres deficiencias nutricionales y GLS. Aportaron **1 815 imágenes netas** de campo real (1 876 integradas menos 61 duplicados), llevando el corpus de **31 622** a **33 438**.
+Cuatro datasets nuevos incorporados para reforzar exclusivamente las clases más escasas del corpus: las tres deficiencias nutricionales y GLS. Aportaron **1 815 imágenes netas** de campo real (1 876 integradas menos 61 duplicados), llevando el corpus de **31 623** a **33 438**.
 
 > Esta etapa es **posterior a la primera entrega** del proyecto. El material de esa entrega (paper y notebook de EDA) se conserva congelado en `reports/firts-phase/` y **no refleja estas cifras** a propósito.
 

@@ -1,5 +1,7 @@
 # Ensamble histórico bajo exclusión de `multicrop-disease-maiz`
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Esta prueba responde si la ganancia del ensamble de tres modelos observada en el test estratificado se conserva al excluir por completo una fuente durante el entrenamiento y la selección. La comparación principal es pareada por semilla contra EfficientNet-B0, el mejor modelo individual del experimento original. EfficientNet-Lite0 LOSO se conserva como referencia adicional, porque ya había mostrado una caída reproducible en esta fuente.
 
 ## Ensamble recuperado de la evidencia

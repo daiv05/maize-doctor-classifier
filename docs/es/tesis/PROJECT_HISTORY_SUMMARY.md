@@ -14,4 +14,4 @@ El incidente del 21 de septiembre terminó de aclarar la metodología. Tratar on
 
 El punto de corte actual es EfficientNet-Lite0 `20260921_204608`, entrenado sobre `seed_42` estratificado por clase+ambiente: 23 400/5 014/5 015, mejor época 39, validación Macro-F1 0.9561, test Macro-F1 0.9480 y accuracy 97.81 %. Sigue siendo un baseline de desarrollo, no una proclamación de producción: mezcla fuentes conocidas y aún no tiene auditoría perceptual, validación cross-source final ni exportación/dispositivo del nuevo checkpoint.
 
-La siguiente fase es un estudio Optuna de 60 trials con test cerrado, seguido de entrenamiento formal, multi-seed y validaciones estratificada, source-grouped y LOSO claramente separadas.
+El HPO formal de Lite0 se cerró con 25 intentos y test único del ganador (2026-09-24). Después, el multi-seed del baseline y la validación LOSO se cerraron el 2026-10-01 con tres semillas, manteniendo separadas las validaciones estratificada, source-grouped y LOSO.

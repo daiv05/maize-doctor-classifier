@@ -5,7 +5,7 @@ El EDA busca responder tres preguntas antes de diseñar el pipeline de entrenami
 El análisis completo y reproducible, con todo el código, está en la notebook [`notebooks/01_eda.ipynb`](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb). Esta página resume los hallazgos y las decisiones que se derivaron de ellos.
 
 ::: warning Instantánea histórica — agosto de 2026
-Esta página y sus figuras reflejan el corpus ampliado de **33 438 imágenes**, anterior a las exclusiones contractuales vigentes. No es el EDA de `master_manifest.csv` actual, que contiene 33 429 muestras elegibles. Los cambios históricos llevaron el dataset desde **31 622** imágenes y el desbalance máximo desde **32.9x** a **14.1x**.
+Esta página y sus figuras reflejan el corpus ampliado de **33 438 imágenes**, anterior a las exclusiones contractuales vigentes. No es el EDA de `master_manifest.csv` actual, que contiene 33 429 muestras elegibles. Los cambios históricos llevaron el dataset desde **31 623** imágenes y el desbalance máximo desde **32.9x** a **14.1x**.
 
 La versión de la primera entrega se conserva congelada en `reports/firts-phase/` (notebook `.ipynb` + salida estática `.html`). El detalle del procesamiento está en [Limpieza y ordenado](/es/cleanup-and-ordered/).
 :::

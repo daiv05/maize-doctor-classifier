@@ -1,5 +1,7 @@
 # Diferencia entre dataset.yaml y el lock de seed_42
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Fecha de revisión: 29 de septiembre de 2026. Esta nota se refiere al split
 vigente seed_42, no a una nueva materialización.
 

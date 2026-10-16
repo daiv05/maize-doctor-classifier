@@ -1,6 +1,6 @@
 # Optimización histórica de hiperparámetros (Optuna)
 
-**Estado: HISTÓRICO.** Esta página describe los estudios anteriores de 15/25 trials. No documenta el estudio nuevo de 60 trials, que permanece [planificado](/es/experimentos/hpo).
+**Estado: HISTÓRICO.** Esta página describe los estudios anteriores de 15/25 trials. No documenta el HPO formal de 25 intentos, cerrado el 2026-09-24; ver [HPO formal](/es/experimentos/hpo).
 
 Ajustar a mano los hiperparámetros de una red neuronal —la tasa de aprendizaje, el tamaño del lote, el decaimiento de pesos— suele ser una pérdida de tiempo y recursos. Si se elige una tasa muy alta, el modelo diverge y no aprende; si es muy baja, el entrenamiento avanza con lentitud excesiva y puede estancarse en mínimos locales subóptimos.
 

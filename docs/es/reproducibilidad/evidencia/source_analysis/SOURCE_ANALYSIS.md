@@ -1,5 +1,7 @@
 # Distribución y rendimiento por fuente — `seed_42`
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Fecha: 29 de septiembre de 2026. Fase descriptiva, sin entrenamiento ni cambios en
 `seed_42`. Corpus: `corn-clean:/clean`; particiones congeladas:
 `corn-outputs:/splits/seed_42`. Se analizaron 33 429 muestras elegibles

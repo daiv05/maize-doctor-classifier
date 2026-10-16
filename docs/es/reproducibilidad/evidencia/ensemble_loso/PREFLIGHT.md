@@ -1,5 +1,7 @@
 # Preflight del ensamble histórico bajo LOSO multicrop
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Auditoría previa a cualquier entrenamiento o inferencia final (2 de octubre de 2026).
 
 El ensamble vinculado al delta citado es el de `docs/es/resultados/evidencia/ensamble_resumen.json` (SHA-256 `dcafbb4c21e2d69646b8a04cd1bbf425474b615f5eb6b44d594abd469b6f90c2`): `efficientnet_lite0` run `20260812_221429`, `efficientnet_b0` run `20260910_170120` y `shufflenet_v2_x1_0` run `20260910_184521`. Promedia las probabilidades softmax con peso `1/3` para cada miembro y decide por `argmax`. Su Macro-F1 de test estratificado fue `0.9566569450594972` frente al mejor individual B0 `0.9483330101876505`: delta exacto `0.008323934871846683` (el JSON redondea a `0.0083`). Se probó sobre 5,015 imágenes de una materialización histórica, no en LOSO.

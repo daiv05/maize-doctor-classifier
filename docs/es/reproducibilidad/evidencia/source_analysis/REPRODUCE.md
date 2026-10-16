@@ -1,5 +1,7 @@
 # Reproducción local del análisis por fuente
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Los CSV de predicciones usados están copiados en este directorio. Sus SHA-256
 figuran en `source_analysis_summary.json`. Los manifests congelados deben
 descargarse de `corn-outputs:/splits/seed_42` sin editarlos; el script comprueba

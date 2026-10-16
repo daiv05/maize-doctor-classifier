@@ -1,5 +1,7 @@
 # LOSO baseline EfficientNet-Lite0: protocolo predefinido
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 Estado al 30 de septiembre de 2026: **dos entrenamientos y dos evaluaciones
 externas completados; sin jobs activos**.
 Fuentes predefinidas: `maize-diseases` y `multicrop-disease-maiz`. No es HPO,

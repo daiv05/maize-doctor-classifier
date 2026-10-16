@@ -211,9 +211,9 @@ Los rangos siguientes provienen de `HyperparameterSpace` y `TuningObjective`; no
 
 El scheduler es coseno fijo y no forma parte del espacio. `dropout` tampoco está expuesto por la implementación de tuning; no debe aparecer como parámetro buscado hasta que el código lo soporte. Cada trial usa `seed_dataset + trial.number`, early stopping y reporte por época al pruner.
 
-## Comando planificado
+## Comando planificado (superado)
 
-Validado contra `make help` y el parser actual; no ejecutado:
+Este comando correspondía al presupuesto original de 60 intentos, que fue reducido a 25 por la enmienda. No debe ejecutarse. Se conserva como registro del plan inicial. Validado contra `make help` y el parser actual; no ejecutado:
 
 ```bash
 make tune-main MAIN_MODELS=efficientnet_lite0 N_TRIALS=60 \

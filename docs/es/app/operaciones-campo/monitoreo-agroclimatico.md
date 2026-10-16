@@ -32,7 +32,7 @@ Al tocar cualquiera de las 4 tarjetas o el distintivo inferior en la pantalla pr
 
 ### 1. Temperatura Ambiental (°C)
 - **Rango de Alerta Máxima:** **20 °C a 28 °C**
-- **Impacto Agronómico:** Es la ventana térmica óptima para la germinación y multiplicación de esporas de **Roya Común (*Puccinia sorghi*)** y **Tizón Foliar (*Bipolaris maydis*)**. 
+- **Impacto Agronómico:** Es la ventana térmica óptima para la germinación y multiplicación de esporas de **Roya Común (*Puccinia sorghi*)** y **Tizón Foliar (*Exserohilum turcicum*)**. 
 - **Recomendación en Lote:** Si la temperatura de tu zona se mantiene en este rango durante varios días con noches frescas, inspecciona con lupa el envés de las hojas basales e intermedias antes de que aparezcan pústulas generalizadas.
 
 ### 2. Humedad Relativa del Aire (%)

@@ -99,7 +99,7 @@ Las tres cifras de prueba se recomputan de forma exacta desde las predicciones p
 
 ## 5. Desglose de Rendimiento por Clase Fitosanitaria
 
-Desempeño detallado sobre las 9 clases en `test.csv` (Precision / Recall / $F_1$-Score):
+Desempeño detallado sobre las 9 clases (Precision / Recall / $F_1$-Score). Nota: el `test.csv` de `outputs-remote/splits/seed_42` tiene 338 `common_rust` y 290 `gray_leaf_spot`, mientras que las predicciones del run `20260921_204608` tienen 339 y 289. Esta diferencia no está resuelta en la documentación.
 
 | Clase Agronómica | Muestras Test | **Lite0** ($F_1$) | B0 ($F_1$) | ShuffleNet-V2 ($F_1$) | Diagnóstico Agronómico |
 |---|:---:|:---:|:---:|:---:|---|

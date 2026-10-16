@@ -5,9 +5,9 @@
 El desarrollo computacional del proyecto se articul\'o en una arquitectura h\'ibrida que desacopla la fase de entrenamiento a gran escala en la nube (\textit{Cloud Training}) de la fase de operaci\'on local en el tel\'efono (\textit{Edge Inference}).
 
 \subsection{Infraestructura de C\'omputo y Entrenamiento en la Nube}
-Los modelos se entrenaron sobre instancias aceleradas por hardware en la plataforma Modal, empleando unidades de procesamiento gr\'afico \textbf{NVIDIA A10G} (24~GB VRAM GDDR6, 125 TFLOPS de rendimiento tensorial) montadas sobre entornos Linux con CUDA 12.1 y PyTorch 2.3. Se aplic\'o precisi\'on mixta autom\'atica (\textit{AMP bfloat16}) para maximizar el ancho de banda y la saturaci\'on de memoria.
+Los modelos se entrenaron sobre instancias aceleradas por hardware en la plataforma Modal, empleando unidades de procesamiento gr\'afico \textbf{NVIDIA A10G} (24~GB VRAM GDDR6, 125 TFLOPS de rendimiento tensorial) montadas sobre entornos Linux con CUDA 12.6 y PyTorch 2.12.1. Se aplic\'o precisi\'on mixta autom\'atica (\textit{AMP bfloat16}) para maximizar el ancho de banda y la saturaci\'on de memoria.
 
-El r\'egimen de entrenamiento incorpor\'o un programador de tasa de aprendizaje por recocido cosenoidal con calentamiento lineal (\textit{Cosine Annealing with Warmup}) durante tres \'epocas iniciales, estabilizando los pesos procedentes de ImageNet antes de permitir gradientes elevados. Como salvaguarda frente al sobreajuste, se aplic\'o parada temprana (\textit{Early Stopping}) con una paciencia de 8 \'epocas sobre el Macro $F_1$ de validaci\'on (Figura~\ref{fig:convergencia_entrenamiento}).
+El r\'egimen de entrenamiento incorpor\'o un programador de tasa de aprendizaje por recocido cosenoidal con calentamiento lineal (\textit{Cosine Annealing with Warmup}) durante tres \'epocas iniciales, estabilizando los pesos procedentes de ImageNet \cite{deng2009} antes de permitir gradientes elevados. Como salvaguarda frente al sobreajuste, se aplic\'o parada temprana (\textit{Early Stopping}) con una paciencia de 8 \'epocas sobre el Macro $F_1$ de validaci\'on (Figura~\ref{fig:convergencia_entrenamiento}).
 
 \begin{figure}[H]
 \centering
@@ -69,7 +69,7 @@ Suavizado de Etiquetas & 0.10 & 0.075 & Valor de b\'usqueda \\
 
 \subsection{Rendimiento del modelo: ensamble y bioseguridad}
 
-El ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) super\'o a todas las arquitecturas individuales en la totalidad de las m\'etricas de evaluaci\'on (Tabla~\ref{tab:resultados_ensamble_c3} y Figura~\ref{fig:comparativa_ensamble_bar}).
+El ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) super\'o a las arquitecturas individuales en la partici\'on estratificada hist\'orica (Tabla~\ref{tab:resultados_ensamble_c3} y Figura~\ref{fig:comparativa_ensamble_bar}). Este resultado es hist\'orico, de una sola semilla y en una partici\'on que mezcla fuentes; bajo validaci\'on con fuente no vista la ventaja es mixta (sección de generalizaci\'on).
 
 \begin{table}[H]
 \caption{Desempe\~no cuantitativo del Ensamble vs. Modelos Individuales en Prueba (5~015 im\'agenes)}
@@ -77,18 +77,18 @@ El ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) super\'o a
 \centering
 \small
 \begin{singlespace}
-\begin{tabular}{lcccc}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.2cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
 \toprule
 \textbf{Arquitectura / Modelo} & \textbf{Exactitud (Accuracy)} & \textbf{Macro $F_1$} & \textbf{Precision} & \textbf{Recall} \\
 \midrule
 ShuffleNet-V2-x1.0 & 97.31\% & 0.9330 & 0.9388 & 0.9298 \\
-EfficientNet-Lite0 (Referencia oficial, base de desarrollo) & 97.81\% & 0.9480 & 0.9513 & 0.9467 \\
+EfficientNet-Lite0 (baseline de desarrollo vigente, \texttt{20260921\allowbreak{}\_204608}) & 97.81\% & 0.9480 & 0.9513 & 0.9467 \\
 EfficientNet-B0 (Referencia Individual) & 97.97\% & 0.9483 & 0.9589 & 0.9400 \\
 \textbf{Ensamble Heterog\'eneo (Soft Voting)} & \textbf{98.29\%} & \textbf{0.9567} & \textbf{0.9642} & \textbf{0.9506} \\
 \midrule
-\textit{Ganancia neta vs. Mejor Individual} & \textit{+0.32 pp} & \textit{+0.84 pp} & \textit{+0.53 pp} & \textbf{\textit{+1.06 pp}} \\
+\textit{Ganancia neta vs. Mejor Individual (hist\'orica)} & \textit{+0.32 pp} & \textit{+0.83 pp} & \textit{+0.52 pp} & \textbf{\textit{+1.06 pp}} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{singlespace}
 \end{table}
 
@@ -108,7 +108,7 @@ El hallazgo de mayor trascendencia agron\'omica reside en el \textbf{Macro Recal
 \label{fig:matriz_ensamble}
 \end{figure}
 
-Asimismo, se resolvi\'o definitivamente el cuello de botella hist\'orico de la primera fase: la \textbf{deficiencia de potasio}, que previamente colapsaba en 0.49, ascendi\'o a \textbf{0.8475} en el ensamble y a 0.8242 en Lite0. Esta mejora coincide con la incorporaci\'on de nuevos repositorios y con la p\'erdida ponderada \texttt{sqrt\_inverse}, pero no se aisl\'o experimentalmente la contribuci\'on de cada factor.
+Asimismo, la \textbf{deficiencia de potasio}, que en una evaluaci\'on previa de la primera fase alcanzaba 0.49 (protocolo y soporte distintos), subi\'o a \textbf{0.8475} en el ensamble hist\'orico y a 0.8242 en Lite0 vigente. Esta mejora coincide con la incorporaci\'on de nuevos repositorios y con la p\'erdida ponderada \texttt{sqrt\_inverse}, pero no se aisl\'o experimentalmente la contribuci\'on de cada factor.
 
 \begin{table}[H]
 \caption{Desglose de rendimiento agron\'omico por clase en el conjunto de prueba independiente}
@@ -146,16 +146,16 @@ Para poner a prueba los l\'imites del sistema frente al cambio de dominio, se di
 \centering
 \small
 \begin{singlespace}
-\begin{tabular}{lccc}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.8cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
 \toprule
 \textbf{Configuraci\'on de Red} & \textbf{CV Estratificada (5 folds)} & \textbf{CV Agrupada por Fuente} & \textbf{Ca\'ida Neta ($\Delta$)} \\
 \midrule
 Configuraci\'on Base & $0.9311 \pm 0.0099$ & $\mathbf{0.6026 \pm 0.1240}$ & $\mathbf{-0.3286}$ \\
 Configuraci\'on B0 & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
 \midrule
-\textit{Fuentes en Validaci\'on} & \textit{11 de 11 (100\% solapadas)} & \textit{0 solapadas con entrenamiento} & — \\
+\multicolumn{4}{p{\textwidth}}{\textit{Fuentes en validaci\'on: repositorios solapados con entrenamiento en la partici\'on hist\'orica; 0 solapados con entrenamiento en la agrupada.}} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{singlespace}
 \end{table}
 
@@ -177,13 +177,32 @@ Configuraci\'on B0 & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
 \caption{Impacto de la partici\'on frente a la optimizaci\'on algor\'itmica.}
 \end{figure}
 
-\noindent\textbf{Hallazgo principal:} \textbf{El cambio de protocolo de partici\'on ($-0.3286$ en Macro $F_1$) es considerablemente mayor que el efecto medido del ajuste de hiperpar\'ametros ($+0.0012$ en validaci\'on)}. Mientras la validaci\'on estratificada muestra un intervalo estrecho ($\pm 0.0099$), al evaluar fuera de fuente el Macro $F_1$ baja a $0.6026 \pm 0.1240$, calculado sobre las clases evaluables en cada pliegue.
+\noindent\textbf{Hallazgo principal (hist\'orico):} \textbf{En la validaci\'on cruzada de cinco pliegues, el cambio de protocolo de partici\'on ($-0.3286$ en Macro $F_1$ sobre la misma escala) es considerablemente mayor que el efecto del ajuste de hiperpar\'ametros ($+0.0152$, de 0.9311 a 0.9463)}. El $-0.3286$ compara 9 clases en la partici\'on estratificada con el macro evaluable por pliegue en la agrupada, por lo que no es una resta pareada exacta; el valor pareado es $-0.4952$ (0.9311 frente a 0.4359). El ajuste en validaci\'on del HPO fue de $+0.0012$. Mientras la validaci\'on estratificada muestra un intervalo estrecho ($\pm 0.0099$), al evaluar fuera de fuente el Macro $F_1$ evaluable baja a $0.6026$ (IC95 $\pm 0.1240$), calculado sobre las clases evaluables en cada pliegue.
 
-La variabilidad entre tres semillas en la configuraci\'on oficial es de $\sigma = 0.0049$ (media $0.9430$), por lo que la diferencia de partici\'on equivale a unas 60 desviaciones est\'andar (Figura~\ref{fig:sigmas_c3}). Este resultado es consistente con que las redes entrenadas sobre estos repositorios p\'ublicos dependen en parte de la firma visual de cada fuente, aunque el experimento no permite atribuir la ca\'ida a un \'unico factor.
+La variabilidad entre tres semillas en la configuraci\'on de desarrollo es de $\sigma = 0.0052$ (media $0.9435$, $\sigma$ muestral con $n=3$), por lo que la diferencia de partici\'on hist\'orica equivale a unas 64 desviaciones est\'andar (Figura~\ref{fig:sigmas_c3}). Este resultado es consistente con que las redes entrenadas sobre estos repositorios p\'ublicos dependen en parte de la firma visual de cada fuente, aunque el experimento no permite atribuir la ca\'ida a un \'unico factor.
+
+\begin{table}[H]
+\caption{Evaluaci\'on LOSO con tres semillas: Macro $F_1$ y exactitud en la fuente retenida}
+\label{tab:loso_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.6cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
+\toprule
+\textbf{Fuente retenida} & \textbf{Macro $F_1$ (media $\pm$ SD)} & \textbf{Exactitud (media $\pm$ SD)} & \textbf{Semillas} \\
+\midrule
+\texttt{maize-diseases} & 0.9933 $\pm$ 0.0006 & 99.37\% $\pm$ 0.07 pp & 3 \\
+\texttt{multicrop-}\allowbreak{}\texttt{disease-maiz} & 0.9019 $\pm$ 0.0044 & 80.38\% $\pm$ 0.32 pp & 3 \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+En ambos casos el modelo se entren\'o sin la fuente retenida y se evalu\'o sobre ella, con selecci\'on de checkpoint congelada antes de abrir la evaluaci\'on final. La desviaci\'on est\'andar es muestral ($n=3$). Con tres semillas, estas cifras describen la variabilidad observada, pero no alcanzan para una prueba de significancia.
 
 \subsection{Capacidades del diagn\'ostico: equidad entre entornos}
 
-Se audit\'o el modelo desplegado (\texttt{Lite0}) desglosando la prueba entre im\'agenes en condiciones de laboratorio ($N=532$) y campo aut\'entico ($N=4~483$). En las tres clases compartidas (roya, mancha gris y tiz\'on), el \textit{Disparate Impact Ratio} sobre Macro $F_1$ fue $DIR = 0.9778$ (diferencia de 0.0209), por encima del umbral regulatorio del 80\% (Figura~\ref{fig:fairness_panel}). El umbral mide la paridad de resultados entre grupos y no sustituye el an\'alisis de tasas de error por clase, que se presenta a continuaci\'on.
+Se audit\'o el modelo desplegado (\texttt{Lite0}) desglosando la prueba entre im\'agenes en condiciones de laboratorio ($N=532$) y campo aut\'entico ($N=4~483$). En las tres clases compartidas (roya, mancha gris y tiz\'on), el \textit{Disparate Impact Ratio} fue $DIR = 0.9604$ sobre Macro $F_1$ y $DIR = 0.9901$ sobre exactitud, por encima del umbral regulatorio del 80\% (Figura~\ref{fig:fairness_panel}). El umbral mide la paridad de resultados entre grupos y no sustituye el an\'alisis de tasas de error por clase, que se presenta a continuaci\'on.
 
 \begin{figure}[H]
 \centering
@@ -260,9 +279,9 @@ Control nulo (sin p\'ixeles) & Clase mayoritaria & 0.0\% & 26.14\% & 0.0 pp & �
 
 Al ocluir la regi\'on central de la imagen (36.3\% del \'area), el clasificador conserva un \textbf{79.46\% de exactitud}; esta sensibilidad se mantiene dentro de los m\'argenes esperados seg\'un el an\'alisis de equidad. En cambio, al ocluir la periferia, la exactitud cae a 42.25\% y el an\'alisis marca dependencia cr\'itica de la regi\'on perif\'erica (riesgo CR\'ITICO, \texttt{shortcut\_confirmed}). Este hallazgo es consistente con que el fondo aporta se\~nal de clase, aunque el experimento no aisla causalmente la lesi\'on del fondo, por lo que la interpretaci\'on debe tomarse como hip\'otesis de trabajo que motiva el marco gu\'ia de captura.
 
-\noindent\textbf{El fallo instructivo de la segmentaci\'on:} Intentar aislar la hoja forzando una m\'ascara negra autom\'atica con YOLO degrad\'o el Macro $F_1$ a \textbf{0.7191}. Esto demostr\'o que los errores de m\'ascara en hojas complejas destruyen tejido leg\'itimo y alteran la estad\'istica de color de la red convolucional.
+\noindent\textbf{Segmentaci\'on como preprocesamiento experimental:} Un modelo entrenado sobre un corpus con m\'ascaras de hoja alcanz\'o un Macro $F_1$ de \textbf{0.7191} en prueba, frente a 0.9480 del baseline de imagen completa. La comparaci\'on no es pareada, porque el conjunto de prueba segmentado no comparte im\'agenes con el original, y el perfil de m\'ascara no est\'a registrado en el run. Se presenta como evidencia de que eliminar el fondo puede costar se\~nal \'util, no como una atribuci\'on causal (ver secci\'on~2.6).
 
-\noindent\textbf{Interpretabilidad con Grad-CAM y SHAP:} Al evaluar mapas de calor locales (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}), los m\'etodos de atribuci\'on destacan las lesiones visibles. Sin embargo, al medir el \textbf{exceso de atribuci\'on foliar} (fracci\'on sobre la hoja menos la cobertura de la m\'ascara), el exceso medio fue de apenas \textbf{+0.037}. La firma de fondo es un fen\'omeno difuso de baja frecuencia distribuido en miles de p\'ixeles que no satura los mapas locales pero gobierna la predicci\'on global.
+\noindent\textbf{Interpretabilidad con Grad-CAM y SHAP:} Al evaluar mapas de calor locales (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}), los m\'etodos de atribuci\'on destacan las lesiones visibles. Los mapas se obtuvieron con Grad-CAM, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017}. Sin embargo, al medir el \textbf{exceso de atribuci\'on foliar} (fracci\'on sobre la hoja menos la cobertura de la m\'ascara), el exceso medio fue de apenas \textbf{+0.037}. Una hip\'otesis compatible con este resultado es que la firma de fondo es un fen\'omeno difuso de baja frecuencia, distribuido en miles de p\'ixeles, que no satura los mapas locales; esta hip\'otesis no fue medida directamente.
 
 \begin{figure}[H]
 \centering

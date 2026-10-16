@@ -1,5 +1,8 @@
 # Resultados del Ensamble Multimodelo
 
+> [!NOTE] Ámbito metodológico de esta evaluación
+> **HISTÓRICO.** Las cifras de esta página proceden de una materialización de desarrollo anterior, no del baseline vigente `20260921_204608`. Corresponden a la evaluación **in-distribution** sobre el conjunto de prueba estratificado de desarrollo (`seed_42`, 5 015 imágenes), donde las fuentes de datos están representadas tanto en entrenamiento como en prueba. Para consultar la prueba de estrés del ensamble evaluado fuera de dominio sobre fuentes no vistas en tres semillas independientes, consulte [Evaluación del Ensamble Fuera de Dominio (LOSO)](/es/auditoria/ensamble-loso).
+
 El ensamble por votación suave (*Soft Voting*) combina las probabilidades de predicción de las tres arquitecturas principales del proyecto: **`EfficientNet-Lite0`**, **`EfficientNet-B0`** y **`ShuffleNet-V2-x1.0`**, seleccionando para cada una su mejor checkpoint entrenado.
 
 Al promediar las distribuciones de confianza de tres modelos con sesgos inductivos dispares, el sistema alcanza los indicadores de desempeño más altos de todo el proyecto sobre las 5,015 imágenes del conjunto de prueba retenido.

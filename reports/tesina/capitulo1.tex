@@ -203,7 +203,7 @@ El n\'ucleo de aprendizaje profundo embebido abarca:
 Con el fin de delimitar con precisi\'on la cobertura de la investigaci\'on, se definen los siguientes l\'imites operacionales:
 \begin{itemize}
 \item \textbf{L\'imite biol\'ogico y sintom\'atico:} El sistema se restringe exclusivamente al an\'alisis de afecciones visibles en la l\'amina foliar del ma\'iz. Quedan fuera del alcance patolog\'ias radiculares, afecciones del tallo interno sin expresi\'on foliar y el monitoreo de plagas subterr\'aneas.
-\item \textbf{L\'imite de plataforma y compatibilidad de hardware:} La soluci\'on m\'ovil se enfoca en dispositivos con sistema operativo Android 7.0 o superior con arquitectura de procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 2~GB de memoria RAM. No se contempla desarrollo nativo para iOS ni para tel\'efonos sin capacidades inteligentes.
+\item \textbf{L\'imite de plataforma y compatibilidad de hardware:} La soluci\'on m\'ovil se enfoca en dispositivos con sistema operativo Android 8.0 o superior con arquitectura de procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 2~GB de memoria RAM. No se contempla desarrollo nativo para iOS ni para tel\'efonos sin capacidades inteligentes.
 \item \textbf{L\'imite de infraestructura y red:} La aplicaci\'on est\'a dise\~nada para operar desconectada; no existe dependencia de servicios en la nube para emitir el diagn\'ostico, ni se incluye sincronizaci\'on transaccional en tiempo real entre m\'ultiples terminales.
 \item \textbf{L\'imite legal y de diagn\'ostico fitopatol\'ogico:} La herramienta constituye un asistente t\'ecnico de orientaci\'on y apoyo agron\'omico para el productor. En ning\'un caso reemplaza los ensayos fitopatol\'ogicos de laboratorio (cultivos, aislamiento microbiano o pruebas PCR), ni sustituye los dict\'amenes oficiales de cuarentena o certificaci\'on fitosanitaria del Ministerio de Agricultura y Ganader\'ia.
 \end{itemize}
@@ -229,7 +229,7 @@ Los criterios siguientes son las condiciones que el sistema debe cumplir para co
 Ahorro de entrenamiento & Reducir en al menos 40\% las horas de GPU frente a una b\'usqueda sin poda temprana. & Horas de GPU por corrida \\
 Rendimiento del modelo & Alcanzar Macro $F_1 \ge 0.85$ en la partici\'on de prueba retenida, con recall de la necrosis letal (MLN) $\ge 95\%$. & Macro $F_1$, recall por clase \\
 Capacidades del diagn\'ostico & Mantener un \textit{Disparate Impact Ratio} $\ge 0.80$ entre laboratorio y campo real, y rechazar fuera de dominio las im\'agenes que no son hojas de ma\'iz. & DIR, umbral OOD \\
-Soluci\'on integral & Modelo Int8 menor a 5~MB, inferencia en menos de 100~ms en un tel\'efono de gama media y funcionamiento sin conexi\'on. & Tama\~no, latencia \\
+Soluci\'on integral & Modelo Int8 de 20~MB o menos, inferencia de 300~ms o menos en un tel\'efono de gama media y funcionamiento sin conexi\'on. & Tama\~no, latencia \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}

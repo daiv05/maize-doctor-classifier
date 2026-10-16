@@ -1,5 +1,7 @@
 # HPO formal EfficientNet-Lite0 — resultado
 
+> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
+
 ## Study
 
 study_name: `efficientnet_lite0_seed42_hpo_v1`  
