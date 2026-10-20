@@ -16,25 +16,25 @@
 \contentsline {figure}{\numberline {2.10}{\ignorespaces Diagrama de flujo arquitect\'onico integral del sistema DoctorMaiz.}}{30}{figure.caption.19}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {3.1}{\ignorespaces Curvas de convergencia: P\'erdida y Macro $F_1$ durante el entrenamiento en Modal.}}{32}{figure.caption.20}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Historial de ensayos de Optuna.}}{32}{figure.caption.21}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Importancia relativa de hiperpar\'ametros.}}{32}{figure.caption.21}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Din\'amica de exploraci\'on e impacto relativo de variables en Optuna.}}{32}{figure.caption.21}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Comparativa de desempe\~no del ensamble frente a modelos individuales.}}{34}{figure.caption.24}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces Matriz de confusi\'on normalizada del ensamble sobre 5~015 muestras de prueba.}}{35}{figure.caption.25}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces Dise\~no del experimento cruzado $2\times 2$.}}{36}{figure.caption.28}%
-\contentsline {figure}{\numberline {3.8}{\ignorespaces Magnitud de impacto en sigmas ($\sigma $).}}{36}{figure.caption.28}%
-\contentsline {figure}{\numberline {3.9}{\ignorespaces Impacto de la partici\'on frente a la optimizaci\'on algor\'itmica.}}{36}{figure.caption.28}%
-\contentsline {figure}{\numberline {3.10}{\ignorespaces Disparidad por entorno ambiental.}}{38}{figure.caption.30}%
-\contentsline {figure}{\numberline {3.11}{\ignorespaces Matrices desagregadas Lab vs. Campo.}}{38}{figure.caption.30}%
-\contentsline {figure}{\numberline {3.12}{\ignorespaces Auditor\'ia de equidad e imparcialidad entre condiciones fotogr\'aficas.}}{38}{figure.caption.30}%
-\contentsline {figure}{\numberline {3.13}{\ignorespaces Exactitud seg\'un la regi\'on geom\'etrica visible frente al azar nulo.}}{39}{figure.caption.33}%
-\contentsline {figure}{\numberline {3.14}{\ignorespaces Mapas de activaci\'on Grad-CAM en muestras de campo real y laboratorio.}}{40}{figure.caption.34}%
-\contentsline {figure}{\numberline {3.15}{\ignorespaces Panel comparado de explicabilidad local: LIME, SHAP y Grad-CAM.}}{41}{figure.caption.35}%
-\contentsline {figure}{\numberline {3.16}{\ignorespaces Pantalla de inicio.}}{43}{figure.caption.37}%
-\contentsline {figure}{\numberline {3.17}{\ignorespaces Marco gu\'ia foliar.}}{43}{figure.caption.37}%
-\contentsline {figure}{\numberline {3.18}{\ignorespaces Diagn\'ostico obtenido.}}{43}{figure.caption.37}%
-\contentsline {figure}{\numberline {3.19}{\ignorespaces Flujo principal de la aplicaci\'on m\'ovil nativa DoctorMaiz.}}{43}{figure.caption.37}%
-\contentsline {figure}{\numberline {3.20}{\ignorespaces Bloqueo seguro por OOD.}}{44}{figure.caption.38}%
-\contentsline {figure}{\numberline {3.21}{\ignorespaces Aporte comunitario.}}{44}{figure.caption.38}%
-\contentsline {figure}{\numberline {3.22}{\ignorespaces Gu\'ia de severidad.}}{44}{figure.caption.38}%
-\contentsline {figure}{\numberline {3.23}{\ignorespaces Mecanismos de seguridad, participaci\'on comunitaria y escalas agron\'omicas.}}{44}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Historial de ensayos de Optuna.}}{34}{figure.caption.22}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Importancia relativa de hiperpar\'ametros.}}{34}{figure.caption.22}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Din\'amica de exploraci\'on e impacto relativo de variables en Optuna.}}{34}{figure.caption.22}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Comparativa de desempe\~no del ensamble frente a modelos individuales.}}{36}{figure.caption.25}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Matriz de confusi\'on normalizada del ensamble sobre 5~015 muestras de prueba.}}{36}{figure.caption.26}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Dise\~no del experimento cruzado $2\times 2$.}}{38}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Magnitud de impacto en sigmas ($\sigma $).}}{38}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Impacto de la partici\'on frente a la optimizaci\'on algor\'itmica.}}{38}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Disparidad por entorno ambiental.}}{39}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Matrices desagregadas Lab vs. Campo.}}{39}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Auditor\'ia de equidad e imparcialidad entre condiciones fotogr\'aficas.}}{39}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.13}{\ignorespaces Exactitud seg\'un la regi\'on geom\'etrica visible frente al azar nulo.}}{40}{figure.caption.34}%
+\contentsline {figure}{\numberline {3.14}{\ignorespaces Mapas de activaci\'on Grad-CAM en muestras de campo real y laboratorio.}}{42}{figure.caption.35}%
+\contentsline {figure}{\numberline {3.15}{\ignorespaces Panel comparado de explicabilidad local: LIME, SHAP y Grad-CAM.}}{42}{figure.caption.36}%
+\contentsline {figure}{\numberline {3.16}{\ignorespaces Pantalla de inicio.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.17}{\ignorespaces Marco gu\'ia foliar.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.18}{\ignorespaces Diagn\'ostico obtenido.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.19}{\ignorespaces Flujo principal de la aplicaci\'on m\'ovil nativa DoctorMaiz.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.20}{\ignorespaces Bloqueo seguro por OOD.}}{46}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.21}{\ignorespaces Aporte comunitario.}}{46}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.22}{\ignorespaces Gu\'ia de severidad.}}{46}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.23}{\ignorespaces Mecanismos de seguridad, participaci\'on comunitaria y escalas agron\'omicas.}}{46}{figure.caption.39}%

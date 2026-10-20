@@ -20,95 +20,145 @@ hero:
       link: /es/baselines/
 
 features:
-  - title: "9 Clases"
-    details: "Clasificación de 6 enfermedades foliares y plagas (roya, NCLB, GLS, necrosis letal, cogollero, sana) y 3 deficiencias nutricionales (N, P, K) mediante CNN con transferencia de aprendizaje."
-  - title: "Edge AI Offline"
-    details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite con cuantización Int8, con objetivo ≤ 20 MB y latencia ≤ 300 ms en CPU Snapdragon serie 6xx o equivalente."
-  - title: "Orientado al Campo"
-    details: "Evaluación desagregada por ambiente y fuente. El split principal mezcla fuentes conocidas; la generalización cross-source se mide con protocolos separados."
-  - title: "Meta Macro F1 ≥ 0.85"
-    details: "Criterio de viabilidad con análisis de matriz de confusión y curvas Precision-Recall por clase, priorizando Recall para minimizar falsos negativos."
+  - icon: 🎯
+    title: "9 Clases Fitosanitarias"
+    details: "Detección de 4 patologías fúngicas/virales, 1 plaga (cogollero), 3 deficiencias nutricionales (N, P, K) y control de hoja sana mediante CNN con transfer learning."
+  - icon: ⚡
+    title: "Edge AI 100 % Offline"
+    details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite Int8 (≤ 14 MB), con latencia < 300 ms en procesadores móviles sin requerir internet."
+  - icon: 🌾
+    title: "Diseñado para el Campo"
+    details: "Resistente a fondos ruidosos mediante encuadre guiado y recorte preventivo, evaluado bajo condiciones reales de iluminación en El Salvador."
+  - icon: 🛡️
+    title: "Auditoría y Validación LOSO"
+    details: "Evaluación honesta por origen (Leave-One-Source-Out) y módulo de detección fuera de distribución (Mahalanobis OOD) para evitar falsos diagnósticos."
 ---
+
+<div class="dm-kpi-banner">
+  <div class="dm-kpi-card">
+    <div class="dm-kpi-val">33 429</div>
+    <div class="dm-kpi-lbl">Muestras Foliares Curadas</div>
+  </div>
+  <div class="dm-kpi-card">
+    <div class="dm-kpi-val">&lt; 300 ms</div>
+    <div class="dm-kpi-lbl">Inferencia en CPU Móvil</div>
+  </div>
+  <div class="dm-kpi-card">
+    <div class="dm-kpi-val">≤ 14 MB</div>
+    <div class="dm-kpi-lbl">Modelo Cuantizado Int8</div>
+  </div>
+  <div class="dm-kpi-card">
+    <div class="dm-kpi-val">100 %</div>
+    <div class="dm-kpi-lbl">Autonomía Offline</div>
+  </div>
+</div>
 
 ## El Proyecto
 
 **Detección de Enfermedades Foliares, Plagas y Deficiencias Nutricionales en Cultivos de Maíz mediante Deep Learning en Dispositivos Móviles**
 
-| | |
-|---|---|
-| **Institución** | Universidad de El Salvador - Facultad de Ingeniería y Arquitectura |
-| **Programa** | Escuela de Ingeniería de Sistemas Informáticos - Curso de Especialización en Machine Learning |
-| **Ciclo** | I 2026 - Grupo 02 |
-| **Docente** | Ing. Bladimir Díaz Campos |
-
-### Equipo
-
-| Nombre | Carnet |
-|---|---|
-| Josias Abner Rivas Fuentes | RF20010 |
-| David Alejandro Deras Cerros | DC19019 |
-| Elmer Edenilson Rosales Molina | RM20001 |
+<div class="dm-academic-card">
+  <div class="dm-academic-header" style="display: flex; flex-wrap: wrap; gap: 0.85rem; margin-bottom: 1.25rem;">
+    <span class="dm-badge">🎓 Universidad de El Salvador</span>
+    <span class="dm-badge">🏛️ Facultad de Ingeniería y Arquitectura</span>
+    <span class="dm-badge">💻 Escuela de Sistemas Informáticos</span>
+  </div>
+  <p style="font-size: 0.9rem; color: var(--vp-c-text-2); margin-bottom: 0.85rem;">
+    Trabajo desarrollado en el marco del <strong>Curso de Especialización en Machine Learning</strong> (Ciclo I 2026 — Grupo 02), bajo la cátedra del <strong>Ing. Bladimir Díaz Campos</strong>.
+  </p>
+  <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--vp-c-text-2); margin-top: 1rem;">
+    Equipo de Desarrollo e Investigación
+  </div>
+  <div class="dm-team-grid">
+    <div class="dm-team-member">
+      <div class="dm-team-avatar">JR</div>
+      <div>
+        <div style="font-weight: 700; font-size: 0.9rem; color: var(--vp-c-text-1);">Josias Abner Rivas Fuentes</div>
+        <div style="font-size: 0.78rem; color: var(--vp-c-text-2); font-family: var(--vp-font-family-mono);">RF20010</div>
+      </div>
+    </div>
+    <div class="dm-team-member">
+      <div class="dm-team-avatar">DD</div>
+      <div>
+        <div style="font-weight: 700; font-size: 0.9rem; color: var(--vp-c-text-1);">David Alejandro Deras Cerros</div>
+        <div style="font-size: 0.78rem; color: var(--vp-c-text-2); font-family: var(--vp-font-family-mono);">DC19019</div>
+      </div>
+    </div>
+    <div class="dm-team-member">
+      <div class="dm-team-avatar">ER</div>
+      <div>
+        <div style="font-weight: 700; font-size: 0.9rem; color: var(--vp-c-text-1);">Elmer Edenilson Rosales Molina</div>
+        <div style="font-size: 0.78rem; color: var(--vp-c-text-2); font-family: var(--vp-font-family-mono);">RM20001</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 ### Contexto y Problema
 
-Para entender por qué existe este proyecto conviene partir del peso que tiene la agricultura en El Salvador: representa el 5.6% del PIB y es el sustento de más de 2 millones de personas rurales. El 82.1% de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz, su principal cultivo, es vulnerable a enfermedades foliares, plagas y deficiencias nutricionales que, sin detección correcta y en etapas tempranas, pueden destruir hasta el 70% de la cosecha.
+Para entender por qué existe este proyecto conviene partir del peso que tiene la agricultura en El Salvador: representa el **5.6 % del PIB** y es el sustento de más de **2 millones de personas rurales**. El 82.1 % de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz, su principal cultivo, es vulnerable a enfermedades foliares, plagas y deficiencias nutricionales que, sin detección temprana, pueden destruir hasta el 70 % de la cosecha.
 
-El problema es que en zonas rurales el acceso a asistencia técnica es limitado, así que los diagnósticos terminan dependiendo de la experiencia empírica del agricultor. Eso puede generar detecciones tardías y pérdidas económicas significativas, en 2023 la cosecha ya había caído un tercio respecto a 2021.
+En zonas rurales el acceso a asistencia agronómica presencial es limitado, por lo que el diagnóstico recae casi exclusivamente en la intuición empírica. Esto provoca detecciones tardías y pérdidas acumuladas significativas.
 
-### Clases Objetivo
+### Clases Objetivo del Modelo
 
-#### Enfermedades y plagas foliares
+El sistema evalúa 9 condiciones foliares agrupadas en cuatro categorías fitosanitarias: **tejido sano** (control de referencia), **enfermedades infecciosas**, **plagas** y **deficiencias nutricionales**:
 
-| Clase | Nombre en inglés | Patógeno/Agente | Síntoma visual | Lab | Real | Total |
-|---|---|---|---|---:|---:|---:|
-| **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas dispersas en ambas caras de la hoja | 2 150 | 106 (pocos datos) | 2 256 |
-| **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones alargadas grisáceas o marrones con bordes difusos | 888 | 5 942 | 6 830 |
-| **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares grises o marrones delimitadas por nervaduras | 513 | 1 417 | 1 930 |
-| **Necrosis letal del maíz (MLN)** | Lethal Necrosis | *MCMV + SCMV* | Moteado clorótico severo, necrosis y muerte progresiva de la planta | 0 | 6 415 | 6 415 |
-| **Hoja sana** | Healthy | - | Sin síntomas foliares de enfermedad | 0 | 8 740 | 8 740 |
-| **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Daño por masticación con excrementos en el cogollo y hojas | 0 | 4 853 | 4 853 |
+| Categoría | Clase | Nombre en inglés | Agente / Causa | Síntoma visual | Lab | Real | Total |
+|:---:|---|---|---|---|---:|---:|---:|
+| <span class="dm-pill-sano">Sano</span> | **Hoja sana** | Healthy | Control biológico (tejido óptimo) | Sin lesiones, lámina foliar verde uniforme | 0 | 8 740 | 8 740 |
+| <span class="dm-pill-enf">Enfermedad</span> | **Roya común** | Common Rust | *Puccinia sorghi* | Pústulas anaranjadas pulverulentas en ambas caras | 2 150 | 106 | 2 256 |
+| <span class="dm-pill-enf">Enfermedad</span> | **Tizón foliar del norte (NCLB)** | Northern Corn Leaf Blight | *Exserohilum turcicum* | Lesiones elípticas grisáceas con bordes difusos | 888 | 5 942 | 6 830 |
+| <span class="dm-pill-enf">Enfermedad</span> | **Mancha gris de la hoja (GLS)** | Gray Leaf Spot | *Cercospora zeae-maydis* | Lesiones rectangulares estrechas delimitadas por nervaduras | 513 | 1 417 | 1 930 |
+| <span class="dm-pill-enf">Enfermedad</span> | **Necrosis letal del maíz (MLN)** | Lethal Necrosis | *MCMV + SCMV* | Moteado severo, clorosis y secado progresivo | 0 | 6 415 | 6 415 |
+| <span class="dm-pill-plaga">Plaga</span> | **Gusano cogollero** | Fall Armyworm | *Spodoptera frugiperda* | Masticación irregular y excrementos en el verticilo | 0 | 4 853 | 4 853 |
+| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de nitrógeno** | Nitrogen Deficiency | Carencia de N | Amarillamiento en "V" desde la punta en hojas viejas | 0 | 846 | 846 |
+| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de fósforo** | Phosphorus Deficiency | Carencia de P | Bordes y puntas púrpuras/violáceas en hojas jóvenes | 0 | 938 | 938 |
+| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de potasio** | Potassium Deficiency | Carencia de K | Secado y necrosis marginal en hojas inferiores | 0 | 621 | 621 |
+| **Total** | **9 clases objetivo** | — | — | — | **3 551** | **29 878** | **33 429** |
 
-#### Deficiencias nutricionales
-
-| Clase | Nombre en inglés | Síntoma visual | Lab | Real | Total |
-|---|---|---|---:|---:|---:|
-| **Deficiencia de nitrógeno** | Nitrogen Deficiency | Amarillamiento en "V" desde la punta de hojas inferiores | 0 | 846 (pocos datos) | 846 |
-| **Deficiencia de fósforo** | Phosphorus Deficiency | Bordes y puntas moradas/rojizas en hojas jóvenes | 0 | 938 (pocos datos) | 938 |
-| **Deficiencia de potasio** | Potassium Deficiency | Necrosis marginal en hojas más viejas | 0 | 621 (pocos datos) | 621 |
-
-> Conteos de la materialización vigente: **33 429 muestras elegibles** (3 551 lab + 29 878 campo real), después de ocho exclusiones verificadas. Las marcas "(pocos datos)" señalan las clases con menor soporte. La instantánea anterior de agosto contenía 33 438 y se conserva como registro histórico.
-
-> **Evolución histórica.** El corpus pasó de **31 623** a la instantánea ampliada de **33 438 imágenes** al incorporar cuatro datasets Roboflow. El manifest actual descubre 33 437 y deja 33 429 elegibles. Detalle en [Limpieza](/es/cleanup-and-ordered/), [EDA histórica](/es/exploratory-data-analysis/) y [pipeline vigente](/es/metodologia/pipeline-datos).
-
+> 📊 **Distribución muestral:** Corpus activo con **33 429 muestras elegibles** (3 551 laboratorio + 29 878 campo real) tras 8 exclusiones metodológicas auditadas. Ver [Auditoría Metodológica](/es/auditoria/) y [Pipeline de Datos](/es/metodologia/pipeline-datos).
 
 ### Metodología
 
-El proyecto avanza en fases iterativas siguiendo **CRISP-DM**:
+El proyecto avanza en fases iterativas siguiendo el ciclo estándar **CRISP-DM**:
 
-1. **Comprensión del negocio**: análisis del impacto en el sector agrícola salvadoreño
-2. **Comprensión de los datos**: consolidación multi-fuente de datasets públicos; ver [Recopilación de datasets](/es/datasets/)
-3. **Preparación de los datos**: limpieza, estandarización a 224 x 224 px y data augmentation
-4. **Modelado**: transfer learning en PyTorch con modelos preentrenados en ImageNet
-5. **Evaluación**: Macro-F1 sobre test retenido, desgloses por fuente/ambiente y protocolos cross-source separados
-6. **Despliegue**: exportación del modelo PyTorch a TFLite (Int8) y PWA con inferencia offline + módulo opcional de sincronización
+1. **Comprensión del negocio**: análisis de las condiciones de campo y limitaciones de conectividad rural en El Salvador.
+2. **Comprensión de los datos**: consolidación multi-fuente de 8 repositorios internacionales; ver [Recopilación de datasets](/es/datasets/).
+3. **Preparación de los datos**: filtrado de atajos, normalización a 224 × 224 px y balanceo de clases.
+4. **Modelado**: transfer learning y benchmarking con arquitecturas MobileNet, EfficientNet y ResNet.
+5. **Evaluación y Auditoría**: macro-F1, análisis de calibración, partición LOSO por origen y detección de muestras anómalas (OOD).
+6. **Despliegue móvil**: cuantización Int8 post-entrenamiento (TFLite) y empaquetado en aplicación Android nativa offline.
 
-### Arquitectura del Sistema
+### Arquitectura de Inferencia
 
-```
-Captura / Galería
-      ↓
-Preprocesamiento (224x224, normalización)
-      ↓
-Inferencia CNN - TensorFlow Lite (Int8, exportado desde PyTorch)
-      ↓
-Clase predicha + nivel de confianza
-      ↓ (cuando hay conexión)
-Módulo de sincronización - API FastAPI + MySQL
+```mermaid
+flowchart LR
+    A["📸 Captura en Campo<br>(Visor con recorte 75 %)"] --> B["⚙️ Preprocesamiento<br>(224×224 px, normalización)"]
+    B --> C["🧠 Inferencia Edge TFLite<br>(EfficientNet-Lite0 Int8)"]
+    C --> D{"🛡️ Filtro OOD<br>Mahalanobis"}
+    D -- "Fuera de dominio" --> E["⚠️ Alerta Muestra No Reconocida"]
+    D -- "Válida" --> F["✅ Diagnóstico + Recomendación<br>(Persistencia SQLite Local)"]
 ```
 
-### Restricciones Técnicas
+### Restricciones Técnicas de Despliegue
 
-- Dispositivo objetivo: Android ≥ 4 GB RAM, CPU Snapdragon serie 6xx o equivalente
-- Tamaño del modelo: ≤ 20 MB (post cuantización Int8)
-- Latencia de inferencia: ≤ 300 ms por imagen
-- Funcionamiento completamente offline como característica principal
+<div class="dm-spec-grid">
+  <div class="dm-spec-item">
+    <div class="dm-spec-label">📱 Dispositivo Objetivo</div>
+    <div class="dm-spec-value">Android 8.0+ (ARM64, gama media/baja)</div>
+  </div>
+  <div class="dm-spec-item">
+    <div class="dm-spec-label">📦 Peso Máximo Modelo</div>
+    <div class="dm-spec-value">≤ 14 MB (TFLite Int8 post-cuantización)</div>
+  </div>
+  <div class="dm-spec-item">
+    <div class="dm-spec-label">⚡ Latencia de Inferencia</div>
+    <div class="dm-spec-value">&lt; 300 ms por fotograma en CPU</div>
+  </div>
+  <div class="dm-spec-item" style="border-left: 3px solid #2e7d32;">
+    <div class="dm-spec-label">📡 Requisito de Red</div>
+    <div class="dm-spec-value" style="color: #2e7d32;">100 % Autónomo (Cero datos móviles)</div>
+  </div>
+</div>
+

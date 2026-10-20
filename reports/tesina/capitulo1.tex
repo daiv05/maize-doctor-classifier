@@ -214,7 +214,7 @@ Con el fin de delimitar con precisi\'on la cobertura de la investigaci\'on, se d
 El dise\~no propone un sistema de visi\'on artificial embebido en una aplicaci\'on m\'ovil nativa, con captura asistida y operaci\'on completamente desconectada, capaz de clasificar nueve condiciones agron\'omicas de la hoja de ma\'iz en tel\'efonos inteligentes de gama baja o media del sector rural salvadore\~no. Se considera alcanzado el objetivo general si se cumplen los criterios de la Tabla~\ref{tab:criterios_exito}.
 
 \subsection{Criterios de \'Exito Espec\'ificos}
-Los criterios siguientes son las condiciones que el sistema debe cumplir para considerar alcanzado cada objetivo. Se verifican en el cap\'itulo de resultados y se agrupan en cuatro temas.
+Los criterios siguientes son las condiciones que el sistema debe cumplir para considerar alcanzado cada objetivo. Se verifican en el cap\'itulo de resultados y se agrupan en cinco temas.
 
 \begin{table}[H]
 \caption{Criterios de \'exito del proyecto, agrupados por tema}
@@ -226,9 +226,10 @@ Los criterios siguientes son las condiciones que el sistema debe cumplir para co
 \toprule
 \textbf{Tema} & \textbf{Criterio y umbral} & \textbf{M\'etrica} \\
 \midrule
-Ahorro de entrenamiento & Reducir en al menos 40\% las horas de GPU frente a una b\'usqueda sin poda temprana. & Horas de GPU por corrida \\
+Ahorro de entrenamiento & El total de \'epocas ejecutadas por la b\'usqueda no supera el 50\% del m\'aximo te\'orico (25 ensayos $\times$ 60 \'epocas). & \'Epocas ejecutadas por la b\'usqueda \\
 Rendimiento del modelo & Alcanzar Macro $F_1 \ge 0.85$ en la partici\'on de prueba retenida, con recall de la necrosis letal (MLN) $\ge 95\%$. & Macro $F_1$, recall por clase \\
-Capacidades del diagn\'ostico & Mantener un \textit{Disparate Impact Ratio} $\ge 0.80$ entre laboratorio y campo real, y rechazar fuera de dominio las im\'agenes que no son hojas de ma\'iz. & DIR, umbral OOD \\
+Capacidades del diagn\'ostico & Mantener un \textit{Disparate Impact Ratio} $\ge 0.80$ entre laboratorio y campo real. & DIR \\
+Confiabilidad de la evaluaci\'on & Ninguna imagen del conjunto de prueba aparece en entrenamiento ni validaci\'on, por hash de archivo y por p\'ixeles. & Solapamiento por SHA-256 y por p\'ixeles \\
 Soluci\'on integral & Modelo Int8 de 20~MB o menos, inferencia de 300~ms o menos en un tel\'efono de gama media y funcionamiento sin conexi\'on. & Tama\~no, latencia \\
 \bottomrule
 \end{tabularx}

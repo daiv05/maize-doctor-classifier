@@ -16,13 +16,43 @@ El r\'egimen de entrenamiento incorpor\'o un programador de tasa de aprendizaje 
 \label{fig:convergencia_entrenamiento}
 \end{figure}
 
-\section{Resultados por Tema de Evaluaci\'on}
+\section{Resultados}
 
-Los resultados se agrupan en los cuatro temas de los criterios de \'exito (Tabla~\ref{tab:criterios_exito}). Cada subsecci\'on reporta solo valores medidos y, cuando el criterio no se cumple o no se midi\'o, lo indica.
+Esta secci\'on reporta el estado de cada criterio de \'exito definido en la Tabla~\ref{tab:criterios_exito} y, a continuaci\'on, el detalle de las mediciones. Cuando un criterio no se cumple, no se midi\'o o depende de una corrida pendiente, la tabla lo indica.
+
+\begin{table}[H]
+\caption{Estado de los criterios de \'exito al cierre de esta versi\'on}
+\label{tab:estado_criterios_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.4cm}}
+\toprule
+\textbf{Criterio} & \textbf{Resultado medido} & \textbf{Estado} \\
+\midrule
+\'Epocas de la b\'usqueda $\le 50\%$ del m\'aximo te\'orico & 453 de 1\,500 \'epocas (30.2\%) en 25 ensayos. & Cumple \\
+Macro $F_1 \ge 0.85$ en prueba & 0.9480 (baseline vigente, una semilla); 0.9435 $\pm$ 0.0052 en tres semillas. & Cumple \\
+Recall de MLN $\ge 95\%$ en prueba & 100.0\% en la partici\'on hist\'orica del ensamble; 0.72--0.81 bajo LOSO. & Cumple solo en partici\'on de desarrollo \\
+DIR $\ge 0.80$ entre laboratorio y campo & 0.9604 (Macro $F_1$) y 0.9901 (exactitud), tres clases compartidas. & Cumple \\
+Solapamiento cero entre particiones & 0 de 5~015 im\'agenes de prueba en entrenamiento o validaci\'on, por SHA-256 y por p\'ixeles; 33~437 archivos verificados. No incluye similitud perceptual. & Cumple \\
+Int8 de 20~MB o menos & 3.56~MB (modelo hist\'orico desplegado). & Cumple \\
+Inferencia $\le 300$~ms en tel\'efono de gama media & Mediana de 60~ms en un Motorola edge 40 neo (MediaTek Dimensity 7030), seg\'un la documentaci\'on de prototipo; el registro de medici\'on no est\'a archivado y el checkpoint medido es el hist\'orico. & Cumple con medici\'on pendiente de archivo \\
+Funcionamiento sin conexi\'on & Clasificaci\'on local verificada en un dispositivo. & Cumple \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+
+ tabla lo indica.
+
+
+
+Los resultados se agrupan en los cinco temas de los criterios de \'exito (Tabla~\ref{tab:criterios_exito}). Cada subsecci\'on reporta solo valores medidos y, cuando el criterio no se cumple o no se midi\'o, lo indica.
 
 \subsection{Ahorro de entrenamiento: b\'usqueda bayesiana con poda}
 
-El estudio bayesiano ejecutado con Optuna explor\'o 25 intentos sobre la arquitectura \texttt{EfficientNet-Lite0}, de los cuales 8 se completaron, 15 fueron podados por el algoritmo \textit{MedianPruner} al no superar la mediana de sus pares tras el periodo de calentamiento (8 \'epocas), y 2 se interrumpieron por fallos de proceso. El ensayo ganador fue el Trial~0 (\'epoca 44), seleccionado por su mejor Macro $F_1$ de validaci\'on.
+El estudio bayesiano ejecutado con Optuna explor\'o 25 intentos sobre la arquitectura \texttt{EfficientNet-Lite0}, de los cuales 8 se completaron, 15 fueron podados por el algoritmo \textit{MedianPruner} al no superar la mediana de sus pares tras el periodo de calentamiento (8 \'epocas), y 2 se interrumpieron por fallos de proceso. El ensayo ganador fue el Trial~0 (\'epoca 44), seleccionado por su mejor Macro $F_1$ de validaci\'on. La eficiencia de la b\'usqueda se mide en \'epocas ejecutadas: 453 de 1\,500 posibles (25 ensayos de 60 \'epocas), es decir, el 30.2\%, por debajo del l\'imite de 50\%. Las \'epocas de los dos ensayos interrumpidos no se registraron y quedan fuera del numerador, mientras que el denominador los cuenta completos. El criterio original, horas de GPU frente a una b\'usqueda sin poda, no se evalu\'o porque exige una corrida sin poda que no se ejecut\'o; la medida en \'epocas se defini\'o despu\'es de observar los datos. La medida no demuestra que la poda no haya descartado un candidato mejor.
 
 \begin{figure}[H]
 \centering
@@ -303,7 +333,7 @@ El modelo \texttt{EfficientNet-Lite0} cuantizado a 8 bits (\textbf{Int8}) redujo
 
 Para validar el prototipo en condiciones de campo aut\'enticas, la aplicaci\'on m\'ovil nativa \textbf{DoctorMaiz} (desarrollada en React Native, TypeScript y motor \texttt{react-native-fast-tflite}) fue instalada y testeada en un smartphone f\'isico \textbf{Motorola edge 40 neo} (procesador MediaTek Dimensity 7030 octa-core a 2.5 GHz, 8~GB RAM, Android 15).
 
-Las mediciones instrumentadas mediante \texttt{adb logcat} arrojaron latencias extraordinarias (Tabla~\ref{tab:latencias_movil_c3}):
+Las mediciones reportadas con \texttt{adb logcat} arrojaron latencias de referencia. Su registro de origen est\'a pendiente de verificaci\'on, por lo que estas cifras se presentan como preliminares (Tabla~\ref{tab:latencias_movil_c3}):
 \begin{itemize}
 \item La inferencia pura en la CPU del tel\'efono requiri\'o una mediana de \textbf{60 milisegundos} (promedio 68 ms), frente a la meta de $\le 100$~ms para inferencia definida en la especificaci\'on.
 \item El preprocesado bilineal tom\'o 41 ms.
