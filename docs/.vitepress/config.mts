@@ -137,6 +137,7 @@ const esDatasetSidebar = [
       { text: "Plan HPO", link: "/es/experimentos/hpo" },
       { text: "Entrenamiento formal", link: "/es/experimentos/formal-training" },
       { text: "Multi-seed", link: "/es/experimentos/multiseed" },
+      { text: "Selección de configuración", link: "/es/experimentos/seleccion-modelo-final" },
       { text: "Validación cruzada", link: "/es/experimentos/cross-validation" },
     ],
   },

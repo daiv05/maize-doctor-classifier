@@ -118,9 +118,9 @@ make upload-dataset STAGE_DIR=/ruta/con/espacio             # empaqueta y sube
 
 **Nunca coloques ni modifiques nada manualmente en `raw/`** - esa carpeta es inmutable y no forma parte de este flujo de descarga; `clean/` es la única fuente de verdad para el pipeline.
 
-## 6. Generar los splits
+## 6. Preparar los splits
 
-Con `clean/` ya poblado:
+Para una **materialización nueva**, con `clean/` ya poblado:
 
 ```bash
 make splits              # Splits completos (9 clases) -> outputs/splits/seed_42/
@@ -128,6 +128,43 @@ make splits-baseline      # Splits del perfil baseline (subset + límite por cla
 ```
 
 No edites los CSV de `outputs/splits/` a mano - son derivados reproducibles.
+
+Para continuar los experimentos sobre el `seed_42` vigente, recupera la carpeta
+completa `splits/seed_42/` del Volume `corn-outputs` y colócala en
+`outputs/splits/seed_42/`. Debe incluir `manifest.lock.json`, los cuatro CSV
+contractuales y los dos archivos de auditoría. Si existe una copia local como
+`outputs/multiseed-inputs/frozen/seed_42/`, verifica primero su lock y CSV con
+`make preflight-data SPLITS_DIR=outputs/multiseed-inputs/frozen/seed_42`.
+`make modal-pull` descarga el Volume completo a `outputs-remote/` si tienes
+acceso a Modal y espacio para él.
+La copia `outputs/repair-20260912/` corresponde a otras preparaciones y no
+sustituye este split. No uses `make splits` para intentar reconstruir el lock
+histórico: el [YAML actual tiene un hash diferente](docs/es/reproducibilidad/evidencia/pixel_duplicate_audit/dataset_yaml_drift_report.md).
+
+Antes de entrenar, ejecuta el control que no modifica datos ni splits:
+
+```bash
+make preflight-data
+```
+
+El comando verifica que existe el Python que usa Make, `DATASET_ROOT/clean`, el lock
+versionado, los hashes y conteos de los splits, el inventario completo de
+imágenes y sus SHA-256. Escribe `outputs/preflight/seed_42_local.json` y falla
+si falta o difiere un requisito. La verificación de contenido lee
+aproximadamente 19 GB una vez. `QUICK=1` omite esos hashes y devuelve estado
+`incomplete` (código 2), útil solo para un diagnóstico inicial.
+
+Si dispones del baseline histórico archivado, puedes incluirlo en la auditoría:
+
+```bash
+make preflight-data \
+  REFERENCE_RUN_DIR=outputs/archives/DoctorMaiz_efficientnet_lite0_20260921_204608/efficientnet_lite0/20260921_204608 \
+  REFERENCE_RUN_SUMMARY=docs/es/resultados/evidencia/run_20260921_lite0_summary.json
+```
+
+Una diferencia de hash de `config/dataset.yaml` frente al lock se informa como
+advertencia documentada; los splits y las imágenes todavía deben coincidir
+exactamente. Guarda el YAML efectivo junto al run nuevo.
 
 ## 7. Verificar que todo funciona
 
@@ -171,7 +208,8 @@ source venv/bin/activate   # o venv\Scripts\Activate.ps1 en Windows
 cp .env.example .env       # editar DATASET_ROOT / HF_DATASET_REPO / GDRIVE_DATASET_ID
 make install
 make download-dataset
-make splits
-make splits-baseline
+make splits             # solo para una materialización nueva
+make splits-baseline    # solo si necesitas el perfil baseline
+make preflight-data
 make summary
 ```

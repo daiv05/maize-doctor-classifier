@@ -1,5 +1,10 @@
 # Comparación multi-seed: baseline frente a HPO trial 0
 
+**Actualización 19 de octubre de 2026:** el par seed 42 terminó con
+**2/10 runs completas y 1/5 pares**. HPO obtuvo +0,001206 de Macro-F1 de
+validación frente al baseline en ese par. Los otros ocho slots siguen
+pendientes. [Resultados, hashes y límites](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/REVIEW.md).
+
 Estado al 24 de septiembre de 2026: implementación validada localmente,
 con 0 de 10 entrenamientos iniciados. La ejecución queda pendiente hasta el
 **1 de octubre de 2026**, fecha prevista para retomar el experimento.
@@ -126,6 +131,12 @@ no se reinicia automáticamente desde cero ni se exceden diez intentos. Los peso
 e historial permanecen intactos. La reanudación automática es entre runs completas,
 no desde una época interrumpida.
 
+**Enmienda posterior al inicio (2026-10-19):** el primer intento baseline
+seed 42 fue cancelado por el cliente Modal antes de completar una época o
+producir métricas. Se preservó y se documentó una única reejecución manual,
+que eleva el límite de intentos físicos a once sin cambiar los diez slots
+válidos previstos. [Incidente, evidencia y alcance](./multiseed-incidente-2026-10-19.md).
+
 ## Reportes y estadística
 
 `MULTISEED_SUMMARY.json`, `MULTISEED_RESULTS.csv` y `MULTISEED_REPORT.md`
@@ -145,9 +156,15 @@ La selección HPO utilizó esta misma validation: multi-seed no elimina ese sesg
 IC exploratorio frágil con n=5 y supuestos de independencia/normalidad entre seeds;
 no se declara significancia ni se promueve un ganador automáticamente.
 
+La [regla para elegir la configuración del entrenamiento formal](./seleccion-modelo-final.md)
+se fijó el 19 de octubre de 2026 antes de las diez nuevas runs. Exige cinco
+pares válidos; esta página documenta la ejecución y el reporte, mientras que
+la decisión sigue pendiente con 2/10 resultados.
+
 ## Calendario y procedimiento de reanudación
 
-La ejecución se retomará a partir del 1 de octubre de 2026. Durante la pausa se
+La reanudación se había previsto a partir del 1 de octubre de 2026; al corte
+del 19 de octubre siguen pendientes las diez runs. Durante la pausa se
 conservan el protocolo, los manifiestos, los parámetros y los artefactos de origen.
 La pausa no modifica las cinco semillas, las dos configuraciones ni las reglas
 de evaluación.
@@ -208,10 +225,13 @@ generar un plan nuevo explícitamente; no editar el protocolo a mano.
 
 ## Estado de resultados y verificación técnica
 
-Entrenamientos del experimento completados/fallidos/iniciados: **0/0/0**. Ambas columnas
-para las cinco semillas están pendientes. Media±SD, N/P/K, ECE y deltas no están
-disponibles todavía. No hay conclusión experimental ni recomendación de promover
-una configuración hasta completar la comparación.
+Estado al 19 de octubre: **2/10 runs completas**, ambas de seed 42;
+**8/10 pendientes**. Los recibos `COMPLETE.json` y los hashes de los
+artefactos se verificaron; el intento técnico interrumpido antes de la
+primera validation queda archivado y fuera de los agregados. Hay una
+diferencia pareada, pero aún no se pueden calcular SD muestral ni inferir
+estabilidad entre seeds. No hay conclusión experimental ni recomendación de
+promover una configuración hasta completar la comparación.
 
 Pruebas: smoke CPU sintético con/sin `--skip-test`, export incompatible, fuentes
 canónicas, hashes/leakage, estadísticas, diez slots simulados sin duplicados,

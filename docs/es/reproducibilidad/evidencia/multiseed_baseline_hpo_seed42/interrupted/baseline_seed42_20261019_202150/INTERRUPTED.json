@@ -1,0 +1,14 @@
+{
+  "status": "INTERRUPTED_BEFORE_FIRST_EPOCH",
+  "experiment_id": "efficientnet_lite0_baseline_vs_hpo",
+  "configuration": "baseline",
+  "seed": 42,
+  "run_id": "20261019_202150",
+  "modal_app_id": "ap-hvpdYklqpc5XPXr6gsomWz",
+  "started_at": "2026-10-19T20:21:45.048113+00:00",
+  "cancelled_at": "2026-10-19T20:24:35Z",
+  "cause": "La invocación síncrona run_batch.remote recibió una cancelación al interrumpir el cliente local de Modal.",
+  "evidence": "Modal log: Received a cancellation signal while processing input; Runner terminated. La carpeta de run no contiene checkpoint ni métricas; no hubo validación ni test.",
+  "automatic_retry": false,
+  "protocol_sha256": "bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9"
+}

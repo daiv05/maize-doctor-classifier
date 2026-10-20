@@ -1,6 +1,6 @@
 # Resultados experimentales consolidados
 
-Estado al 2 de octubre de 2026. Este documento reúne resultados **ya registrados** para que el equipo compare alternativas. No selecciona una arquitectura ni autoriza entrenamiento o evaluación formal. Cada cifra corresponde al protocolo indicado; los test estándar, holdouts LOSO y validaciones internas no son intercambiables. `N/A` significa que no existe una medición comparable en la evidencia consultada.
+Estado al 19 de octubre de 2026. Este documento reúne resultados **ya registrados** para que el equipo compare alternativas. No selecciona una arquitectura ni autoriza entrenamiento o evaluación formal. Cada cifra corresponde al protocolo indicado; los test estándar, holdouts LOSO y validaciones internas no son intercambiables. `N/A` significa que no existe una medición comparable en la evidencia consultada.
 
 ## Corpus y preguntas experimentales
 
@@ -32,6 +32,13 @@ Los 18 checkpoints físicos respaldados corresponden a las runs individuales de 
 ## HPO y repetición
 
 El estudio HPO solicitó 25 intentos: 8 `COMPLETE`, 15 `PRUNED` y 2 `FAIL` por interrupción. El trial 0 se seleccionó **solo por validation** (0,957292 frente a 0,956086 del baseline seed 42); después se hizo una evaluación final única del test, con 0,943125 frente a 0,948002 del baseline seed 42. El test no participó en la búsqueda ni en la poda. Este resultado describe una mejora pequeña en validation que no se trasladó al test; no se lo interpreta como selección de modelo final.
+
+El [primer par nuevo baseline/HPO](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/REVIEW.md)
+terminó el 19 de octubre: dos runs seed 42, validation-only, con Macro-F1
+0,956086266 y 0,957292225 respectivamente (delta HPO +0,001205960).
+Reproduce las métricas históricas de esa seed, pero todavía quedan cuatro
+pares de seeds y no hay elección de configuración. Estas dos nuevas runs
+no forman parte del paquete histórico de 18 checkpoints descrito arriba.
 
 Las tres semillas 42/123/2026 del baseline dieron test Macro-F1 0,948002 / 0,937867 / 0,944597, media 0,943489 ± 0,005158 y rango 0,937867–0,948002. Para N/P/K en el test estándar, F1 medio por clase fue N 0,891506 ± 0,013902, P 0,927756 ± 0,006590 y K 0,808883 ± 0,014451; los soportes fueron 127, 140 y 93 por seed. La [tabla por clase](../reproducibilidad/evidencia/multiseed_source_stability/baseline_class_multiseed.csv) conserva los valores individuales. Tres semillas permiten observar variación, no establecer significancia estadística fuerte.
 
@@ -79,4 +86,4 @@ En `lethal_necrosis`, B0 tuvo recall medio 0,777778 ± 0,031967 y F1 0,874607 ±
 
 ## Alcance pendiente
 
-No se ejecutó PHash, por lo que los casi duplicados siguen sin medir. Solo dos fuentes fueron priorizadas en el LOSO inicial y el ensamble se midió bajo una sola exclusión de fuente. El test histórico se ha observado repetidamente; ninguna cifra de esta síntesis se empleó para reajustar configuraciones. Quedan separados y pendientes la comparación formal baseline/HPO de cinco semillas (0/10 runs), CV y LOSO final general, selección por el equipo, entrenamiento formal y evaluación final formal. El respaldo de modelos es una copia verificable de artefactos existentes, no una nueva ejecución experimental.
+No se ejecutó PHash, por lo que los casi duplicados siguen sin medir. Solo dos fuentes fueron priorizadas en el LOSO inicial y el ensamble se midió bajo una sola exclusión de fuente. El test histórico se ha observado repetidamente; ninguna cifra de esta síntesis se empleó para reajustar configuraciones. Quedan separados y pendientes los cuatro pares restantes de la comparación formal baseline/HPO (2/10 runs completas), CV y LOSO final general, selección por el equipo, entrenamiento formal y evaluación final formal. El respaldo histórico de modelos es una copia verificable de artefactos existentes; el nuevo par validation-only se documenta aparte.

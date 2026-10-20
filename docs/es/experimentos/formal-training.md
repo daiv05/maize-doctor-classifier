@@ -1,18 +1,45 @@
 # Plantilla de entrenamiento formal
 
-**Estado: PENDIENTE.** Completar únicamente desde artefactos del run posterior al HPO.
+**Estado: PENDIENTE.** El HPO formal de 25 intentos ya terminó; no repetir
+`make tune-main` como requisito de esta fase. Antes de entrenar, registrar en el
+decision log la configuración elegida usando la
+[regla de selección fijada](./seleccion-modelo-final.md) y ejecutar
+[`make preflight-data`](../../../LOCAL.md) sobre la
+materialización congelada. Completar esta ficha únicamente desde artefactos
+del nuevo run.
 
 ## Identidad
 
 | Campo | Valor |
 |---|---|
-| Study / best trial | `PENDIENTE — best_params.json` |
-| Modelo | `efficientnet_lite0` |
+| Configuración elegida y justificación | `PENDIENTE — baseline o HPO, según decisión registrada` |
+| Modelo | EfficientNet-Lite0 para la comparación baseline/HPO; run formal pendiente |
 | Commit | `PENDIENTE — git rev-parse HEAD` |
 | Split lock SHA-256 | `PENDIENTE — manifest.lock.json` |
 | Config efectiva | `PENDIENTE — summary.json` |
 | Run ID | `PENDIENTE — summary.json` |
 | Checkpoint / hash | `PENDIENTE — best.pth + summary.json` |
+
+## Comandos tras cerrar la selección
+
+Para conservar los valores por defecto del pipeline principal:
+
+```bash
+make train-main MAIN_MODELS=efficientnet_lite0
+```
+
+Solo si la configuración elegida usa los parámetros del HPO, indicar el JSON
+verificado del estudio formal. `BEST_PARAMS` se transmite a `--best-params` tanto
+en `train-main` como en `modal-train-main`; las opciones explícitas de la CLI
+prevalecen sobre ese archivo.
+
+```bash
+make train-main MAIN_MODELS=efficientnet_lite0 BEST_PARAMS=/ruta/al/best_hyperparameters.json
+```
+
+La ruta del JSON debe existir en el entorno que ejecuta el entrenamiento (local
+o contenedor Modal). El resultado del test histórico del HPO no selecciona por
+sí solo la configuración formal. Ver [comparación baseline/HPO](../tesis/HPO_BASELINE_COMPARISON.md).
 
 ## Resultado observado
 

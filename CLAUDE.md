@@ -88,10 +88,12 @@ lista todo agrupado.
 make install                          # pip install -e ".[dev,analysis,xai,cloud]"
                                        # + ",export" si necesitas exportar a ONNX/TFLite
 make download-dataset                 # clean/ (HF Hub, fallback Google Drive)
+make preflight-data                   # verifica clean/, hashes de seed_42 y artefactos antes de entrenar
 make upload-dataset STAGE_DIR=<dir>   # empaqueta clean/ en shards .tar y sube a HF [DRY_RUN=1]
 make splits / make splits-baseline    # regenera splits CSV
 make train-baselines [MODELS=<nombre> NO_CAP=1|MAX_PER_CLASS=<n>]
-make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]  # alias: make train
+make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> BEST_PARAMS=<json> CLAHE=1 CLASS_WEIGHTS=<estrategia>]  # alias: make train
+make cross-validate [MODEL=<nombre> GROUP_BY_SOURCE=1 IGNORE_TUNED_PARAMS=1 SKIP_TEST=1 OUTPUT_DIR=<dir>]
 make modal-train-baselines [MODELS=<nombre> EPOCHS=<n>]        # baselines en GPU
 make modal-train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n>]   # principal en GPU (alias: modal-train)
 make explain-visual-baselines [MODELS=<nombre>]   # reporte visual LIME+Grad-CAM post-hoc

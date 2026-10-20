@@ -2,6 +2,14 @@
 
 La fuente estructurada histórica es [`manifiesto_corridas.csv`](../resultados/evidencia/manifiesto_corridas.csv). Los runs contractuales recientes se complementan con sus `summary.json`; no se copian valores futuros ni se promueven resultados por estar cronológicamente más recientes.
 
+La secuencia pendiente y los comandos vigentes se documentan en
+[entrenamiento formal](./formal-training.md) y
+[validación cruzada](./cross-validation.md). El [HPO formal](./hpo.md) ya está
+cerrado y no forma parte de los prerrequisitos que haya que repetir.
+La [regla de selección de la configuración final](./seleccion-modelo-final.md)
+ya está fijada; la elección continúa pendiente hasta completar los cinco
+pares baseline/HPO del [estudio multi-seed](./multiseed.md).
+
 ## Punto de corte actual
 
 | Fecha/run | Modelo | Protocolo/seed | Objetivo | Val Macro-F1 | Test Macro-F1 | Accuracy | Estado |

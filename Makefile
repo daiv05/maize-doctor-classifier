@@ -4,12 +4,14 @@ ifeq ($(OS),Windows_NT)
     RUFF   	:= venv\Scripts\ruff
 	PYRIGHT := venv\Scripts\pyright
 	MODAL   := venv\Scripts\modal
+	BOOTSTRAP_PYTHON ?= python
 else
     PYTHON 	:= venv/bin/python
     PIP    	:= venv/bin/pip
     RUFF   	:= venv/bin/ruff
 	PYRIGHT := venv/bin/pyright
 	MODAL   := venv/bin/modal
+	BOOTSTRAP_PYTHON ?= python3
 endif
 
 # ==============================================================================
@@ -52,6 +54,14 @@ LIME ?=
 DETACH ?=
 
 # Optuna HPO & K-Fold Cross Validation
+BEST_PARAMS ?=
+GROUP_BY_SOURCE ?=
+IGNORE_TUNED_PARAMS ?=
+SKIP_TEST ?=
+PREFLIGHT_REPORT ?= outputs/preflight/seed_42_local.json
+REFERENCE_RUN_DIR ?=
+REFERENCE_RUN_SUMMARY ?=
+QUICK ?=
 N_TRIALS ?= 20
 TIMEOUT ?=
 PRUNER ?= median
@@ -90,7 +100,7 @@ STABILITY_RUNS ?=
 .PHONY: help
 help:
 	@echo "Local - setup y datos:"
-	@echo "  install download-dataset upload-dataset splits splits-baseline summary test-loader"
+	@echo "  install download-dataset upload-dataset splits splits-baseline preflight-data summary test-loader"
 	@echo "    upload-dataset requiere STAGE_DIR=<dir con ~18GB libres> [DRY_RUN=1] [KEEP_STAGE=1]"
 	@echo ""
 	@echo "Local - baselines (runs en outputs/baselines, var MODELS):"
@@ -98,7 +108,7 @@ help:
 	@echo "  explain-visual-baselines explain-fidelity-baselines explain-errors-baselines"
 	@echo ""
 	@echo "Local - pipeline principal (runs en $(MAIN_OUTPUT_DIR), var MAIN_MODELS):"
-	@echo "  train-main (alias: train)   [EXPORT_FORMATS=onnx,tflite para exportar al terminar]"
+	@echo "  train-main (alias: train)   [BEST_PARAMS=<json>] [EXPORT_FORMATS=onnx,tflite]"
 	@echo "  tune-main (Optuna HPO)      [N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median]"
 	@echo "  tune-dashboard              (inicia optuna-dashboard en el puerto 8080)"
 	@echo "  evaluate-ensemble (alias: ensemble)  (evalúa Soft Voting Ensemble en test.csv)"
@@ -106,6 +116,7 @@ help:
 	@echo "  eval-export-main  (mide el .onnx/.tflite sobre el split de test completo)"
 	@echo "  explain-visual-main explain-fidelity-main explain-errors-main"
 	@echo "  explain-compare-main explain-global-main   (SHAP: solo pipeline principal)"
+	@echo "  cross-validate [MODEL=<nombre> GROUP_BY_SOURCE=1 IGNORE_TUNED_PARAMS=1 SKIP_TEST=1 OUTPUT_DIR=<dir>]"
 	@echo ""
 	@echo "Modal - infraestructura:"
 	@echo "  modal-seed modal-splits modal-clean-outputs modal-pull"
@@ -140,7 +151,7 @@ help:
 # Local - setup y datos
 # ==============================================================================
 
-.PHONY: install download-dataset upload-dataset splits splits-baseline summary test-loader
+.PHONY: install download-dataset upload-dataset splits splits-baseline preflight-data summary test-loader
 
 install:
 	$(PIP) install -e ".[dev,analysis,xai,cloud]"
@@ -158,6 +169,16 @@ splits:
 
 splits-baseline:
 	$(PYTHON) scripts/pipeline/create_splits.py --baseline $(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),) $(if $(GROUP_BY_SOURCE),--group-by-source,)
+
+# No usa el venv: debe poder diagnosticar su ausencia antes de make install.
+preflight-data:
+	@$(BOOTSTRAP_PYTHON) scripts/checks/preflight_data_artifacts.py \
+		$(if $(DATASET_ROOT),--dataset-root "$(DATASET_ROOT)",) \
+		$(if $(OUTPUT_ROOT),--output-root "$(OUTPUT_ROOT)",) \
+		$(if $(SPLITS_DIR),--splits-dir "$(SPLITS_DIR)",) \
+		$(if $(REFERENCE_RUN_DIR),--reference-run-dir "$(REFERENCE_RUN_DIR)",) \
+		$(if $(REFERENCE_RUN_SUMMARY),--reference-run-summary "$(REFERENCE_RUN_SUMMARY)",) \
+		$(if $(QUICK),--quick,) --report "$(PREFLIGHT_REPORT)"
 
 summary:
 	$(PYTHON) src/analysis/dataset_summary.py
@@ -188,6 +209,7 @@ train-baselines:
 # Pipeline principal. Runs en outputs/main/<modelo>/.
 train:
 	$(PYTHON) scripts/pipeline/train.py --models $(MAIN_MODELS) \
+		$(if $(BEST_PARAMS),--best-params "$(BEST_PARAMS)",) \
 		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
@@ -251,6 +273,10 @@ cross-validate:
 	$(PYTHON) scripts/pipeline/cross_validate.py \
 		$(if $(MODEL),--model $(MODEL),) \
 		$(if $(K_FOLDS),--k-folds $(K_FOLDS),) \
+		$(if $(GROUP_BY_SOURCE),--group-by-source,) \
+		$(if $(IGNORE_TUNED_PARAMS),--ignore-tuned-params,) \
+		$(if $(SKIP_TEST),--skip-test,) \
+		$(if $(BEST_PARAMS),--best-params "$(BEST_PARAMS)",) \
 		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
@@ -528,6 +554,7 @@ modal-train-baselines:
 # modal-segment-dataset y modal-splits-segmented corridos antes).
 modal-train:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
+		$(if $(BEST_PARAMS),--best-params "$(BEST_PARAMS)",) \
 		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
 		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
 		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
@@ -570,7 +597,10 @@ modal-cross-validate:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::cross_validate_modal \
 		$(if $(MODEL),--model "$(MODEL)",) \
 		$(if $(K_FOLDS),--k-folds "$(K_FOLDS)",) \
-		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",$(if $(EPOCHS),--epochs "$(EPOCHS)",)) \
+		$(if $(GROUP_BY_SOURCE),--group-by-source,) \
+		$(if $(IGNORE_TUNED_PARAMS),--ignore-tuned-params,) \
+		$(if $(SKIP_TEST),--skip-test,) \
+		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
 		$(if $(BATCH_SIZE),--batch-size "$(BATCH_SIZE)",) \
 		$(if $(LEARNING_RATE),--learning-rate "$(LEARNING_RATE)",) \
 		$(if $(WEIGHT_DECAY),--weight-decay "$(WEIGHT_DECAY)",) \

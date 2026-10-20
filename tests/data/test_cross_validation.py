@@ -96,6 +96,12 @@ def test_load_best_params_if_available(tmp_path: Path):
     assert params["learning_rate"] == 0.0003
     assert params["batch_size"] == 16
 
+    with pytest.raises(FileNotFoundError):
+        _load_best_params_if_available("efficientnet_b0", str(tmp_path / "missing.json"), tmp_path)
+
+    with pytest.raises(ValueError, match="incompatibles"):
+        _load_best_params_if_available("efficientnet_b0", str(best_json), tmp_path, ignorar=True)
+
 
 def test_corn_dataset_accepts_dataframe(tmp_path: Path):
     from src.data.dataset import CornDataset

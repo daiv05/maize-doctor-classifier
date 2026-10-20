@@ -1,0 +1,274 @@
+{
+  "complete": false,
+  "completed_runs": 2,
+  "configurations": {
+    "baseline": {
+      "accuracy": {
+        "ci95_t_exploratory": null,
+        "max": 0.9806541683286797,
+        "mean": 0.9806541683286797,
+        "median": 0.9806541683286797,
+        "min": 0.9806541683286797,
+        "n": 1,
+        "std": null
+      },
+      "ece": {
+        "ci95_t_exploratory": null,
+        "max": 0.13984422997609045,
+        "mean": 0.13984422997609045,
+        "median": 0.13984422997609045,
+        "min": 0.13984422997609045,
+        "n": 1,
+        "std": null
+      },
+      "macro_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.9560862657056215,
+        "mean": 0.9560862657056215,
+        "median": 0.9560862657056215,
+        "min": 0.9560862657056215,
+        "n": 1,
+        "std": null
+      },
+      "nitrogen_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.8984375,
+        "mean": 0.8984375,
+        "median": 0.8984375,
+        "min": 0.8984375,
+        "n": 1,
+        "std": null
+      },
+      "phosphorus_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.9672727272727273,
+        "mean": 0.9672727272727273,
+        "median": 0.9672727272727273,
+        "min": 0.9672727272727273,
+        "n": 1,
+        "std": null
+      },
+      "potassium_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.8571428571428571,
+        "mean": 0.8571428571428571,
+        "median": 0.8571428571428571,
+        "min": 0.8571428571428571,
+        "n": 1,
+        "std": null
+      }
+    },
+    "hpo_trial_0": {
+      "accuracy": {
+        "ci95_t_exploratory": null,
+        "max": 0.9800558436378142,
+        "mean": 0.9800558436378142,
+        "median": 0.9800558436378142,
+        "min": 0.9800558436378142,
+        "n": 1,
+        "std": null
+      },
+      "ece": {
+        "ci95_t_exploratory": null,
+        "max": 0.05792522954665005,
+        "mean": 0.05792522954665005,
+        "median": 0.05792522954665005,
+        "min": 0.05792522954665005,
+        "n": 1,
+        "std": null
+      },
+      "macro_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.9572922254288656,
+        "mean": 0.9572922254288656,
+        "median": 0.9572922254288656,
+        "min": 0.9572922254288656,
+        "n": 1,
+        "std": null
+      },
+      "nitrogen_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.904,
+        "mean": 0.904,
+        "median": 0.904,
+        "min": 0.904,
+        "n": 1,
+        "std": null
+      },
+      "phosphorus_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.967032967032967,
+        "mean": 0.967032967032967,
+        "median": 0.967032967032967,
+        "min": 0.967032967032967,
+        "n": 1,
+        "std": null
+      },
+      "potassium_f1": {
+        "ci95_t_exploratory": null,
+        "max": 0.8585858585858586,
+        "mean": 0.8585858585858586,
+        "median": 0.8585858585858586,
+        "min": 0.8585858585858586,
+        "n": 1,
+        "std": null
+      }
+    }
+  },
+  "experiment_id": "efficientnet_lite0_baseline_vs_hpo",
+  "figures": [
+    "figures/macro_f1_by_seed.png",
+    "figures/ece_by_seed.png",
+    "figures/macro_f1_distribution.png",
+    "figures/paired_delta.png",
+    "figures/npk_by_configuration.png"
+  ],
+  "paired_delta": {
+    "ci95_t_exploratory": null,
+    "max": 0.00120595972324411,
+    "mean": 0.00120595972324411,
+    "median": 0.00120595972324411,
+    "min": 0.00120595972324411,
+    "n": 1,
+    "std": null
+  },
+  "pairs": [
+    {
+      "baseline": 0.9560862657056215,
+      "delta": 0.00120595972324411,
+      "hpo_trial_0": 0.9572922254288656,
+      "seed": 42
+    }
+  ],
+  "protocol_sha256": "bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9",
+  "results": [
+    {
+      "accuracy": 0.9806541683286797,
+      "best_epoch": 39,
+      "checkpoint_sha256": "860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859",
+      "configuration": "baseline",
+      "ece": 0.13984422997609045,
+      "experiment_id": "efficientnet_lite0_baseline_vs_hpo",
+      "finished_at": "2026-10-19T21:13:09.878024+00:00",
+      "macro_f1": 0.9560862657056215,
+      "nitrogen_f1": 0.8984375,
+      "phosphorus_f1": 0.9672727272727273,
+      "potassium_f1": 0.8571428571428571,
+      "protocol_sha256": "bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9",
+      "run_relative": "efficientnet_lite0/20261019_203033",
+      "seed": 42,
+      "status": "COMPLETE",
+      "test_used": false
+    },
+    {
+      "accuracy": 0.9800558436378142,
+      "best_epoch": 44,
+      "checkpoint_sha256": "00ff9aa5670dec814096ff3755fdd9c5e81ef29587297ad5acf4a94d7a715aa0",
+      "configuration": "hpo_trial_0",
+      "ece": 0.05792522954665005,
+      "experiment_id": "efficientnet_lite0_baseline_vs_hpo",
+      "finished_at": "2026-10-19T21:59:53.687919+00:00",
+      "macro_f1": 0.9572922254288656,
+      "nitrogen_f1": 0.904,
+      "phosphorus_f1": 0.967032967032967,
+      "potassium_f1": 0.8585858585858586,
+      "protocol_sha256": "bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9",
+      "run_relative": "efficientnet_lite0/20261019_211317",
+      "seed": 42,
+      "status": "COMPLETE",
+      "test_used": false
+    },
+    {
+      "accuracy": null,
+      "configuration": "baseline",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 123,
+      "status": "PENDING"
+    },
+    {
+      "accuracy": null,
+      "configuration": "hpo_trial_0",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 123,
+      "status": "PENDING"
+    },
+    {
+      "accuracy": null,
+      "configuration": "baseline",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 2026,
+      "status": "PENDING"
+    },
+    {
+      "accuracy": null,
+      "configuration": "hpo_trial_0",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 2026,
+      "status": "PENDING"
+    },
+    {
+      "accuracy": null,
+      "configuration": "baseline",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 3407,
+      "status": "PENDING"
+    },
+    {
+      "accuracy": null,
+      "configuration": "hpo_trial_0",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 3407,
+      "status": "PENDING"
+    },
+    {
+      "accuracy": null,
+      "configuration": "baseline",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 7777,
+      "status": "PENDING"
+    },
+    {
+      "accuracy": null,
+      "configuration": "hpo_trial_0",
+      "ece": null,
+      "macro_f1": null,
+      "nitrogen_f1": null,
+      "phosphorus_f1": null,
+      "potassium_f1": null,
+      "seed": 7777,
+      "status": "PENDING"
+    }
+  ],
+  "test_used": false,
+  "ties": 0,
+  "wins_baseline": 0,
+  "wins_hpo": 1
+}

@@ -187,6 +187,11 @@ def _parse_args() -> argparse.Namespace:
              "fuente aparezca a ambos lados de un pliegue.",
     )
     parser.add_argument(
+        "--skip-test",
+        action="store_true",
+        help="Ejecuta solo los pliegues de desarrollo; no carga ni evalúa test.csv.",
+    )
+    parser.add_argument(
         "--num-workers",
         type=int,
         default=8,
@@ -207,16 +212,20 @@ def _load_best_params_if_available(
     # El auto-descubrimiento inyecta hiperparametros afinados sin que nadie los pida,
     # asi que una corrida pensada como linea base deja de serlo en silencio.
     if ignorar:
-        logger.info("Hiperparametros: valores por defecto del pipeline (auto-descubrimiento desactivado)")
+        if explicit_path:
+            raise ValueError("--ignore-tuned-params y --best-params son incompatibles")
+        logger.info(
+            "Hiperparametros: valores por defecto del pipeline (auto-descubrimiento desactivado)"
+        )
         return None
 
     if explicit_path:
         p = Path(explicit_path)
-        if p.exists():
-            with open(p, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("best_params", data)
-        logger.warning("No se encontró el archivo de hiperparámetros indicado: %s", explicit_path)
+        if not p.is_file():
+            raise FileNotFoundError(f"No se encontró el archivo de hiperparámetros: {p}")
+        with open(p, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("best_params", data)
 
     # Auto-descubrimiento en múltiples ubicaciones candidatas
     candidates = [
@@ -313,15 +322,20 @@ def main() -> None:
     warmup = int(optuna_params.get("warmup_epochs", 2)) if optuna_params else 2
     use_clahe = bool(optuna_params.get("clahe", False)) if optuna_params else False
 
-    # 1. Cargar Pool de Desarrollo (train + val) y Test Set Retenido
+    # 1. Cargar el pool de desarrollo; test solo para la evaluación final opt-in.
     train_df = pd.read_csv(splits_dir / "train.csv")
     val_df = pd.read_csv(splits_dir / "val.csv")
     dev_df = pd.concat([train_df, val_df], ignore_index=True)
-    test_df = pd.read_csv(splits_dir / "test.csv")
+    test_df = None if args.skip_test else pd.read_csv(splits_dir / "test.csv")
 
-    logger.info("=== VALIDACIÓN CRUZADA ESTRATIFICADA (%d-FOLD) + TEST FINAL ===", args.k_folds)
-    logger.info("Modelo: %s | Pool Desarrollo: %d imágenes | Test Retenido: %d imágenes", args.model, len(dev_df), len(test_df))
-    logger.info("Hiperparámetros: lr=%.2e, wd=%.2e, batch_size=%d, loss_weight='%s', clahe=%s", lr, wd, bs, cw, use_clahe)
+    logger.info("=== VALIDACIÓN CRUZADA (%d-FOLD) ===", args.k_folds)
+    logger.info("Modelo: %s | Pool Desarrollo: %d imágenes", args.model, len(dev_df))
+    if test_df is not None:
+        logger.info("Test retenido: %d imágenes", len(test_df))
+    logger.info(
+        "Hiperparámetros: lr=%.2e, wd=%.2e, batch_size=%d, loss_weight='%s', clahe=%s",
+        lr, wd, bs, cw, use_clahe,
+    )
 
     # 2. Generar K Folds Estratificados
     splitter = (
@@ -338,23 +352,25 @@ def main() -> None:
     factory = CornTransformFactory(config_path=str(config_path), target_size=target_size, clahe=use_clahe)
     pin_memory = (device.type == "cuda")
 
-    # Dataset de prueba final retenido
-    test_dataset = CornDataset(
-        csv_path=str(splits_dir / "test.csv"),
+    # El mapeo se deriva del pool de desarrollo cuando el test permanece cerrado.
+    reference_dataset = CornDataset(
+        csv_path=dev_df if args.skip_test else str(splits_dir / "test.csv"),
         config_path=str(config_path),
         transform=factory.get_pipeline("test"),
     )
-    class_to_idx = test_dataset.class_to_idx
+    class_to_idx = reference_dataset.class_to_idx
     idx_to_class = {v: k for k, v in class_to_idx.items()}
     class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
 
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=bs,
-        shuffle=False,
-        num_workers=args.num_workers,
-        pin_memory=pin_memory,
-    )
+    test_loader = None
+    if not args.skip_test:
+        test_loader = DataLoader(
+            reference_dataset,
+            batch_size=bs,
+            shuffle=False,
+            num_workers=args.num_workers,
+            pin_memory=pin_memory,
+        )
 
     fold_metrics_list: list[dict[str, float]] = []
     trained_fold_models: list[torch.nn.Module] = []
@@ -479,7 +495,8 @@ def main() -> None:
         # Mover modelo a CPU para liberar VRAM antes del siguiente fold
         model.eval()
         model.cpu()
-        trained_fold_models.append(model)
+        if not args.skip_test:
+            trained_fold_models.append(model)
 
     # 4. Estadísticas Agregadas de Validación Cruzada
     stats = compute_aggregate_statistics(fold_metrics_list)
@@ -487,35 +504,42 @@ def main() -> None:
     logger.info("Macro F1: %.4f ± %.4f (IC 95%%: [%.4f, %.4f])", stats["macro_f1"]["mean"], stats["macro_f1"]["std"], stats["macro_f1"]["ci_95_lower"], stats["macro_f1"]["ci_95_upper"])
     logger.info("Accuracy: %.4f ± %.4f (IC 95%%: [%.4f, %.4f])", stats["accuracy"]["mean"], stats["accuracy"]["std"], stats["accuracy"]["ci_95_lower"], stats["accuracy"]["ci_95_upper"])
 
-    # 5. Evaluación de la Prueba Final en Test Set Retenido (Fold Averaging Ensemble)
-    logger.info("=== EVALUACIÓN DE LA PRUEBA FINAL SOBRE TEST SET RETENIDO ===")
-    # Mover modelos de folds de vuelta a GPU para evaluación del ensamble
-    for m in trained_fold_models:
-        m.to(device)
-    fold_ensemble = SoftVotingEnsemble(models=trained_fold_models)
-    
-    test_y_true: list[int] = []
-    test_y_pred: list[int] = []
+    # 5. Evaluación final opcional: la comparación de protocolos usa solo CV.
+    hold_out_test_metrics = None
+    if test_loader is not None:
+        logger.info("=== EVALUACIÓN DE LA PRUEBA FINAL SOBRE TEST SET RETENIDO ===")
+        for m in trained_fold_models:
+            m.to(device)
+        fold_ensemble = SoftVotingEnsemble(models=trained_fold_models)
 
-    with torch.no_grad():
-        for batch in test_loader:
-            images, targets, _ = unpack_batch(batch)
-            images = images.to(device)
-            test_y_true.extend(targets.tolist())
-            ens_probs = fold_ensemble.predict_probabilities(images)
-            preds = torch.argmax(ens_probs, dim=-1).cpu().tolist()
-            test_y_pred.extend(preds)
+        test_y_true: list[int] = []
+        test_y_pred: list[int] = []
+        with torch.no_grad():
+            for batch in test_loader:
+                images, targets, _ = unpack_batch(batch)
+                images = images.to(device)
+                test_y_true.extend(targets.tolist())
+                ens_probs = fold_ensemble.predict_probabilities(images)
+                preds = torch.argmax(ens_probs, dim=-1).cpu().tolist()
+                test_y_pred.extend(preds)
 
-    test_macro = _calc_metrics_macro(test_y_true, test_y_pred, num_classes=len(class_to_idx))
-    test_macro_f1 = test_macro["macro_f1"]
-    test_acc = _calc_acc(test_y_true, test_y_pred)
-    test_prec = test_macro["macro_precision"]
-    test_rec = test_macro["macro_recall"]
+        test_macro = _calc_metrics_macro(test_y_true, test_y_pred, num_classes=len(class_to_idx))
+        test_macro_f1 = test_macro["macro_f1"]
+        test_acc = _calc_acc(test_y_true, test_y_pred)
+        test_prec = test_macro["macro_precision"]
+        test_rec = test_macro["macro_recall"]
+        hold_out_test_metrics = {
+            "test_macro_f1": round(test_macro_f1, 4),
+            "test_accuracy": round(test_acc, 4),
+            "test_macro_precision": round(test_prec, 4),
+            "test_macro_recall": round(test_rec, 4),
+            "test_samples": len(test_y_true),
+        }
 
-    logger.info("=== RESULTADOS EN TEST SET FINAL (HOLD-OUT) ===")
-    logger.info("Test Final Macro F1: %.4f", test_macro_f1)
-    logger.info("Test Final Accuracy: %.4f", test_acc)
-    logger.info("Test Final Precision: %.4f | Recall: %.4f", test_prec, test_rec)
+        logger.info("=== RESULTADOS EN TEST SET FINAL (HOLD-OUT) ===")
+        logger.info("Test Final Macro F1: %.4f", test_macro_f1)
+        logger.info("Test Final Accuracy: %.4f", test_acc)
+        logger.info("Test Final Precision: %.4f | Recall: %.4f", test_prec, test_rec)
 
     # 6. Exportar Artefactos
     df_folds = pd.DataFrame(fold_metrics_list)
@@ -524,6 +548,8 @@ def main() -> None:
     summary_data = {
         "model_name": args.model,
         "k_folds": args.k_folds,
+        "group_by_source": args.group_by_source,
+        "skip_test": args.skip_test,
         "optuna_params_applied": optuna_params is not None,
         "hyperparameters_used": {
             "learning_rate": lr,
@@ -534,22 +560,19 @@ def main() -> None:
             "clahe": use_clahe,
         },
         "kfold_validation_statistics": stats,
-        "hold_out_test_metrics": {
-            "test_macro_f1": round(test_macro_f1, 4),
-            "test_accuracy": round(test_acc, 4),
-            "test_macro_precision": round(test_prec, 4),
-            "test_macro_recall": round(test_rec, 4),
-            "test_samples": len(test_y_true),
-        },
+        "hold_out_test_metrics": hold_out_test_metrics,
         "dev_dataset_size": len(dev_df),
-        "test_dataset_size": len(test_df),
+        "test_dataset_size": len(test_df) if test_df is not None else None,
     }
     with open(output_dir / "kfold_summary.json", "w", encoding="utf-8") as f:
         json.dump(summary_data, f, indent=2)
 
     # Gráficos
     plot_kfold_boxplot(fold_metrics_list, output_dir / "kfold_boxplot.png", model_name=args.model)
-    plot_test_confusion_matrix(test_y_true, test_y_pred, class_names, output_dir / "confusion_matrix_test.png")
+    if hold_out_test_metrics is not None:
+        plot_test_confusion_matrix(
+            test_y_true, test_y_pred, class_names, output_dir / "confusion_matrix_test.png"
+        )
 
     logger.info("Reportes y matrices guardados exitosamente en: %s", output_dir)
 

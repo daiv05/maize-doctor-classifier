@@ -58,7 +58,7 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 - Una métrica por ambiente o fuente debe indicar su soporte y las clases evaluables.
 - `0.6026 ± 0.1240` significa **CV agrupada por fuente**, no LOSO ni el holdout source-grouped actual.
 - El resultado agrupando N/P/K responde a otra taxonomía y se reporta separado del Macro-F1 de nueve clases.
-- El multi-seed baseline/LOSO de tres semillas ya está cerrado más abajo. Siguen pendientes el estudio pareado baseline/HPO (0/10 runs), CV/LOSO final general, entrenamiento formal, exportación y dispositivo. El HPO de 25 intentos no completa esas fases.
+- El multi-seed baseline/LOSO de tres semillas ya está cerrado más abajo. El estudio pareado baseline/HPO tiene 2/10 runs completas; siguen pendientes sus cuatro pares restantes, CV/LOSO final general, entrenamiento formal, exportación y dispositivo. El HPO de 25 intentos no completa esas fases.
 - El ensamble histórico ya se midió bajo LOSO multicrop con tres seeds: resultado mixto frente a B0 y peor ECE. No equivale a validación general de transferencia ni a selección del modelo formal.
 
 <!-- hpo-lite0-seed42-completed -->
@@ -93,8 +93,36 @@ Artefactos locales bajo `outputs/multiseed/efficientnet_lite0_baseline_vs_hpo/`:
 `MULTISEED_SUMMARY.json`, `MULTISEED_RESULTS.csv`, `MULTISEED_REPORT.md`.
 El reporte explicita pendientes; no importa resultados históricos como nuevos.
 JUnit de 146 pruebas en `outputs/multiseed-checks/tests.xml`.
-Este plan sigue separado del estudio baseline/LOSO ya cerrado y conserva 0/10 runs.
+En ese corte de preparación, el plan seguía separado del estudio baseline/LOSO
+ya cerrado y conservaba 0/10 runs.
 No se ejecutó inferencia del test real durante su preparación.
+La [regla de selección de configuración](../experimentos/seleccion-modelo-final.md)
+se documentó el 19 de octubre de 2026, antes de ejecutar la cohorte pareada.
+Es una decisión metodológica, **no un resultado cuantitativo**: no existe aún
+registro de configuración elegida ni se incorpora una cifra de mejora nueva.
+
+El [incidente del 19 de octubre](../experimentos/multiseed-incidente-2026-10-19.md)
+conserva el intento baseline seed 42 cancelado antes de validation. Su
+`STARTED.json` archivado tiene SHA-256
+`bf78ec8eab088c18123bd23cab70101d66b0206a9e844a191f264af37f80ca42`;
+no aporta una nueva métrica ni sustituye a ninguno de los diez slots válidos.
+
+## Multi-seed baseline/HPO — primer par completo 2026-10-19
+
+[Revisión, métricas y límites](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/REVIEW.md).
+Estado actual: **2/10 runs completas, 1/5 pares**, ocho slots pendientes.
+Todos los artefactos pequeños y sus SHA-256 figuran en
+[MANIFEST.sha256](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/MANIFEST.sha256).
+
+| Afirmación verificable | Artefacto versionado | SHA-256 |
+|---|---|---|
+| Validation Macro-F1 baseline 0,956086266; HPO 0,957292225; delta pareado +0,001205960 (seed 42) | [resumen](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/MULTISEED_SUMMARY.json) y [CSV](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/MULTISEED_RESULTS.csv) | resumen `8892a7b7806e73926dc584288cda91b0e6eaa3f1f95a28fa8d9e411bf2b0afd8`; CSV `7e3cb23126189bf07e0426e4c1f11c498990f05c7de1a12d87f33f4dca9f0a95` |
+| Ambos recibos COMPLETE, hashes de checkpoints/artefactos, `test_used=false` | [baseline](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/baseline/seed_42/COMPLETE.json) y [HPO](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/hpo_trial_0/seed_42/COMPLETE.json) | baseline `74e540b57d7925b18858888dc468671fe185ab799063f553be3ceae01430250c`; HPO `2fa43a41c00c0b9e8eb191f15df74187bb5bf2bfcd40cdc72b2984797136c230` |
+| 21/21 hashes verificados; 5 014 predicciones/IDs por configuración; Macro-F1 y accuracy recalculados | [revisión](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/REVIEW.md), [reporte](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/MULTISEED_REPORT.md) | reporte `fb9442b7672336d0db72fe431e6a792b8fc8e3e1bf02116759d8bcefd537b41e`; hashes completos en MANIFEST |
+
+Los checkpoints y CSV de predicciones completos están en
+`corn-outputs:/multiseed/efficientnet_lite0_baseline_vs_hpo/`. Esta única
+seed no satisface la regla de selección de cinco pares.
 
 ## Multi-seed baseline/LOSO — cerrado 2026-10-01
 

@@ -1,6 +1,6 @@
 # Estado experimental actual
 
-Punto de corte: **2 de octubre de 2026**. No implica que todo artefacto histórico se haya repetido sobre el corpus vigente.
+Punto de corte: **19 de octubre de 2026**. No implica que todo artefacto histórico se haya repetido sobre el corpus vigente.
 
 ## Completado
 
@@ -44,8 +44,15 @@ causal a la procedencia.
 
 [Baseline frente a HPO trial 0](./multiseed.md): cinco seeds emparejadas
 (42, 123, 2026, 3407, 7777), mismo split, validation-only. Runner y smoke local
-implementados; **0/10 runs iniciadas**. No forma parte del estudio activo.
-En ese plan pareado separado no se evaluó test ni se seleccionó una configuración para la fase siguiente.
+implementados; **2/10 runs completas, seed 42 en ambas configuraciones**.
+El [primer par](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/REVIEW.md)
+dio HPO − baseline = +0,001206 de validation Macro-F1; los ocho slots
+restantes siguen pendientes. El primer intento baseline fue cancelado antes
+de validation, archivado y [documentado](./multiseed-incidente-2026-10-19.md).
+En este estudio separado no se evaluó test ni se seleccionó una configuración para la fase siguiente.
+La [regla de selección](./seleccion-modelo-final.md) quedó fijada el 19 de
+octubre de 2026 para aplicar solo tras cinco pares válidos. El primer par
+no permite seleccionar con el test ya observado.
 
 ## Estado de la fase de integridad
 
@@ -58,7 +65,7 @@ En ese plan pareado separado no se evaluó test ni se seleccionó una configurac
 | Análisis por fuente | COMPLETADO; descriptivo, complementado por LOSO |
 | Baseline multi-seed (42/123/2026) | COMPLETADO; tres test finales, el de seed 42 histórico |
 | LOSO multi-seed de dos fuentes (42/123/2026) | COMPLETADO; tres holdouts por fuente |
-| Comparación baseline/HPO multi-seed | PENDIENTE; 0/10 runs |
+| Comparación baseline/HPO multi-seed | EN CURSO; 2/10 runs completas, 1/5 pares |
 | Ensamble histórico bajo LOSO multicrop (42/123/2026) | COMPLETADO; resultado mixto frente a B0 |
 | Cinco observaciones originales | COMPLETADAS/CERRADAS en el alcance documentado; límites indicados abajo |
 | Documentación consolidada de resultados | COMPLETADA; sin selección de ganador |

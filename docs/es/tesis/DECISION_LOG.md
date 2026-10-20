@@ -150,3 +150,40 @@ Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validati
   verificación de fuentes, manifiestos y resultados existentes. Sin lanzamiento automático.
 - **Estado:** implementación validada localmente; 0/10 runs. No conclusión
   experimental ni promoción. [Protocolo y comandos](../experimentos/multiseed.md).
+
+## DEC-016 — Regla de selección de configuración antes de la cohorte pareada
+
+- **Fecha:** 2026-10-19. Regla fijada después de conocer los resultados
+  históricos de test, pero antes de ejecutar las diez nuevas runs pareadas.
+- **Alcance:** elegir entre `baseline` y `hpo_trial_0` de EfficientNet-Lite0
+  para un entrenamiento formal posterior; no elegir checkpoint, seed o
+  arquitectura distinta.
+- **Puerta:** diez runs contractuales, cinco pares completos, hashes y
+  `test_used=false`; con evidencia incompleta, decisión pendiente.
+- **Regla:** HPO se elige si la media pareada de validation Macro-F1 mejora al
+  menos 0,005 y gana en cuatro o cinco seeds. Con cohorte completa, baseline
+  se elige en los demás casos. Métricas secundarias se informan sin cambiar
+  la regla retrospectivamente.
+- **Estado:** protocolo cerrado; **0/10 runs, sin configuración seleccionada**.
+  [Regla, límites y cierre](../experimentos/seleccion-modelo-final.md).
+
+## DEC-017 — Recuperación manual tras cancelación de Modal
+
+- **Fecha:** 2026-10-19, antes de observar validation en la nueva cohorte.
+- **Hecho:** el primer baseline seed 42 se canceló al interrumpir el cliente
+  de una invocación sincrónica de Modal; no completó una época ni produjo
+  métricas o checkpoint. HPO no se inició.
+- **Decisión:** preservar el intento y permitir una sola reejecución manual;
+  diez slots válidos y hasta once intentos físicos. El lanzador temporal usa
+  `spawn` y no modifica el snapshot congelado ni el test.
+- **Evidencia:** [incidente y enmienda](../experimentos/multiseed-incidente-2026-10-19.md).
+
+## Seguimiento de DEC-015/DEC-017 — Primer par completo (2026-10-19)
+
+- Baseline y HPO seed 42: **2/10 runs completas, 1/5 pares**. Diferencia HPO
+  − baseline de validation Macro-F1: **+0,001205960**.
+- Los recibos, hashes y 5 014 predicciones por configuración se cotejaron;
+  `test_used=false`. La cancelación técnica previa permanece archivada.
+- **Decisión de configuración:** PENDIENTE hasta completar cinco pares;
+  este resultado de una seed no modifica DEC-016.
+- **Evidencia:** [revisión del primer par](../reproducibilidad/evidencia/multiseed_baseline_hpo_seed42/REVIEW.md).

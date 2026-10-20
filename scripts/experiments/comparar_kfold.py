@@ -1,12 +1,16 @@
-"""Compara las celdas del experimento 2x2 de validación cruzada.
+"""Compara protocolos de validación cruzada desde predicciones por pliegue.
 
-Las cuatro celdas cruzan protocolo de partición (estratificada frente a agrupada por
-procedencia) con configuración (valores por defecto frente a hiperparámetros afinados).
-Cada cifra se recomputa desde las predicciones por imagen de cada pliegue, no se lee del
-resumen, y se acompaña del acierto de un predictor constante de la clase mayoritaria.
+El modo histórico cruza cuatro celdas: protocolo (estratificada o agrupada por
+procedencia) y configuración (por defecto o afinada). El modo de dos directorios
+compara corridas nuevas de ambos protocolos. Cada cifra se recomputa desde las
+predicciones por imagen de cada pliegue y se acompaña del acierto nulo.
 
 Uso:
     python scripts/experiments/comparar_kfold.py --raiz outputs/fase_f
+    python scripts/experiments/comparar_kfold.py \
+      --estratificada-dir outputs/kfold/modelo/estratificada \
+      --agrupada-dir outputs/kfold/modelo/agrupada \
+      --salida outputs/kfold/modelo/comparacion.csv
 """
 
 from __future__ import annotations
@@ -32,9 +36,11 @@ CELDAS = {
 
 def parse_args() -> argparse.Namespace:
     """Define la interfaz de línea de comandos."""
-    parser = argparse.ArgumentParser(description="Compara las celdas del 2x2 de K-Fold.")
+    parser = argparse.ArgumentParser(description="Compara protocolos de K-Fold.")
     parser.add_argument("--raiz", type=Path, default=Path("outputs/fase_f"))
-    parser.add_argument("--salida", type=Path, default=Path("outputs/fase_f/comparacion.csv"))
+    parser.add_argument("--estratificada-dir", type=Path, default=None)
+    parser.add_argument("--agrupada-dir", type=Path, default=None)
+    parser.add_argument("--salida", type=Path, default=None)
     return parser.parse_args()
 
 
@@ -86,23 +92,38 @@ def resumir_celda(directorio: Path) -> dict[str, object] | None:
 
 
 def main() -> None:
-    """Construye la tabla comparativa de las cuatro celdas."""
+    """Construye la tabla histórica 2x2 o compara dos corridas nuevas."""
     args = parse_args()
+    if (args.estratificada_dir is None) != (args.agrupada_dir is None):
+        raise SystemExit("Indique --estratificada-dir y --agrupada-dir juntos.")
+
+    if args.estratificada_dir is not None:
+        celdas = [
+            ("estratificada", "estratificada", "configuración elegida", args.estratificada_dir),
+            ("agrupada", "agrupada", "configuración elegida", args.agrupada_dir),
+        ]
+    else:
+        celdas = [
+            (nombre, protocolo, configuracion, args.raiz / nombre)
+            for nombre, (protocolo, configuracion) in CELDAS.items()
+        ]
+
     filas = []
-    for carpeta, (protocolo, configuracion) in CELDAS.items():
-        resumen = resumir_celda(args.raiz / carpeta)
+    for carpeta, protocolo, configuracion, directorio in celdas:
+        resumen = resumir_celda(directorio)
         if resumen is None:
-            print(f"[!] sin pliegues en {carpeta}", flush=True)
+            print(f"[!] sin pliegues en {directorio}", flush=True)
             continue
         filas.append({"celda": carpeta, "protocolo": protocolo,
                       "configuracion": configuracion, **resumen})
 
-    if not filas:
-        raise SystemExit("No se encontraron pliegues en ninguna celda.")
+    if not filas or (args.estratificada_dir is not None and len(filas) != 2):
+        raise SystemExit("Faltan predicciones de pliegues para completar la comparación.")
 
     tabla = pd.DataFrame(filas)
-    args.salida.parent.mkdir(parents=True, exist_ok=True)
-    tabla.to_csv(args.salida, index=False)
+    salida = args.salida or args.raiz / "comparacion.csv"
+    salida.parent.mkdir(parents=True, exist_ok=True)
+    tabla.to_csv(salida, index=False)
 
     print(f"\n{'celda':26s} {'macroF1_ev':>11s} {'IC95':>8s} {'accuracy':>9s} "
           f"{'nulo':>7s} {'clases':>8s} {'k':>3s}")
@@ -118,7 +139,7 @@ def main() -> None:
                      - par.loc["agrupada", "macro_f1_evaluable"])
             print(f"\n  {configuracion}: estratificada -> agrupada = {caida:+.4f} de macro-F1")
 
-    print(f"\n[*] tabla en {args.salida}", flush=True)
+    print(f"\n[*] tabla en {salida}", flush=True)
 
 
 if __name__ == "__main__":
