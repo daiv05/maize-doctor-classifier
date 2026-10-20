@@ -1,0 +1,9 @@
+{
+  "run_id": "20260921_204608",
+  "checkpoint_sha256": "860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859",
+  "split_manifest_sha256": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+  "device": "cuda",
+  "samples": 5014,
+  "macro_f1_recomputed": 0.9560862657056215,
+  "macro_f1_recorded": 0.9560862657056215
+}

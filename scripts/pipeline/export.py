@@ -26,6 +26,7 @@ from src.export.data import build_test_loader, resolve_test_csv
 from src.models import list_models
 from src.models.feature_exposed import FeatureExposedModel
 from src.training.common import resolve_run_dir, select_device
+from src.training.runs import read_run_contract
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -69,9 +70,7 @@ def _parse_args() -> argparse.Namespace:
         help="Directorio con test.csv (default: el 'splits_dir' de summary.json).",
     )
     parser.add_argument("--batch-size", type=int, default=32, dest="batch_size")
-    parser.add_argument(
-        "--parity-sample-size", type=int, default=30, dest="parity_sample_size"
-    )
+    parser.add_argument("--parity-sample-size", type=int, default=30, dest="parity_sample_size")
     parser.add_argument(
         "--tolerance",
         type=float,
@@ -116,9 +115,20 @@ def _export_one(args: argparse.Namespace, model_name: str, output_dir: Path) -> 
         checkpoint_path = run_dir / "best.pth"
 
     class_to_idx, _, image_size = resolve_export_inputs(run_dir, model_name, config_path)
-    write_labels_json(run_dir, class_to_idx, model_name, image_size)
+    run_contract = read_run_contract(run_dir)
     device = select_device()
-    model = load_checkpoint_for_export(checkpoint_path, model_name, class_to_idx, device)
+    test_csv = None
+    if not args.no_parity:
+        test_csv = resolve_test_csv(run_dir, args.splits_dir)
+    model = load_checkpoint_for_export(
+        checkpoint_path,
+        model_name,
+        class_to_idx,
+        device,
+        image_size=image_size,
+        splits_dir=test_csv.parent if test_csv is not None else None,
+    )
+    write_labels_json(run_dir, class_to_idx, model_name, image_size)
     # El segundo output (features pooled pre-head) alimenta el detector OOD por
     # distancia de Mahalanobis en la app; no cambia el output[0] (logits), que
     # sigue siendo lo único que valida la paridad numérica.
@@ -126,9 +136,13 @@ def _export_one(args: argparse.Namespace, model_name: str, output_dir: Path) -> 
 
     test_loader = None
     if not args.no_parity:
-        test_csv = resolve_test_csv(run_dir, args.splits_dir)
         test_loader, _ = build_test_loader(
-            test_csv, config_path, class_to_idx, image_size, args.batch_size
+            test_csv,
+            config_path,
+            class_to_idx,
+            image_size,
+            args.batch_size,
+            preprocessing_contract=run_contract["preprocessing"],
         )
 
     report = export_model(

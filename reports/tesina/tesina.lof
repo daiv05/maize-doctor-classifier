@@ -1,0 +1,40 @@
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Diversidad morfol\'ogica, fondos r\'usticos y heterogeneidad geom\'etrica en las afecciones foliares del ma\'iz.}}{3}{figure.caption.1}%
+\contentsline {figure}{\numberline {1.2}{\ignorespaces Modelo conceptual de caja negra para el diagn\'ostico fitosanitario m\'ovil.}}{6}{figure.caption.2}%
+\contentsline {figure}{\numberline {1.3}{\ignorespaces Diagrama de Gantt de ejecuci\'on temporal del proyecto (Metodolog\'ia CRISP-DM)}}{13}{figure.caption.4}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Cat\'alogo fotogr\'afico de las nueve clases agron\'omicas presentes en el corpus.}}{19}{figure.caption.11}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Distribuci\'on de muestras por clase.}}{21}{figure.caption.13}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Proporci\'on Laboratorio vs. Campo Real.}}{21}{figure.caption.13}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces An\'alisis exploratorio de distribuci\'on y balance ambiental del corpus.}}{21}{figure.caption.13}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Matriz de contingencia fuente vs. patolog\'ia.}}{21}{figure.caption.14}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Distribuci\'on de resoluciones espaciales.}}{21}{figure.caption.14}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Concentraci\'on de procedencia y heterogeneidad geom\'etrica en las im\'agenes.}}{21}{figure.caption.14}%
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Modelo relacional del servidor. Las flechas van de \texttt {users} a las tablas que referencian su \texttt {id}. \texttt {app\_releases} no tiene relaciones.}}{28}{figure.caption.16}%
+\contentsline {figure}{\numberline {2.9}{\ignorespaces Flujo de sincronizaci\'on de un aporte, desde el guardado local hasta la confirmaci\'on del servidor. Si el env\'io falla, el registro permanece pendiente.}}{29}{figure.caption.17}%
+\contentsline {figure}{\numberline {2.10}{\ignorespaces Diagrama de flujo arquitect\'onico integral del sistema DoctorMaiz.}}{30}{figure.caption.19}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Curvas de convergencia: P\'erdida y Macro $F_1$ durante el entrenamiento en Modal.}}{32}{figure.caption.20}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Historial de ensayos de Optuna.}}{34}{figure.caption.22}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Importancia relativa de hiperpar\'ametros.}}{34}{figure.caption.22}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Din\'amica de exploraci\'on e impacto relativo de variables en Optuna.}}{34}{figure.caption.22}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Comparativa de desempe\~no del ensamble frente a modelos individuales.}}{36}{figure.caption.25}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Matriz de confusi\'on normalizada del ensamble sobre 5~015 muestras de prueba.}}{36}{figure.caption.26}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Dise\~no del experimento cruzado $2\times 2$.}}{38}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Magnitud de impacto en sigmas ($\sigma $).}}{38}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Impacto de la partici\'on frente a la optimizaci\'on algor\'itmica.}}{38}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Disparidad por entorno ambiental.}}{39}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Matrices desagregadas Lab vs. Campo.}}{39}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Auditor\'ia de equidad e imparcialidad entre condiciones fotogr\'aficas.}}{39}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.13}{\ignorespaces Exactitud seg\'un la regi\'on geom\'etrica visible frente al azar nulo.}}{40}{figure.caption.34}%
+\contentsline {figure}{\numberline {3.14}{\ignorespaces Mapas de activaci\'on Grad-CAM en muestras de campo real y laboratorio.}}{42}{figure.caption.35}%
+\contentsline {figure}{\numberline {3.15}{\ignorespaces Panel comparado de explicabilidad local: LIME, SHAP y Grad-CAM.}}{42}{figure.caption.36}%
+\contentsline {figure}{\numberline {3.16}{\ignorespaces Pantalla de inicio.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.17}{\ignorespaces Marco gu\'ia foliar.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.18}{\ignorespaces Diagn\'ostico obtenido.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.19}{\ignorespaces Flujo principal de la aplicaci\'on m\'ovil nativa DoctorMaiz.}}{45}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.20}{\ignorespaces Bloqueo seguro por OOD.}}{46}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.21}{\ignorespaces Aporte comunitario.}}{46}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.22}{\ignorespaces Gu\'ia de severidad.}}{46}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.23}{\ignorespaces Mecanismos de seguridad, participaci\'on comunitaria y escalas agron\'omicas.}}{46}{figure.caption.39}%

@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-09-24T07:00:35-06:00",
+  "scope": "workspace_monthly_summary_not_run_specific",
+  "billing_month": "2026-09",
+  "workspace": "abner-rivas",
+  "source_command": "modal billing summary --json",
+  "is_final_invoice": false,
+  "response": {
+    "metered_cost": "26.51306701",
+    "billed_cost": "0E-8",
+    "adjustments": {
+      "plan_cost": "0E-8",
+      "credits": "-23.81000000",
+      "free_storage": "-2.70306701",
+      "reservation_adjustment": "-0E-8"
+    },
+    "metered_cost_breakdown": {
+      "volumes": "2.70306701",
+      "ephemeral_apps": "23.81265849",
+      "llm_tokens": "0E-8"
+    }
+  }
+}

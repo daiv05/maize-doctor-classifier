@@ -78,12 +78,11 @@ def test_sin_el_fichero_los_defaults_no_cambian(modulo, monkeypatch):
     assert args.learning_rate == pytest.approx(1e-4)
 
 
-def test_una_clave_desconocida_se_reporta_y_no_se_aplica(modulo, tmp_path, monkeypatch, capsys):
-    """Una clave sin equivalente en el CLI no puede desaparecer en silencio."""
+def test_una_clave_desconocida_se_rechaza(modulo, tmp_path, monkeypatch):
+    """Una clave destinada a entrenamiento no puede ignorarse silenciosamente."""
     destino = tmp_path / "raro.json"
     destino.write_text(json.dumps({"best_params": {"parametro_inventado": 3}}), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["train.py", "--best-params", str(destino)])
 
-    modulo._parse_args()
-
-    assert "parametro_inventado" in capsys.readouterr().out
+    with pytest.raises(ValueError, match="parametro_inventado"):
+        modulo._parse_args()

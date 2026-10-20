@@ -6,7 +6,7 @@ Un diagnóstico erróneo en el campo tiene consecuencias directas sobre la econo
 
 ## La prueba de ablación espacial y el control nulo
 
-Para medir qué tanto influye el contexto exterior de la foto frente a los síntomas centrales de la hoja, realizamos una prueba de oclusión espacial sobre las 5,015 imágenes del conjunto de prueba, comparando los resultados contra un predictor nulo (que adivina siempre la clase mayoritaria). La máscara es un rectángulo fijo que abarca del 20 % al 80 % de cada eje: ocluir el centro tapa el 36.3 % del área y deja visible un anillo periférico del 63.7 %; ocluir la periferia tapa ese 63.7 % y deja visible la caja central del 36.3 %.
+Para medir qué tanto influye el contexto exterior de la foto frente a los síntomas centrales de la hoja, realizamos una prueba de oclusión espacial sobre las 5,015 imágenes del conjunto de prueba (modelo auditado: EfficientNet-Lite0 `20260812_221429`, el desplegado histórico; no es el baseline `20260921_204608`), comparando los resultados contra un predictor nulo (que adivina siempre la clase mayoritaria). La máscara es un rectángulo fijo que abarca del 20 % al 80 % de cada eje: ocluir el centro tapa el 36.3 % del área y deja visible un anillo periférico del 63.7 %; ocluir la periferia tapa ese 63.7 % y deja visible la caja central del 36.3 %.
 
 ![Ablación con control nulo](/resultados/ablacion_control_nulo.png)
 
@@ -37,7 +37,7 @@ Lo que **no** queda establecido es que el fondo pese más que la hoja. Las dos c
 
 ### De dónde sale la información del fondo
 
-El resultado solo sorprende si se supone que el fondo es ruido. No lo es. Cada repositorio del corpus fue fotografiado bajo sus propias condiciones de suelo, iluminación, distancia focal y sensor, y varios contienen muy pocas clases, hasta el extremo de que cuatro de las catorce fuentes contienen una sola. En consecuencia, **la periferia no predice la enfermedad: predice el repositorio, y el repositorio acota la enfermedad**. Reconocer de qué dataset proviene una fotografía no exige ver la lesión, basta con la textura del suelo y el tono de la luz.
+El resultado solo sorprende si se supone que el fondo es ruido. No lo es. Cada repositorio del corpus fue fotografiado bajo sus propias condiciones de suelo, iluminación, distancia focal y sensor, y varios contienen muy pocas clases, hasta el extremo de que cinco de las catorce fuentes contienen una sola. En consecuencia, **la periferia no predice la enfermedad: predice el repositorio, y el repositorio acota la enfermedad**. Reconocer de qué dataset proviene una fotografía no exige ver la lesión, basta con la textura del suelo y el tono de la luz.
 
 Es la misma lectura que arroja, desde otro ángulo, el [experimento cruzado 2×2](/es/resultados/evaluacion): cuando las fuentes se reúnen en pliegues disjuntos y el modelo debe evaluar repositorios que jamás vio, el macro $F_1$ se desploma de 0.9311 a 0.6026. Dos pruebas metodológicamente independientes —una que borra regiones de la imagen y otra que reorganiza la partición de los datos— convergen en el mismo diagnóstico, y esa convergencia es lo que sostiene la conclusión.
 
@@ -106,7 +106,7 @@ Para separar ambos efectos se mide el **exceso de atribución**: la fracción de
 | Mancha gris (GLS) | 26 | 0.570 | 0.639 | −0.069 |
 | **Media de las seis clases** | — | — | — | **+0.037** |
 
-El perfil se calculó sobre 270 imágenes (30 por clase), empleando como máscara de hoja la segmentación producida por el modelo del repositorio `maize-doctor-segmenter` en lugar de un umbral cromático. Las tres clases restantes —*gusano cogollero*, *necrosis letal* y *deficiencia de potasio*— quedan fuera de la tabla porque su máscara alcanza coberturas de entre 0.54 y 0.86 y el control de calidad rechaza entre el 37 % y el 57 % de sus imágenes, así que su ratio no es interpretable. Los datos brutos están en [`xai_global_summary.csv`](/es/resultados/evidencia/) y su desglose por imagen en `xai_global_per_image.csv`.
+El perfil se calculó sobre 270 imágenes (30 por clase), empleando como máscara de hoja la segmentación producida por el modelo del repositorio `maize-doctor-segmenter` en lugar de un umbral cromático. Las tres clases restantes —*gusano cogollero*, *necrosis letal* y *deficiencia de potasio*— quedan fuera de la tabla porque su máscara alcanza coberturas de entre 0.54 y 0.86 y el control de calidad rechaza entre el 33 % y el 57 % de sus imágenes, así que su ratio no es interpretable. Los datos brutos están en [`xai_global_summary.csv`](/es/resultados/evidencia/) y su desglose por imagen en `xai_global_per_image.csv`.
 
 **El exceso medio es de +0.037 y su signo se reparte: tres clases por encima del azar y tres por debajo.** La atribución sobre la hoja no supera de forma consistente la que produciría una atención repartida en proporción al área; únicamente la roya común exhibe una concentración foliar netamente superior a su nivel de azar.
 

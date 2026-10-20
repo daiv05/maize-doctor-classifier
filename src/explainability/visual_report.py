@@ -113,18 +113,21 @@ def prepare_lime_image(image: Image.Image, target_size: tuple[int, int]) -> np.n
 
 
 def build_predict_fn(
-    model: nn.Module, device: torch.device, target_size: tuple[int, int]
+    model: nn.Module,
+    device: torch.device,
+    target_size: tuple[int, int],
+    validation_transform: Callable | None = None,
 ) -> Callable[[np.ndarray], np.ndarray]:
     """
     Envuelve `model` en la función predict_fn que espera `LimeImageExplainer`: recibe
     un batch de imágenes HWC uint8 y devuelve las probabilidades softmax por clase,
     aplicando las mismas transforms deterministas de validación (resize + normalize).
     """
-    validation_transform = build_validation_transform(target_size)
+    effective_transform = validation_transform or build_validation_transform(target_size)
 
     @torch.no_grad()
     def predict_fn(images: np.ndarray) -> np.ndarray:
-        batch = torch.stack([validation_transform(Image.fromarray(img)) for img in images]).to(
+        batch = torch.stack([effective_transform(Image.fromarray(img)) for img in images]).to(
             device
         )
         probs = model(batch).softmax(dim=1)
@@ -223,6 +226,7 @@ def render_visual_explanation(
     device: torch.device | None = None,
     model_name: str | None = None,
     segments: np.ndarray | None = None,
+    validation_transform: Callable | None = None,
 ) -> dict:
     """
     Genera el reporte visual (original / regiones positivas / heatmap de importancia
@@ -248,7 +252,7 @@ def render_visual_explanation(
     image_np = prepare_lime_image(image, target_size)
     image_rgb01 = image_np.astype(float) / 255.0
 
-    predict_fn = build_predict_fn(model, device, target_size)
+    predict_fn = build_predict_fn(model, device, target_size, validation_transform)
     explanation = run_lime_explanation(
         image_np,
         predict_fn,
@@ -278,7 +282,8 @@ def render_visual_explanation(
     if model_name is not None:
         try:
             target_layer = get_target_layer(model, model_name)
-            input_tensor = build_validation_transform(target_size)(image).unsqueeze(0).to(device)
+            effective_transform = validation_transform or build_validation_transform(target_size)
+            input_tensor = effective_transform(image).unsqueeze(0).to(device)
             with GradCAM(model, target_layer) as cam:
                 heatmap = cam(input_tensor, class_idx=pred_idx)
             gradcam_panel = build_gradcam_overlay(image_rgb01, heatmap, target_size)
@@ -423,6 +428,7 @@ def explain_model_visual(
     seed: int,
     device: torch.device,
     enable_gradcam: bool = True,
+    validation_transform: Callable | None = None,
 ) -> None:
     """
     Genera el reporte visual (3 paneles LIME, 4 si `enable_gradcam`) para una muestra
@@ -458,6 +464,7 @@ def explain_model_visual(
             seed=seed,
             device=device,
             model_name=model_name if enable_gradcam else None,
+            validation_transform=validation_transform,
         )
         logger.info(
             f"[{model_name}] {img_path.name}: predicho={result['predicted_label']} "

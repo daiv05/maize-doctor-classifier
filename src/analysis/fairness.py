@@ -21,6 +21,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+from src.data.identity import unpack_batch
+
 logger = logging.getLogger(__name__)
 
 
@@ -298,7 +300,8 @@ def evaluate_background_shortcut(
     black_val = _true_black_value(device)
 
     with torch.no_grad():
-        for images, targets in loader:
+        for batch in loader:
+            images, targets, _ = unpack_batch(batch)
             images = images.to(device)
             targets = targets.to(device)
             bs = images.size(0)

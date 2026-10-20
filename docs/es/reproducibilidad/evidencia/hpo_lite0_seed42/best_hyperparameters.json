@@ -1,0 +1,13 @@
+{
+  "best_params": {
+    "batch_size": 16,
+    "clahe": false,
+    "class_weights": "none",
+    "epochs": 60,
+    "label_smoothing": 0.075,
+    "learning_rate": 8.468008575248323e-05,
+    "warmup_epochs": 1,
+    "weight_decay": 0.005669849511478858
+  },
+  "schema": "pytorch_hpo_v1"
+}

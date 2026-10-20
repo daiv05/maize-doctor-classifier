@@ -13,6 +13,8 @@ from pathlib import Path
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
+from src.data.identity import align_manifest_to_sample_ids, dataset_manifest, sample_ids_from
+from src.data.preparation import atomic_write_json
 from src.data.provenance import provenance_from_path
 from src.training.evaluation import (
     compute_calibration_metrics,
@@ -64,8 +66,11 @@ def write_predictions_csv(
     run_dir: Path,
     test_dataset,
     idx_to_class: dict[int, str],
+    labels: list[int],
     predictions: list[int],
     probs: list[float],
+    *,
+    filename: str = "predictions.csv",
 ) -> pd.DataFrame:
     """
     Escribe predictions.csv con una fila por imagen de test.
@@ -73,25 +78,68 @@ def write_predictions_csv(
     @param {Path} run_dir Directorio del run.
     @param {CornDataset} test_dataset Dataset de test, fuente de rutas y etiquetas.
     @param {dict[int,str]} idx_to_class Mapeo indice->clase.
+    @param {list[int]} labels Etiquetas reales en el orden efectivo de inferencia.
     @param {list[int]} predictions Predicciones codificadas.
     @param {list[float]} probs Confianza de la clase predicha.
     @returns {pd.DataFrame} El propio dataframe escrito.
     """
+    if not (len(labels) == len(predictions) == len(probs)):
+        raise ValueError("Labels, predicciones y probabilidades deben tener la misma longitud")
+    sample_ids = sample_ids_from(predictions, field_name="predicciones")
+    label_sample_ids = sample_ids_from(labels, field_name="etiquetas")
+    if sample_ids != label_sample_ids:
+        raise ValueError("Las etiquetas y predicciones no conservan el mismo orden de sample_id")
+
+    source_manifest = dataset_manifest(test_dataset)
+    if source_manifest is None:
+        raise ValueError("El dataset de test no expone un manifiesto con sample_id")
+    manifest = align_manifest_to_sample_ids(source_manifest, sample_ids)
+    true_labels = [idx_to_class[value] for value in labels]
+    if manifest["label"].tolist() != true_labels:
+        raise ValueError("Las etiquetas inferidas no coinciden con el manifiesto por sample_id")
+
     frame = pd.DataFrame(
         {
-            "image_path": test_dataset.data_frame["image_path"].tolist(),
-            "label": test_dataset.data_frame["label"].tolist(),
+            "sample_id": sample_ids,
+            "image_path": manifest["image_path"].tolist(),
+            "label": true_labels,
+            "true_label": true_labels,
             "pred_label": [idx_to_class[p] for p in predictions],
             "pred_prob": probs,
         }
     )
-    if "environment" in test_dataset.data_frame.columns:
-        frame["environment"] = test_dataset.data_frame["environment"].tolist()
-    frame["source_id"] = [
-        provenance_from_path(path) for path in test_dataset.data_frame["image_path"]
-    ]
-    frame.to_csv(run_dir / "predictions.csv", index=False)
+    if "environment" in manifest.columns:
+        frame["environment"] = manifest["environment"].tolist()
+    frame["source_id"] = [provenance_from_path(path) for path in frame["image_path"]]
+    frame.to_csv(run_dir / filename, index=False)
     return frame
+
+
+def write_validation_outputs(run_dir, dataset, idx_to_class, labels, predictions, probs):
+    """Diagnóstico del checkpoint elegido, con las métricas e identidad existentes."""
+    frame = write_predictions_csv(
+        run_dir,
+        dataset,
+        idx_to_class,
+        labels,
+        predictions,
+        probs,
+        filename="validation_predictions.csv",
+    )
+    mapping = {name: index for index, name in idx_to_class.items()}
+    diagnostics = {
+        "calibration": compute_calibration_metrics(frame, mapping),
+        "per_class": classification_report(
+            frame["label"],
+            frame["pred_label"],
+            labels=list(mapping),
+            output_dict=True,
+            zero_division=0,
+        ),
+        "npk_grouped": compute_grouped_metrics(frame, NPK_GROUPS),
+    }
+    atomic_write_json(run_dir / "validation_diagnostics.json", diagnostics)
+    return diagnostics
 
 
 def write_extended_metrics(
@@ -135,4 +183,11 @@ def write_summary(run_dir: Path, payload: dict) -> None:
     @param {Path} run_dir Directorio del run.
     @param {dict} payload Configuracion y metricas del run.
     """
-    (run_dir / "summary.json").write_text(json.dumps(payload, indent=2, default=str))
+    if payload.get("schema_version") is not None:
+        from src.training.runs import write_run_contract
+
+        write_run_contract(run_dir, payload)
+    else:
+        # Compatibilidad para utilidades/tests que escriben JSON auxiliares; los nuevos
+        # runs pasan siempre por write_run_contract y su esquema estricto.
+        atomic_write_json(run_dir / "summary.json", payload)

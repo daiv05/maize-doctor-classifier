@@ -1,8 +1,10 @@
-# Entrenamiento de Producción (Pipeline Principal)
+# Entrenamiento del pipeline principal
 
-Se entrenaron tres arquitecturas sobre el corpus completo del proyecto (**33,433 imágenes** repartidas en las 9 clases del cultivo de maíz). **`EfficientNet-Lite0` es la arquitectura desplegada**: es la que se exporta a TFLite y la que ejecuta la aplicación móvil. `EfficientNet-B0` y `ShuffleNet-V2-x1.0` se entrenan como comparación y como miembros del ensamble.
+Se entrenaron tres arquitecturas en la etapa histórica del pipeline principal. La materialización vigente de `seed_42` contiene **33 429 imágenes** en nueve clases. Un `EfficientNet-Lite0` histórico está desplegado; el checkpoint vigente `20260921_204608` es todavía baseline de desarrollo.
 
-El objetivo de esta fase es converger a los checkpoints definitivos de alto rendimiento (`best.pth`) que alimentarán el **Ensamble Multimodelo**, la **Auditoría de Equidad (Fairness)** y la **Exportación a Dispositivos Móviles (TFLite/Edge)**.
+El pipeline produce checkpoints `best.pth` para ensamble, auditoría y exportación. “Best” significa mejor validación dentro del run, no validación de producción.
+
+Cada entrenamiento nuevo genera además un `summary.json` v1 y hashes verificables del split, la configuración y el checkpoint. El formato, la carga segura y la migración de runs históricos se describen en [Contratos versionados de runs y artefactos](/es/pipeline/contratos-runs).
 
 ---
 
@@ -15,14 +17,16 @@ A diferencia de los baselines (que operaron sobre un subconjunto capado a 10,020
 
 | Partición | Proporción | Muestras | Propósito |
 |---|:---:|:---:|---|
-| **Entrenamiento (`train.csv`)** | 70.0 % | **23,403** | Ajuste de gradientes mediante AdamW |
-| **Validación (`val.csv`)** | 15.0 % | **5,015** | Monitoreo por época, scheduler y early stopping |
+| **Entrenamiento (`train.csv`)** | 70.0 % | **23,400** | Ajuste de gradientes mediante AdamW |
+| **Validación (`val.csv`)** | 15.0 % | **5,014** | Monitoreo por época, scheduler y early stopping |
 | **Prueba (`test.csv`)** | 15.0 % | **5,015** | Evaluación final retenida (no vista en entrenamiento) |
-| **Total Corpus** | **100 %** | **33,433** | 9 clases patológicas y nutricionales |
+| **Total Corpus** | **100 %** | **33,429** | 9 clases patológicas y nutricionales |
+
+Este split es estratificado por `label + environment`; las fuentes se conservan como metadato y pueden aparecer a ambos lados. Los resultados históricos que aparecen más abajo corresponden a una materialización anterior de 33 433 imágenes. El primer reentrenamiento sobre el split corregido es el [baseline `20260921_204608`](/es/resultados/run-20260921-efficientnet-lite0).
 
 ---
 
-## 2. Hiperparámetros de Producción
+## 2. Hiperparámetros históricos de despliegue
 
 Cada arquitectura usa la configuración con la que obtiene su mejor resultado en prueba, que no es la misma para las tres:
 
@@ -36,7 +40,7 @@ Cada arquitectura usa la configuración con la que obtiene su mejor resultado en
 
 Los valores de `warmup_epochs` y `weight_decay` de la tabla siguiente son los del pipeline, no los del Trial #12 —que eran 2 y 1.573e-05—, porque el wrapper de Modal no los propagaba en el momento de lanzar estas corridas. El resto es común a las tres:
 
-| Hiperparámetro | Valor de Producción | Justificación Técnica |
+| Hiperparámetro | Valor histórico | Justificación técnica |
 |---|:---:|---|
 | **Optimizador** | **AdamW** | Regularización desacoplada de decaimiento de pesos ($L_2$). |
 | **Learning Rate Base** | **`4.548e-4`** (`1.0e-4` en Lite0) | Identificado por Optuna sobre `B0`; `Lite0` conserva el valor por defecto. |
@@ -95,7 +99,7 @@ Las tres cifras de prueba se recomputan de forma exacta desde las predicciones p
 
 ## 5. Desglose de Rendimiento por Clase Fitosanitaria
 
-Desempeño detallado sobre las 9 clases en `test.csv` (Precision / Recall / $F_1$-Score):
+Desempeño detallado sobre las 9 clases (Precision / Recall / $F_1$-Score). Nota: el `test.csv` de `outputs-remote/splits/seed_42` tiene 338 `common_rust` y 290 `gray_leaf_spot`, mientras que las predicciones del run `20260921_204608` tienen 339 y 289. Esta diferencia no está resuelta en la documentación.
 
 | Clase Agronómica | Muestras Test | **Lite0** ($F_1$) | B0 ($F_1$) | ShuffleNet-V2 ($F_1$) | Diagnóstico Agronómico |
 |---|:---:|:---:|:---:|:---:|---|

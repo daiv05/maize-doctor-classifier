@@ -1,5 +1,8 @@
 # Ensamble Multimodelo por Soft Voting
 
+> [!NOTE] Ámbito metodológico de este diseño
+> Este componente describe la combinación de las tres arquitecturas sobre el conjunto de prueba estratificado de desarrollo (`seed_42`). Para la auditoría de robustez del ensamble ante fuentes no vistas (exclusión completa LOSO en 3 semillas), consulte [Evaluación del Ensamble Fuera de Dominio](/es/auditoria/ensamble-loso).
+
 Cuando tres expertos agrícolas observan una misma hoja con síntomas dudosos, es probable que se fijen en detalles diferentes: uno prestará más atención a las manchas cloróticas centrales, otro a las quemaduras del borde y el tercero a la textura de la lámina. Si combinamos sus opiniones, el veredicto final suele ser mucho más acertado que el de cualquiera de ellos por separado.
 
 En aprendizaje profundo ocurre exactamente lo mismo. Para llevar la capacidad predictiva al máximo nivel, diseñamos un sistema de ensamble por votación suave (*Soft Voting*) que combina las tres arquitecturas entrenadas: **`EfficientNet-Lite0`**, **`EfficientNet-B0`** y **`ShuffleNet-V2-x1.0`**.
@@ -44,5 +47,5 @@ En patologías críticas como la **necrosis letal del maíz (MLN)**, el ensamble
 
 La existencia de este ensamble abre una arquitectura muy práctica para el despliegue del sistema:
 
-1. **Nivel local en el teléfono (Edge AI):** Para el trabajo diario en la parcela sin cobertura de red, la app ejecuta **`EfficientNet-Lite0` cuantizado a Int8** (3.5 MB), entregando diagnósticos en 60 ms con un Macro F1 de 0.9468.
+1. **Nivel local en el teléfono (Edge AI):** Para el trabajo diario en la parcela sin cobertura de red, la app ejecuta **`EfficientNet-Lite0` cuantizado a Int8** (3.5 MB), con diagnósticos en ~60 ms. El Macro F1 de 0.9468 corresponde al modelo FP32; la evaluación del Int8 sobre el test completo no está documentada aquí (ver `evaluate_export`).
 2. **Nivel en la nube (API para técnicos y extensión):** Cuando el productor cuenta con conexión o cuando técnicos agrícolas del CENTA/MAG consultan el sistema desde una computadora, el backend puede ejecutar el **ensamble completo**, exprimiendo el 95.67 % de Macro F1 y el 98.3 % de exactitud para corroborar casos especialmente complejos.

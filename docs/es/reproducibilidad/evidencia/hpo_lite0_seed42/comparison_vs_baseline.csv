@@ -1,0 +1,3 @@
+configuration,model,val_macro_f1,improvement_absolute,improvement_percentage_points
+baseline_20260921_204608,efficientnet_lite0,0.9560862657056215,0.0,0.0
+hpo_trial_000,efficientnet_lite0,0.9572922254288656,0.00120595972324411,0.120595972324411

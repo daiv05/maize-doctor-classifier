@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
+from src.data.identity import unpack_batch
+
 logger = logging.getLogger(__name__)
 
 _MIN_RELIABLE_SAMPLES = 20
@@ -60,7 +62,8 @@ def _collect_samples(
     images_batches: list[torch.Tensor] = []
     labels_batches: list[torch.Tensor] = []
     collected = 0
-    for images, labels in test_loader:
+    for batch in test_loader:
+        images, labels, _ = unpack_batch(batch)
         images_batches.append(images)
         labels_batches.append(labels)
         collected += images.size(0)

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "pipeline": "main",
+  "model": "efficientnet_lite0",
+  "run_id": "20260921_180112",
+  "seed": 42,
+  "split_identifier": "seed_42",
+  "split_manifest_sha256": "ac9c441ff949c7d863d725e59453f0eddff33f385378e5677c78b796f011b95b",
+  "config_sha256": "53cc091e505057f6751a7b6151f403e03f830fac3c0966df9ba51e2df2814e8b",
+  "checkpoint": "best.pth",
+  "checkpoint_sha256": "fc2b57f388b2546846fd43039b483e3dbc1c51a2629a5b0b965d48f08de8d713",
+  "epochs_requested": 60,
+  "epochs_run": 12,
+  "best_epoch": 4,
+  "best_val_macro_f1": 0.266926673586559,
+  "last_train_macro_f1": 0.9663680743730672,
+  "test": {
+    "loss": 1.6582295276716374,
+    "accuracy": 0.585704831237591,
+    "macro_f1": 0.4006654357661327
+  },
+  "source_artifacts": {
+    "summary": "corn-outputs:/main/efficientnet_lite0/20260921_180112/summary.json",
+    "history": "corn-outputs:/main/efficientnet_lite0/20260921_180112/train_history.csv",
+    "checkpoint": "corn-outputs:/main/efficientnet_lite0/20260921_180112/best.pth"
+  },
+  "documentation_note": "last_train_macro_f1 is copied from epoch 12 of train_history.csv; all other metrics are copied from summary.json"
+}

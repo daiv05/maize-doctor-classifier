@@ -45,7 +45,7 @@ Todas las anotaciones son polígonos de segmentación (312 líneas, 0 bbox), con
 - **Volumen bajo.** 276 imágenes en total, de las cuales solo 158 corresponden a clases de deficiencia. Es un aporte modesto comparado con `maize_2_roboflow`.
 - **Nomenclatura de archivo con prefijo de clase.** Los nombres originales codifican la clase (`H-0001`, etc.), pero la fuente de verdad usada para clasificar fue siempre la etiqueta YOLO, no el nombre.
 - **Resolución alta y vertical.** Predomina 3024 x 4032 px (194 imágenes), típico de cámara de teléfono en orientación retrato. Sin redimensionado por parte de Roboflow.
-- La clase `Healthy` **no se integró** en esta incorporación: `healthy` ya es la clase mayoritaria del corpus (8 744 imágenes) y no necesita refuerzo.
+- La clase `Healthy` **no se integró** en esta incorporación: `healthy` ya es la clase mayoritaria del corpus (8 740 elegibles en la materialización vigente; 8 744 en la instantánea de agosto) y no necesita refuerzo.
 - Sin augmentation aplicada.
 
 ## Tamaño y distribución

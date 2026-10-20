@@ -14,10 +14,7 @@ from typing import Sequence
 import torch
 import torch.nn as nn
 
-from src.models.registry import MODEL_REGISTRY
-
 logger = logging.getLogger(__name__)
-
 
 
 class SoftVotingEnsemble(nn.Module):
@@ -34,14 +31,17 @@ class SoftVotingEnsemble(nn.Module):
             raise ValueError("El ensamble debe contener al menos un modelo.")
 
         self.models = nn.ModuleList(models)
-        self.model_names = list(model_names) if model_names else [f"model_{i}" for i in range(len(models))]
+        self.model_names = (
+            list(model_names) if model_names else [f"model_{i}" for i in range(len(models))]
+        )
 
         if weights is None:
             raw_weights = [1.0 / len(models)] * len(models)
         else:
             if len(weights) != len(models):
                 raise ValueError(
-                    f"La cantidad de pesos ({len(weights)}) no coincide con la cantidad de modelos ({len(models)})."
+                    f"La cantidad de pesos ({len(weights)}) no coincide con la cantidad "
+                    f"de modelos ({len(models)})."
                 )
             total = sum(weights)
             if total <= 0:
@@ -65,7 +65,7 @@ class SoftVotingEnsemble(nn.Module):
         return weighted_probs
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Devuelve log-probabilidades (logits estables) del ensamble para compatibilidad con loss/argmax."""
+        """Devuelve log-probabilidades estables para compatibilidad con loss/argmax."""
         probs = self.predict_probabilities(x)
         return torch.log(probs.clamp(min=1e-12))
 
@@ -82,30 +82,34 @@ class SoftVotingEnsemble(nn.Module):
         num_classes: int = 9,
         weights: Sequence[float] | None = None,
         device: str | torch.device = "cpu",
+        policy: str = "normal",
     ) -> SoftVotingEnsemble:
-        """Construye un ensamble cargando los pesos entrenados de cada modelo desde disco."""
+        """Construye un ensemble solo después de validar todos sus contratos y hashes."""
         if len(model_names) != len(checkpoint_paths):
             raise ValueError(
-                f"Número de nombres ({len(model_names)}) difiere de checkpoints ({len(checkpoint_paths)})."
+                f"Número de nombres ({len(model_names)}) difiere de checkpoints "
+                f"({len(checkpoint_paths)})."
             )
 
-        loaded_models: list[nn.Module] = []
+        from src.training.runs import load_validated_run, validate_ensemble_runs
+
+        loaded_runs = []
         for name, ckpt_path in zip(model_names, checkpoint_paths):
             path = Path(ckpt_path)
-            if not path.exists():
-                raise FileNotFoundError(f"Checkpoint no encontrado: {path}")
-
-            model = MODEL_REGISTRY.build(name, num_classes=num_classes, pretrained=False)
-            checkpoint = torch.load(path, map_location=device)
-            state_dict = (
-                checkpoint["model_state_dict"]
-                if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint
-                else checkpoint
+            loaded_runs.append(
+                load_validated_run(
+                    path,
+                    expected_model=name,
+                    expected_num_classes=num_classes,
+                    device=device,
+                )
             )
-            model.load_state_dict(state_dict)
-            model.eval()
-            model.to(device)
-            loaded_models.append(model)
             logger.info("Modelo cargado en el ensamble: %s desde %s", name, path)
 
-        return cls(models=loaded_models, weights=weights, model_names=model_names)
+        validate_ensemble_runs(loaded_runs, policy=policy, shared_input=True)
+
+        return cls(
+            models=[run.model for run in loaded_runs],
+            weights=weights,
+            model_names=model_names,
+        )

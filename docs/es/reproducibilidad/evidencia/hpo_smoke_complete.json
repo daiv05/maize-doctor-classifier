@@ -1,0 +1,16 @@
+{
+  "resume_verified": true,
+  "source_sha256": "d768e2ebd591cae0bd2260e086492f30572e687b29f86f0a9f27feb5ec1dbeac",
+  "split_hashes": {
+    "manifest.lock.json": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "master_manifest.csv": "64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163",
+    "test.csv": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724",
+    "train.csv": "231048178f3450bf84925f8d19eb5a672669ee9f2658a23fe87d88d6e9949434",
+    "val.csv": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5"
+  },
+  "test_used": false,
+  "trial_numbers": [
+    0,
+    1
+  ]
+}

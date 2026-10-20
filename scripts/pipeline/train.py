@@ -8,7 +8,6 @@ sin `replacement=True` cada epoca ve el 100% de las imagenes unicas en vez del ~
 """
 
 import argparse
-import json
 import logging
 from pathlib import Path
 
@@ -28,6 +27,7 @@ from src.training.artifacts import (
     write_predictions_csv,
     write_summary,
     write_test_outputs,
+    write_validation_outputs,
 )
 from src.training.common import (
     build_run_dir,
@@ -37,9 +37,11 @@ from src.training.common import (
     update_latest_pointer,
     worker_init_fn,
 )
+from src.training.hyperparameters import parse_with_best_params
 from src.training.loop import fit, run_epoch
 from src.training.losses import build_criterion
 from src.training.optim import EarlyStopping, build_scheduler
+from src.training.runs import build_run_contract
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -94,10 +96,16 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--clip-grad-norm", type=float, default=1.0, dest="clip_grad_norm")
     parser.add_argument(
         "--clahe",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=False,
         help="Aplica CLAHE como preprocesamiento en los cuatro pipelines.",
     )
     parser.add_argument("--no-pretrained", action="store_true", dest="no_pretrained")
+    parser.add_argument(
+        "--skip-test",
+        action="store_true",
+        help="Solo train/validation; no construye dataset/loader de test. Incompatible con export.",
+    )
     parser.add_argument("--num-workers", type=int, default=4, dest="num_workers")
     parser.add_argument(
         "--max-per-class",
@@ -129,39 +137,25 @@ def _parse_args() -> argparse.Namespace:
         type=int,
         default=None,
         help="Semilla de inicializacion y barajado. No altera la particion, que se lee ya "
-             "materializada de --splits-dir: variarla mide la varianza del entrenamiento "
-             "sobre un reparto fijo. Por defecto, dataset.seed del YAML.",
+        "materializada de --splits-dir: variarla mide la varianza del entrenamiento "
+        "sobre un reparto fijo. Por defecto, dataset.seed del YAML.",
     )
     parser.add_argument(
         "--best-params",
         type=str,
         default="",
         help="JSON con hiperparametros (best_params.json de Optuna). Fija los defaults "
-             "del parser, de modo que cualquier bandera explicita lo sobrescribe.",
+        "del parser, de modo que cualquier bandera explicita lo sobrescribe.",
     )
 
-    # Los defaults se fijan antes del parseo final para que una bandera explicita gane
-    # sobre el JSON. Enumerar los parametros en cada llamador es lo que hizo que dos de
-    # los seis hiperparametros afinados se perdieran en silencio.
-    previo, _ = parser.parse_known_args()
-    if previo.best_params:
-        with open(previo.best_params, "r", encoding="utf-8") as fichero:
-            contenido = json.load(fichero)
-        valores = contenido.get("best_params", contenido)
-        admitidos = {accion.dest for accion in parser._actions}
-        aplicados = {k: v for k, v in valores.items() if k in admitidos}
-        ignorados = sorted(set(valores) - set(aplicados))
-        parser.set_defaults(**aplicados)
-        print(f"[*] hiperparametros desde {previo.best_params}: {aplicados}", flush=True)
-        if ignorados:
-            print(f"[!] claves del JSON sin equivalente en el CLI: {ignorados}", flush=True)
-
-    return parser.parse_args()
+    return parse_with_best_params(parser)
 
 
 def main() -> None:
     """Entrena cada modelo solicitado y persiste sus artefactos de run."""
     args = _parse_args()
+    if args.skip_test and args.export_formats:
+        raise SystemExit("--skip-test no permite --export (la paridad requiere test).")
     if args.epochs < 1:
         raise SystemExit("--epochs debe ser mayor o igual a 1.")
 
@@ -210,11 +204,15 @@ def main() -> None:
             transform=factory.get_pipeline("val"),
             class_to_idx=class_to_idx,
         )
-        test_dataset = CornDataset(
-            csv_path=str(splits_dir / "test.csv"),
-            config_path=str(config_path),
-            transform=factory.get_pipeline("test"),
-            class_to_idx=class_to_idx,
+        test_dataset = (
+            None
+            if args.skip_test
+            else CornDataset(
+                csv_path=str(splits_dir / "test.csv"),
+                config_path=str(config_path),
+                transform=factory.get_pipeline("test"),
+                class_to_idx=class_to_idx,
+            )
         )
 
         pin_memory = device.type == "cuda"
@@ -233,12 +231,16 @@ def main() -> None:
             num_workers=args.num_workers,
             pin_memory=pin_memory,
         )
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=args.batch_size,
-            shuffle=False,
-            num_workers=args.num_workers,
-            pin_memory=pin_memory,
+        test_loader = (
+            None
+            if args.skip_test
+            else DataLoader(
+                test_dataset,
+                batch_size=args.batch_size,
+                shuffle=False,
+                num_workers=args.num_workers,
+                pin_memory=pin_memory,
+            )
         )
 
         run_id = generate_run_id()
@@ -304,47 +306,97 @@ def main() -> None:
         if best_path.exists():
             model.load_state_dict(torch.load(best_path, map_location=device))
 
-        test_metrics, labels, predictions, probs = run_epoch(
-            model, test_loader, criterion, device, desc=f"{model_name} test"
-        )
-        write_test_outputs(run_dir, idx_to_class, labels, predictions)
-        predictions_df = write_predictions_csv(
-            run_dir, test_dataset, idx_to_class, predictions, probs
-        )
-        write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
-        write_summary(
-            run_dir,
-            {
-                "pipeline": "main",
-                "model": model_name,
-                "run_id": run_id,
-                "num_classes": len(class_to_idx),
-                "class_to_idx": class_to_idx,
-                "image_size": list(target_size),
-                "splits_dir": str(splits_dir),
-                "seed": seed,
-                "epochs_requested": args.epochs,
-                "epochs_run": len(history),
-                "batch_size": args.batch_size,
-                "learning_rate": args.learning_rate,
-                "weight_decay": args.weight_decay,
-                "scheduler": args.scheduler,
-                "warmup_epochs": args.warmup_epochs,
-                "min_lr": args.min_lr,
-                "patience": args.patience,
-                "class_weights": args.class_weights,
-                "label_smoothing": args.label_smoothing,
-                "clip_grad_norm": args.clip_grad_norm,
-                "clahe": args.clahe,
-                "sampler": None,
-                "pretrained": not args.no_pretrained,
-                "best_epoch": best_row["epoch"],
-                "best_val_macro_f1": best_row["val_macro_f1"],
-                "test": test_metrics,
+        validation_metrics = None
+        test_metrics = None
+        if args.skip_test:
+            validation_metrics, labels, predictions, probs = run_epoch(
+                model, val_loader, criterion, device, desc=f"{model_name} best validation"
+            )
+            write_validation_outputs(run_dir, val_dataset, idx_to_class, labels, predictions, probs)
+        else:
+            test_metrics, labels, predictions, probs = run_epoch(
+                model, test_loader, criterion, device, desc=f"{model_name} test"
+            )
+            write_test_outputs(run_dir, idx_to_class, labels, predictions)
+            predictions_df = write_predictions_csv(
+                run_dir, test_dataset, idx_to_class, labels, predictions, probs
+            )
+            write_extended_metrics(run_dir, predictions_df, class_to_idx, NPK_GROUPS)
+        historical_summary = {
+            "pipeline": "main",
+            "model": model_name,
+            "run_id": run_id,
+            "num_classes": len(class_to_idx),
+            "class_to_idx": class_to_idx,
+            "image_size": list(target_size),
+            "splits_dir": str(splits_dir),
+            "seed": seed,
+            "epochs_requested": args.epochs,
+            "epochs_run": len(history),
+            "batch_size": args.batch_size,
+            "learning_rate": args.learning_rate,
+            "weight_decay": args.weight_decay,
+            "scheduler": args.scheduler,
+            "warmup_epochs": args.warmup_epochs,
+            "min_lr": args.min_lr,
+            "patience": args.patience,
+            "class_weights": args.class_weights,
+            "label_smoothing": args.label_smoothing,
+            "clip_grad_norm": args.clip_grad_norm,
+            "clahe": args.clahe,
+            "sampler": None,
+            "pretrained": not args.no_pretrained,
+            "best_epoch": best_row["epoch"],
+            "best_val_macro_f1": best_row["val_macro_f1"],
+            "test": test_metrics,
+        }
+        hyperparameters = {
+            "learning_rate": args.learning_rate,
+            "batch_size": args.batch_size,
+            "weight_decay": args.weight_decay,
+            "optimizer": "AdamW",
+            "scheduler": args.scheduler,
+            "epochs": args.epochs,
+            "patience": args.patience,
+            "dropout": None,
+            "warmup_epochs": args.warmup_epochs,
+            "min_lr": args.min_lr,
+            "class_weights": args.class_weights,
+            "label_smoothing": args.label_smoothing,
+            "clip_grad_norm": args.clip_grad_norm,
+            "sampler": None,
+            "pretrained": not args.no_pretrained,
+        }
+        metrics = {
+            "best_validation": {
+                "epoch": best_row["epoch"],
+                "macro_f1": best_row["val_macro_f1"],
             },
+            "test": test_metrics,
+        }
+        if args.skip_test:
+            historical_summary.pop("test")
+            historical_summary["test_used"] = False
+            historical_summary["evaluation_mode"] = "validation_only"
+            metrics.pop("test")
+            metrics["best_validation"].update(validation_metrics)
+        contract = build_run_contract(
+            run_dir=run_dir,
+            model_name=model_name,
+            seed=seed,
+            hyperparameters=hyperparameters,
+            preprocessing=factory.to_contract(),
+            training_preprocessing=factory.training_contract(),
+            class_to_idx=class_to_idx,
+            splits_dir=splits_dir,
+            best_epoch=best_row["epoch"],
+            metrics=metrics,
+            historical_fields=historical_summary,
         )
+        write_summary(run_dir, contract)
         update_latest_pointer(output_dir, model_name, run_id)
-        logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
+        if test_metrics is not None:
+            logger.info("[%s] Test macro_f1=%.4f", model_name, test_metrics["macro_f1"])
 
         if args.export_formats:
             from src.export.common import (
@@ -370,8 +422,7 @@ def main() -> None:
                 )
                 summary_path = write_export_summary(run_dir, report)
                 if any(
-                    not f.succeeded or (f.parity and not f.parity.passed)
-                    for f in report.formats
+                    not f.succeeded or (f.parity and not f.parity.passed) for f in report.formats
                 ):
                     logger.warning(
                         "[%s] Exportacion con problemas, ver %s", model_name, summary_path

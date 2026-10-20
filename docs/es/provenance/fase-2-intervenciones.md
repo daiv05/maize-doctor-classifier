@@ -29,11 +29,11 @@ Ambas mejoras se ubicaron por debajo del umbral de desviación estadística entr
 
 ---
 
-## Conclusión: el techo de los datos
+## Interpretación y límite de esta campaña
 
-El resultado de esta fase fue concluyente:
+El resultado observado en esta fase fue:
 
 - **El balanceo no crea diversidad:** Repartir cupos entre repositorios no genera variedad donde no la hay; si una fuente contiene fondos uniformes y artificiales, submuestrearla no altera la firma visual de fondo.
 - **Los atajos no son solo el fondo:** El atajo visual que utiliza la red no se limita a si el fondo es negro o verde; abarca la resolución del sensor, la relación de compresión JPEG, el ángulo de captura y la variedad botánica del maíz.
 
-Este experimento confirmó de manera definitiva que **el proyecto alcanzó el techo de lo que puede resolverse con software sobre los datasets públicos actuales**. Cualquier esfuerzo adicional de código habría resultado redundante: la única intervención con impacto real es recolectar datos genuinos en campo salvadoreño.
+Estas dos intervenciones no cerraron la brecha dentro del presupuesto y protocolo probados. El resultado respalda priorizar recolección genuina en campo salvadoreño, pero no demuestra que toda intervención algorítmica futura sea inútil. Las cifras son históricas y deben leerse con sus artefactos LOSO.

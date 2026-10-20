@@ -1,0 +1,141 @@
+{
+  "derived_manifest_sha256": {
+    "holdout.csv": "d36f938bdb6db7505722e5b7cf6458adc5568f3a94525884943e47eb0a8b0688",
+    "train.csv": "7fd7878df04c7ab6d6126fef96104bedc48699e5e417d533b06afc77e86115e4",
+    "val.csv": "eea6551f65050f8bb6780d501d382c2e758037f32c8e1624e78214067a64b1cb"
+  },
+  "frozen_manifest_sha256": {
+    "manifest.lock.json": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+    "master_manifest.csv": "64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163",
+    "test.csv": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724",
+    "train.csv": "231048178f3450bf84925f8d19eb5a672669ee9f2658a23fe87d88d6e9949434",
+    "val.csv": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5"
+  },
+  "historical_b0_checkpoint_sha256": "0e367a5318c068c9bcc90a6bec0d17a0b029251ca5f98400034bd09de7524fdb",
+  "historical_evidence_sha256": "dcafbb4c21e2d69646b8a04cd1bbf425474b615f5eb6b44d594abd469b6f90c2",
+  "historical_shuffle_checkpoint_sha256": "b681a3fd5fffaa5d078802369dff04b46c91cbfed7b333ea80c9d6965fd82c9e",
+  "holdout_sha256": "d36f938bdb6db7505722e5b7cf6458adc5568f3a94525884943e47eb0a8b0688",
+  "manifest_lock_sha256": "d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b",
+  "members": [
+    {
+      "best_epoch": 42,
+      "best_val_macro_f1": 0.9524884042075362,
+      "checkpoint_sha256": "bd778a28d251fd1b45960f3caec8f5b51d0ed0178c4e4f46e06d2b40948e4517",
+      "local_run_dir": "outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_42/runs/efficientnet_lite0/20260930_145541",
+      "model": "efficientnet_lite0",
+      "run_dir": "/outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_42/runs/efficientnet_lite0/20260930_145541",
+      "run_id": "20260930_145541",
+      "seed": 42,
+      "selection_lock_sha256": "a137e5f21c5adef9a53872f1da5d94b49a3011a3cc4a84048a20794c2437b162",
+      "summary_sha256": "851511bff33cacce89727314bc821a9b68c2745444b23f4fa00103cbf5ccac0a"
+    },
+    {
+      "best_epoch": 28,
+      "best_val_macro_f1": 0.9582914464860303,
+      "checkpoint_sha256": "6211ebd734a1cd08b7026347e5fa8591457b56a981674e76dcc209203dd1be95",
+      "duration_seconds": 1981.898974,
+      "gpu": "NVIDIA A10G",
+      "local_run_dir": "outputs/ensemble_loso/multicrop-disease-maiz/seed_42/efficientnet_b0/runs/efficientnet_b0/20261002_143310",
+      "model": "efficientnet_b0",
+      "run_dir": "/outputs/ensemble_loso/multicrop-disease-maiz/seed_42/efficientnet_b0/runs/efficientnet_b0/20261002_143310",
+      "run_id": "20261002_143310",
+      "seed": 42,
+      "selection_lock_sha256": "fb6319985a92a193126c95e338aa5e1499269b4a1964bb8a5f1ac93c2139d153",
+      "summary_sha256": "70acbd30423e404552fdc9fdedad258742bd17af7724f5842618cad828a3117f"
+    },
+    {
+      "best_epoch": 25,
+      "best_val_macro_f1": 0.9498492744773386,
+      "checkpoint_sha256": "bd1e33c6760ea5f56de4a4b8c9dbbd7513137f974af70798309c282679d69f19",
+      "duration_seconds": 1463.274429,
+      "gpu": "NVIDIA A10G",
+      "local_run_dir": "outputs/ensemble_loso/multicrop-disease-maiz/seed_42/shufflenet_v2_x1_0/runs/shufflenet_v2_x1_0/20261002_150615",
+      "model": "shufflenet_v2_x1_0",
+      "run_dir": "/outputs/ensemble_loso/multicrop-disease-maiz/seed_42/shufflenet_v2_x1_0/runs/shufflenet_v2_x1_0/20261002_150615",
+      "run_id": "20261002_150615",
+      "seed": 42,
+      "selection_lock_sha256": "b4b04b25c57c8497dc2f0bd3e37a4ec6d24e5e68daa08d3549b10b1a6012777e",
+      "summary_sha256": "d16f9c7e6cf61f5ebc7ddd589e76733eead31502b4b28af908e3288740a21923"
+    },
+    {
+      "best_epoch": 28,
+      "best_val_macro_f1": 0.9510067469971923,
+      "checkpoint_sha256": "3bb36aeb4b4328f0552a606a76d8b8455a7a1fea1c5fc288784dfa8be35b0863",
+      "local_run_dir": "outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_123/runs/efficientnet_lite0/20261001_170150",
+      "model": "efficientnet_lite0",
+      "run_dir": "/outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_123/runs/efficientnet_lite0/20261001_170150",
+      "run_id": "20261001_170150",
+      "seed": 123,
+      "selection_lock_sha256": "c4f244e88996c67069bf2bb37d69ab1b5f623338a18a873286f4b7a3d1598d7b",
+      "summary_sha256": "8d24533273d85b21bbf5fbbd4f3df903435f837c57e298af0f97fd46360c1747"
+    },
+    {
+      "best_epoch": 24,
+      "best_val_macro_f1": 0.95788221585789,
+      "checkpoint_sha256": "493ae44e472e288239b0ad934b6d1a5be167dcd00c5473bdf13f9451539c586a",
+      "duration_seconds": 1800.961957,
+      "gpu": "NVIDIA A10G",
+      "local_run_dir": "outputs/ensemble_loso/multicrop-disease-maiz/seed_123/efficientnet_b0/runs/efficientnet_b0/20261002_153038",
+      "model": "efficientnet_b0",
+      "run_dir": "/outputs/ensemble_loso/multicrop-disease-maiz/seed_123/efficientnet_b0/runs/efficientnet_b0/20261002_153038",
+      "run_id": "20261002_153038",
+      "seed": 123,
+      "selection_lock_sha256": "6fdb0fe0c72382268f0c24d5937e6730ebafa32dbf485529e400097a2e89b364",
+      "summary_sha256": "f582972c88a02f8261aa887ca4b5708caec684d0151e2e5c0e8329113c75a3b4"
+    },
+    {
+      "best_epoch": 33,
+      "best_val_macro_f1": 0.9514288827915434,
+      "checkpoint_sha256": "76d842db5f599a3e299fa4d069e501fab85dbdd0b6c205c9bc9598cbdc3bc6a7",
+      "duration_seconds": 1560.085157,
+      "gpu": "NVIDIA A10G",
+      "local_run_dir": "outputs/ensemble_loso/multicrop-disease-maiz/seed_123/shufflenet_v2_x1_0/runs/shufflenet_v2_x1_0/20261002_160041",
+      "model": "shufflenet_v2_x1_0",
+      "run_dir": "/outputs/ensemble_loso/multicrop-disease-maiz/seed_123/shufflenet_v2_x1_0/runs/shufflenet_v2_x1_0/20261002_160041",
+      "run_id": "20261002_160041",
+      "seed": 123,
+      "selection_lock_sha256": "8bf5ad9fecfcfa80100dcd37efa7cca93bf8102a2b263a5d07030e51671820e0",
+      "summary_sha256": "4760e165032e625f6c6bc18f1b4d7544d777b4c6c4cceb78e88277ed5e643b8f"
+    },
+    {
+      "best_epoch": 43,
+      "best_val_macro_f1": 0.9593519318239934,
+      "checkpoint_sha256": "d38fc9f91adffc6943abcdf72bb8ef4951ca18c98bc2f1be6de3d723bc193c43",
+      "local_run_dir": "outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_2026/runs/efficientnet_lite0/20261001_173226",
+      "model": "efficientnet_lite0",
+      "run_dir": "/outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_2026/runs/efficientnet_lite0/20261001_173226",
+      "run_id": "20261001_173226",
+      "seed": 2026,
+      "selection_lock_sha256": "84adfb5858b19d7081003a9ae0900aa55e9efd301b784ecccc7ea8863889dbc3",
+      "summary_sha256": "bace6d71ab1d5f929dc7e0fa9b0410c732a91f641064726c127205ee498c08f1"
+    },
+    {
+      "best_epoch": 30,
+      "best_val_macro_f1": 0.9623945664268911,
+      "checkpoint_sha256": "de79eadbfd72c08a388618593006fdc5d227aba0b17d254dfdb6dd8134ed4992",
+      "duration_seconds": 1973.157221,
+      "gpu": "NVIDIA A10G",
+      "local_run_dir": "outputs/ensemble_loso/multicrop-disease-maiz/seed_2026/efficientnet_b0/runs/efficientnet_b0/20261002_162642",
+      "model": "efficientnet_b0",
+      "run_dir": "/outputs/ensemble_loso/multicrop-disease-maiz/seed_2026/efficientnet_b0/runs/efficientnet_b0/20261002_162642",
+      "run_id": "20261002_162642",
+      "seed": 2026,
+      "selection_lock_sha256": "cc68711fe2169fdcda561d5399b6abce823f9acb7631b10b86801aa3eca622bb",
+      "summary_sha256": "aeda1a91a561eb98f21effe3ebd2e17e77af12b26f26d054e77bc9e979f9828e"
+    },
+    {
+      "best_epoch": 22,
+      "best_val_macro_f1": 0.9476770029839311,
+      "checkpoint_sha256": "ffca186457e87ed22458440f4307fcf90585a76c23fdc42eb195cc5ba2179b49",
+      "duration_seconds": 1358.856988,
+      "gpu": "NVIDIA A10G",
+      "local_run_dir": "outputs/ensemble_loso/multicrop-disease-maiz/seed_2026/shufflenet_v2_x1_0/runs/shufflenet_v2_x1_0/20261002_165936",
+      "model": "shufflenet_v2_x1_0",
+      "run_dir": "/outputs/ensemble_loso/multicrop-disease-maiz/seed_2026/shufflenet_v2_x1_0/runs/shufflenet_v2_x1_0/20261002_165936",
+      "run_id": "20261002_165936",
+      "seed": 2026,
+      "selection_lock_sha256": "8c5a0e6dbf908a04a55fa055b7d020bac09a519ded7da613c7cccf4193ee6348",
+      "summary_sha256": "4c734fc0e660b4e912096a812e3eb1a301724b6510e6f0b7b5737de73ef01f24"
+    }
+  ]
+}

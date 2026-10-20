@@ -1,0 +1,47 @@
+{
+  "generated_from": {
+    "seed_42": "corn-outputs:/splits/seed_42/preparation_audit.json",
+    "seed_42_source_grouped": "corn-outputs:/splits/seed_42_source_grouped/preparation_audit.json"
+  },
+  "dataset": {
+    "samples_discovered": 33437,
+    "samples_valid": 33437,
+    "samples_excluded": 8,
+    "samples_eligible": 33429,
+    "label_conflicts_after_exclusions": 0,
+    "exact_duplicates_after_preparation": 0,
+    "sources": 11
+  },
+  "seed_42": {
+    "strategy": "stratified_label_environment",
+    "train": 23400,
+    "val": 5014,
+    "test": 5015,
+    "classes_per_split": 9,
+    "sample_overlap_count": 0,
+    "sha256_overlap_count": 0,
+    "effective_group_overlap_count": 0,
+    "deduplicate_perceptual": false,
+    "perceptual_overlap_count": null,
+    "manifest_lock_sha256": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8"
+  },
+  "seed_42_source_grouped": {
+    "strategy": "source_grouped",
+    "train": 16554,
+    "val": 7809,
+    "test": 9066,
+    "train_percent": 49.52,
+    "val_percent": 23.36,
+    "test_percent": 27.12,
+    "source_groups": 11,
+    "train_groups": 5,
+    "val_groups": 3,
+    "test_groups": 3,
+    "classes_missing_from_validation": ["fall_armyworm", "lethal_necrosis"],
+    "sample_overlap_count": 0,
+    "sha256_overlap_count": 0,
+    "effective_group_overlap_count": 0,
+    "deduplicate_perceptual": false,
+    "perceptual_overlap_count": null
+  }
+}

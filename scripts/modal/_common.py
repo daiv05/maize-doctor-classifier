@@ -43,6 +43,7 @@ image = (
         }
     )
     .add_local_dir("config", f"{REPO_ANCHOR}/config", copy=True)
+    .add_local_file("pyproject.toml", f"{REPO_ANCHOR}/pyproject.toml", copy=True)
     .add_local_python_source("src", "scripts")
 )
 

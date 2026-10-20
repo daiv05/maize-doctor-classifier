@@ -1,5 +1,7 @@
 # Procedencia y Fuga de Información
 
+**Estado: HISTÓRICO/EXPERIMENTAL.** Esta página describe la campaña de procedencia anterior. Su inventario manejaba 14 etiquetas de fuente; el `master_manifest.csv` vigente normaliza 11 `source_id`. Los valores LOSO de esta página no son la CV agrupada `0.6026 ± 0.1240` ni el holdout source-grouped actual.
+
 Uno de los mayores aprendizajes de este proyecto no vino de afinar capas ni de inventar funciones de pérdida complicadas, sino de hacernos una pregunta incómoda: **¿el modelo está aprendiendo a reconocer enfermedades foliares o solo está reconociendo de qué cámara y de qué experimento vino cada fotografía?**
 
 En visión por computadora aplicada a la agricultura, casi todo el mundo entrena con mezclas de datasets públicos disponibles en internet. Nosotros reunimos más de 33,400 imágenes provenientes de 14 fuentes distintas. Sobre el papel, el modelo alcanzaba cifras espectaculares en las particiones estándar: más del 97 % de exactitud y 0.94 de Macro F1. 
@@ -37,14 +39,14 @@ El modelo era capaz de clasificar casi ocho de cada diez fotos sin haber visto j
 
 Para medir la capacidad real de generalización, cambiamos radicalmente la forma de evaluar: implementamos una validación dejando fuentes completas fuera (*Leave-One-Source-Out*). 
 
-En cada iteración, el modelo se entrena con varias fuentes y se evalúa sobre una fuente retenida que jamás vio durante el entrenamiento. Es la prueba definitiva de cómo se comportaría la aplicación si la llevamos a una parcela con condiciones que el sistema nunca ha conocido.
+En cada iteración, el modelo se entrena con varias fuentes y se evalúa sobre una fuente retenida. Es un *stress test* de transferencia entre repositorios; no reproduce por sí solo todas las condiciones de una parcela salvadoreña.
 
 | Protocolo de evaluación | Macro $F_1$-Score | Exactitud (Accuracy) | Qué mide en realidad |
 |---|:---:|:---:|---|
 | **Partición aleatoria estándar** | **0.8411** | **91.15 %** | Rendimiento memorizando la mezcla de fuentes conocidas. |
-| **Evaluación fuera de fuente (honesta)** | **`0.5573`** | **`0.6884`** | **Generalización real frente a cámaras y campos nuevos.** |
+| **LOSO histórico** | **`0.5573`** | **`0.6884`** | Transferencia entre las fuentes públicas representadas. |
 
-La caída de casi 28 puntos en Macro F1 no es un error de programación: es la medida exacta de la **brecha de dominio** en la agricultura digital.
+La caída de casi 28 puntos de Macro-F1 estima la brecha entre esos protocolos históricos. Su magnitud depende de las fuentes, clases evaluables y materialización.
 
 Las patologías con muchas fotos repartidas en varias fuentes (como hojas sanas, necrosis letal o roya común) lograron retener más del 80 % de su rendimiento. Pero las clases con menos imágenes y concentradas en una o dos fuentes (como las deficiencias nutricionales y la mancha gris) sufrieron caídas pronunciadas al ser evaluadas en un entorno desconocido.
 
@@ -56,6 +58,6 @@ Durante semanas exploramos si este sesgo podía solucionarse mediante técnicas 
 
 La razón es simple y contundente: **ninguno de los 14 datasets públicos disponibles fue capturado en El Salvador ni en Centroamérica**. 
 
-No existe ningún truco matemático que pueda reemplazar la diversidad biológica real. La única solución honesta para que DoctorMaiz sea infalible en el campo salvadoreño es alimentar el modelo con fotografías tomadas en las milpas locales, bajo el sol local y con las variedades locales de maíz. 
+La diversidad biológica real no puede inferirse por completo desde estos repositorios. Recolectar y etiquetar fotografías locales es una intervención prioritaria para medir y mejorar el desempeño en El Salvador; no garantiza por sí sola un sistema infalible.
 
 Por eso este hallazgo no representó un fracaso, sino el pilar conceptual más valioso de la Etapa 2: justificó el desarrollo del marco guía en la cámara móvil para neutralizar los fondos engañosos y dio sentido al módulo de contribución comunitaria de la aplicación.

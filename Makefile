@@ -154,10 +154,10 @@ upload-dataset:
 	$(PYTHON) scripts/dataset/upload_to_hf.py --stage-dir $(STAGE_DIR) $(if $(DRY_RUN),--dry-run,) $(if $(KEEP_STAGE),--keep-stage,)
 
 splits:
-	$(PYTHON) scripts/pipeline/create_splits.py
+	$(PYTHON) scripts/pipeline/create_splits.py $(if $(GROUP_BY_SOURCE),--group-by-source,)
 
 splits-baseline:
-	$(PYTHON) scripts/pipeline/create_splits.py --baseline $(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),)
+	$(PYTHON) scripts/pipeline/create_splits.py --baseline $(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),) $(if $(GROUP_BY_SOURCE),--group-by-source,)
 
 summary:
 	$(PYTHON) src/analysis/dataset_summary.py
@@ -216,6 +216,20 @@ tune:
 		$(if $(NO_PRETRAINED),--no-pretrained,)
 
 tune-main: tune
+
+# Protocolo formal, mismo motor Optuna; nunca usa los estudios históricos de tuning/.
+.PHONY: hpo-main modal-hpo-preflight modal-hpo-smoke modal-hpo
+hpo-main:
+	$(PYTHON) scripts/pipeline/tune.py --formal-hpo $(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),)
+
+modal-hpo-preflight:
+	$(MODAL) run scripts/modal/train.py::tune_main --formal-hpo --preflight-only
+
+modal-hpo-smoke:
+	$(MODAL) run scripts/modal/train.py::tune_main --formal-hpo --smoke
+
+modal-hpo:
+	$(MODAL) run --detach scripts/modal/train.py::tune_main --formal-hpo --continue-study
 
 tune-dashboard:
 	$(PYTHON) -c "from optuna_dashboard._cli import main; main()" sqlite:///outputs/tuning/optuna_study.db --port 8080
@@ -423,7 +437,9 @@ modal-splits:
 	$(MODAL) run scripts/modal/train.py::make_splits \
 		$(if $(BASELINE),--baseline,) \
 		$(if $(NO_CAP),--no-cap,) \
-		$(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",)
+		$(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",) \
+		$(if $(ALLOW_INCOMPLETE),--allow-incomplete,) \
+		$(if $(GROUP_BY_SOURCE),--group-by-source,)
 
 # Splits sobre el dataset pre-segmentado (corn-clean-segmented -> splits/seed_42_segmented).
 # Requiere haber corrido antes modal-segment-dataset.

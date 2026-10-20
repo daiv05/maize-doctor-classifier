@@ -78,7 +78,13 @@ def seed_dataset(force: bool = False) -> None:
     secrets=[modal.Secret.from_name("hf")],
     timeout=2 * 3600,
 )
-def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int = 0) -> None:
+def make_splits(
+    baseline: bool = False,
+    no_cap: bool = False,
+    max_per_class: int = 0,
+    allow_incomplete: bool = False,
+    group_by_source: bool = False,
+) -> None:
     """
     Genera los splits CSV en el Volume corn-outputs.
 
@@ -89,6 +95,9 @@ def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int
     @param {bool} baseline Genera seed_42_baseline (perfil capado) en vez de seed_42.
     @param {bool} no_cap Sin tope por clase; solo aplica junto con baseline.
     @param {int} max_per_class Tope por clase; 0 usa el default del YAML. Solo con baseline.
+    @param {bool} allow_incomplete Permite splits sin cobertura completa de clases cuando
+        los grupos de procedencia indivisibles hacen imposible cubrir train/val/test.
+    @param {bool} group_by_source Genera el benchmark estricto seed_42_source_grouped.
     """
     dataset_vol.reload()
     command = [sys.executable, "scripts/pipeline/create_splits.py"]
@@ -98,6 +107,10 @@ def make_splits(baseline: bool = False, no_cap: bool = False, max_per_class: int
             command.append("--no-cap")
         elif max_per_class:
             command += ["--max-per-class", str(max_per_class)]
+    if allow_incomplete:
+        command.append("--allow-incomplete-splits")
+    if group_by_source:
+        command.append("--group-by-source")
 
     run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     outputs_vol.commit()
@@ -298,7 +311,8 @@ def train_main(
         "/outputs": outputs_vol,
     },
     secrets=[modal.Secret.from_name("hf")],
-    timeout=8 * 3600,
+    timeout=24 * 3600,
+    max_containers=1,
 )
 def tune_main(
     models: str = "efficientnet_b0",
@@ -312,6 +326,11 @@ def tune_main(
     splits_dir: str = "",
     num_workers: int = 32,
     study_name_prefix: str = "tune",
+    formal_hpo: bool = False,
+    preflight_only: bool = False,
+    smoke: bool = False,
+    max_new_trials: int = 2,
+    continue_study: bool = False,
 ) -> None:
     """Optimización de hiperparámetros con Optuna en GPU de Modal (A10G).
 
@@ -321,6 +340,11 @@ def tune_main(
     """
     dataset_vol.reload()
     outputs_vol.reload()
+    if formal_hpo:
+        models, n_trials, epochs = "efficientnet_lite0", 25, 60
+        baseline_macro_f1 = 0.9560862657056215
+        if pruner != "median":
+            raise ValueError("HPO formal requiere MedianPruner.")
     command = [
         sys.executable,
         "scripts/pipeline/tune.py",
@@ -343,9 +367,29 @@ def tune_main(
         command += ["--timeout", str(timeout)]
     if splits_dir:
         command += ["--splits-dir", splits_dir]
+    if formal_hpo:
+        command += ["--formal-hpo", "--max-new-trials", str(max_new_trials)]
+    if preflight_only:
+        command.append("--preflight-only")
+    if smoke:
+        command.append("--smoke")
 
-    run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
-    outputs_vol.commit()
+    try:
+        run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
+    finally:
+        # También conserva FAIL y trazas cuando el subproceso aborta.
+        outputs_vol.commit()
+    if formal_hpo and continue_study and not preflight_only and not smoke:
+        import json
+
+        study_dir = Path("/outputs/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1")
+        summary = json.loads((study_dir / "study_summary.json").read_text())
+        if summary["n_recorded"] < n_trials:
+            call = tune_main.spawn(
+                formal_hpo=True, num_workers=num_workers, splits_dir=splits_dir,
+                max_new_trials=max_new_trials, continue_study=True,
+            )
+            print(f"Continuación secuencial: {call.object_id}", flush=True)
 
 
 @app.function(
@@ -361,12 +405,16 @@ def optuna_dashboard_modal():
     outputs_vol.reload()
     db_path = Path("/outputs/tuning/optuna_study.db")
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.Popen([
-        "optuna-dashboard",
-        f"sqlite:///{db_path}",
-        "--port", "8080",
-        "--host", "0.0.0.0",
-    ])
+    subprocess.Popen(
+        [
+            "optuna-dashboard",
+            f"sqlite:///{db_path}",
+            "--port",
+            "8080",
+            "--host",
+            "0.0.0.0",
+        ]
+    )
 
 
 @app.function(
@@ -390,7 +438,8 @@ def evaluate_ensemble_modal(
     command = [
         sys.executable,
         "scripts/pipeline/evaluate_ensemble.py",
-        "--num-workers", str(num_workers),
+        "--num-workers",
+        str(num_workers),
         "--models",
         *models.split(),
         "--batch-size",
@@ -442,7 +491,8 @@ def cross_validate_modal(
     command = [
         sys.executable,
         "scripts/pipeline/cross_validate.py",
-        "--num-workers", str(num_workers),
+        "--num-workers",
+        str(num_workers),
         "--model",
         model,
         "--k-folds",
@@ -498,8 +548,10 @@ def fairness_report_modal(
     command = [
         sys.executable,
         "scripts/pipeline/evaluate_fairness.py",
-        "--subgroup-column", subgroup_column,
-        "--num-workers", str(num_workers),
+        "--subgroup-column",
+        subgroup_column,
+        "--num-workers",
+        str(num_workers),
         "--model",
         model,
         "--batch-size",

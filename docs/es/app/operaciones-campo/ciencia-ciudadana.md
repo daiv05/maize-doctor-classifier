@@ -32,7 +32,7 @@ Los modelos entrenados con imágenes de otros continentes sufren una pérdida de
 
 1. **Variedades y Genética Criolla:** Las variedades locales (como híbridos *CENTA H-59*, *Pasaquina* o maíces criollos de montaña) presentan una textura foliar, vellosidad y coloración distinta a las variedades de Norteamérica.
 2. **Suelos Volcánicos y Deficiencias Complejas:** Los andosoles y vertisoles salvadoreños presentan dinámicas de fijación de fósforo muy marcadas, provocando manchas rojizas que modelos extranjeros confunden fácilmente con virosis.
-3. **Complejo Mancha de Asfalto (*Phyllachora maydis*):** Es una patología devastadora típica del trópico americano que apenas existe en los datasets de laboratorio de Estados Unidos o Europa.
+3. **Clases poco representadas en datasets internacionales:** Las deficiencias nutricionales de fósforo y potasio tienen muy pocas imágenes públicas de campo, sobre todo de variedades locales.
 
 ---
 
@@ -44,12 +44,12 @@ El agricultor puede postular fotografías de sus escaneos para que formen parte 
 graph TD
     A[Foto en Parcela] --> B[DoctorMaiz App]
     B --> C[Opción: 'Aportar al Dataset']
-    C --> D[Anonimización de Datos Personales]
+    C --> D[Envío al servidor con cuenta registrada]
     D --> E[Revisión por Especialistas Agrónomos]
-    E --> F[Inclusión en la Siguiente Versión del Modelo TFLite]
+    E --> F[Inclusión en una futura versión del modelo, si se decide]
 ```
 
-### Protocolo de Privacidad y Anonimización
-- **Sin Datos Personales:** La fotografía se desvincula de tu nombre, teléfono y correo electrónico.
-- **Geomasking de Seguridad:** La coordenada GPS exacta se aproxima a nivel de cantón o municipio para proteger la ubicación precisa de la propiedad del agricultor.
-- **Acceso Abierto a la Academia:** Las muestras validadas se ponen a disposición de universidades, escuelas de agronomía e instituciones de investigación agrícola sin fines de lucro.
+### Qué se envía
+- **Lo que se envía:** la fotografía, la etiqueta que elegiste, tu nota opcional y la fecha del escaneo.
+- **Lo que no se envía:** tu nombre, teléfono, correo y coordenadas GPS del escaneo. La app no los incluye en el envío.
+- **Pendiente de confirmar:** la app todavía no limpia los metadatos de la fotografía antes de enviarla.

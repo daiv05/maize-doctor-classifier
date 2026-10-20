@@ -1,0 +1,105 @@
+{
+  "protocol": "loso_baseline_seed42_v1",
+  "results": [
+    {
+      "holdout_metrics": {
+        "accuracy": 0.9937043926169695,
+        "checkpoint_sha256": "b16b1ef8bb4285f65be020272845b6c927057103bf177a290311f186de101dcc",
+        "classes_present": [
+          "common_rust",
+          "healthy",
+          "northern_corn_leaf_blight"
+        ],
+        "ece_15_bins": 0.12104359447811103,
+        "error_rate": 0.006295607383030476,
+        "errors": 44,
+        "held_out_source": "maize-diseases",
+        "holdout_finished_at_utc": "2026-09-30T15:15:51.253398+00:00",
+        "holdout_sha256": "c94e4e1963f00b18e1bf0d0ed9ca41a50dd7676c8c1e5157567474cdbee54167",
+        "holdout_started_at_utc": "2026-09-30T15:13:49.550261+00:00",
+        "macro_f1": 0.9931239869074601,
+        "macro_f1_definition": "unweighted mean over classes present in ground truth",
+        "macro_precision": 0.9908993941924815,
+        "macro_recall": 0.9954343317162343,
+        "mean_confidence_correct": 0.8747075930441601,
+        "mean_confidence_errors": 0.5725226456468756,
+        "npk_present": [],
+        "protocol": "loso_baseline_seed42_v1",
+        "run_id": "20260930_144843",
+        "samples": 6989,
+        "selection_lock_sha256": "1a8c202ed20cacb14d8f1c5dcc25996c1832dd20665e3caf17929b9c23860a80",
+        "weighted_f1": 0.9946504938976077
+      },
+      "run_dir": "/home/desarrolloab/Documentos/ML/Clasificador/maize-doctor-classifier/outputs/loso/efficientnet_lite0_baseline/maize-diseases/seed_42/runs/efficientnet_lite0/20260930_144843",
+      "run_id": "20260930_144843",
+      "selection": {
+        "best_epoch": 15,
+        "best_val_macro_f1": 0.9489747671307414,
+        "checkpoint_selected_at_utc": "2026-09-30T15:04:39.850970+00:00",
+        "checkpoint_sha256": "b16b1ef8bb4285f65be020272845b6c927057103bf177a290311f186de101dcc",
+        "held_out_source": "maize-diseases",
+        "holdout_evaluated": false,
+        "protocol": "loso_baseline_seed42_v1",
+        "run_id": "20260930_144843",
+        "schema_version": 1,
+        "selection_criterion": "internal_validation_macro_f1",
+        "selection_locked_at_utc": "2026-09-30T15:13:47.824875+00:00",
+        "split_lock_sha256": "6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07",
+        "summary_sha256": "527af09f3987e37495bc26bcd9c693070542d9268ac03c3681c4ae6337455cff",
+        "training_completed_at_utc": "2026-09-30T15:10:42.501933+00:00"
+      },
+      "source_id": "maize-diseases"
+    },
+    {
+      "holdout_metrics": {
+        "accuracy": 0.8069119669876204,
+        "checkpoint_sha256": "bd778a28d251fd1b45960f3caec8f5b51d0ed0178c4e4f46e06d2b40948e4517",
+        "classes_present": [
+          "common_rust",
+          "fall_armyworm",
+          "lethal_necrosis"
+        ],
+        "ece_15_bins": 0.048824072058377924,
+        "error_rate": 0.19308803301237965,
+        "errors": 1123,
+        "held_out_source": "multicrop-disease-maiz",
+        "holdout_finished_at_utc": "2026-09-30T15:39:20.768305+00:00",
+        "holdout_sha256": "d36f938bdb6db7505722e5b7cf6458adc5568f3a94525884943e47eb0a8b0688",
+        "holdout_started_at_utc": "2026-09-30T15:37:33.234431+00:00",
+        "macro_f1": 0.9054897408521415,
+        "macro_f1_definition": "unweighted mean over classes present in ground truth",
+        "macro_precision": 0.9671960281358106,
+        "macro_recall": 0.8606070974011034,
+        "mean_confidence_correct": 0.8081474959431186,
+        "mean_confidence_errors": 0.6059787879272539,
+        "npk_present": [],
+        "protocol": "loso_baseline_seed42_v1",
+        "run_id": "20260930_145541",
+        "samples": 5816,
+        "selection_lock_sha256": "a137e5f21c5adef9a53872f1da5d94b49a3011a3cc4a84048a20794c2437b162",
+        "weighted_f1": 0.8795330304560223
+      },
+      "run_dir": "/home/desarrolloab/Documentos/ML/Clasificador/maize-doctor-classifier/outputs/loso/efficientnet_lite0_baseline/multicrop-disease-maiz/seed_42/runs/efficientnet_lite0/20260930_145541",
+      "run_id": "20260930_145541",
+      "selection": {
+        "best_epoch": 42,
+        "best_val_macro_f1": 0.9524884042075362,
+        "checkpoint_selected_at_utc": "2026-09-30T15:29:35.400376+00:00",
+        "checkpoint_sha256": "bd778a28d251fd1b45960f3caec8f5b51d0ed0178c4e4f46e06d2b40948e4517",
+        "held_out_source": "multicrop-disease-maiz",
+        "holdout_evaluated": false,
+        "protocol": "loso_baseline_seed42_v1",
+        "run_id": "20260930_145541",
+        "schema_version": 1,
+        "selection_criterion": "internal_validation_macro_f1",
+        "selection_locked_at_utc": "2026-09-30T15:37:31.765809+00:00",
+        "split_lock_sha256": "d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b",
+        "summary_sha256": "851511bff33cacce89727314bc821a9b68c2745444b23f4fa00103cbf5ccac0a",
+        "training_completed_at_utc": "2026-09-30T15:35:54.872056+00:00"
+      },
+      "source_id": "multicrop-disease-maiz"
+    }
+  ],
+  "schema_version": 1,
+  "training_runs": 2
+}

@@ -1,6 +1,5 @@
 """Utilidades compartidas por los scripts de entrenamiento (train.py y train_baselines.py)."""
 
-import json
 import logging
 import random
 from datetime import datetime
@@ -10,6 +9,13 @@ import numpy as np
 import torch
 
 from src.models.registry import ModelRegistry
+from src.training.runs import (
+    read_run_contract,
+    write_latest_pointer,
+)
+from src.training.runs import (
+    resolve_run_dir as _resolve_run_dir,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,26 +67,13 @@ def build_run_dir(output_dir: Path, model_name: str, run_id: str) -> Path:
 def update_latest_pointer(output_dir: Path, model_name: str, run_id: str) -> None:
     """Escribe <output_dir>/<model_name>/latest.json. Llamar solo tras un run exitoso
     (summary.json ya escrito), para no apuntar a runs a medias."""
-    latest_path = output_dir / model_name / "latest.json"
-    latest_path.write_text(json.dumps({"run_id": run_id}, indent=2))
+    write_latest_pointer(output_dir, model_name, run_id)
 
 
 def resolve_run_dir(output_dir: Path, model_name: str, run_id: str | None = None) -> Path:
     """Resuelve el directorio de un run: sin run_id, lee latest.json; falla con
     SystemExit claro si no hay ningún run registrado o el run_id pedido no existe."""
-    model_dir = output_dir / model_name
-    if run_id is None:
-        latest_path = model_dir / "latest.json"
-        if not latest_path.exists():
-            raise SystemExit(
-                f"No hay runs registrados para '{model_name}' en {model_dir}. "
-                "Entrena primero con: make train-baselines"
-            )
-        run_id = json.loads(latest_path.read_text())["run_id"]
-    run_dir = model_dir / run_id
-    if not run_dir.exists():
-        raise SystemExit(f"No se encontró el run '{run_id}' para '{model_name}' en {model_dir}")
-    return run_dir
+    return _resolve_run_dir(output_dir, model_name, run_id)
 
 
 def load_run_metadata(
@@ -101,24 +94,13 @@ def load_run_metadata(
     canónico `dataset.classes` que usa CornDataset) produce etiquetas permutadas - ese fue
     el bug de rótulos de los reportes LIME.
     """
-    summary_path = run_dir / "summary.json"
-    if summary_path.exists():
-        summary = json.loads(summary_path.read_text())
-        splits_dir = Path(summary.get("splits_dir", fallback_splits_dir))
-        class_to_idx = {
-            str(class_name): int(class_idx)
-            for class_name, class_idx in summary["class_to_idx"].items()
-        }
-        idx_to_class = {idx: class_name for class_name, idx in class_to_idx.items()}
-        image_size = summary.get("image_size", list(fallback_target_size))
-        target_size = (int(image_size[0]), int(image_size[1]))
-        return splits_dir, class_to_idx, idx_to_class, target_size
-
-    # Import diferido: evita arrastrar pandas/yaml (cadena de src.data.dataset) salvo que
-    # realmente falte summary.json.
-    from src.data.dataset import resolve_class_mapping
-
-    class_to_idx, idx_to_class = resolve_class_mapping(
-        fallback_splits_dir / "train.csv", fallback_classes
-    )
-    return fallback_splits_dir, class_to_idx, idx_to_class, fallback_target_size
+    # Los argumentos fallback se conservan en la firma por compatibilidad de API, pero un
+    # run legacy ya no puede cargarse silenciosamente: debe migrarse explícitamente.
+    del fallback_classes, fallback_target_size
+    summary = read_run_contract(run_dir)
+    recorded_splits = Path(summary["splits_dir"])
+    splits_dir = recorded_splits if recorded_splits.exists() else fallback_splits_dir
+    class_to_idx = dict(summary["class_to_idx"])
+    idx_to_class = {idx: class_name for class_name, idx in class_to_idx.items()}
+    image_size = summary["architecture"]["input_size"]
+    return splits_dir, class_to_idx, idx_to_class, (int(image_size[0]), int(image_size[1]))

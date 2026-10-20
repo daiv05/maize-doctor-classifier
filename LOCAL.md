@@ -144,8 +144,22 @@ make train-baselines                          # Entrena baselines sobre el perfi
 make train-baselines MODELS=efficientnet_b0   # Solo un modelo
 make train-baselines NO_CAP=1                 # Mismas 9 clases, sin tope de imágenes
 make train-baselines MAX_PER_CLASS=1000       # Mismas 9 clases, tope custom
-make train                                    # Pipeline principal (loop de entrenamiento aún pendiente)
+make train-main MAIN_MODELS=efficientnet_lite0 MAIN_EPOCHS=60  # Pipeline principal local
+make evaluate-ensemble                         # Evalúa el ensamble sobre test.csv
+make explain-errors-main MAIN_MODELS=efficientnet_lite0        # Análisis post-hoc de errores
 ```
+
+`make train` es alias de `make train-main` y, sin override, usa la lista de modelos definida por `MAIN_MODELS` en el Makefile. Para un único Lite0, pásalo explícitamente como arriba. Estos comandos son costosos; confirmar primero el split y el espacio disponible.
+
+## 9. Diagnóstico rápido
+
+```bash
+make help          # targets y variables vigentes
+make test-loader   # carga un batch (image, label, sample_id)
+make check         # verificaciones configuradas por el proyecto
+```
+
+La especificación de identidad, manifests y splits está en [`docs/es/metodologia/pipeline-datos.md`](docs/es/metodologia/pipeline-datos.md). No regeneres `make splits` si solo quieres reutilizar una materialización contractual existente.
 
 ## Resumen rápido (happy path)
 

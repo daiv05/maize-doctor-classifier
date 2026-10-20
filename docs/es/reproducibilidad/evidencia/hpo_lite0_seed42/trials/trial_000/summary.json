@@ -1,0 +1,114 @@
+{
+  "architecture": {
+    "input_size": [
+      224,
+      224
+    ],
+    "model_name": "efficientnet_lite0",
+    "num_classes": 9
+  },
+  "best_epoch": 44,
+  "checkpoint": "best.pth",
+  "checkpoint_sha256": "ae39a1c4a8b757021ec2c34a856d6fb484bf801a6adc3bfb71860d58e9d81471",
+  "class_to_idx": {
+    "common_rust": 0,
+    "fall_armyworm": 1,
+    "gray_leaf_spot": 2,
+    "healthy": 3,
+    "lethal_necrosis": 4,
+    "nitrogen_deficiency": 5,
+    "northern_corn_leaf_blight": 6,
+    "phosphorus_deficiency": 7,
+    "potassium_deficiency": 8
+  },
+  "config_sha256": "0e6c7488549a3639ffb1d031202ecb5acae0f4b938a24af69715048efae2173c",
+  "epochs_run": 52,
+  "hyperparameters": {
+    "batch_size": 16,
+    "clahe": false,
+    "class_weights": "none",
+    "clip_grad_norm": 1.0,
+    "dropout": null,
+    "epochs": 60,
+    "label_smoothing": 0.075,
+    "learning_rate": 8.468008575248323e-05,
+    "min_lr": 1e-06,
+    "optimizer": "AdamW",
+    "patience": 8,
+    "pretrained": true,
+    "sampler": null,
+    "scheduler": "cosine",
+    "warmup_epochs": 1,
+    "weight_decay": 0.005669849511478858
+  },
+  "image_size": [
+    224,
+    224
+  ],
+  "metrics": {
+    "best_validation": {
+      "epoch": 44,
+      "loss": 0.4448641099133813,
+      "macro_f1": 0.9572922254288656
+    }
+  },
+  "model": "efficientnet_lite0",
+  "num_classes": 9,
+  "pipeline": "hpo",
+  "preprocessing": {
+    "clahe": {
+      "clip_limit": 2.0,
+      "enabled": false,
+      "tile_grid": 8
+    },
+    "loader": {
+      "color_mode": "RGB",
+      "exif_transpose": true
+    },
+    "normalization": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "operation": "zscore",
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    },
+    "purpose": "inference",
+    "resize": {
+      "antialias": true,
+      "aspect_ratio": "stretch",
+      "interpolation": "bilinear",
+      "operation": "resize",
+      "target_size": [
+        224,
+        224
+      ]
+    },
+    "schema_version": 1
+  },
+  "run_id": "trial_000",
+  "schema_version": 1,
+  "seed": 42,
+  "split_identifier": "seed_42",
+  "split_manifest_sha256": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
+  "split_manifest_source": "manifest.lock.json",
+  "splits_dir": "/outputs/splits/seed_42",
+  "study_name": "efficientnet_lite0_seed42_hpo_v1",
+  "test_used": false,
+  "training_preprocessing": {
+    "inference_contract_sha256_required": true,
+    "pipelines": [
+      "train",
+      "minority"
+    ],
+    "random_augmentations_contractual_for_inference": false,
+    "schema_version": 1
+  },
+  "trial_number": 0,
+  "trial_state": "COMPLETE"
+}

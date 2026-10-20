@@ -6,7 +6,7 @@ Esta página resume los hallazgos consolidados de la auditoría de procedencia y
 
 ---
 
-## Lo que quedó demostrado
+## Resultados observados en la campaña histórica
 
 A través de experimentos cruzados sobre más de 33,000 imágenes, establecimos cuatro conclusiones fundamentales:
 
@@ -15,7 +15,7 @@ A través de experimentos cruzados sobre más de 33,000 imágenes, establecimos 
 2. **Las particiones aleatorias sobreestiman la capacidad del modelo:**
    Cuando se divide el dataset al azar, las mismas cámaras, fondos y condiciones de iluminación se reparten por igual entre entrenamiento y prueba. El modelo obtiene más de 94 % de Macro F1 en ese escenario porque se le evalúa sobre el mismo entorno que ya memorizó.
 3. **La evaluación fuera de fuente revela la brecha agrícola:**
-   Al evaluar el sistema bajo un protocolo honesto dejando fuentes completas fuera (*Leave-One-Source-Out*), el Macro F1 real se sitúa en torno a **0.56 – 0.60**. Las clases con abundancia de fotos y orígenes variados (como hojas sanas o necrosis letal) resisten bien el cambio de dominio, mientras que las clases con pocas muestras y dominadas por una sola fuente sufren el impacto de la novedad.
+   El LOSO histórico produjo valores alrededor de 0.56 en su resumen, mientras la CV agrupada histórica produjo 0.6026 ± 0.1240. Son protocolos distintos y no forman un único intervalo. Ambos mostraron sensibilidad al cambio de fuente.
 4. **Las intervenciones algorítmicas tienen un techo:**
    Probamos equilibrar las fuentes dentro de cada lote, sustituir fondos artificialmente y aplicar aumentaciones severas de color y recorte. Aunque algunas técnicas ofrecieron mejoras marginales en patologías puntuales, ninguna logró cerrar la brecha de fondo. La causa no es que el algoritmo sea malo, sino que los datos de partida no contienen la variabilidad suficiente.
 
@@ -27,4 +27,4 @@ En lugar de esconder estos resultados o insistir en métricas infladas, utilizam
 
 - **Diseño del visor de cámara con marco guía:** Sabiendo que el modelo es sensible al suelo y al entorno, la app le exige al agricultor llenar un marco central con la hoja y descarta automáticamente el 75 % del área exterior de la foto antes de enviarla a clasificar.
 - **Detector de anomalías fuera de dominio (OOD):** Implementamos el filtro de distancia de Mahalanobis para que el sistema aprenda a abstenerse y marcar "Imagen no reconocida" cuando una foto se aleja demasiado de lo que el modelo aprendió con seguridad.
-- **Módulo de aporte para agricultores:** La aplicación incluye una pantalla para subir fotografías capturadas en campo local. La única manera de llevar el clasificador al 95 % de generalización real en El Salvador es incorporar gradualmente la variabilidad de nuestras propias parcelas.
+- **Módulo de aporte para agricultores:** La aplicación incluye una pantalla para aportar fotografías de campo local. Su valor debe comprobarse con etiquetas de calidad y un protocolo de evaluación local; no se fija de antemano una mejora o umbral alcanzable.

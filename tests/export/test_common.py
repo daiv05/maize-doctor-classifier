@@ -10,13 +10,16 @@ import torch
 from src.export.common import (
     ExportDependencyError,
     ExportFormatResult,
+    ExportIntegrityError,
     ExportReport,
     parse_export_formats,
     resolve_export_inputs,
+    validate_export_artifact,
     write_export_summary,
     write_labels_json,
 )
 from src.export.parity import ParityResult
+from src.training.runs import LegacyRunError
 
 
 def test_parse_export_formats_csv():
@@ -42,24 +45,19 @@ def test_parse_export_formats_deduplica():
 
 
 def test_resolve_export_inputs_sin_summary(tmp_path):
-    with pytest.raises(SystemExit):
+    with pytest.raises(LegacyRunError):
         resolve_export_inputs(tmp_path, "shufflenet_v2_x1_0", tmp_path / "dataset.yaml")
 
 
-def test_resolve_export_inputs_lee_summary(tmp_path):
+def test_resolve_export_inputs_rechaza_summary_legacy(tmp_path):
     summary = {
         "class_to_idx": {"healthy": 0, "common_rust": 1},
         "image_size": [224, 224],
     }
     (tmp_path / "summary.json").write_text(json.dumps(summary))
 
-    class_to_idx, idx_to_class, image_size = resolve_export_inputs(
-        tmp_path, "shufflenet_v2_x1_0", tmp_path / "dataset.yaml"
-    )
-
-    assert class_to_idx == {"healthy": 0, "common_rust": 1}
-    assert idx_to_class == {0: "healthy", 1: "common_rust"}
-    assert image_size == (224, 224)
+    with pytest.raises(LegacyRunError, match="Legacy run"):
+        resolve_export_inputs(tmp_path, "shufflenet_v2_x1_0", tmp_path / "dataset.yaml")
 
 
 def test_write_export_summary_crea_export_dir(tmp_path):
@@ -149,6 +147,39 @@ def test_write_export_summary_sha256_none_si_no_hay_output_path(tmp_path):
 
     payload = json.loads((tmp_path / "export" / "export_summary.json").read_text())
     assert payload["formats"][0]["sha256"] is None
+
+
+def test_validate_export_artifact_rechaza_bytes_modificados(tmp_path, monkeypatch):
+    export_dir = tmp_path / "export"
+    export_dir.mkdir()
+    model_path = export_dir / "model.onnx"
+    model_path.write_bytes(b"export contractual")
+    run = {
+        "run_id": tmp_path.name,
+        "checkpoint_sha256": "a" * 64,
+        "class_to_idx": {"healthy": 0},
+        "preprocessing": {"schema_version": 1},
+    }
+    payload = {
+        "schema_version": 1,
+        **run,
+        "formats": [
+            {
+                "format": "onnx",
+                "output_path": "export/model.onnx",
+                "succeeded": True,
+                "sha256": hashlib.sha256(b"export contractual").hexdigest(),
+            }
+        ],
+    }
+    (export_dir / "export_summary.json").write_text(json.dumps(payload), encoding="utf-8")
+    monkeypatch.setattr("src.export.common.read_run_contract", lambda _run_dir: run)
+
+    assert validate_export_artifact(tmp_path, model_path, "onnx", None) == payload
+    with model_path.open("ab") as handle:
+        handle.write(b"tamper")
+    with pytest.raises(ExportIntegrityError, match="SHA-256 del export no coincide"):
+        validate_export_artifact(tmp_path, model_path, "onnx", None)
 
 
 def test_export_to_tflite_sin_dependencia_levanta_error_claro(monkeypatch):

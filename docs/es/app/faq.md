@@ -38,15 +38,14 @@ El mensaje *"No Reconocida"* no es un error de la app: es una **salvaguarda de s
 
 **Solución:** Acércate a 20–30 cm, haz que la hoja llene el marco verde central, haz sombra con tu cuerpo si el sol es muy intenso y vuelve a presionar el disparador.
 
-### ¿Cómo distingo rápidamente en campo entre Roya y Mancha de Asfalto?
-Aplica la **"Prueba del Frotado con la Yema del Dedo"**:
-- **Roya Común:** Las pústulas rompen la cutícula foliar. Al frotar la lesión con el dedo, este se manchará con un polvo fino color canela o marrón (esporas libres).
-- **Mancha de Asfalto:** Las lesiones son estromas negros lisos y brillantes que crecen dentro del tejido. Al frotar o raspar suavemente con la uña, **no manchan el dedo y no se desprenden**.
+### ¿Cómo distingo rápidamente en campo entre Roya y Mancha Gris?
+- **Roya Común:** Son pústulas redondeadas de 1 a 2 mm que rompen la cutícula foliar. Al frotar la lesión con el dedo, este se manchará con un polvo fino color canela o marrón.
+- **Mancha Gris:** Son lesiones rectangulares de 1 a 6 cm, delimitadas por las nervaduras. No producen polvo al frotarlas.
 
 ### ¿Mis fotografías y coordenadas son públicas o privadas?
 - **En Modo Invitado:** Todos los registros, fotos y coordenadas permanecen estrictamente dentro de la memoria interna de tu teléfono celular. Nada se envía a servidores externos.
 - **En Modo Registrado:** Tus escaneos se respaldan en tu cuenta privada.
-- **Al Contribuir al Dataset Nacional:** Solo las fotos que tú decidas postular voluntariamente se comparten con la investigación científica. En ese proceso, **se borran tus datos personales** y las coordenadas GPS se aproximan a nivel de municipio para resguardar la privacidad de tu parcela.
+- **Al Contribuir al Dataset Nacional:** Solo se envían las fotos que tú decidas postular voluntariamente, junto con la etiqueta que elegiste y tu nota opcional. El envío no incluye tu nombre, teléfono, correo ni coordenadas GPS. El envío requiere una cuenta registrada y conexión a internet.
 
 ### ¿Por qué algunos escaneos no aparecen sobre el mapa de cobertura?
 Si un escaneo aparece en la lista de historial pero no se ve sobre el mapa, se debe a que el teléfono no tenía señal de satélites GPS en el momento exacto del disparo.  

@@ -1,0 +1,76 @@
+{
+  "baseline": {
+    "csv_sha256": {
+      "test": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724",
+      "train": "231048178f3450bf84925f8d19eb5a672669ee9f2658a23fe87d88d6e9949434",
+      "val": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5"
+    },
+    "overlap": {
+      "train/test/file_sha256": 0,
+      "train/test/pixel_sha256": 0,
+      "train/test/sample_id": 0,
+      "train/val/file_sha256": 0,
+      "train/val/pixel_sha256": 0,
+      "train/val/sample_id": 0,
+      "val/test/file_sha256": 0,
+      "val/test/pixel_sha256": 0,
+      "val/test/sample_id": 0
+    },
+    "samples": {
+      "test": 5015,
+      "train": 23400,
+      "val": 5014
+    },
+    "split_lock_sha256": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8"
+  },
+  "checked_at_utc": "2026-10-01T14:27:05.028682+00:00",
+  "maize-diseases": {
+    "csv_sha256": {
+      "holdout": "c94e4e1963f00b18e1bf0d0ed9ca41a50dd7676c8c1e5157567474cdbee54167",
+      "train": "b361ba1010e402d110f06e51419e397b24464eb4ed0c3951500083f0c8a4d34a",
+      "val": "3da556ca4d6e6b1f196a9b0977674965b3044c9f967e070fcf1fce72a2868350"
+    },
+    "overlap": {
+      "train/holdout/file_sha256": 0,
+      "train/holdout/pixel_sha256": 0,
+      "train/holdout/sample_id": 0,
+      "train/val/file_sha256": 0,
+      "train/val/pixel_sha256": 0,
+      "train/val/sample_id": 0,
+      "val/holdout/file_sha256": 0,
+      "val/holdout/pixel_sha256": 0,
+      "val/holdout/sample_id": 0
+    },
+    "samples": {
+      "holdout": 6989,
+      "train": 18519,
+      "val": 3967
+    },
+    "split_lock_sha256": "6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07"
+  },
+  "multicrop-disease-maiz": {
+    "csv_sha256": {
+      "holdout": "d36f938bdb6db7505722e5b7cf6458adc5568f3a94525884943e47eb0a8b0688",
+      "train": "7fd7878df04c7ab6d6126fef96104bedc48699e5e417d533b06afc77e86115e4",
+      "val": "eea6551f65050f8bb6780d501d382c2e758037f32c8e1624e78214067a64b1cb"
+    },
+    "overlap": {
+      "train/holdout/file_sha256": 0,
+      "train/holdout/pixel_sha256": 0,
+      "train/holdout/sample_id": 0,
+      "train/val/file_sha256": 0,
+      "train/val/pixel_sha256": 0,
+      "train/val/sample_id": 0,
+      "val/holdout/file_sha256": 0,
+      "val/holdout/pixel_sha256": 0,
+      "val/holdout/sample_id": 0
+    },
+    "samples": {
+      "holdout": 5816,
+      "train": 19328,
+      "val": 4150
+    },
+    "split_lock_sha256": "d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b"
+  },
+  "pixel_inventory_sha256": "7d15a768a604d1f94ded6c9a490b5b58a699b0850d4c8f003245775c4470090e"
+}

@@ -1,0 +1,42 @@
+{
+  "config_sha256": "8f0e560fe78267bb3f96f907d4668e29f1dd22d6a6645f474a84d1fad4db4730",
+  "exclusions_sha256": "4ca25fcb91d48ee6a99c5f9e46ed3d8ad787305e17af0d852a7eeacfbd7e6432",
+  "group_manifest_sha256": null,
+  "master_manifest_sha256": "64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163",
+  "schema_version": 1,
+  "seed": 42,
+  "split_parameters": {
+    "allow_incomplete_splits": false,
+    "classes": [
+      "common_rust",
+      "fall_armyworm",
+      "gray_leaf_spot",
+      "healthy",
+      "lethal_necrosis",
+      "nitrogen_deficiency",
+      "northern_corn_leaf_blight",
+      "phosphorus_deficiency",
+      "potassium_deficiency"
+    ],
+    "dedup_distance": 0,
+    "deduplicate_perceptual": false,
+    "group_by_source": false,
+    "group_manifest_sha256": null,
+    "grouping_column": null,
+    "max_per_class": null,
+    "ratios": {
+      "test": 0.15,
+      "train": 0.7,
+      "val": 0.15
+    },
+    "seed": 42,
+    "split_strategy": "stratified_label_environment",
+    "stratify_columns": [
+      "label",
+      "environment"
+    ]
+  },
+  "test_sha256": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724",
+  "train_sha256": "231048178f3450bf84925f8d19eb5a672669ee9f2658a23fe87d88d6e9949434",
+  "val_sha256": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5"
+}

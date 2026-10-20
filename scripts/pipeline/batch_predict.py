@@ -18,9 +18,9 @@ import src.models.baselines.mobilenet  # noqa: F401 - registra modelos
 import src.models.baselines.shufflenet  # noqa: F401 - registra modelos
 from src.config import PROJECT_ROOT, get_output_root
 from src.data.loader import load_and_normalize_image
-from src.data.transforms import CornTransformFactory
 from src.models.registry import MODEL_REGISTRY
 from src.training.common import load_run_metadata, select_device
+from src.training.runs import load_validated_run
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ def main() -> None:
 
     run_dir = checkpoint_path.parent
     fallback_splits_dir = get_output_root() / "splits" / "seed_42"
-    _, _, idx_to_class, target_size = load_run_metadata(
+    _, class_to_idx, idx_to_class, target_size = load_run_metadata(
         run_dir=run_dir,
         fallback_splits_dir=fallback_splits_dir,
         fallback_classes=cfg["dataset"]["classes"],
@@ -80,14 +80,16 @@ def main() -> None:
     )
 
     device = select_device()
-    model = MODEL_REGISTRY.build(args.model, num_classes=len(idx_to_class), pretrained=False).to(
-        device
+    loaded = load_validated_run(
+        checkpoint_path,
+        expected_model=args.model,
+        expected_input_size=target_size,
+        expected_class_to_idx=class_to_idx,
+        device=device,
+        config_path=str(config_path),
     )
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-    model.eval()
-
-    factory = CornTransformFactory(config_path=str(config_path), target_size=target_size)
-    pipeline = factory.get_pipeline("inference")
+    model = loaded.model
+    pipeline = loaded.factory.get_pipeline("inference")
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

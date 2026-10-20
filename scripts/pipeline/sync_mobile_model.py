@@ -15,7 +15,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-from src.export.common import _sha256_file
+from src.data.preparation import sha256_file as _sha256_file
 
 
 def _summary_path(run_dir: Path, quantize: str | None) -> Path:
@@ -43,9 +43,7 @@ def sync_mobile_model(
 
     match = next((f for f in summary["formats"] if f["format"] == fmt), None)
     if match is None or not match["succeeded"]:
-        raise ValueError(
-            f"No se encontro un export exitoso de formato '{fmt}' en {summary_path}"
-        )
+        raise ValueError(f"No se encontro un export exitoso de formato '{fmt}' en {summary_path}")
 
     export_dir = run_dir / "export"
     model_filename = "model.tflite" if quantize is None and fmt == "tflite" else None
@@ -92,11 +90,11 @@ def _parse_args() -> argparse.Namespace:
         description="Copia el modelo exportado y labels.json al repo de la app movil."
     )
     parser.add_argument("--run-dir", required=True, dest="run_dir")
-    parser.add_argument("--dest", required=True, help="Directorio destino (assets/model de la app).")
-    parser.add_argument("--format", default="tflite", choices=["onnx", "tflite"])
     parser.add_argument(
-        "--quantize", default="int8", help="'int8' o 'none' (default: int8)."
+        "--dest", required=True, help="Directorio destino (assets/model de la app)."
     )
+    parser.add_argument("--format", default="tflite", choices=["onnx", "tflite"])
+    parser.add_argument("--quantize", default="int8", help="'int8' o 'none' (default: int8).")
     return parser.parse_args()
 
 

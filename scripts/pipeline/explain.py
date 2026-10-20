@@ -41,6 +41,7 @@ from src.training.common import (
     resolve_run_dir,
     select_device,
 )
+from src.training.runs import RunContractError, load_validated_run
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -59,6 +60,7 @@ class RunContext:
     target_size: tuple[int, int]
     splits_dir: Path
     device: torch.device
+    validation_transform: object | None = None
 
 
 def load_config() -> dict:
@@ -186,8 +188,8 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         dest="segmented_root",
         help="Raiz del corpus segmentado. Cuando se indica, la mascara foliar se deriva "
-             "de esas imagenes en lugar de la heuristica de color, que en algunas clases "
-             "marca la imagen entera como hoja.",
+        "de esas imagenes en lugar de la heuristica de color, que en algunas clases "
+        "marca la imagen entera como hoja.",
     )
     global_profile.add_argument(
         "--sample-size",
@@ -240,7 +242,7 @@ def iter_run_contexts(
     for model_name in resolve_model_names(args.models, MODEL_REGISTRY):
         try:
             run_dir = resolve_run_dir(output_dir, model_name, args.run)
-        except SystemExit as error:
+        except (SystemExit, RunContractError) as error:
             logger.warning(f"[{model_name}] {error}. Se omite.")
             continue
 
@@ -254,18 +256,22 @@ def iter_run_contexts(
             )
             continue
 
-        splits_dir, _, idx_to_class, target_size = load_run_metadata(
+        splits_dir, class_to_idx, idx_to_class, target_size = load_run_metadata(
             run_dir=run_dir,
             fallback_splits_dir=splits_fallback,
             fallback_classes=cfg["dataset"]["classes"],
             fallback_target_size=tuple(cfg["dataset"]["target_size"]),
         )
 
-        model = MODEL_REGISTRY.build(
-            model_name, num_classes=len(idx_to_class), pretrained=False
-        ).to(device)
-        model.load_state_dict(torch.load(run_dir / "best.pth", map_location=device))
-        model.eval()
+        loaded = load_validated_run(
+            run_dir / "best.pth",
+            expected_model=model_name,
+            expected_input_size=target_size,
+            expected_class_to_idx=class_to_idx,
+            splits_dir=splits_dir,
+            device=device,
+        )
+        model = loaded.model
 
         yield RunContext(
             model_name=model_name,
@@ -275,6 +281,7 @@ def iter_run_contexts(
             target_size=target_size,
             splits_dir=splits_dir,
             device=device,
+            validation_transform=loaded.factory.get_pipeline("inference"),
         )
 
 
@@ -348,6 +355,7 @@ def cmd_visual(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
                 seed=lime_cfg["seed"],
                 device=device,
                 model_name=gradcam_name,
+                validation_transform=context.validation_transform,
             )
             logger.info(
                 f"[{context.model_name}] Diagnostico: {result['predicted_label']} "
@@ -369,6 +377,7 @@ def cmd_visual(args: argparse.Namespace, cfg: dict, device: torch.device) -> Non
             seed=lime_cfg["seed"],
             device=device,
             enable_gradcam=gradcam_enabled,
+            validation_transform=context.validation_transform,
         )
 
 
@@ -418,6 +427,7 @@ def _explain_subset(
             seed=lime_cfg["seed"],
             device=context.device,
             model_name=context.model_name if gradcam_enabled else None,
+            validation_transform=context.validation_transform,
         )
 
         metadata = json.loads(output_path.with_suffix(".json").read_text(encoding="utf-8"))
@@ -624,7 +634,6 @@ def cmd_compare(args: argparse.Namespace, cfg: dict, device: torch.device) -> No
         logger.info(f"[{context.model_name}] Acuerdo:\n{summary.to_string(index=False)}")
 
 
-
 def _mascara_segmentada(
     raiz: str | None, ruta_relativa: str, forma: tuple[int, int]
 ) -> "np.ndarray | None":
@@ -646,6 +655,7 @@ def _mascara_segmentada(
     with Image.open(candidata) as imagen:
         reescalada = imagen.convert("RGB").resize((forma[1], forma[0]))
     return np.asarray(reescalada).sum(axis=2) > 12
+
 
 def cmd_global(args: argparse.Namespace, cfg: dict, device: torch.device) -> None:
     """
