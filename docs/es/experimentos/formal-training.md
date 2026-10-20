@@ -4,7 +4,7 @@
 `make tune-main` como requisito de esta fase. Antes de entrenar, registrar en el
 decision log la configuración elegida usando la
 [regla de selección fijada](./seleccion-modelo-final.md) y ejecutar
-[`make preflight-data`](../../../LOCAL.md) sobre la
+`make preflight-data` (véase `LOCAL.md` en la raíz del repositorio) sobre la
 materialización congelada. Completar esta ficha únicamente desde artefactos
 del nuevo run.
 

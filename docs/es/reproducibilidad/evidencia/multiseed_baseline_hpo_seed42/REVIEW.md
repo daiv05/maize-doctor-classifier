@@ -44,7 +44,7 @@ pero no se declara identidad de checkpoint entre orquestadores.
   `bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9`.
 
 Los archivos pequeños de evidencia están en esta carpeta; sus hashes constan
-en [MANIFEST.sha256](./MANIFEST.sha256). Los checkpoints, predicciones e
+en `MANIFEST.sha256` de esta carpeta. Los checkpoints, predicciones e
 historiales completos permanecen en
 `corn-outputs:/multiseed/efficientnet_lite0_baseline_vs_hpo/` y en la copia
 local ignorada `outputs/multiseed-receipts/efficientnet_lite0_baseline_vs_hpo/`.
