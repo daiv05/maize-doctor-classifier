@@ -83,9 +83,12 @@
 }
 
 @keyframes dmFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-8px);
   }
@@ -96,6 +99,7 @@
     transform: scale(0.92);
     opacity: 0.6;
   }
+
   100% {
     transform: scale(1.18);
     opacity: 0.95;
@@ -142,16 +146,19 @@ html:not(.dark) .VPButton.alt:hover {
 /* Modo Oscuro: resuelve el problema de visión manteniendo letras blancas de alto contraste */
 .dark .VPHero .action .VPButton.alt,
 .dark .VPButton.alt {
-  color: #f8fafc !important; /* Blanco hueso nítido de alto contraste */
+  color: #f8fafc !important;
+  /* Blanco hueso nítido de alto contraste */
   background-color: rgba(255, 255, 255, 0.07) !important;
   border-color: rgba(255, 255, 255, 0.16) !important;
 }
 
 .dark .VPHero .action .VPButton.alt:hover,
 .dark .VPButton.alt:hover {
-  color: #ffffff !important; /* Mantiene letras 100% blancas en hover, sin volverse verde */
+  color: #ffffff !important;
+  /* Mantiene letras 100% blancas en hover, sin volverse verde */
   background-color: rgba(255, 255, 255, 0.15) !important;
-  border-color: #a4d852 !important; /* Borde de acento lima brillante accesible */
+  border-color: #a4d852 !important;
+  /* Borde de acento lima brillante accesible */
   box-shadow: 0 4px 18px rgba(164, 216, 82, 0.25);
 }
 
@@ -506,3 +513,38 @@ html:not(.dark) .VPButton.alt:hover {
 }
 
 
+/* ==========================================================================
+   Alineación del Sidebar: eliminación de espacio muerto a la izquierda
+   en pantallas grandes (>= 1440px) respetando la geometría del navbar.
+   ========================================================================== */
+
+@media (min-width: 1440px) {
+  /* Evita que VitePress empuje el sidebar hacia el centro de la pantalla */
+  .VPSidebar {
+    padding-left: 32px !important;
+    width: var(--vp-sidebar-width) !important;
+  }
+
+  /* Aplica el padding ÚNICAMENTE al contenedor exterior del título, nunca al enlace <a> */
+  .VPNavBar.has-sidebar > .wrapper > .container > .title {
+    padding-left: 32px !important;
+    width: var(--vp-sidebar-width) !important;
+  }
+
+  /* El contenido del navbar se sitúa exactamente tras el sidebar */
+  .VPNavBar.has-sidebar .content {
+    padding-left: var(--vp-sidebar-width) !important;
+    padding-right: 32px !important;
+  }
+
+  /* La línea divisoria del navbar inicia al término del sidebar, sin cruzar el deslizador */
+  .VPNavBar.has-sidebar .divider {
+    padding-left: var(--vp-sidebar-width) !important;
+  }
+
+  /* El contenido de la documentación fluye junto al sidebar sin margen muerto */
+  .VPContent.has-sidebar {
+    padding-left: var(--vp-sidebar-width) !important;
+    padding-right: 0 !important;
+  }
+}
