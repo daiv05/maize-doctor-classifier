@@ -5,7 +5,7 @@
 
 .worktrees/
 
-**.local**
+**.local
 
 .temp/
 cache/
@@ -17,7 +17,12 @@ node_modules/
 /data
 /outputs/
 /outputs-remote**
-/results-remote/
+/finales/
+/modelos entrenados-*/
+/outputs-entrega-2-artefactos-modal/
+/Imagenes/
+/test/
+.codegraph/config.json
 **.aux
 **.log
 **.out
@@ -25,6 +30,13 @@ node_modules/
 **.fdb**
 **.fls
 **.synctex.gz
+**/*.lof
+**/*.lot
+*.bbl
+*.blg
+*.aux
+*.toc
+*.out
 
 npm-debug.log*
 yarn-debug.log*
@@ -35,7 +47,6 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Python: entornos, bytecode, tooling y cobertura
 .venv/
 venv/
 __pycache__/
@@ -53,7 +64,6 @@ htmlcov/
 
 /tmp/**
 
-# Experimentos: se versiona el código, no las imágenes de entrada/salida
 /experiments/**/input/*
 !/experiments/**/input/.gitkeep
 /experiments/**/output/
