@@ -108,7 +108,6 @@ def validate_effective_hyperparameters(payload: dict[str, Any]) -> dict[str, Any
         raise ValueError("dropout debe ser null o un número en [0, 1).")
     for key in ("learning_rate", "weight_decay", "batch_size", "epochs"):
         minimal = {key: payload[key]}
-        # Reutiliza las reglas de rango sin exigir las demás claves del archivo HPO.
         value = minimal[key]
         lower, upper, lower_inclusive = _NUMERIC_BOUNDS[key]
         if type(value) not in (int, float) or not math.isfinite(value):

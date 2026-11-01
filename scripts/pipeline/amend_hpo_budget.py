@@ -68,8 +68,6 @@ def amend(source_dir: Path, destination: Path, root: Path, reason: str):
         for name, expected in old_files.items():
             if hashlib.sha256(bundle.read(name)).hexdigest() != expected:
                 raise ValueError(f"Fuente anterior alterada: {name}")
-        # No basta permitir tuning.py entero: su objetivo, transforms, pérdida y
-        # espacio deben conservar exactamente el AST anterior.
         training_file = "src/training/tuning.py"
         old_tree = ast.parse(bundle.read(training_file))
         new_tree = ast.parse((root / training_file).read_text())

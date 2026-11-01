@@ -39,7 +39,10 @@ def completed_hpo(request, monkeypatch):
         study, directory, "efficientnet_lite0", 0.8, epochs=3, requested_trials=budget
     )
     write_selection_lock(
-        study=study, study_dir=directory, split_snapshot=snapshot, search_space=objective.space,
+        study=study,
+        study_dir=directory,
+        split_snapshot=snapshot,
+        search_space=objective.space,
         requested_trials=budget,
     )
     monkeypatch.setattr(runs, "build_model", lambda *a, **kw: torch.nn.Linear(3, 9))
@@ -68,60 +71,73 @@ def completed_hpo(request, monkeypatch):
     if budget == 25:
         previous = directory / "budget_revisions/60-to-25"
         previous.mkdir(parents=True)
-        for name in ("study.db", "preflight.json", "source_code.zip", "source_archive.json",
-                     "study_summary.json", "trials.csv"):
+        for name in (
+            "study.db",
+            "preflight.json",
+            "source_code.zip",
+            "source_archive.json",
+            "study_summary.json",
+            "trials.csv",
+        ):
             shutil.copy2(directory / name, previous / name)
-        atomic_write_json(directory / "BUDGET_AMENDMENT.json", {
-            "old_budget": 60, "new_budget": 25, "reason": "synthetic authorized amendment",
-            "new_protocol": {"split_snapshot": snapshot, "n_trials": budget},
-            "test_used": False, "timestamp": "2000-01-01T00:00:00+00:00",
-            "prior_evidence_sha256": {p.name: sha256_file(p) for p in previous.iterdir()},
-        })
+        atomic_write_json(
+            directory / "BUDGET_AMENDMENT.json",
+            {
+                "old_budget": 60,
+                "new_budget": 25,
+                "reason": "synthetic authorized amendment",
+                "new_protocol": {"split_snapshot": snapshot, "n_trials": budget},
+                "test_used": False,
+                "timestamp": "2000-01-01T00:00:00+00:00",
+                "prior_evidence_sha256": {p.name: sha256_file(p) for p in previous.iterdir()},
+            },
+        )
     return directory
 
 
 def test_report_updates_docs_only_after_verified_completion(completed_hpo, tmp_path):
     report = report_hpo.build_report(completed_hpo)
-    budget = json.loads((completed_hpo / "study_summary.json").read_text())["n_trials_requested"]
+    budget = json.loads((completed_hpo / "study_summary.json").read_text(encoding="utf-8"))[
+        "n_trials_requested"
+    ]
     assert f"trials_requested: {budget}" in report
     assert "test_used_during_hpo: NO" in report
     root = tmp_path / "project"
     docs = root / "docs/es"
     paths = [
         "experimentos/hpo.md",
-        "tesis/PROJECT_EVOLUTION.md",
+        "tesis/historia-del-proyecto.md",
         "tesis/DECISION_LOG.md",
         "tesis/EVIDENCE_REGISTRY.md",
-        "tesis/MILESTONES.md",
         "reproducibilidad/figuras.md",
     ]
     for name in paths:
         path = docs / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("# Histórico\n\nPreservar esta tabla y su evidencia.\n")
+        path.write_text("# Histórico\n\nPreservar esta tabla y su evidencia.\n", encoding="utf-8")
     hpo_page = docs / "experimentos/hpo.md"
     hpo_page.write_text(
-        hpo_page.read_text()
-        + "\n**Estado al 2026-09-23: EN EJECUCIÓN; "
-        "los 60 trials formales aún no se declaran completados.**\n"
+        hpo_page.read_text(encoding="utf-8") + "\n**Estado al 2026-09-23: EN EJECUCIÓN; "
+        "los 60 trials formales aún no se declaran completados.**\n",
+        encoding="utf-8",
     )
     report_hpo.update_docs(completed_hpo, root, report)
-    first = {name: (docs / name).read_text() for name in paths}
+    first = {name: (docs / name).read_text(encoding="utf-8") for name in paths}
     report_hpo.update_docs(completed_hpo, root, report)
-    assert first == {name: (docs / name).read_text() for name in paths}
+    assert first == {name: (docs / name).read_text(encoding="utf-8") for name in paths}
     assert all("Preservar esta tabla" in content for content in first.values())
-    assert "COMPLETADO" in first["tesis/MILESTONES.md"]
+    assert "COMPLETADO" in first["tesis/historia-del-proyecto.md"]
     assert "EN EJECUCIÓN" not in first["experimentos/hpo.md"]
     evidence = docs / "reproducibilidad/evidencia/hpo_lite0_seed42"
     assert (evidence / "FINAL_TEST_STARTED.json").exists()
-    lock = json.loads((completed_hpo / "HPO_SELECTION_LOCK.json").read_text())
+    lock = json.loads((completed_hpo / "HPO_SELECTION_LOCK.json").read_text(encoding="utf-8"))
     assert (evidence / lock["winner_checkpoint"]).with_name("summary.json").exists()
     assert (docs / "tesis/HPO_BASELINE_COMPARISON.md").exists()
 
 
 def test_report_rejects_incomplete_budget(completed_hpo):
     path = completed_hpo / "study_summary.json"
-    payload = json.loads(path.read_text())
+    payload = json.loads(path.read_text(encoding="utf-8"))
     payload["n_recorded"] = payload["n_trials_requested"] - 1
     atomic_write_json(path, payload)
     with pytest.raises(ValueError, match=str(payload["n_trials_requested"])):
@@ -129,7 +145,7 @@ def test_report_rejects_incomplete_budget(completed_hpo):
 
 
 def test_report_rejects_changed_checkpoint(completed_hpo):
-    lock = json.loads((completed_hpo / "HPO_SELECTION_LOCK.json").read_text())
+    lock = json.loads((completed_hpo / "HPO_SELECTION_LOCK.json").read_text(encoding="utf-8"))
     with (completed_hpo / lock["winner_checkpoint"]).open("ab") as handle:
         handle.write(b"altered")
     with pytest.raises(ValueError, match="Hash"):
@@ -154,7 +170,9 @@ def test_watcher_only_collects_after_final_marker(tmp_path, monkeypatch):
     watch_hpo.monitor("modal", "app", tmp_path, 300)
     collect.assert_called_once()
     status = json.loads(
-        (tmp_path / "outputs/hpo-monitor" / watch_hpo.STUDY / "status.json").read_text()
+        (tmp_path / "outputs/hpo-monitor" / watch_hpo.STUDY / "status.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert status["state"] == "complete"
 
@@ -170,7 +188,9 @@ def test_watcher_reports_stopped_app_without_relaunch(tmp_path, monkeypatch):
     watch_hpo.monitor("modal", "app", tmp_path, 300)
     collect.assert_not_called()
     status = json.loads(
-        (tmp_path / "outputs/hpo-monitor" / watch_hpo.STUDY / "status.json").read_text()
+        (tmp_path / "outputs/hpo-monitor" / watch_hpo.STUDY / "status.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert status["state"] == "needs_audit"
 

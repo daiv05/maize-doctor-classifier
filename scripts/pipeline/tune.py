@@ -166,8 +166,6 @@ def main(argv=None):
                     raise RuntimeError(
                         "Preflight ya fijado con otro protocolo/código; requiere auditoría."
                     )
-                # Antes del primer trial se permite corregir un preflight técnico.
-                # Se conserva la evidencia de la revisión fallida, sin abrir otro study.
                 previous = json.loads(preflight_path.read_text())
                 revisions = directory / "preflight_revisions"
                 revisions.mkdir(exist_ok=True)

@@ -4,7 +4,6 @@ Uso: python scripts/pipeline/report_hpo.py --study-dir outputs/hpo/... --update-
 Acepta el presupuesto formal archivado (60 original / 25 enmendado), lock y test único.
 """
 
-# Las tablas y saltos Markdown del template preservan líneas largas y dos espacios.
 # ruff: noqa: E501, W291
 
 from __future__ import annotations
@@ -19,10 +18,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-
-def digest(path: Path) -> str:
-    with path.open("rb") as handle:
-        return hashlib.file_digest(handle, "sha256").hexdigest()
+from src.data.preparation import sha256_file
 
 
 def read_json(path: Path):
@@ -71,7 +67,7 @@ def validate_evidence(directory: Path):
         if amendment["test_used"] or datetime.fromisoformat(amendment["timestamp"]) > datetime.fromisoformat(lock["selection_timestamp"]):
             raise ValueError("La enmienda debe preceder selección/test.")
         for name, expected in amendment["prior_evidence_sha256"].items():
-            if digest(directory / "budget_revisions/60-to-25" / name) != expected:
+            if sha256_file(directory / "budget_revisions/60-to-25" / name) != expected:
                 raise ValueError(f"Evidencia previa alterada: {name}")
     if sorted(int(row["trial_number"]) for row in trials) != list(range(target)):
         raise ValueError("Identidades de trials incompletas o duplicadas.")
@@ -88,7 +84,7 @@ def validate_evidence(directory: Path):
         <= datetime.fromisoformat(final["finished_at"])
     ):
         raise ValueError("Test no es posterior al bloqueo de selección.")
-    if final["selection_lock_sha256"] != digest(directory / "HPO_SELECTION_LOCK.json"):
+    if final["selection_lock_sha256"] != sha256_file(directory / "HPO_SELECTION_LOCK.json"):
         raise ValueError("Selection lock difiere del usado en test.")
     winner = max(
         (row for row in trials if row["state"] == "COMPLETE"),
@@ -114,7 +110,7 @@ def validate_evidence(directory: Path):
         **{f"final_test/{name}": value for name, value in final["artifact_hashes"].items()},
     }
     for name, expected in checks.items():
-        if digest(directory / name) != expected:
+        if sha256_file(directory / name) != expected:
             raise ValueError(f"Hash inconsistente: {name}")
     before = read_json(directory / "preflight.json")["protocol"]["split_snapshot"]["sha256"]
     after = read_json(directory / "split_hashes_after.json")["sha256"]
@@ -122,7 +118,7 @@ def validate_evidence(directory: Path):
         raise ValueError("Los hashes de splits cambiaron.")
     source = read_json(directory / "preflight.json")["source"]
     archive = read_json(directory / "source_archive.json")
-    if digest(directory / "source_code.zip") != archive["archive_sha256"]:
+    if sha256_file(directory / "source_code.zip") != archive["archive_sha256"]:
         raise ValueError("Archivo de código alterado.")
     with zipfile.ZipFile(directory / "source_code.zip") as bundle:
         for name, expected in source["files"].items():
@@ -170,7 +166,7 @@ def build_report(directory: Path) -> str:
         top_regions.append({"parameter": key, "top10_min": min(values), "top10_max": max(values)})
     hashes = [{"artefacto": k, "SHA256": v} for k, v in lock["split_hashes"].items()]
     hashes += [
-        {"artefacto": key, "SHA256": digest(directory / key)}
+        {"artefacto": key, "SHA256": sha256_file(directory / key)}
         for key in (
             lock["winner_checkpoint"],
             "best_hyperparameters.json",
@@ -234,7 +230,7 @@ estabilidad entre semillas; esa validación corresponde a una fase posterior.
 {table([{"corte": k, "best_validation": v} for k, v in summary["convergence"].items()], ["corte", "best_validation"])}
 
 Última mejora: trial {lock["best_trial"]} (índice 0-based).
-No se ejecuta trial 61 aunque siga existiendo potencial de mejora.
+No se ejecuta trial {summary["n_trials_requested"] + 1} aunque siga existiendo potencial de mejora.
 
 ## Hyperparameter importance
 
@@ -329,8 +325,8 @@ def update_docs(directory: Path, root: Path, report: str):
     additions = {
         "experimentos/hpo.md": f"## Resultados completados — {date}\n\n{winner_line}\n\n"
         f"Test único posterior al lock. [Entrega completa, Top 10 y hashes]({relative}).",
-        "tesis/PROJECT_EVOLUTION.md": f"## {date} — HPO formal EfficientNet-Lite0\n\n"
-        f"Se completó Optuna con {target} intentos para optimizar sistemáticamente el baseline. {winner_line}\n\n"
+        "tesis/historia-del-proyecto.md": f"## {date} — HPO formal EfficientNet-Lite0\n\n"
+        f"**COMPLETADO: Optuna {target} intentos.** {winner_line}\n\n"
         f"Se exploraron LR, WD, smoothing, batch, pesos de clase y warmup; test permaneció cerrado "
         f"hasta congelar ganador/checkpoint. [Parámetros, test final y evidencia]({relative}).",
         "tesis/DECISION_LOG.md": f"## DEC-012 — Cierre experimental ({date})\n\n{winner_line}\n\n"
@@ -338,15 +334,13 @@ def update_docs(directory: Path, root: Path, report: str):
         "tesis/EVIDENCE_REGISTRY.md": f"## HPO formal Lite0 — {date}\n\n{winner_line}\n\n"
         f"[Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final]({relative}). "
         "Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.",
-        "tesis/MILESTONES.md": f"## M16 — cierre verificado ({date})\n\n"
-        f"**COMPLETADO: HPO Optuna {target} trials.** {winner_line}\n\n[Evidencia]({relative}).",
         "reproducibilidad/figuras.md": f"## HPO Lite0 seed42 — {date}\n\n"
         "Study `efficientnet_lite0_seed42_hpo_v1`; generador "
         "`src/training/tuning.py::save_optimization_plots`; fuente `study.db`/`trials.csv`. "
         "Código exacto en `source_code.zip`.\n\n"
         + table(
             [
-                {"figure": p.name, "SHA256": digest(p)}
+                {"figure": p.name, "SHA256": sha256_file(p)}
                 for p in (directory / "figures").glob("*.png")
             ],
             ["figure", "SHA256"],
@@ -374,15 +368,9 @@ def update_docs(directory: Path, root: Path, report: str):
                     "El presupuesto revisado de 25 intentos y el test único ya están verificados; "
                     "véase «Resultados completados» al final de esta página.",
                 )
-            if relative_path == "tesis/MILESTONES.md":
-                original = original.replace(
-                    "| M16 | pendiente | Optuna 60 trials | plan HPO | PENDIENTE |",
-                    f"| M16 | {date} | Optuna {target} trials | HPO_REPORT.md | COMPLETADO |",
-                )
             path.write_text(original.rstrip() + f"\n\n{marker}\n\n{addition}\n", encoding="utf-8")
     figures = root / "public/resultados/hpo_lite0_seed42"
     shutil.copytree(directory / "figures", figures, dirs_exist_ok=True)
-    # Tabla nueva: no altera plantillas/tablas históricas.
     table_path = docs / "tesis/HPO_BASELINE_COMPARISON.md"
     table_path.write_text(
         "# Baseline vs HPO winner\n\n"
