@@ -26,6 +26,7 @@ from PIL import Image, ImageOps
 from PIL import __version__ as pillow_version
 
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root
+from src.data.preparation import sha256_file
 
 DEFAULT_OUTPUT = PROJECT_ROOT / "docs/es/reproducibilidad/evidencia/pixel_duplicate_audit"
 SPLITS = ("train", "val", "test")
@@ -58,14 +59,6 @@ PREFLIGHT_COLUMNS = (
     "status",
     "error",
 )
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def pixel_signature(path: str | Path) -> dict[str, Any]:
@@ -274,7 +267,7 @@ def _scan_pixel_row(row: dict[str, Any], dataset_root: str) -> dict[str, Any]:
     path = Path(dataset_root) / str(row["relative_path"])
     try:
         return {**row, **pixel_signature(path), "error": ""}
-    except Exception as exc:  # una imagen ilegible queda trazada, no se omite
+    except Exception as exc:
         return {
             **row,
             "pixel_sha256": "",
@@ -331,7 +324,6 @@ def _collect_pixel_rows(
                 _scan_pixel_row, batch, [str(dataset_root)] * len(batch), chunksize=8
             ):
                 done[(str(result["sample_id"]), str(result["file_sha256"]))] = result
-            # El checkpoint atómico permite reanudar sin recalcular hashes ya completos.
             all_rows = [
                 done[(str(row["sample_id"]), str(row["file_sha256"]))]
                 for row in tasks

@@ -16,5 +16,4 @@ def test_loso_macro_f1_ignores_absent_truth_class_as_separate_term() -> None:
         }
     )
     result = _metrics(frame)
-    # healthy F1 = 2/3; rust F1 = 1; mean over ground-truth classes = 5/6.
     assert abs(result["macro_f1"] - 5 / 6) < 1e-12

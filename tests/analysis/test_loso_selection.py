@@ -10,7 +10,7 @@ from scripts.experiments.loso_finalize import (
     evaluate_holdout,
     lock_selection,
 )
-from scripts.experiments.prepare_loso_baseline import sha256
+from src.data.preparation import sha256_file
 
 
 def fixture_run(tmp_path):
@@ -27,11 +27,11 @@ def fixture_run(tmp_path):
         "model": "efficientnet_lite0",
         "seed": 42,
         "config_sha256": BASELINE_CONFIG_SHA256,
-        "split_manifest_sha256": sha256(split_lock),
+        "split_manifest_sha256": sha256_file(split_lock),
         "test_used": False,
         "evaluation_mode": "validation_only",
         "metrics": {"best_validation": {"macro_f1": 0.8}},
-        "checkpoint_sha256": sha256(checkpoint),
+        "checkpoint_sha256": sha256_file(checkpoint),
         "best_epoch": 2,
         "best_val_macro_f1": 0.8,
         "run_id": run.name,
@@ -48,7 +48,7 @@ def test_evaluation_requires_selection_lock(tmp_path):
     with pytest.raises(FileNotFoundError, match="selection.lock.json"):
         evaluate_holdout(run, splits, source)
     locked = lock_selection(run, splits, source)
-    assert locked["checkpoint_sha256"] == sha256(run / "best.pth")
+    assert locked["checkpoint_sha256"] == sha256_file(run / "best.pth")
     assert locked["selection_criterion"] == "internal_validation_macro_f1"
     assert not (run / "holdout_predictions.csv").exists()
     with pytest.raises(FileExistsError, match="ya existe"):

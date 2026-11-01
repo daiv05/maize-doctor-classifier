@@ -10,8 +10,9 @@ from pathlib import Path
 import pandas as pd
 
 from scripts.experiments.loso_finalize import BASELINE_CONFIG_SHA256
-from scripts.experiments.prepare_loso_baseline import FROZEN, OUTPUT, SOURCES, sha256
+from scripts.experiments.prepare_loso_baseline import FROZEN, OUTPUT, SOURCES
 from src.config import PROJECT_ROOT
+from src.data.preparation import sha256_file
 
 EVIDENCE = PROJECT_ROOT / "docs/es/reproducibilidad/evidencia/loso_baseline"
 SOURCE_ANALYSIS = PROJECT_ROOT / "docs/es/reproducibilidad/evidencia/source_analysis"
@@ -41,15 +42,15 @@ def collect(base: Path, evidence: Path) -> dict:
         metrics = json.loads((run / "holdout_metrics.json").read_text(encoding="utf-8"))
         if summary["config_sha256"] != BASELINE_CONFIG_SHA256:
             raise ValueError(f"{source}: baseline config SHA diferente")
-        if summary["split_manifest_sha256"] != sha256(split_lock_path):
+        if summary["split_manifest_sha256"] != sha256_file(split_lock_path):
             raise ValueError(f"{source}: splits SHA diferente")
         if summary.get("test_used") is not False or "test" in summary["metrics"]:
             raise ValueError(f"{source}: entrenamiento accedió a test")
-        if sha256(run / "best.pth") != selection["checkpoint_sha256"]:
+        if sha256_file(run / "best.pth") != selection["checkpoint_sha256"]:
             raise ValueError(f"{source}: checkpoint SHA diferente")
-        if sha256(summary_path) != selection["summary_sha256"]:
+        if sha256_file(summary_path) != selection["summary_sha256"]:
             raise ValueError(f"{source}: summary cambió tras el lock")
-        if metrics["selection_lock_sha256"] != sha256(selection_path):
+        if metrics["selection_lock_sha256"] != sha256_file(selection_path):
             raise ValueError(f"{source}: lock no coincide con evaluación")
         if metrics["holdout_sha256"] != split_lock["derived_sha256"]["holdout.csv"]:
             raise ValueError(f"{source}: holdout SHA diferente")
@@ -104,8 +105,8 @@ def collect(base: Path, evidence: Path) -> dict:
             "train_delta_n": split_lock["preflight"]["train_delta"],
             "train_delta_percent": split_lock["preflight"]["train_delta_percent"],
             "checkpoint_sha256": selection["checkpoint_sha256"],
-            "selection_lock_sha256": sha256(selection_path),
-            "split_lock_sha256": sha256(split_lock_path),
+            "selection_lock_sha256": sha256_file(selection_path),
+            "split_lock_sha256": sha256_file(split_lock_path),
         })
         current_class = pd.read_csv(run / "holdout_class_metrics.csv")
         remaining_train = pd.read_csv(split_dir / "train.csv")

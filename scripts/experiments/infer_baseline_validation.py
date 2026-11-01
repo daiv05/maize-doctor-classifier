@@ -65,7 +65,6 @@ def main() -> None:
             probabilities.extend(confidence.cpu().tolist())
             sample_ids.extend(ids)
 
-    # El escritor contractual alinea por sample_id; nunca por posición de CSV.
     from src.data.identity import IdentifiedValues
 
     indexed_labels = IdentifiedValues(labels, sample_ids=sample_ids)

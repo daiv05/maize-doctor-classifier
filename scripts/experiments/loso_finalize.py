@@ -20,9 +20,10 @@ from sklearn.metrics import (
 )
 from torch.utils.data import DataLoader
 
-from scripts.experiments.prepare_loso_baseline import SOURCES, sha256
+from scripts.experiments.prepare_loso_baseline import SOURCES
 from src.data.dataset import CornDataset
 from src.data.identity import unpack_batch
+from src.data.preparation import sha256_file
 from src.training.evaluation import expected_calibration_error
 from src.training.runs import load_validated_run
 
@@ -53,13 +54,13 @@ def lock_selection(run_dir: Path, splits_dir: Path, source: str) -> dict:
         raise ValueError("Modelo o semilla distintos del protocolo")
     if summary["config_sha256"] != BASELINE_CONFIG_SHA256:
         raise ValueError("La configuración efectiva difiere del baseline congelado")
-    if summary["split_manifest_sha256"] != sha256(lock_path):
+    if summary["split_manifest_sha256"] != sha256_file(lock_path):
         raise ValueError("El run no usó estos splits derivados")
     if summary.get("test_used") is not False or summary.get("evaluation_mode") != "validation_only":
         raise ValueError("El run no es validation-only")
     if "test" in summary or "test" in summary["metrics"]:
         raise ValueError("El run contiene evaluación de test antes del lock")
-    if sha256(checkpoint) != summary["checkpoint_sha256"]:
+    if sha256_file(checkpoint) != summary["checkpoint_sha256"]:
         raise ValueError("SHA-256 del checkpoint no coincide con el contrato")
     history = pd.read_csv(run_dir / "train_history.csv")
     if history.empty or history["val_macro_f1"].isna().any():
@@ -77,9 +78,9 @@ def lock_selection(run_dir: Path, splits_dir: Path, source: str) -> dict:
         "selection_criterion": "internal_validation_macro_f1",
         "best_epoch": summary["best_epoch"],
         "best_val_macro_f1": summary["best_val_macro_f1"],
-        "checkpoint_sha256": sha256(checkpoint),
-        "summary_sha256": sha256(summary_path),
-        "split_lock_sha256": sha256(lock_path),
+        "checkpoint_sha256": sha256_file(checkpoint),
+        "summary_sha256": sha256_file(summary_path),
+        "split_lock_sha256": sha256_file(lock_path),
         "checkpoint_selected_at_utc": timestamp(checkpoint),
         "training_completed_at_utc": timestamp(summary_path),
         "selection_locked_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -103,16 +104,16 @@ def evaluate_holdout(run_dir: Path, splits_dir: Path, source: str,
     if (run_dir / "holdout_predictions.csv").exists():
         raise FileExistsError("Ya existen predicciones holdout")
     checkpoint = run_dir / "best.pth"
-    if sha256(checkpoint) != locked["checkpoint_sha256"]:
+    if sha256_file(checkpoint) != locked["checkpoint_sha256"]:
         raise ValueError("Checkpoint cambió después del selection lock")
-    if sha256(run_dir / "summary.json") != locked["summary_sha256"]:
+    if sha256_file(run_dir / "summary.json") != locked["summary_sha256"]:
         raise ValueError("Summary cambió después del selection lock")
     split_lock_path = splits_dir / "manifest.lock.json"
-    if sha256(split_lock_path) != locked["split_lock_sha256"]:
+    if sha256_file(split_lock_path) != locked["split_lock_sha256"]:
         raise ValueError("Splits cambiaron después del selection lock")
     split_lock = json.loads(split_lock_path.read_text(encoding="utf-8"))
     holdout_path = splits_dir / "holdout.csv"
-    if sha256(holdout_path) != split_lock["derived_sha256"]["holdout.csv"]:
+    if sha256_file(holdout_path) != split_lock["derived_sha256"]["holdout.csv"]:
         raise ValueError("Holdout CSV no coincide con su lock")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -178,9 +179,9 @@ def evaluate_holdout(run_dir: Path, splits_dir: Path, source: str,
         "protocol": "loso_baseline_seed42_v1",
         "held_out_source": source,
         "run_id": locked["run_id"],
-        "selection_lock_sha256": sha256(selection_path),
+        "selection_lock_sha256": sha256_file(selection_path),
         "checkpoint_sha256": locked["checkpoint_sha256"],
-        "holdout_sha256": sha256(holdout_path),
+        "holdout_sha256": sha256_file(holdout_path),
         "holdout_started_at_utc": started,
         "holdout_finished_at_utc": datetime.now(timezone.utc).isoformat(),
         "samples": len(predictions),

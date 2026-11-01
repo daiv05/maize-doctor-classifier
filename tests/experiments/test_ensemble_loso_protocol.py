@@ -224,7 +224,6 @@ def test_final_inference_is_guarded_once_and_uses_same_holdout(tmp_path, monkeyp
     monkeypatch.setattr(finalize, "ROOT", tmp_path / "ensemble")
     monkeypatch.setattr(finalize, "LOCK_SHA256", train.sha256_file(splits / "manifest.lock.json"))
     monkeypatch.setattr(finalize, "HOLDOUT_SHA256", train.sha256_file(splits / "holdout.csv"))
-    # Use the canonical class names/indices expected by the project's nine-class contract.
     mapping = {
         "common_rust": 0,
         "fall_armyworm": 1,

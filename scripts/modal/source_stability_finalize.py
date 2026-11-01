@@ -6,27 +6,19 @@ the six pre-registered training outcomes independent of final test/holdout resul
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
 import modal
 
 from scripts.modal._common import dataset_vol, image, outputs_vol
+from src.data.preparation import sha256_file
 
 app = modal.App("doctor-maiz-source-stability-finalize", image=image)
 REFERENCE_SUMMARY = Path("/outputs/main/efficientnet_lite0/20260921_204608/summary.json")
 REFERENCE_SHA256 = "20bb0945574913ffa8c736fecbcf25d932e6b87ce3e7a7c59d98439558432346"
 SCENARIOS = ("baseline", "maize-diseases", "multicrop-disease-maiz")
 SEEDS = (123, 2026)
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def verify_existing_lock(
@@ -56,7 +48,7 @@ def verify_existing_lock(
         (run_dir / "summary.json", locked["summary_sha256"]),
         (splits / "manifest.lock.json", locked["split_lock_sha256"]),
     ):
-        if sha256(path) != expected:
+        if sha256_file(path) != expected:
             raise ValueError(f"Artefacto modificado tras selection lock: {path}")
     return locked
 
@@ -90,7 +82,7 @@ def final_status(run_dir: Path, scenario: str, seed: int) -> tuple[str, dict | N
     ):
         raise RuntimeError(f"Evaluación final iniciada pero incompleta; no repetir: {run_dir}")
     marker, metrics = _read(guard), _read(metrics_path)
-    lock_sha = sha256(run_dir / "selection.lock.json")
+    lock_sha = sha256_file(run_dir / "selection.lock.json")
     if (
         marker.get("scenario") != scenario
         or marker.get("seed") != seed
@@ -125,7 +117,7 @@ def finalize_batch() -> None:
 
     dataset_vol.reload()
     outputs_vol.reload()
-    if sha256(REFERENCE_SUMMARY) != REFERENCE_SHA256:
+    if sha256_file(REFERENCE_SUMMARY) != REFERENCE_SHA256:
         raise ValueError("Baseline histórico remoto diferente")
     reference = json.loads(REFERENCE_SUMMARY.read_text(encoding="utf-8"))
     slots = []
@@ -148,7 +140,6 @@ def finalize_batch() -> None:
     if len(slots) != 6:
         raise ValueError("Se requieren las seis runs nuevas completas antes del test")
 
-    # Freeze all six selections before opening any test or holdout.
     for scenario, seed, run_dir, splits, metadata in slots:
         if (run_dir / "selection.lock.json").exists():
             verify_existing_lock(run_dir, splits, scenario, seed, metadata)

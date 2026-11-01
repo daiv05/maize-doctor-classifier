@@ -6,7 +6,6 @@ Seed 42 is never launched; a preempted slot may make one bounded retry.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
@@ -22,24 +21,13 @@ from scripts.modal._common import (
     outputs_vol,
     run_with_periodic_commit,
 )
+from src.data.preparation import sha256_file
+from src.training.source_stability_protocol import LOCK_SHA256, verify_splits
 
 app = modal.App("doctor-maiz-source-stability", image=image)
 MODEL = "efficientnet_lite0"
 SEEDS = (123, 2026)
 SCENARIOS = ("baseline", "maize-diseases", "multicrop-disease-maiz")
-LOCK_SHA256 = {
-    "baseline": "0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8",
-    "maize-diseases": "6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07",
-    "multicrop-disease-maiz": "d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b",
-}
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -56,34 +44,6 @@ def scenario_paths(scenario: str, seed: int) -> tuple[Path, Path]:
         )
     base = Path("/outputs/loso/efficientnet_lite0_baseline") / scenario
     return base / "seed_42/splits", base / f"seed_{seed}"
-
-
-def verify_splits(scenario: str, splits: Path) -> dict:
-    """Check byte-identical manifests; the LOSO holdout is hashed, never opened."""
-    lock_path = splits / "manifest.lock.json"
-    if sha256_file(lock_path) != LOCK_SHA256[scenario]:
-        raise ValueError(f"Manifest lock distinto: {scenario}")
-    lock = json.loads(lock_path.read_text(encoding="utf-8"))
-    if scenario == "baseline":
-        expected = {
-            "master_manifest.csv": lock["master_manifest_sha256"],
-            "train.csv": lock["train_sha256"],
-            "val.csv": lock["val_sha256"],
-            "test.csv": lock["test_sha256"],
-        }
-    else:
-        if lock["protocol"] != "loso_baseline_seed42_v1" or lock["held_out_source"] != scenario:
-            raise ValueError(f"Protocolo LOSO distinto: {scenario}")
-        expected = lock["derived_sha256"]
-        frozen = Path("/outputs/splits/seed_42")
-        verify_splits("baseline", frozen)
-        for name, digest in lock["frozen_sha256"].items():
-            if sha256_file(frozen / name) != digest:
-                raise ValueError(f"Input congelado distinto: {name}")
-    for name, digest in expected.items():
-        if sha256_file(splits / name) != digest:
-            raise ValueError(f"CSV distinto: {scenario}/{name}")
-    return lock
 
 
 def command(scenario: str, seed: int, splits: Path, root: Path) -> list[str]:
@@ -185,7 +145,6 @@ def inspect_slot(root: Path, scenario: str, seed: int, reference: dict) -> tuple
             ):
                 raise ValueError(f"Metadatos y checkpoint no coinciden: {root}")
         else:
-            # Modal may preempt after training but before the metadata commit.
             metadata.update(
                 {
                     "status": "validation_complete",
@@ -214,7 +173,6 @@ def inspect_slot(root: Path, scenario: str, seed: int, reference: dict) -> tuple
         write_json(archive / "experiment_metadata.json", metadata)
         return False, attempt + 1
 
-    # A restart can happen after archiving but before starting the retry.
     archive = root / "interrupted_attempts" / f"attempt_{attempt}"
     return False, attempt + 1 if archive.exists() else attempt
 

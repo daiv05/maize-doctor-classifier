@@ -28,7 +28,7 @@ def test_started_but_incomplete_evaluation_is_not_repeated(tmp_path):
 
 def test_complete_evaluation_is_verified_and_skipped(tmp_path):
     run = _run(tmp_path)
-    lock_sha = remote.sha256(run / "selection.lock.json")
+    lock_sha = remote.sha256_file(run / "selection.lock.json")
     marker = {
         "scenario": "maize-diseases",
         "seed": 2026,

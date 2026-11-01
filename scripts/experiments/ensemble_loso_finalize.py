@@ -17,22 +17,22 @@ from sklearn.metrics import (
 )
 from torch.utils.data import DataLoader
 
-from scripts.modal.ensemble_loso_train import (
+from src.data.dataset import CornDataset
+from src.data.identity import unpack_batch
+from src.data.preparation import sha256_file
+from src.training.ensemble_loso_protocol import (
     LOCK_SHA256,
     MODELS,
     ROOT,
     SEEDS,
     SOURCE,
     SPLITS,
-    sha256_file,
     verify_run,
-    verify_splits,
     write_json,
 )
-from src.data.dataset import CornDataset
-from src.data.identity import unpack_batch
 from src.training.evaluation import expected_calibration_error
 from src.training.runs import load_validated_run, validate_run_contract
+from src.training.source_stability_protocol import verify_splits
 
 MEMBERS = ("efficientnet_lite0", *MODELS)
 WEIGHTS = (1 / 3, 1 / 3, 1 / 3)

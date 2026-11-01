@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, precision_recall_fscore_support
 
 from scripts.experiments.source_stability_report import stats
+from src.config import get_output_root
 from src.data.preparation import sha256_file
 from src.training.evaluation import expected_calibration_error
 
@@ -20,9 +21,9 @@ SEEDS = (42, 123, 2026)
 MEMBERS = ("efficientnet_lite0", "efficientnet_b0", "shufflenet_v2_x1_0")
 MODELS = (*MEMBERS, "ensemble")
 HISTORICAL_DELTA = 0.9566569450594972 - 0.9483330101876505
-OUTPUT = Path("outputs/ensemble_loso") / SOURCE
+OUTPUT = get_output_root() / "ensemble_loso" / SOURCE
 EVIDENCE = Path("docs/es/reproducibilidad/evidencia/ensemble_loso")
-LITE = Path("outputs/loso/efficientnet_lite0_baseline") / SOURCE
+LITE = get_output_root() / "loso/efficientnet_lite0_baseline" / SOURCE
 
 
 def read_json(path: Path) -> dict:
@@ -374,9 +375,7 @@ def compile_report() -> dict:
         group = read_json(OUTPUT / f"seed_{seed}" / "ensemble.selection.lock.json")
         for member in group["members"]:
             run_dir = Path(member["run_dir"])
-            local_run = Path(str(run_dir).removeprefix("/outputs/"))
-            if not local_run.exists():
-                local_run = Path("outputs") / local_run
+            local_run = get_output_root() / str(run_dir).removeprefix("/outputs/")
             if not local_run.exists():
                 raise FileNotFoundError(local_run)
             if sha256_file(local_run / "best.pth") != member["checkpoint_sha256"]:
