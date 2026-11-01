@@ -5,11 +5,9 @@ usando imagededup (PHash - rápido, escala a 20k+ imágenes).
 Analiza cada enfermedad completa (lab/ + real/ juntos).
 
 Opciones:
-  1. Encontrar duplicados  - guarda CSV en results/ (junto a este script)
+  1. Encontrar duplicados  - guarda CSV en <OUTPUT_ROOT>/cleanup/duplicates/
   2. Encontrar y eliminar  - guarda CSV y elimina duplicados
   3. Eliminar duplicados   - elimina basándose en CSV ya existente
-
-Los CSV existentes en results/ son registro histórico (ver results/README.md).
 """
 
 import csv
@@ -17,9 +15,9 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from src.config import get_dataset_root
+from src.config import get_dataset_root, get_output_root
 
-ANALYSIS_DIR = Path(__file__).parent / "results"
+ANALYSIS_DIR = get_output_root() / "cleanup" / "duplicates"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"}
 
