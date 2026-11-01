@@ -150,8 +150,6 @@ def split_manifest_fingerprint(splits_dir: str | Path) -> tuple[str, str]:
             "No se puede identificar el split: falta manifest.lock.json y CSV contractuales: "
             f"{missing}"
         )
-    # Compatibilidad para splits históricos/sintéticos: el conjunto ordenado de hashes
-    # constituye un artefacto equivalente, sin depender de rutas absolutas.
     fingerprint = sha256_json({path.name: sha256_file(path) for path in csv_paths})
     return fingerprint, "derived_split_csv_sha256_v1"
 

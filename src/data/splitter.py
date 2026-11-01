@@ -119,8 +119,6 @@ class SourceGroupedSplitter(DatasetSplitter):
         random.Random(self.seed).shuffle(group_names)
         tie_rank = {group: rank for rank, group in enumerate(group_names)}
 
-        # Los grupos grandes se colocan primero. La puntuación favorece una clase/entorno que
-        # todavía falta en el candidato y luego minimiza desviaciones de tamaño y distribución.
         for group in sorted(group_names, key=lambda value: (-int(sizes[value]), tie_rank[value])):
             group_frame = working[working[self.group_column].eq(group)]
             group_labels = Counter(group_frame["label"].astype(str))
