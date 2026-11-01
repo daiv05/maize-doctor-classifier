@@ -9,6 +9,7 @@
 ### Contratos que no deben romperse
 
 - `sample_id = SHA256(ruta relativa normalizada UTF-8)`: identifica la muestra lógica y no depende de sus bytes. El SHA-256 de contenido se calcula durante preparación, nunca dentro de `CornDataset.__getitem__`.
+- `.gitattributes` fija finales de línea LF para JSON, CSV, MD, YAML, TOML, TXT, TeX, `.py`, `.sh` y `Makefile`. Los SHA-256 fijados (`config/dataset_exclusions.csv`, la evidencia de HPO/multiseed y las fuentes que hashea `src/training/multiseed.py`) solo coinciden con LF; con `core.autocrlf=true` y sin ese archivo cambiaban en Windows.
 - `master_manifest.csv`, `manifest.lock.json`, `preparation_audit.json` y `split_audit_report.csv` son el contrato de una materialización; no inferir identidad por número de fila.
 - `CornDataset` devuelve `(image, label, sample_id)` y conserva `ImageCache`, `max_per_class`, selección de `minority_classes`, transforms y `class_to_idx`. Un fallo carga **esa misma muestra o levanta un error trazable**; nunca cambia a `idx+1`, devuelve `None`, filtra en `collate_fn` ni muta el DataFrame.
 - `seed_42` es desarrollo estratificado por `label + environment`; `source_id` es metadato. `seed_42_source_grouped` es un benchmark separado con fuentes indivisibles. No sustituir uno por otro ni llamar LOSO a ninguno.
@@ -35,16 +36,14 @@
   - **Cuantización opt-in:** `--quantize int8` (CLI) / `QUANTIZE=int8` (Makefile) escribe `model_int8.<fmt>` **junto** al FP32 sin pisarlo, con su propio `export_summary_int8.json`. Los umbrales de paridad se relajan solos para el modo cuantizado (`_PARITY_DEFAULTS`): exigirle la tolerancia de FP32 lo reprobaría siempre.
   - Instalar el extra `export` degrada `typing-extensions` a 4.12.2 (pin viejo de `xdsl`, dependencia transitiva de `litert-torch`). No afecta al proyecto, pero rompe `jupyter_client`; se recupera con `pip install "typing-extensions>=4.14"`, y el aviso de pip sobre `xdsl` que queda es inocuo.
   - **ONNX sale en un solo archivo:** el exportador de torch saca los pesos a un `model.onnx.data` aparte, y un `.onnx` sin su sidecar carga pero falla al inferir - trampa fea dentro de un bundle móvil. `_consolidate_single_file()` los une. Para cuantizar hay que borrar antes el `value_info` del grafo: el exportador dynamo deja anotaciones de shape inconsistentes que abortan la inferencia de shapes de onnxruntime.
-- **Evaluación de lo exportado:** `scripts/pipeline/evaluate_export.py` (`make eval-export-main`) corre el **archivo exportado** sobre el split de test completo y reporta accuracy/macro-F1 reales, desglose por entorno y delta contra PyTorch (`export/eval_<fmt>[_<quant>].json` + CSV por imagen). Es distinto de la paridad que valida `export.py`, que solo compara ~30 muestras numéricamente: una int8 puede pasar la paridad y aun así perder macro-F1 en las clases minoritarias. Falla si la caída supera `--max-macro-f1-drop` (0.01 por defecto).
+- **Evaluación de lo exportado:** `scripts/pipeline/evaluate_export.py` (`make eval-export-main`) corre el **archivo exportado** sobre el split de test completo y reporta accuracy/macro-F1 reales, desglose por entorno y delta contra PyTorch (`export/eval_<fmt>[_<quant>].json` + CSV por imagen). Es distinto de la paridad que valida `export.py`, que solo compara ~30 muestras numéricamente: una int8 puede pasar la paridad y aun así perder macro-F1 en las clases minoritarias. Falla si la caída supera `--max-macro-f1-drop` (0.01 por defecto). `evaluate_export.py` y `compute_ood_stats.py` aceptan `--num-workers` (default `min(8, CPUs)`); con `num_workers=0` el cálculo de OOD sobre train tardaba más de una hora en Modal.
+- **Modelo desplegado:** la app despliega el oficial `20260921_204608` (EfficientNet-Lite0, test macro-F1 0.9480), exportado a int8 (`model_int8.tflite`, 3.74 MB, test macro-F1 0.9489) con su `ood_stats.json` (schema 4, umbral Relative Mahalanobis 106.37, percentil 95 de validación). Antes desplegaba el run `20260812_221429` con un umbral 31.47 sin procedencia verificable, que ya no se usa.
+- **HPO y multiseed:** el HPO formal de Lite0 (`scripts/pipeline/tune.py --formal-hpo`, `make hpo-main`) tiene presupuesto de 25 intentos (enmendado desde 60) y baseline de validación 0.9560862657056215 (`tuning_study.BASELINE_F1`, única fuente). El multiseed baseline contra HPO (`src/training/multiseed.py`) está incompleto: 2 de 10 entrenamientos, solo validación. Los bloqueos de escritor de ambos usan `src/training/filelock.py` (fcntl en POSIX, msvcrt en Windows).
 - **Contratos de runs:** `src/training/runs.py` es la fuente autoritativa para crear, resolver, validar y migrar runs. Los nuevos `summary.json` usan `schema_version=1` y fijan arquitectura, hiperparámetros efectivos, preprocessing, `class_to_idx`, fingerprint del split, mejor época y SHA-256 de `best.pth`. Los consumidores deben usar `load_validated_run()`; un run legacy requiere `scripts/pipeline/migrate_run.py` y no se carga silenciosamente. Detalle en `docs/es/pipeline/contratos-runs.md`.
 
 ## Clases del dataset
 
-Definidas en `config/dataset.yaml -> dataset.classes` (orden canónico para `class_to_idx`). Ratios de desbalance vs. `healthy` (corpus actual, tras la ampliación de agosto 2026):
-`common_rust` (3.9x), `gray_leaf_spot` (4.5x), `phosphorus_deficiency` (9.3x), `nitrogen_deficiency` (10.3x), `potassium_deficiency` (14.1x).
-El pipeline extendido de augmentación / el `WeightedRandomSampler` se activan con umbral estricto `max_count/count > 4.0`, así que sobre el dataset completo califican `gray_leaf_spot`, `nitrogen_deficiency`, `phosphorus_deficiency` y `potassium_deficiency` (no `common_rust`, que queda en 3.9x).
-Los ratios previos a la ampliación eran 7.9x / 14.3x / 16.8x / 32.9x respectivamente: **la selección de clases minoritarias no cambió**, solo su magnitud. Ojo con `gray_leaf_spot`: con 4.5x quedó cerca del umbral, y reforzarlo más lo sacaría del grupo, cambiando el comportamiento del entrenamiento.
-El perfil `baseline` (`config/dataset.yaml -> baseline:`) usa las 9 clases con un tope de 1500 img/clase (`max_images_per_class`).
+Definidas en `config/dataset.yaml -> dataset.classes` (orden canónico para `class_to_idx`). Ratios de desbalance vs. `healthy` (corpus actual, tras la ampliación de agosto 2026): `common_rust` (3.9x), `gray_leaf_spot` (4.5x), `phosphorus_deficiency` (9.3x), `nitrogen_deficiency` (10.3x), `potassium_deficiency` (14.1x). El pipeline extendido de augmentación / el `WeightedRandomSampler` se activan con umbral estricto `max_count/count > 4.0`, así que sobre el dataset completo califican `gray_leaf_spot`, `nitrogen_deficiency`, `phosphorus_deficiency` y `potassium_deficiency` (no `common_rust`, que queda en 3.9x). Los ratios previos a la ampliación eran 7.9x / 14.3x / 16.8x / 32.9x respectivamente: **la selección de clases minoritarias no cambió**, solo su magnitud. Ojo con `gray_leaf_spot`: con 4.5x quedó cerca del umbral, y reforzarlo más lo sacaría del grupo, cambiando el comportamiento del entrenamiento. El perfil `baseline` (`config/dataset.yaml -> baseline:`) usa las 9 clases con un tope de 1500 img/clase (`max_images_per_class`).
 
 ## Explicabilidad
 
@@ -55,37 +54,19 @@ Post-hoc, no acoplada al entrenamiento: `scripts/pipeline/explain.py` (subcomand
 
 ## Dataset: hosting y descarga
 
-`clean/` (~33k imágenes, ~19 GB) vive en Hugging Face Datasets Hub (fuente primaria) con Google Drive de respaldo;
-`download_dataset.py --source auto` resuelve cuál usar. `scripts/download_datasets.sh` es un flujo distinto:
-ingesta de fuentes crudas nuevas (Kaggle/Mendeley/Roboflow) hacia `raw/`, no toca `clean/`.
+`clean/` (~33k imágenes, ~19 GB) vive en Hugging Face Datasets Hub (fuente primaria) con Google Drive de respaldo; `download_dataset.py --source auto` resuelve cuál usar. `scripts/download_datasets.sh` es un flujo distinto: ingesta de fuentes crudas nuevas (Kaggle/Mendeley/Roboflow) hacia `raw/`, no toca `clean/`.
 
-En HF el dataset **no** se publica como archivos sueltos sino en shards `clean-<NNNNN>.tar` de ~800 MB
-que contienen el árbol `<clase>/<entorno>/<archivo>`: 33k blobs individuales implicarían 33k requests
-HTTP por descarga, prohibitivo sobre el Volume remoto de Modal. `download_dataset.py` los extrae y borra
-tras bajarlos, reconstruyendo `clean/<clase>/{lab,real}/` — el resto del pipeline no se entera del formato.
-Se acompañan de metadata ligera (`metadata.csv` con `file_name`/`label`/`environment`, `dataset_infos.json`)
-para que HF reconozca el repo como dataset de clasificación de imágenes; se excluye al descargar. No se
-suben Parquet con imágenes embebidas: duplicarían el tamaño del repo a cambio del Dataset Viewer.
-Subida: `make upload-dataset STAGE_DIR=<dir con ~19 GB libres>` (`DRY_RUN=1` para ver el plan de shards).
+En HF el dataset **no** se publica como archivos sueltos sino en shards `clean-<NNNNN>.tar` de ~800 MB que contienen el árbol `<clase>/<entorno>/<archivo>`: 33k blobs individuales implicarían 33k requests HTTP por descarga, prohibitivo sobre el Volume remoto de Modal. `download_dataset.py` los extrae y borra tras bajarlos, reconstruyendo `clean/<clase>/{lab,real}/` — el resto del pipeline no se entera del formato. Se acompañan de metadata ligera (`metadata.csv` con `file_name`/`label`/`environment`, `dataset_infos.json`) para que HF reconozca el repo como dataset de clasificación de imágenes; se excluye al descargar. No se suben Parquet con imágenes embebidas: duplicarían el tamaño del repo a cambio del Dataset Viewer. Subida: `make upload-dataset STAGE_DIR=<dir con ~19 GB libres>` (`DRY_RUN=1` para ver el plan de shards).
 
-Para propagar una actualización a Modal: `make modal-seed FORCE=1` y luego `make modal-splits`.
-`FORCE=1` vacía `/data/clean` antes de descargar - sin eso `seed_dataset` es un no-op (el Volume
-ya tiene contenido), y forzar solo la descarga tampoco basta: los shards se extraen sobre el árbol
-existente y `snapshot_download` no borra lo que desapareció del repo, así que un archivo renombrado
-aguas arriba sobreviviría con sus dos nombres. Los splits del Volume `corn-outputs` quedan obsoletos
-tras cambiar el dataset y hay que regenerarlos.
+Para propagar una actualización a Modal: `make modal-seed FORCE=1` y luego `make modal-splits`. `FORCE=1` vacía `/data/clean` antes de descargar - sin eso `seed_dataset` es un no-op (el Volume ya tiene contenido), y forzar solo la descarga tampoco basta: los shards se extraen sobre el árbol existente y `snapshot_download` no borra lo que desapareció del repo, así que un archivo renombrado aguas arriba sobreviviría con sus dos nombres. Los splits del Volume `corn-outputs` quedan obsoletos tras cambiar el dataset y hay que regenerarlos.
 
 
 ## Comandos frecuentes
 
-Convención de nombres: prefijo `modal-` = GPU en la nube, sin prefijo = local; sufijo
-`-baselines` = runs de `outputs/baselines` (var `MODELS`), sufijo `-main` = runs de
-`outputs/main` (var `MAIN_MODELS`). Los targets sin sufijo son los genéricos y apuntan a
-baselines salvo que se pase `OUTPUT_DIR` (local) o `PIPELINE=main` (Modal). `make help`
-lista todo agrupado.
+Convención de nombres: prefijo `modal-` = GPU en la nube, sin prefijo = local; sufijo `-baselines` = runs de `outputs/baselines` (var `MODELS`), sufijo `-main` = runs de `outputs/main` (var `MAIN_MODELS`). Los targets sin sufijo son los genéricos y apuntan a baselines salvo que se pase `OUTPUT_DIR` (local) o `PIPELINE=main` (Modal). `make help` lista todo agrupado.
 
 ```bash
-make install                          # pip install -e ".[dev,analysis,xai,cloud]"
+make install                          # pip install -e ".[dev,analysis,xai,cloud,tuning]"
                                        # + ",export" si necesitas exportar a ONNX/TFLite
 make download-dataset                 # clean/ (HF Hub, fallback Google Drive)
 make upload-dataset STAGE_DIR=<dir>   # empaqueta clean/ en shards .tar y sube a HF [DRY_RUN=1]

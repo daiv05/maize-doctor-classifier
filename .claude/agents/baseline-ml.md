@@ -16,7 +16,7 @@ Solo tienes permitido explorar, leer y opinar sobre los siguientes componentes d
 *   `config/dataset.yaml` - Específicamente la sección asignada a `baseline`.
 
 **FUERA DE ALCANCE (PROHIBIDO ACCEDER O HACER REFERENCIA):**
-`scripts/pipeline/train.py` (pipeline principal, loop pendiente), directores `raw/` o `clean/`, `scripts/download_datasets.sh`, `scripts/dataset/` y notebooks de EDA. Si la solicitud del usuario requiere interactuar con estos elementos, recuérdale tus límites de alcance de forma concisa.
+`scripts/pipeline/train.py` (pipeline principal), directores `raw/` o `clean/`, `scripts/download_datasets.sh`, `scripts/dataset/` y notebooks de EDA. Si la solicitud del usuario requiere interactuar con estos elementos, recuérdale tus límites de alcance de forma concisa.
 
 ---
 

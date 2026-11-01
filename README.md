@@ -31,16 +31,19 @@ Las cifras siguientes pertenecen a protocolos y momentos distintos; el estado se
 
 | Configuración evaluada | Macro F1 | Accuracy | Entorno de aplicación |
 |---|:---:|:---:|---|
-| **`EfficientNet-Lite0` `20260921_204608`** | **0.9480** | **97.81 %** | Baseline vigente de desarrollo; `seed_42` estratificado |
-| `EfficientNet-Lite0` `20260812_221429` | 0.9468 | 97.91 % | HISTÓRICO: artefacto desplegado en móvil |
+| **`EfficientNet-Lite0` `20260921_204608`** | **0.9480** | **97.81 %** | Modelo oficial (FP32); `seed_42` estratificado |
+| `EfficientNet-Lite0` `20260921_204608`, TFLite int8 | 0.9489 | 97.87 % | Desplegado en la app (3.74 MB); mismo test completo, acuerdo con PyTorch 99.74 % |
+| `EfficientNet-Lite0` `20260812_221429` | 0.9468 | 97.91 % | HISTÓRICO: artefacto desplegado en móvil hasta el 2026-11-01 |
 | Ensamble Soft Voting (3 modelos) | 0.9567 | 98.29 % | HISTÓRICO: test estratificado, inferencia en servidor |
 | CV agrupada por fuente, configuración base | 0.6026 ± 0.1240 | 79.69 % ± 11.95 pp | HISTÓRICO: cinco pliegues, 5–8 clases evaluables |
 
 La distancia entre el protocolo estratificado y la CV agrupada muestra una brecha de dominio histórica. No es una comparación pareada del baseline actual ni un resultado LOSO: cambian particiones, soporte de clases y unidad aislada.
 
-**Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430 con σ = 0.0049. Este estudio no sustituye el multi-seed pendiente de la configuración que resulte del HPO nuevo.
+**Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430 con σ = 0.0049. No sustituye al multiseed baseline contra HPO, que está incompleto (2 de 10 entrenamientos, solo validación) y cuya diferencia no es interpretable.
 
-**Equidad.** Macro F1 de 0.9298 en campo real frente a 0.8865 en laboratorio sobre clases con soporte, con un *disparate impact ratio* de 0.9534, por encima de la regla del 80 %. Detalle completo en [FAIRNESS_REPORT.md](FAIRNESS_REPORT.md).
+**Equidad.** Sobre el checkpoint de agosto, macro F1 de 0.9215 en campo real y 0.9423 en laboratorio; la prueba de atajos marca `shortcut_detected=true` (la accuracy cae de 0.9791 a 0.4225 al ocultar la periferia de la imagen). Detalle y limitaciones en [docs/es/resultados/equidad.md](docs/es/resultados/equidad.md).
+
+**Fotos de campo externas.** En 97 fotos propias ajenas al corpus (`Imagenes/`, no versionadas) el modelo oficial acierta 41 (42 %) y el detector fuera de dominio rechaza 49. Es la limitación principal: la generalización fuera de las fuentes de entrenamiento es mucho menor que la del test estratificado (ver [validación agrupada por fuente](docs/es/resultados/run-20260921-source-grouped.md)).
 
 **Alcance: clase, no severidad.** El clasificador dice qué tiene la hoja, pero no cuánto. Nunca se entrenó para medir el grado de daño y la razón es que las imágenes de `data/clean/` vienen etiquetadas por clase, sin ninguna anotación de severidad. Ponérsela no sería limpiar datos, sino sentar a un fitopatólogo a calificar imagen por imagen con la escala que corresponda a cada patógeno; y aun así, repartir en tres grados unas clases que apenas rondan las 300 imágenes dejaría celdas demasiado pequeñas para entrenar sobre ellas. La app cubre el hueco de otra manera, mostrando los niveles del catálogo de severidad reescritos en lenguaje llano para que el agricultor compare su hoja y decida, sin que el sistema afirme un nivel que no midió.
 
@@ -79,11 +82,11 @@ Los conteos de la tabla corresponden a la materialización vigente: **33 437 arc
 
 | Métrica | Meta | Resultado |
 |---|---|---|
-| Macro F1 Score | ≥ 0.85 | 0.9468 en el modelo desplegado; 0.9567 en ensamble |
-| Tamaño del modelo (post Int8) | ≤ 20 MB | 3.56 MB (`efficientnet_lite0`) |
+| Macro F1 Score | ≥ 0.85 | 0.9489 en el modelo desplegado (int8, test completo); 0.9567 en el ensamble histórico |
+| Tamaño del modelo (post Int8) | ≤ 20 MB | 3.74 MB (`efficientnet_lite0`) |
 | Latencia de inferencia | ≤ 300 ms/imagen | ~60 ms en Dimensity 7030 |
 | Dispositivo objetivo | Android ≥ 4 GB RAM, Snapdragon 6xx | Validado en Motorola edge 40 neo |
-| Arquitectura desplegada | - | `efficientnet_lite0` Int8, dos salidas (logits + features) |
+| Arquitectura desplegada | - | `efficientnet_lite0` `20260921_204608` Int8, dos salidas (logits + features); umbral OOD 106.37 |
 
 ---
 
@@ -138,12 +141,12 @@ Guía de instalación local (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md).
 
 ### Del checkpoint al teléfono
 
-`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes. El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula los centroides, la covarianza y el umbral de Mahalanobis que la app usa para rechazar imágenes que no son hojas de maíz. `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` + `ood_stats.json` a la app verificando el hash.
+`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes. El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula los centroides, la covarianza y el umbral de Mahalanobis que la app usa para rechazar imágenes que no son hojas de maíz. Para el modelo oficial el umbral es 106.37 (percentil 95 de validación, 5 de 5 imágenes sintéticas rechazadas, 3.8 % de falsos rechazos sobre 500 de test). `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` + `ood_stats.json` a la app verificando el hash.
 
 | Arquitectura | FP32 | Int8 | Reducción |
 |---|:---:|:---:|:---:|
 | `shufflenet_v2_x1_0` | 4.93 MB | 1.42 MB | 71 % |
-| `efficientnet_lite0` (desplegada) | 12.92 MB | 3.56 MB | 72 % |
+| `efficientnet_lite0` (oficial, desplegada) | 13.79 MB | 3.74 MB | 73 % |
 | `efficientnet_b0` | 15.48 MB | 4.44 MB | 71 % |
 
 ---
@@ -157,7 +160,7 @@ Variables comunes: `MODELS` / `MAIN_MODELS` (nombre o "all"), `EPOCHS` / `MAIN_E
 ### Locales: setup y datos
 
 ```bash
-make install                         # pip install -e ".[dev,analysis,xai,cloud]"
+make install                         # pip install -e ".[dev,analysis,xai,cloud,tuning]"
 make download-dataset                # clean/ (HF Hub, fallback Google Drive)
 make upload-dataset STAGE_DIR=<dir>  # empaqueta clean/ en shards .tar y publica en HF
 
@@ -165,7 +168,8 @@ make splits                          # splits completos (9 clases) -> outputs/sp
 make splits-baseline [NO_CAP=1 | MAX_PER_CLASS=<n>]   # perfil baseline -> outputs/splits/seed_42_baseline/
 
 make clean-outputs                   # borra outputs/ (splits, runs, reportes - todo regenerable)
-make summary / make test-loader / make lint / make fmt / make check
+make summary / make test-loader / make test / make lint / make fmt / make check
+make compile-tesina                  # 3 pasadas de pdflatex en reports/tesina
 ```
 
 ### Locales: baselines (`outputs/baselines/`)
@@ -183,14 +187,15 @@ make explain-errors-baselines [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]
 ```bash
 make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]
                 [EXPORT_FORMATS=onnx,tflite]          # alias: make train
-make tune-main N_TRIALS=60 MAIN_EPOCHS=30 PRUNER=median MAIN_MODELS=efficientnet_lite0  # fase HPO planificada
-make tune-dashboard                                          # optuna-dashboard en el puerto 8080
+make tune-main N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median     # HPO exploratorio; el baseline sale de tuning_study salvo BASELINE_F1
+make hpo-main                                                # protocolo HPO formal Lite0 seed 42 (25 intentos)
+make tune-dashboard                                          # optuna-dashboard en el puerto 8080 (extra tuning)
 make evaluate-ensemble [MODELS=<lista>]                      # voto suave sobre test.csv; alias: make ensemble
 make cross-validate [MODEL=<nombre> K_FOLDS=<n>]             # alias: make kfold
 make fairness-report [MODEL=<nombre> CHECKPOINT=<ruta>]      # equidad + Grad-CAM + test de atajos
 
 make export-main [EXPORT_FORMATS=onnx,tflite QUANTIZE=int8]
-make compute-ood-stats [MAIN_MODELS=<nombre> RUN=<id> PERCENTILE=<p>]
+make compute-ood-stats [MAIN_MODELS=<nombre> RUN=<id> PERCENTILE=<p> NUM_WORKERS=<n>]
 make eval-export-main [EXPORT_FORMATS=tflite QUANTIZE=int8]  # mide el exportado sobre test completo
 make sync-mobile-model RUN_DIR=<dir> DEST=<dir de la app>
 
@@ -244,9 +249,8 @@ make modal-provenance-leak / modal-loso / modal-aligned-loso / modal-pull-proven
 - [Protocolos experimentales](docs/es/metodologia/protocolos-experimentales.md)
 - [Registro y estado de experimentos](docs/es/experimentos/index.md)
 - [Baseline actual `20260921_204608`](docs/es/resultados/run-20260921-efficientnet-lite0.md)
-- [Evolución histórica](docs/es/tesis/PROJECT_EVOLUTION.md) y [resumen ejecutivo](docs/es/tesis/PROJECT_HISTORY_SUMMARY.md)
+- [Historia del proyecto](docs/es/tesis/historia-del-proyecto.md)
 - [Registro de evidencias para tesis](docs/es/tesis/EVIDENCE_REGISTRY.md)
-- [Auditoría documental](docs/es/reproducibilidad/auditoria-documental-2026-09-22.md)
 
 Los informes y páginas históricas se preservan con su contexto; no sustituyen estas fuentes vigentes.
 
@@ -275,7 +279,7 @@ maize-doctor-classifier/
 ├── scripts/
 │   ├── checks/                # Verificaciones puntuales (estabilidad de LIME, etc.)
 │   ├── dataset/               # Subida/descarga de clean/ (Hugging Face Hub, Google Drive)
-│   ├── experiments/           # Validación cruzada de procedencia y fuga
+│   ├── experiments/           # Evidencia reproducible: auditoría de píxeles, análisis por fuente, LOSO, estabilidad entre semillas, ensamble LOSO, procedencia y fuga, empaquetado de checkpoints
 │   ├── modal/                 # Entrenamiento, exportación y explicabilidad en GPU de Modal
 │   └── pipeline/              # splits, train, tune, ensemble, fairness, export, ood, explain
 ├── src/
@@ -286,7 +290,8 @@ maize-doctor-classifier/
 │   ├── models/                # Registro de modelos, ensamble, FeatureExposedModel
 │   ├── segmentation/          # Consumo del segmentador de hoja
 │   └── training/              # Loop de entrenamiento, balanceo, versionado de runs
-├── FAIRNESS_REPORT.md
+├── tests/                     # Pruebas pytest por área (analysis, data, experiments, export, explainability, models, pipeline, training)
+├── .gitattributes             # Finales de línea LF para los artefactos con hash fijado
 ├── Makefile
 └── pyproject.toml
 ```
@@ -309,10 +314,10 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 - [x] Ensamble por voto suave de tres arquitecturas
 - [x] Validación cruzada K-Fold y experimento 2x2 de particiones
 - [x] Auditoría de procedencia, fuga entre fuentes y leave-one-source-out
-- [x] Análisis de sesgos, equidad y ética ([FAIRNESS_REPORT.md](FAIRNESS_REPORT.md))
+- [x] Análisis de sesgos, equidad y ética ([docs/es/resultados/equidad.md](docs/es/resultados/equidad.md))
 - [x] Exportación a ONNX/TFLite Int8 con validación de paridad entre runtimes
 - [x] Detector fuera de dominio (Mahalanobis relativo) y sincronización con la app
-- [x] Aplicación Android con TensorFlow Lite, validada en dispositivo físico
+- [x] Aplicación Android con TensorFlow Lite que despliega el modelo oficial `20260921_204608`, validada en dispositivo físico
 - [x] Guía de severidad en lenguaje llano dentro de la app, para suplir la falta de etiquetas de nivel de daño
 
 ---
