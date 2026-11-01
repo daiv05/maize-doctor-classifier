@@ -264,8 +264,7 @@ No se incluyeron imágenes de esta enfermedad en este bloque debido a que el alg
 
 ### Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
 
-Se reunieron alrededor de 1056 imagenes en un entorno de campo abierto. El lugar donde fueron rescatadas es en /maize-diseases/v1.1.
-Adicionalmente, se detectaron imágenes duplicadas con una suma de 4223 imágenes, por lo que se decidió depurar.
+Se reunieron alrededor de 1056 imagenes en un entorno de campo abierto. El lugar donde fueron rescatadas es en /maize-diseases/v1.1. Adicionalmente, se detectaron imágenes duplicadas con una suma de 4223 imágenes, por lo que se decidió depurar.
 
 ### Healthy | Sana
 

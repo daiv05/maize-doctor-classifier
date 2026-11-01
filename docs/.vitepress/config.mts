@@ -93,7 +93,6 @@ const esDatasetSidebar = [
       { text: "Registro de experimentos", link: "/es/experimentos/" },
       { text: "Estado actual de ejecución", link: "/es/experimentos/current-status" },
       { text: "Optimización de hiperparámetros (HPO)", link: "/es/experimentos/hpo" },
-      { text: "Entrenamiento formal", link: "/es/experimentos/formal-training" },
       { text: "Estabilidad multi-semilla", link: "/es/experimentos/multiseed" },
       { text: "Validación cruzada", link: "/es/experimentos/cross-validation" },
     ],
@@ -126,8 +125,6 @@ const esDatasetSidebar = [
     text: "Reproducibilidad e Integridad",
     collapsed: false,
     items: [
-      { text: "Trazabilidad de reportes históricos", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
-      { text: "Continuidad del HPO y workspace", link: "/es/reproducibilidad/hpo-continuidad" },
       { text: "Procedencia y origen de figuras", link: "/es/reproducibilidad/figuras" },
       { text: "Auditoría bibliográfica y DOIs", link: "/es/reproducibilidad/referencias" },
     ],
@@ -138,13 +135,9 @@ const esDatasetSidebar = [
     items: [
       { text: "Resultados experimentales consolidados", link: "/es/tesis/EXPERIMENTAL_RESULTS_SUMMARY" },
       { text: "Comparativa HPO vs Baseline", link: "/es/tesis/HPO_BASELINE_COMPARISON" },
-      { text: "Evolución cronológica del proyecto", link: "/es/tesis/PROJECT_EVOLUTION" },
-      { text: "Resumen histórico consolidado", link: "/es/tesis/PROJECT_HISTORY_SUMMARY" },
+      { text: "Historia del proyecto", link: "/es/tesis/historia-del-proyecto" },
       { text: "Registro de decisiones de diseño (ADR)", link: "/es/tesis/DECISION_LOG" },
-      { text: "Hitos y entregables", link: "/es/tesis/MILESTONES" },
       { text: "Registro de evidencias experimentales", link: "/es/tesis/EVIDENCE_REGISTRY" },
-      { text: "Backlog de investigación pendiente", link: "/es/tesis/RESEARCH_BACKLOG" },
-      { text: "Plantillas de tablas para tesis", link: "/es/tesis/TABLE_TEMPLATES" },
       { text: "Empaquetado de modelos (README)", link: "/es/tesis/MODEL_PACKAGE_README" },
     ],
   },
@@ -260,7 +253,6 @@ const esAppSidebar = [
 ];
 
 export default defineConfig({
-  ignoreDeadLinks: true,
   vite: {
     publicDir: "../public",
   },
@@ -393,9 +385,8 @@ export default defineConfig({
               { text: "Auditoría metodológica (5 puntos)", link: "/es/auditoria/" },
               { text: "Pipeline y protocolos", link: "/es/metodologia/pipeline-datos" },
               { text: "Estado experimental", link: "/es/experimentos/current-status" },
-              { text: "Evolución histórica", link: "/es/tesis/PROJECT_EVOLUTION" },
+              { text: "Historia del proyecto", link: "/es/tesis/historia-del-proyecto" },
               { text: "Registro de evidencias", link: "/es/tesis/EVIDENCE_REGISTRY" },
-              { text: "Trazabilidad de reportes históricos", link: "/es/reproducibilidad/auditoria-documental-2026-09-22" },
             ],
           },
           {
@@ -414,26 +405,7 @@ export default defineConfig({
         ],
         sidebar: {
           "/es/app/": esAppSidebar,
-          "/es/guia/": esDatasetSidebar,
           "/es/": esDatasetSidebar,
-          "/es/datasets/": esDatasetSidebar,
-          "/es/dataset-classes/": esDatasetSidebar,
-          "/es/cleanup-and-ordered/": esDatasetSidebar,
-          "/es/exploratory-data-analysis/": esDatasetSidebar,
-          "/es/preprocessed/": esDatasetSidebar,
-          "/es/previous-work/": esDatasetSidebar,
-          "/es/baselines/": esDatasetSidebar,
-          "/es/pipeline-baselines/": esDatasetSidebar,
-          "/es/deep-learning/": esDatasetSidebar,
-          "/es/pipeline/": esDatasetSidebar,
-          "/es/provenance/": esDatasetSidebar,
-          "/es/resultados/": esDatasetSidebar,
-          "/es/metodologia/": esDatasetSidebar,
-          "/es/experimentos/": esDatasetSidebar,
-          "/es/reproducibilidad/": esDatasetSidebar,
-          "/es/tesis/": esDatasetSidebar,
-          "/es/deployment/": esDatasetSidebar,
-          "/es/auditoria/": esDatasetSidebar,
         },
         search: {
           provider: "local",
@@ -472,23 +444,6 @@ export default defineConfig({
         },
       },
     },
-    // en: {
-    //   label: 'English',
-    //   lang: 'en',
-    //   link: '/en/',
-    //   title: 'Corn Leaf Disease Detection',
-    //   description: 'Detection of Corn Leaf Diseases using Deep Learning on Mobile Devices',
-    //   themeConfig: {
-    //     nav: [
-    //       { text: 'Home', link: '/en/' },
-    //       { text: 'Datasets', link: '/en/datasets/' },
-    //     ],
-    //     sidebar: {
-    //       '/en/': enDatasetSidebar,
-    //       '/en/datasets/': enDatasetSidebar,
-    //     },
-    //   },
-    // },
   },
 
   themeConfig: {

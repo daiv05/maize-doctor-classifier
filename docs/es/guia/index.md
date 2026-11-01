@@ -2,7 +2,7 @@
 
 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1.25rem 0;">
   <span class="dm-badge">📱 Android 8.0+</span>
-  <span class="dm-badge">⚡ Inferencia &lt; 300 ms</span>
+  <span class="dm-badge">⚡ Inferencia ~23 ms</span>
   <span class="dm-badge">📡 100 % Offline</span>
   <span class="dm-badge">🎯 9 Clases Fitosanitarias</span>
   <span class="dm-badge">🛡️ Filtro OOD Mahalanobis</span>
@@ -44,7 +44,7 @@ La solución se compone de dos herramientas complementarias:
         <span class="dm-badge">EfficientNet-Lite0</span>
       </div>
       <p style="font-size: 0.88rem; color: var(--vp-c-text-2); line-height: 1.55; margin-bottom: 1rem;">
-        Red neuronal cuantizada a enteros de 8 bits (peso ≤ 14 MB). Procesa imágenes de 224×224 px en menos de 300 ms en la CPU del teléfono con filtro de rechazo anómalo (Mahalanobis OOD).
+        Red neuronal cuantizada a enteros de 8 bits (3.74 MB). Procesa imágenes de 224×224 px en unos 23 ms en la CPU del teléfono, con filtro de rechazo anómalo (Mahalanobis OOD).
       </p>
     </div>
     <div style="font-size: 0.88rem; font-weight: 600; color: var(--vp-c-brand-1); padding-top: 0.75rem; border-top: 1px dashed var(--vp-c-divider);">
@@ -77,7 +77,7 @@ Antes de comenzar en el surco, verifica los requisitos mínimos recomendados par
   </div>
   <div class="dm-spec-item">
     <div class="dm-spec-label">💾 Almacenamiento Libre</div>
-    <div class="dm-spec-value">50 MB (modelo 14 MB + SQLite local)</div>
+    <div class="dm-spec-value">50 MB (modelo 3.74 MB + SQLite local)</div>
   </div>
   <div class="dm-spec-item" style="border-left: 3px solid #2e7d32;">
     <div class="dm-spec-label">📡 Conectividad en Campo</div>
@@ -91,7 +91,7 @@ El siguiente flujo ilustra cómo realizar un diagnóstico foliar completo en cue
 
 ```mermaid
 flowchart LR
-    A["Paso 1: Captura Guiada<br>(Enfoque en marco central)"] --> B["Paso 2: Inferencia Local<br>(TFLite Int8 en &lt; 300 ms)"]
+    A["Paso 1: Captura Guiada<br>(Enfoque en marco central)"] --> B["Paso 2: Inferencia Local<br>(TFLite Int8, ~23 ms)"]
     B --> C["Paso 3: Diagnóstico y OOD<br>(9 Clases o Rechazo)"]
 ```
 
@@ -119,7 +119,7 @@ flowchart LR
   <ul style="padding-left: 1.25rem; margin: 0.5rem 0;">
     <li><strong>Redimensionado:</strong> La imagen se ajusta a 224 × 224 píxeles en RGB.</li>
     <li><strong>Normalización:</strong> Se estandarizan los canales cromáticos con los parámetros de referencia de ImageNet (media = [0.485, 0.456, 0.406], desv = [0.229, 0.224, 0.225]).</li>
-    <li><strong>Ejecución:</strong> El modelo cuantizado evalúa la muestra en aproximadamente <strong>180 a 280 milisegundos</strong> en la CPU móvil.</li>
+    <li><strong>Ejecución:</strong> El modelo cuantizado evalúa la muestra en unos <strong>23 milisegundos</strong> (mediana) en la CPU de un teléfono de gama media, más unos 98 ms de preprocesado.</li>
   </ul>
 </div>
 
@@ -136,13 +136,13 @@ flowchart LR
 |:---:|---|---|
 | <span class="dm-pill-sano">Sano</span> | **Planta sana (`healthy`)** | Lámina foliar verde uniforme, sin pústulas ni lesiones. |
 | <span class="dm-pill-enf">Enfermedad</span> | **Roya común (`common_rust`)** | Pústulas pulverulentas de color marrón rojizo en ambas caras. |
-| <span class="dm-pill-enf">Enfermedad</span> | **Tizón foliar del norte (`nclb`)** | Lesiones elípticas grandes en forma de cigarro, grisáceas. |
-| <span class="dm-pill-enf">Enfermedad</span> | **Mancha gris (`gls`)** | Lesiones rectangulares estrechas delimitadas por nervaduras. |
+| <span class="dm-pill-enf">Enfermedad</span> | **Tizón foliar del norte (`northern_corn_leaf_blight`)** | Lesiones elípticas grandes en forma de cigarro, grisáceas. |
+| <span class="dm-pill-enf">Enfermedad</span> | **Mancha gris (`gray_leaf_spot`)** | Lesiones rectangulares estrechas delimitadas por nervaduras. |
 | <span class="dm-pill-enf">Enfermedad</span> | **Necrosis letal (`lethal_necrosis`)** | Clorosis severa y secado progresivo desde los márgenes. |
 | <span class="dm-pill-plaga">Plaga</span> | **Gusano cogollero (`fall_armyworm`)** | Agujeros irregulares con acumulaciones de excremento en el verticilo. |
-| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de nitrógeno (`n`)** | Clorosis en forma de "V" en hojas inferiores (más viejas). |
-| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de fósforo (`p`)** | Coloración púrpura/violácea en bordes y puntas de hojas jóvenes. |
-| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de potasio (`k`)** | Secado y necrosis marginal estricta en hojas inferiores. |
+| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de nitrógeno (`nitrogen_deficiency`)** | Clorosis en forma de "V" en hojas inferiores (más viejas). |
+| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de fósforo (`phosphorus_deficiency`)** | Coloración púrpura/violácea en bordes y puntas de hojas jóvenes. |
+| <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de potasio (`potassium_deficiency`)** | Secado y necrosis marginal estricta en hojas inferiores. |
 
 ::: tip 🛡️ ¿Qué pasa si se escanea un objeto que no es una hoja de maíz?
 DoctorMaiz incorpora un **módulo de detección fuera de distribución (OOD)** basado en distancia de Mahalanobis. Si el usuario escanea un zapato, una pared, tierra o la mano del agricultor, el sistema no forzará un diagnóstico erróneo: la app mostrará un aviso de **«Muestra no reconocida»** y solicitará reencuadrar la hoja de maíz.
@@ -158,7 +158,7 @@ El siguiente esquema resume el flujo integral de datos desde la captura en el ca
 flowchart TD
     subgraph Campo["1. Dispositivo Móvil en el Surco (Sin Conexión)"]
         A["Agricultor enfoca hoja de maíz"] --> B["Visor de cámara guiado"]
-        B --> C["Recorte del 75 % exterior<br>(Eliminación de fondo y malezas)"]
+        B --> C["Recorte al marco guía<br>(+15 % de margen)"]
         C --> D["Motor TFLite Int8<br>(EfficientNet-Lite0)"]
         D --> E{"Filtro OOD<br>Mahalanobis"}
         E -- "Fuera de dominio" --> F["Aviso: Reencuadrar hoja"]

@@ -37,18 +37,15 @@ En aprendizaje profundo, reportar el rendimiento de un modelo a partir de una ú
 
 *(La desviación estándar reportada es muestral con $ddof=1$, $n=3$).*
 
-![Dispersión de Macro-F1 por Semilla](/auditoria/baseline_f1_by_seed.png)
+![Dispersión de Macro-F1 por Semilla](../reproducibilidad/evidencia/multiseed_source_stability/baseline_f1_by_seed.png)
 
 ---
 
 ## 4. Conclusiones Objetivas
 
-1. **Magnitud de la dispersión ($\sigma \approx 0.0052$):**
-   La variación estocástica del Macro-$F_1$ en el conjunto de prueba entre diferentes semillas tiene una desviación estándar de **$\pm 0.005158$** (un rango de 1.01 puntos porcentuales entre la semilla más favorable y la más desfavorable).
-2. **Interpretación de mejoras finas:**
-   Cualquier ganancia experimental por debajo de una centésima ($\Delta F_1 < 0.01$) evaluada con una sola semilla está en el mismo orden de magnitud que la variabilidad estocástica del entrenamiento. Por tanto, no debe presentarse como una ventaja categórica de una arquitectura o técnica si no se demuestra estabilidad pareada multi-semilla.
-3. **Consistencia fitosanitaria:**
-   A pesar de la fluctuación global de medio punto, la jerarquía de dificultad entre clases se mantuvo idéntica en las tres semillas: las patologías con lesiones bien contrastadas (`lethal_necrosis`, `healthy`, `common_rust`) superaron consistentemente el 0.98 de $F_1$, mientras que las deficiencias nutricionales (`potassium_deficiency`, `nitrogen_deficiency`) concentraron la mayor variabilidad.
+1. **Magnitud de la dispersión ($\sigma \approx 0.0052$):** La variación estocástica del Macro-$F_1$ en el conjunto de prueba entre diferentes semillas tiene una desviación estándar de **$\pm 0.005158$** (un rango de 1.01 puntos porcentuales entre la semilla más favorable y la más desfavorable).
+2. **Interpretación de mejoras finas:** Cualquier ganancia experimental por debajo de una centésima ($\Delta F_1 < 0.01$) evaluada con una sola semilla está en el mismo orden de magnitud que la variabilidad estocástica del entrenamiento. Por tanto, no debe presentarse como una ventaja categórica de una arquitectura o técnica si no se demuestra estabilidad pareada multi-semilla.
+3. **Consistencia fitosanitaria:** A pesar de la fluctuación global de medio punto, la jerarquía de dificultad entre clases se mantuvo idéntica en las tres semillas: las patologías con lesiones bien contrastadas (`lethal_necrosis`, `healthy`, `common_rust`) superaron consistentemente el 0.98 de $F_1$, mientras que las deficiencias nutricionales (`potassium_deficiency`, `nitrogen_deficiency`) concentraron la mayor variabilidad.
 
 ---
 

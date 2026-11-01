@@ -27,7 +27,7 @@ Macro-F1 y ECE son media ± desviación estándar **muestral** cuando aparecen t
 | ShuffleNet LOSO `multicrop-disease-maiz` | 42, 123, 2026 | ver cada run | N/A | ver resultados por seed | ver cada run | N/A | 3 | 5.221.267 |
 | Ensamble LOSO `multicrop-disease-maiz` | 42, 123, 2026 | N/A | N/A | 0,928446 ± 0,004168 | 0,089088 ± 0,006372 | N/A | tres miembros por seed | N/A |
 
-Los 18 checkpoints físicos respaldados corresponden a las runs individuales de la tabla: 16 exigidos por el inventario principal y dos históricos B0/ShuffleNet incluidos para preservar la comparación original. El Lite0 desplegado en el ensamble histórico (`20260812_221429`) no está disponible aquí; no se sustituyó por el baseline vigente ni se le atribuyó un hash. Por esa razón el ensamble histórico figura como resultado documentado, no como modelo completo reconstituible en el respaldo. Las métricas históricas proceden de una materialización anterior y no deben leerse como una comparación pareada con el corpus vigente.
+Los 18 checkpoints físicos respaldados corresponden a las runs individuales de la tabla: 16 exigidos por el inventario principal y dos históricos B0/ShuffleNet incluidos para preservar la comparación original. El Lite0 del ensamble histórico (`20260812_221429`) no está en este respaldo, pero sí en la descarga de artefactos de la etapa 2 (`docs/es/resultados/evidencia/etapa2_lite0_20260812_221429/` conserva su resumen y su evaluación int8), de modo que el ensamble histórico es reconstruible. Las métricas históricas proceden de una materialización anterior y no deben leerse como una comparación pareada con el corpus vigente.
 
 ## HPO y repetición
 
@@ -56,7 +56,7 @@ Estas cifras responden preguntas distintas y no entran al inventario principal d
 | Experimento | Resultado registrado | Alcance |
 |---|---|---|
 | [Benchmark source-grouped](../resultados/run-20260921-source-grouped.md), run `20260921_180112` | Validation Macro-F1 0,266927; test Macro-F1 0,400665 | Fuentes indivisibles por split; no es LOSO ni el test estándar |
-| [CV estratificada y agrupada histórica](../resultados/evidencia/kfold_2x2_comparacion.csv) | 0,931145 ± 0,009872 estratificada; 0,602575 ± 0,123966 agrupada | Cinco pliegues; no sustituye las tres seeds ni el LOSO vigente |
+| [CV estratificada y agrupada histórica](../resultados/evidencia/kfold_2x2_comparacion.csv) | 0,931145 ± 0,009872 estratificada; 0,602575 ± 0,123966 agrupada (± es la semiamplitud del IC95; la agrupada es Macro-F1 sobre clases presentes en cada pliegue, el convencional es 0,4359) | Cinco pliegues; no sustituye las tres seeds ni el LOSO vigente |
 | [Clasificación con corpus segmentado](../resultados/evidencia/manifiesto_corridas.csv), run `20260907_163546` | Test Macro-F1 0,719082; accuracy 0,890329 | Resultado exploratorio; summary/checkpoint no versionados aquí |
 
 Las pruebas históricas de explicabilidad, equidad y exportación tienen evidencias en el [registro general](EVIDENCE_REGISTRY.md), pero no se agregan a la tabla principal porque no ofrecen el mismo par protocolo–métrica–checkpoint. Tampoco se vuelve a inferir ni se recalcula el test durante esta síntesis.
@@ -79,4 +79,4 @@ En `lethal_necrosis`, B0 tuvo recall medio 0,777778 ± 0,031967 y F1 0,874607 ±
 
 ## Alcance pendiente
 
-No se ejecutó PHash, por lo que los casi duplicados siguen sin medir. Solo dos fuentes fueron priorizadas en el LOSO inicial y el ensamble se midió bajo una sola exclusión de fuente. El test histórico se ha observado repetidamente; ninguna cifra de esta síntesis se empleó para reajustar configuraciones. Quedan separados y pendientes la comparación formal baseline/HPO de cinco semillas (0/10 runs), CV y LOSO final general, selección por el equipo, entrenamiento formal y evaluación final formal. El respaldo de modelos es una copia verificable de artefactos existentes, no una nueva ejecución experimental.
+No se ejecutó PHash, por lo que los casi duplicados siguen sin medir. Solo dos fuentes fueron priorizadas en el LOSO inicial y el ensamble se midió bajo una sola exclusión de fuente. El test histórico se ha observado repetidamente; ninguna cifra de esta síntesis se empleó para reajustar configuraciones. Quedan separados y pendientes la comparación formal baseline/HPO de cinco semillas (2/10 entrenamientos de validación, 2026-10-19), CV y LOSO final general, selección por el equipo, entrenamiento formal y evaluación final formal. El respaldo de modelos es una copia verificable de artefactos existentes, no una nueva ejecución experimental.

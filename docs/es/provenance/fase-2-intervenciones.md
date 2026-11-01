@@ -8,10 +8,8 @@ Exploramos dos estrategias fundamentales bajo el mismo protocolo de validación 
 
 ## Las dos intervenciones evaluadas
 
-1. **Balanceo de grupos de procedencia:**
-   En lugar de permitir que las fuentes dominantes acaparen el entrenamiento de una clase (como ocurría con *Healthy*, donde el 80 % provenía de tres repositorios monocromáticos), forzamos una distribución equilibrada entre todas las fuentes disponibles para cada patología. El objetivo era evitar que la red aprendiera a asociar una etiqueta con la firma visual de una única cámara.
-2. **Sustitución de fondos (*BackMix*):**
-   Para romper la correlación entre la patología y el fondo del laboratorio o del campo, sustituimos el fondo de las imágenes por entornos tomados de otras fotografías del dataset. Esta técnica buscaba obligar a la red a concentrarse en la lámina foliar, desacoplándola del entorno exterior.
+1. **Balanceo de grupos de procedencia:** En lugar de permitir que las fuentes dominantes acaparen el entrenamiento de una clase (como ocurría con *Healthy*, donde el 80 % provenía de tres repositorios monocromáticos), forzamos una distribución equilibrada entre todas las fuentes disponibles para cada patología. El objetivo era evitar que la red aprendiera a asociar una etiqueta con la firma visual de una única cámara.
+2. **Sustitución de fondos (*BackMix*):** Para romper la correlación entre la patología y el fondo del laboratorio o del campo, sustituimos el fondo de las imágenes por entornos tomados de otras fotografías del dataset. Esta técnica buscaba obligar a la red a concentrarse en la lámina foliar, desacoplándola del entorno exterior.
 
 ---
 

@@ -82,7 +82,7 @@ La **roya común** es prácticamente infalible en laboratorio (1 fallo sobre 322
 
 ![Rendimiento por procedencia con su control nulo](/resultados/equidad_por_fuente.png)
 
-Al auditar los resultados a través de los 14 repositorios del corpus, encontramos un fenómeno ilustrativo:
+Al auditar los resultados a través de los 14 identificadores de procedencia del análisis de agosto (separan versiones de las 11 fuentes del manifiesto vigente), encontramos un fenómeno ilustrativo:
 - Cuatro fuentes alcanzan un 100 % de exactitud perfecta, pero lo hacen de forma trivial: **contienen una sola clase**, por lo que cualquier modelo constante acertaría el 100 % sin aprender nada.
 - En cambio, repositorios multi-clase como `corn_leaf_roboflow` (seis clases, 92.5 % de acierto y +65.8 pp sobre el azar) o `maize_africa` (+56.4 pp sobre el azar) son los que verdaderamente demuestran que el sistema aprende patrones biológicos complejos.
 

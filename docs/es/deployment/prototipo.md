@@ -2,7 +2,7 @@
 
 Llevar una red neuronal de un cuaderno de investigación a un teléfono físico siempre cambia la perspectiva del proyecto. Los números de precisión teórica dejan de importar por un momento y lo que cuenta es la experiencia real: si la aplicación abre rápido, si la cámara responde sin trabarse y si el diagnóstico aparece en pantalla antes de que el usuario pierda la paciencia.
 
-Probamos el prototipo funcional de DoctorMaiz sobre un teléfono real de gama media —un **Motorola edge 40 neo** con procesador MediaTek Dimensity 7030 y Android 15—, ejecutando el modelo `efficientnet_lite0` cuantizado a Int8 (3.56 MB) de forma 100% offline.
+Probamos el prototipo funcional de DoctorMaiz sobre un teléfono real de gama media —un **Motorola edge 40 neo** con procesador MediaTek Dimensity 7030 y Android 15—, ejecutando el modelo `efficientnet_lite0` cuantizado a Int8 (3.74 MB) de forma 100% offline.
 
 ---
 
@@ -28,15 +28,25 @@ Una vez capturada la imagen, la pantalla de resultados muestra el diagnóstico i
 
 ## Tiempos de respuesta y rendimiento real
 
-Medimos el tiempo que toma cada etapa del proceso en el dispositivo móvil utilizando imágenes de alta resolución:
+Tiempos medidos en el Motorola edge 40 neo sobre 143 imágenes (95 fotos de campo externas y 48 del corpus):
 
 | Etapa | Tiempo típico (mediana) | Qué ocurre en ese lapso |
 |---|:---:|---|
-| **Preprocesado** | ~41 ms | Decodificación, corrección de orientación, reescalado con antialiasing y armado del tensor. |
-| **Inferencia** | **~60 ms** | El modelo cuantizado ejecuta sus capas en la CPU del teléfono. |
-| **Pipeline total** | ~470 ms | Desde que se toma la foto hasta que se guarda en la base de datos local y se navega a la pantalla final. |
+| **Preprocesado** | 98 ms (p95 279 ms) | Decodificación, corrección de orientación, reescalado con antialiasing y armado del tensor. |
+| **Inferencia** | **23 ms** | El modelo cuantizado ejecuta sus capas en la CPU del teléfono. |
 
-La inferencia toma apenas 60 milisegundos. Eso significa que el cálculo del modelo matemático no es el cuello de botella: la respuesta se siente prácticamente instantánea. El medio segundo total incluye tareas de interfaz, persistencia en SQLite local y renderizado, manteniendo una experiencia fluida incluso en teléfonos con procesadores modestos.
+La inferencia toma unos 23 milisegundos y el preprocesado unos 98: el cálculo del modelo no es el cuello de botella. El resto del tiempo hasta la pantalla de resultados corresponde a interfaz, persistencia en SQLite local y renderizado.
+
+### Fidelidad frente al servidor
+
+La primera medición en el teléfono coincidía con el computador solo en el 84 % de las predicciones: las imágenes de entre 224 y 896 px por lado se escalaban en un solo paso bilineal sin prefiltro, mientras que el entrenamiento usa el redimensionado con antialias de Pillow. Al pasar el tensor del propio teléfono por el int8 del servidor se reprodujeron sus predicciones, así que el intérprete no era la causa. La app ahora porta el remuestreo de Pillow (`src/ml/resample.ts`, verificado byte a byte contra su salida) y el teléfono coincide con el int8 del servidor en las 143 imágenes.
+
+| Lote | Aciertos en el teléfono | Rechazo OOD en el teléfono |
+|---|---:|---:|
+| Corpus (48) | 45 (93.8 %) | 8.3 % |
+| Fotos de campo externas (95) | 38 (40.0 %) | 52.6 % |
+
+Las cifras de campo coinciden con las del computador y confirman la limitación descrita en [resultados](../resultados/index.md).
 
 ---
 
@@ -46,11 +56,13 @@ Sometimos el prototipo a un conjunto de pruebas con fotografías reales del conj
 
 ![Resultados y rechazo de imágenes fuera de dominio](/app/resultado-potasio.png)
 
-El modelo en el dispositivo reprodujo con fidelidad el comportamiento medido en el servidor, logrando diagnósticos certeros en patologías críticas como roya común, necrosis letal, mancha gris y deficiencias nutricionales.
+En el teléfono, el intérprete int8 reproduce las predicciones del servidor sobre el mismo tensor de entrada (32 de 32 imágenes). Las diferencias entre teléfono y servidor sobre una misma foto provienen del escalado de la imagen y no del modelo; la paridad de muestra de 30 imágenes del int8 no se aprobó por una sola imagen límite (max |Δprob| 0.198 frente al umbral 0.15).
 
 Lo más valioso de las pruebas en dispositivo fue comprobar cómo actúa el **detector de imágenes fuera de dominio (OOD)**. En lugar de forzar una etiqueta cuando una foto resulta confusa o no corresponde a maíz, el sistema activa su salvaguarda:
 
 ![Imagen rechazada por el detector](/app/resultado-no-reconocida.png)
+
+El detector del modelo oficial usa un umbral de 106.37 (percentil 95 de validación): detecta 5 de 5 imágenes sintéticas (negro, blanco, gris, ruido y azul) y rechaza el 3.8 % de 500 imágenes de test. Evidencia de la exportación en [`export_movil_20260921_204608/`](../reproducibilidad/evidencia/export_movil_20260921_204608/export_summary_int8.json).
 
 Cuando la distancia matemática supera el umbral de seguridad, la app prefiere decir con honestidad que la imagen no fue reconocida y sugiere repetir la captura con mejor iluminación o enfoque. Para una herramienta de campo, saber dudar es tan importante como acertar.
 
@@ -58,7 +70,7 @@ Cuando la distancia matemática supera el umbral de seguridad, la app prefiere d
 
 ## Por qué la aplicación pide aportes comunitarios
 
-Las pruebas en el teléfono dejaron en evidencia una verdad inevitable de los datos públicos: de las 14 fuentes que integran el corpus, casi todas provienen de África, India o laboratorios estadounidenses. **Ninguna fue capturada en El Salvador.**
+Las pruebas en el teléfono dejaron en evidencia una verdad inevitable de los datos públicos: de las 11 fuentes (`source_id`) que integran el corpus, casi todas provienen de África, India o laboratorios estadounidenses. **Ninguna fue capturada en El Salvador.**
 
 ![Pantalla para contribuir al dataset](/app/contribuir.png)
 

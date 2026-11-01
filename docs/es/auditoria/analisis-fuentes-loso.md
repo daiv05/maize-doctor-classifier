@@ -28,7 +28,7 @@ El inventario del corpus canónico ($N = 33\,429$ muestras elegibles) se compone
 * En la matriz de contingencia de 11 fuentes $\times$ 9 clases, **65 de las 99 celdas posibles están vacías** (muchas fuentes solo contienen 1, 3 o 4 clases).
 * El coeficiente **V de Cramér es de 0.5030** ($\chi^2 = 67\,673.21$). Esto confirma una asociación moderada-fuerte entre el origen de la foto y la patología, un factor intrínseco de los datasets públicos disponibles a nivel mundial.
 
-![Distribución de Muestras por Fuente](/auditoria/source_sizes.png)
+![Distribución de Muestras por Fuente](../reproducibilidad/evidencia/source_analysis/source_sizes.png)
 
 ---
 
@@ -61,12 +61,9 @@ Para determinar si el modelo colapsa ante fuentes no vistas, se implementó el p
 
 ## 4. Conclusiones Objetivas
 
-1. **La brecha fuera de fuente no es uniforme:**
-   La hipótesis de que el clasificador se desplomaría por igual ante cualquier repositorio nuevo queda refutada: ante `maize-diseases`, el modelo generaliza con un Macro-$F_1$ de 0.993. 
-2. **Causa de la caída en `multicrop`:**
-   La caída a 0.902 en `multicrop-disease-maiz` se concentra en la patología `lethal_necrosis`. Dado que esta fuente aporta más de la mitad de todos los casos de necrosis letal del corpus, excluirla altera drásticamente la distribución de entrenamiento de esa patología específica.
-3. **Implicación para el despliegue:**
-   Para producción en parcelas de El Salvador, el clasificador cuenta con el respaldo del detector fuera de dominio (OOD Mahalanobis) para rechazar imágenes que se desvíen morfológicamente del espacio de entrenamiento.
+1. **La brecha fuera de fuente no es uniforme:** La hipótesis de que el clasificador se desplomaría por igual ante cualquier repositorio nuevo queda refutada: ante `maize-diseases`, el modelo generaliza con un Macro-$F_1$ de 0.993.
+2. **Causa de la caída en `multicrop`:** La caída a 0.902 en `multicrop-disease-maiz` se concentra en la patología `lethal_necrosis`. Dado que esta fuente aporta más de la mitad de todos los casos de necrosis letal del corpus, excluirla altera drásticamente la distribución de entrenamiento de esa patología específica.
+3. **Implicación para el despliegue:** Para producción en parcelas de El Salvador, el clasificador cuenta con el respaldo del detector fuera de dominio (OOD Mahalanobis) para rechazar imágenes que se desvíen morfológicamente del espacio de entrenamiento.
 
 ---
 

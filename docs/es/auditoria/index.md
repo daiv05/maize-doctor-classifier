@@ -27,7 +27,7 @@ flowchart LR
     subgraph Ambito2 ["Ámbito 2: Auditoría Metodológica y Estrés (OOD / Forense)"]
         direction TB
         E1["1. Auditoría de Píxeles<br>Cero duplicados en test (0.0000 %)"]
-        E2["2. Variabilidad entre Semillas<br>3 réplicas: 0.9435 ± 0.0052"]
+        E2["2. Variabilidad entre Semillas<br>3 réplicas: 0.9435 ± 0.0052 (SD)"]
         E3["3. Transferencia de Fuentes (LOSO)<br>Aislamiento: 0.993 vs 0.902"]
         E4["4. Ensamble bajo Estrés<br>Delta +0.0045 · ECE degradado"]
         E1 --> E2 --> E3 --> E4

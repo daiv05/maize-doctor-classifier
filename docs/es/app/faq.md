@@ -11,15 +11,9 @@ Esta sección reúne las consultas y dificultades más comunes reportadas por pr
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_history.png" 
-    caption="Historial y Filtros" 
-    subtitle="Revisión de escaneos guardados" 
-  />
+    src="/app/pixel4_history.png" caption="Historial y Filtros" subtitle="Revisión de escaneos guardados" />
   <PhoneMockup 
-    src="/app/pixel4_forgot_password.png" 
-    caption="Recuperación de Cuenta" 
-    subtitle="Autogestión de credenciales" 
-  />
+    src="/app/pixel4_forgot_password.png" caption="Recuperación de Cuenta" subtitle="Autogestión de credenciales" />
 </PhoneGallery>
 
 ---

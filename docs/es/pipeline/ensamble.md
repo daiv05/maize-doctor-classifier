@@ -1,7 +1,6 @@
 # Ensamble Multimodelo por Soft Voting
 
-> [!NOTE] Ámbito metodológico de este diseño
-> Este componente describe la combinación de las tres arquitecturas sobre el conjunto de prueba estratificado de desarrollo (`seed_42`). Para la auditoría de robustez del ensamble ante fuentes no vistas (exclusión completa LOSO en 3 semillas), consulte [Evaluación del Ensamble Fuera de Dominio](/es/auditoria/ensamble-loso).
+> [!NOTE] Ámbito metodológico de este diseño Este componente describe la combinación de las tres arquitecturas sobre el conjunto de prueba estratificado de desarrollo (`seed_42`). Para la auditoría de robustez del ensamble ante fuentes no vistas (exclusión completa LOSO en 3 semillas), consulte [Evaluación del Ensamble Fuera de Dominio](/es/auditoria/ensamble-loso).
 
 Cuando tres expertos agrícolas observan una misma hoja con síntomas dudosos, es probable que se fijen en detalles diferentes: uno prestará más atención a las manchas cloróticas centrales, otro a las quemaduras del borde y el tercero a la textura de la lámina. Si combinamos sus opiniones, el veredicto final suele ser mucho más acertado que el de cualquiera de ellos por separado.
 
@@ -47,5 +46,5 @@ En patologías críticas como la **necrosis letal del maíz (MLN)**, el ensamble
 
 La existencia de este ensamble abre una arquitectura muy práctica para el despliegue del sistema:
 
-1. **Nivel local en el teléfono (Edge AI):** Para el trabajo diario en la parcela sin cobertura de red, la app ejecuta **`EfficientNet-Lite0` cuantizado a Int8** (3.5 MB), con diagnósticos en ~60 ms. El Macro F1 de 0.9468 corresponde al modelo FP32; la evaluación del Int8 sobre el test completo no está documentada aquí (ver `evaluate_export`).
+1. **Nivel local en el teléfono (Edge AI):** Para el trabajo diario en la parcela sin cobertura de red, la app ejecuta **`EfficientNet-Lite0` cuantizado a Int8** (3.74 MB), con inferencia de ~23 ms en el teléfono. El modelo desplegado es el oficial `20260921_204608`: su int8 obtiene Macro-F1 0.9489 sobre el test completo (PyTorch 0.9480).
 2. **Nivel en la nube (API para técnicos y extensión):** Cuando el productor cuenta con conexión o cuando técnicos agrícolas del CENTA/MAG consultan el sistema desde una computadora, el backend puede ejecutar el **ensamble completo**, exprimiendo el 95.67 % de Macro F1 y el 98.3 % de exactitud para corroborar casos especialmente complejos.

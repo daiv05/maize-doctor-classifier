@@ -16,7 +16,7 @@ La evaluación comenzó comparando cómo responde el modelo frente a dos tipos d
 | **Laboratorio (`lab`)** | 532 | **96.80 %** | **0.9423** |
 | **Conjunto Global de Prueba** | 5,015 | **97.91 %** | **0.9468** |
 
-*(Cifras correspondientes a `EfficientNet-Lite0`, modelo desplegado).*
+*(Cifras correspondientes al `EfficientNet-Lite0` de la etapa 2).*
 
 ![Comparativa de Disparidad por Subgrupo](/fairness/fairness_disparity.png)
 

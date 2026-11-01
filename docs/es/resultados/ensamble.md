@@ -1,7 +1,6 @@
 # Resultados del Ensamble Multimodelo
 
-> [!NOTE] Ámbito metodológico de esta evaluación
-> **HISTÓRICO.** Las cifras de esta página proceden de una materialización de desarrollo anterior, no del baseline vigente `20260921_204608`. Corresponden a la evaluación **in-distribution** sobre el conjunto de prueba estratificado de desarrollo (`seed_42`, 5 015 imágenes), donde las fuentes de datos están representadas tanto en entrenamiento como en prueba. Para consultar la prueba de estrés del ensamble evaluado fuera de dominio sobre fuentes no vistas en tres semillas independientes, consulte [Evaluación del Ensamble Fuera de Dominio (LOSO)](/es/auditoria/ensamble-loso).
+> [!NOTE] Ámbito metodológico de esta evaluación **HISTÓRICO.** Las cifras de esta página proceden de una materialización de desarrollo anterior, no del baseline vigente `20260921_204608`. Corresponden a la evaluación **in-distribution** sobre el conjunto de prueba estratificado de desarrollo (`seed_42`, 5 015 imágenes), donde las fuentes de datos están representadas tanto en entrenamiento como en prueba. Para consultar la prueba de estrés del ensamble evaluado fuera de dominio sobre fuentes no vistas en tres semillas independientes, consulte [Evaluación del Ensamble Fuera de Dominio (LOSO)](/es/auditoria/ensamble-loso).
 
 El ensamble por votación suave (*Soft Voting*) combina las probabilidades de predicción de las tres arquitecturas principales del proyecto: **`EfficientNet-Lite0`**, **`EfficientNet-B0`** y **`ShuffleNet-V2-x1.0`**, seleccionando para cada una su mejor checkpoint entrenado.
 
@@ -42,4 +41,4 @@ La matriz de confusión normalizada confirma la solidez del diagnóstico fitosan
 
 Al desglosar las predicciones por repositorio de procedencia, se observa un patrón claro: el ensamble aporta sus mayores ganancias en fuentes complejas y multi-clase donde los modelos individuales presentaban dudas (como `corn_leaf_roboflow`, con una ganancia de +1.4 pp), mientras que en fuentes homogéneas de una sola clase el rendimiento se mantiene en el techo.
 
-Este comportamiento confirma la viabilidad de la **estrategia dual**: mantener a `EfficientNet-Lite0` como el motor ligero y rápido en el teléfono celular (~60 ms), y reservar el ensamble completo en la nube o API para análisis de confirmación en situaciones fitosanitarias complejas.
+Este comportamiento confirma la viabilidad de la **estrategia dual**: mantener a `EfficientNet-Lite0` como el motor ligero y rápido en el teléfono celular (~23 ms de inferencia), y reservar el ensamble completo en la nube o API para análisis de confirmación en situaciones fitosanitarias complejas.

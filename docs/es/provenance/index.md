@@ -1,10 +1,10 @@
 # Procedencia y Fuga de Información
 
-**Estado: HISTÓRICO/EXPERIMENTAL.** Esta página describe la campaña de procedencia anterior. Su inventario manejaba 14 etiquetas de fuente; el `master_manifest.csv` vigente normaliza 11 `source_id`. Los valores LOSO de esta página no son la CV agrupada `0.6026 ± 0.1240` ni el holdout source-grouped actual.
+**Estado: HISTÓRICO/EXPERIMENTAL.** Esta página describe la campaña de procedencia anterior. Su inventario manejaba 14 etiquetas de fuente; el `master_manifest.csv` vigente normaliza 11 `source_id`. Los valores LOSO de esta página no son la CV agrupada `0.6026 ± 0.1240` (IC95, Macro-F1 sobre clases presentes) ni el holdout source-grouped actual.
 
 Uno de los mayores aprendizajes de este proyecto no vino de afinar capas ni de inventar funciones de pérdida complicadas, sino de hacernos una pregunta incómoda: **¿el modelo está aprendiendo a reconocer enfermedades foliares o solo está reconociendo de qué cámara y de qué experimento vino cada fotografía?**
 
-En visión por computadora aplicada a la agricultura, casi todo el mundo entrena con mezclas de datasets públicos disponibles en internet. Nosotros reunimos más de 33,400 imágenes provenientes de 14 fuentes distintas. Sobre el papel, el modelo alcanzaba cifras espectaculares en las particiones estándar: más del 97 % de exactitud y 0.94 de Macro F1. 
+En visión por computadora aplicada a la agricultura, casi todo el mundo entrena con mezclas de datasets públicos disponibles en internet. Nosotros reunimos más de 33 400 imágenes provenientes de 11 fuentes distintas (14 identificadores de procedencia en el inventario histórico). Sobre el papel, el modelo alcanzaba cifras espectaculares en las particiones estándar: más del 97 % de exactitud y 0.94 de Macro F1. 
 
 Sin embargo, al auditar el origen de cada archivo descubrimos un sesgo estructural severo que ponía en duda la honestidad de esas métricas.
 
@@ -14,8 +14,8 @@ Sin embargo, al auditar el origen de cada archivo descubrimos un sesgo estructur
 
 Cuando se combinan datasets públicos, las fotos no vienen repartidas de manera homogénea. Cada repositorio fue capturado por investigadores diferentes, con teléfonos distintos, bajo la luz de su propio país y con fondos particulares (el piso de un invernadero en Uganda, una cartulina blanca en Estados Unidos o tierra rojiza en la India).
 
-Al mapear las 14 fuentes contra las 9 clases del cultivo encontramos un desbalance crítico:
-- **Cinco de las catorce fuentes aportan una sola clase.**
+Al mapear los 14 identificadores de procedencia contra las 9 clases del cultivo encontramos un desbalance crítico:
+- **Cinco de los catorce identificadores aportan una sola clase.**
 - Más del **80 % de todas las fotos de hojas sanas (`healthy`)** provienen de solo tres repositorios que no contienen ninguna otra enfermedad.
 - Cada patología está fuertemente dominada por una única fuente que concentra entre el 30 % y el 60 % de sus imágenes.
 
@@ -56,7 +56,7 @@ Las patologías con muchas fotos repartidas en varias fuentes (como hojas sanas,
 
 Durante semanas exploramos si este sesgo podía solucionarse mediante técnicas algorítmicas: probamos balanceo de fuentes, sustitución artificial de fondos (*BackMix*), ecualizaciones agresivas y recorte de contornos. Ninguna intervención de software logró cerrar la brecha de manera significativa.
 
-La razón es simple y contundente: **ninguno de los 14 datasets públicos disponibles fue capturado en El Salvador ni en Centroamérica**. 
+La razón es simple y contundente: **ninguno de los datasets públicos disponibles fue capturado en El Salvador ni en Centroamérica**. 
 
 La diversidad biológica real no puede inferirse por completo desde estos repositorios. Recolectar y etiquetar fotografías locales es una intervención prioritaria para medir y mejorar el desempeño en El Salvador; no garantiza por sí sola un sistema infalible.
 

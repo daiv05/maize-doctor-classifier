@@ -9,20 +9,11 @@ DoctorMaiz está calibrada para identificar con alta precisión **9 condiciones 
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/resultado-mancha-gris.png" 
-    caption="Diagnóstico: Mancha Gris" 
-    subtitle="Cercospora zeae-maydis identificada" 
-  />
+    src="/app/resultado-mancha-gris.png" caption="Diagnóstico: Mancha Gris" subtitle="Cercospora zeae-maydis identificada" />
   <PhoneMockup 
-    src="/app/resultado-potasio.png" 
-    caption="Diagnóstico: Deficiencia de K" 
-    subtitle="Carencia nutricional detectada" 
-  />
+    src="/app/resultado-potasio.png" caption="Diagnóstico: Deficiencia de K" subtitle="Carencia nutricional detectada" />
   <PhoneMockup 
-    src="/app/resultado-no-reconocida.png" 
-    caption="Salvaguarda OOD" 
-    subtitle="Imagen fuera de dominio rechazada" 
-  />
+    src="/app/resultado-no-reconocida.png" caption="Salvaguarda OOD" subtitle="Imagen fuera de dominio rechazada" />
 </PhoneGallery>
 
 ---
@@ -60,12 +51,7 @@ Pústulas redondeadas a oblongas de 1 a 2 mm, inicialmente doradas o color canel
 - **Condiciones Frecuentes:** Días cálidos (25 °C a 32 °C) con noches húmedas y períodos secos intercalados.
 
 <PhoneMockup 
-  src="/app/resultado-mancha-gris.png" 
-  caption="Diagnóstico en DoctorMaiz" 
-  subtitle="Cercospora identificada con nivel de confianza" 
-  maxWidth="280px"
-  center
-/>
+  src="/app/resultado-mancha-gris.png" caption="Diagnóstico en DoctorMaiz" subtitle="Cercospora identificada con nivel de confianza" maxWidth="280px" center />
 
 ### Síntomas Visuales
 Lesiones marrones o canela muy particulares: tienen **forma rectangular perfecta**, porque el crecimiento del micelio se ve bloqueado lateralmente por las nervaduras secundarias de la hoja de maíz. Pueden alcanzar de 1 a 6 cm de largo.
@@ -121,12 +107,7 @@ Hojas tiernas con perforaciones alargadas tipo "perdigonada" o ventanillas trans
 - **Síntomas Visuales:** Amarillamiento seguido de una **necrosis o quemadura marginal** a lo largo de los bordes externos de las hojas basales, mientras que la nervadura central permanece verde.
 
 <PhoneMockup 
-  src="/app/resultado-potasio.png" 
-  caption="Diagnóstico en DoctorMaiz" 
-  subtitle="Deficiencia de K detectada en campo" 
-  maxWidth="280px"
-  center
-/>
+  src="/app/resultado-potasio.png" caption="Diagnóstico en DoctorMaiz" subtitle="Deficiencia de K detectada en campo" maxWidth="280px" center />
 
 - **Manejo:** Fertilización con cloruro de potasio (KCl) o sulfato de potasio al fondo del surco.
 

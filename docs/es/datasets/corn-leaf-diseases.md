@@ -40,10 +40,7 @@ Cada carpeta posee 17 subcarpetas, cada una con una técnica de data augmentatio
 - Las imágenes tienen una resolución bastante correcta para el entrenamiento (256 x 256 px, aprox +20kb por imagen).
 
 <ImageCarousel :images="[
-    { src: '/corn-leaf-desease/102_contrast_adjusted.png', alt: 'Imagen con ajuste de contraste (Gray_leaf_spot)' },
-	{ src: '/corn-leaf-desease/102_cropped.png', alt: 'Imagen recortada (Gray_leaf_spot)' },
-	{ src: '/corn-leaf-desease/126_laplacian.png', alt: 'Imagen con filtro de Laplaciano (Gray_leaf_spot)' }
-]" />
+    { src: '/corn-leaf-desease/102_contrast_adjusted.png', alt: 'Imagen con ajuste de contraste (Gray_leaf_spot)' }, { src: '/corn-leaf-desease/102_cropped.png', alt: 'Imagen recortada (Gray_leaf_spot)' }, { src: '/corn-leaf-desease/126_laplacian.png', alt: 'Imagen con filtro de Laplaciano (Gray_leaf_spot)' } ]" />
 
 ## Tamaño y distribución
 
@@ -58,8 +55,7 @@ Cada carpeta posee 17 subcarpetas, cada una con una técnica de data augmentatio
 
 929 de healthy
 
-De cada clase se dispone de 17 carpetas, en cada carpeta se le ha aplicado una técnica de data augmentation.
-En "total":
+De cada clase se dispone de 17 carpetas, en cada carpeta se le ha aplicado una técnica de data augmentation. En "total":
 
 - Cercospora leaf spot / Gray leaf spot: 6970
 - Common Rust: 16201

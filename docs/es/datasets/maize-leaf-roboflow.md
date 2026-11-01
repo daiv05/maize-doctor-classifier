@@ -67,18 +67,7 @@ Todas las anotaciones son bbox YOLO de 5 campos (9 336 líneas, 0 polígonos).
 
 ## Citación
 
-@misc{ maize-leaf-7zwoi-he5vd_dataset,
-  title = { maize-leaf Dataset },
-  type = { Open Source Dataset },
-  author = { David Deras },
-  howpublished = { \url{ https://universe.roboflow.com/david-deras/maize-leaf-7zwoi-he5vd } },
-  url = { https://universe.roboflow.com/david-deras/maize-leaf-7zwoi-he5vd },
-  journal = { Roboflow Universe },
-  publisher = { Roboflow },
-  year = { 2026 },
-  month = { aug },
-  note = { visited on 2026-08-11 },
-}
+@misc{ maize-leaf-7zwoi-he5vd_dataset, title = { maize-leaf Dataset }, type = { Open Source Dataset }, author = { David Deras }, howpublished = { \url{ https://universe.roboflow.com/david-deras/maize-leaf-7zwoi-he5vd } }, url = { https://universe.roboflow.com/david-deras/maize-leaf-7zwoi-he5vd }, journal = { Roboflow Universe }, publisher = { Roboflow }, year = { 2026 }, month = { aug }, note = { visited on 2026-08-11 }, }
 
 ## Licencia
 

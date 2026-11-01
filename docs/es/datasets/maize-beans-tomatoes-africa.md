@@ -103,8 +103,7 @@ El dataset tiene un total de 68.519 imágenes. Para el caso del maíz, las clase
 | Maize Streak Virus Disease       | 1275 + 5103 --- 6378 | 1275 + 5103 --- 6378 |
 | Maize Stripe Virus Disease       | 438 + 1752 --- 2190  | 438 + 1752 --- 2190  |
 
-Basicamente no hay diferencias entre la version 1 y la version 2 del dataset, por lo que se pueden usar indistintamente.
-En total hay 23,286 imágenes de maíz, distribuidas en 12 clases. La clase con más imágenes es Maize Streak Virus Disease, con 6378 imágenes, y la clase con menos imágenes es Maize Rust Disease, con 99 imágenes.
+Basicamente no hay diferencias entre la version 1 y la version 2 del dataset, por lo que se pueden usar indistintamente. En total hay 23,286 imágenes de maíz, distribuidas en 12 clases. La clase con más imágenes es Maize Streak Virus Disease, con 6378 imágenes, y la clase con menos imágenes es Maize Rust Disease, con 99 imágenes.
 
 
 ## Formato

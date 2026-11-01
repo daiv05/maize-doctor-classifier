@@ -13,15 +13,9 @@ DoctorMaiz integra un tablero de 4 variables meteorológicas directamente en la 
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_home_top.png" 
-    caption="Tablero Agroclimático" 
-    subtitle="4 variables con estado de conexión" 
-  />
+    src="/app/pixel4_home_top.png" caption="Tablero Agroclimático" subtitle="4 variables con estado de conexión" />
   <PhoneMockup 
-    src="/app/home.png" 
-    caption="Pantalla de Inicio" 
-    subtitle="Acceso directo al escáner y mapa" 
-  />
+    src="/app/home.png" caption="Pantalla de Inicio" subtitle="Acceso directo al escáner y mapa" />
 </PhoneGallery>
 
 ---

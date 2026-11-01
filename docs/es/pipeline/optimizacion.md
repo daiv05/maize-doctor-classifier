@@ -32,12 +32,9 @@ Uno de los mayores aciertos del estudio fue incorporar un mecanismo de poda temp
 
 El análisis de importancia de parámetros reveló patrones muy claros sobre el comportamiento de los modelos:
 
-1. **El tamaño de lote y la tasa de aprendizaje mandan (>75% del impacto):**
-   Con un tamaño de lote de 64 y una tasa de aprendizaje moderadamente más alta ($\approx 4.5 \times 10^{-4}$), los gradientes de AdamW ganaron mucha estabilidad frente a lotes de 16 o 32, permitiendo al modelo escapar de ruidos propios de las fotos de campo.
-2. **`sqrt_inverse` confirmó ser el balance ideal:**
-   Entrenar sin pesos en la pérdida (`none`) provocaba caídas severas en deficiencias nutricionales, mientras que la inversa pura (`inverse`) sobrecastigaba a la clase sana reduciendo la exactitud general. La raíz cuadrada inversa ofreció el equilibrio justo.
-3. **CLAHE resultó innecesario:**
-   Las capas convolucionales profundas aprenden representaciones invariantes a la luz y a las sombras por su cuenta. Aplicar ecualización adaptativa antes de entrenar no aportó mejoras y habría sumado un costo innecesario en la aplicación móvil.
+1. **El tamaño de lote y la tasa de aprendizaje mandan (>75% del impacto):** Con un tamaño de lote de 64 y una tasa de aprendizaje moderadamente más alta ($\approx 4.5 \times 10^{-4}$), los gradientes de AdamW ganaron mucha estabilidad frente a lotes de 16 o 32, permitiendo al modelo escapar de ruidos propios de las fotos de campo.
+2. **`sqrt_inverse` confirmó ser el balance ideal:** Entrenar sin pesos en la pérdida (`none`) provocaba caídas severas en deficiencias nutricionales, mientras que la inversa pura (`inverse`) sobrecastigaba a la clase sana reduciendo la exactitud general. La raíz cuadrada inversa ofreció el equilibrio justo.
+3. **CLAHE resultó innecesario:** Las capas convolucionales profundas aprenden representaciones invariantes a la luz y a las sombras por su cuenta. Aplicar ecualización adaptativa antes de entrenar no aportó mejoras y habría sumado un costo innecesario en la aplicación móvil.
 
 ---
 
@@ -45,6 +42,6 @@ El análisis de importancia de parámetros reveló patrones muy claros sobre el 
 
 La configuración óptima encontrada sobre `EfficientNet-B0` (Trial #12) logró elevar su Macro F1 de prueba de 94.26% a **94.83%** (+0.57 pp), y al aplicarse a `ShuffleNet-V2` también mejoró su rendimiento (+0.93 pp).
 
-Sin embargo, al probar esa misma configuración sobre la arquitectura desplegada, **`EfficientNet-Lite0`**, el resultado fue el contrario: el Macro F1 bajó a 93.43%. La razón es arquitectónica: `Lite0` prescinde de los bloques de atención Squeeze & Excitation y sustituye las funciones *swish* por operaciones cuantizables, tolerando menos las tasas de aprendizaje agresivas. 
+Sin embargo, al probar esa misma configuración sobre **`EfficientNet-Lite0`**, el resultado fue el contrario: el Macro F1 bajó a 93.43%. La razón es arquitectónica: `Lite0` prescinde de los bloques de atención Squeeze & Excitation y sustituye las funciones *swish* por operaciones cuantizables, tolerando menos las tasas de aprendizaje agresivas. 
 
 Por esta razón, la decisión histórica fue mantener a **`EfficientNet-Lite0` con su configuración base (Macro-F1 de 94.68 % en prueba)**, mientras las otras redes adoptaron la configuración afinada para el ensamble histórico. No predetermina el resultado del HPO nuevo.

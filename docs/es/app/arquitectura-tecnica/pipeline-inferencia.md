@@ -11,16 +11,19 @@ Llevar una arquitectura de aprendizaje profundo moderna a un teléfono móvil qu
 
 ## De PyTorch a TensorFlow Lite Int8
 
-El modelo exportado a la app es **`efficientnet_lite0`** (checkpoint histórico `20260812_221429`), una variante concebida para prescindir de activaciones complejas (como *swish* o *hard-swish*) y maximizar la compatibilidad con unidades de procesamiento de punto fijo en chips móviles.
+El modelo exportado a la app es **`efficientnet_lite0`** (run oficial `20260921_204608`), una variante concebida para prescindir de activaciones complejas (como *swish* o *hard-swish*) y maximizar la compatibilidad con unidades de procesamiento de punto fijo en chips móviles.
 
-| Modelo / Formato | Precisión Numérica | Tamaño en Disco | Latencia Mediana (CPU) | Retención de Macro F1 |
-|---|:---:|:---:|:---:|:---:|
-| **PyTorch (`best.pth`)** | Float32 | 18.2 MB | ~180 ms (Servidor x86) | 100.0 % (Referencia) |
-| **ONNX Runtime** | Float32 | 12.9 MB | ~110 ms (Snapdragon 778G) | 99.9 % |
-| **TFLite Cuantizado (Int8)** | **Entero 8-bit** | **3.56 MB** | **~60 ms (MediaTek Dimensity)** | **99.4 %** |
+| Modelo / Formato | Precisión Numérica | Tamaño en Disco | Macro-F1 en test (5 015) |
+|---|:---:|:---:|:---:|
+| **PyTorch (`best.pth`)** | Float32 | 13.79 MB | 0.9480 |
+| **ONNX** | Float32 | 13.67 MB | paridad aprobada (max \|Δprob\| 3e-6) |
+| **TFLite** | Float32 | 13.56 MB | paridad aprobada (max \|Δprob\| 4e-7) |
+| **TFLite Cuantizado (Int8)** | **Entero 8-bit** | **3.74 MB** | **0.9489** (acuerdo con PyTorch 99.74 %) |
+
+En el Motorola edge 40 neo (Dimensity 7030) el preprocesado toma 98 ms (p95 279 ms) y la inferencia 23 ms (medianas). El preprocesado replica byte a byte el redimensionado bilineal de Pillow del entrenamiento, y el teléfono reproduce las predicciones del int8 del servidor en 143 de 143 imágenes.
 
 ::: tip CUANTIZACIÓN POST-ENTRENAMIENTO (PTQ)
-La cuantización reduce en un **72 %** el peso del archivo del modelo y acelera la multiplicación de matrices en la CPU móvil sin pérdida apreciable de capacidad diagnóstica.
+La cuantización reduce en un **72 %** el peso del archivo respecto al TFLite Float32 y mantiene el Macro-F1 del test completo (0.9489 frente a 0.9480). La paridad de una muestra de 30 imágenes no se aprobó por una sola imagen límite (max |Δprob| 0.198 frente al umbral 0.15).
 :::
 
 ---
@@ -62,7 +65,7 @@ Los motores gráficos móviles entregan un arreglo entrelazado $[H, W, C]$ (R, G
 Para eliminar la penalización de rendimiento del puente JavaScript tradicional de React Native:
 - DoctorMaiz utiliza **Nitro Modules**, una tecnología moderna de interoperabilidad directa en C++ (JSI - *JavaScript Interface*).
 - La llamada a `predict(tensor)` invoca directamente las bibliotecas nativas de TensorFlow Lite sin serialización JSON intermedia.
-- Esto reduce el consumo de memoria y asegura una latencia constante de **~60 milisegundos**.
+- Esto reduce el consumo de memoria y mantiene la inferencia en torno a **23 milisegundos** (mediana).
 
 ---
 

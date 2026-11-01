@@ -17,8 +17,7 @@ Los baselines se entrenan sobre el **perfil `baseline`** de la configuración de
 | Prueba (`test.csv`, 15 %) | 1 503 |
 | **Total** | **10 020** |
 
-Se conservan completas las clases minoritarias (potasio 266, nitrógeno 523, fósforo 612) y
-limita solo las mayoritarias (healthy, tizones, gusano cogollero). El cap es configurable para permitir experimentar con diferentes tamaños de dataset, pero el valor por defecto es 1 500 imágenes por clase.
+Se conservan completas las clases minoritarias (potasio 266, nitrógeno 523, fósforo 612) y limita solo las mayoritarias (healthy, tizones, gusano cogollero). El cap es configurable para permitir experimentar con diferentes tamaños de dataset, pero el valor por defecto es 1 500 imágenes por clase.
 
 ::: warning Corridas de la primera etapa
 Las cifras y métricas de esta sección corresponden a corridas sobre **31 623 imágenes**, previas a la ampliación. En la materialización vigente de 33 429 elegibles, potasio 621, nitrógeno 846 y fósforo 938 siguen por debajo del tope de 1 500; el total y las métricas cambiarían si se regenerara `splits-baseline`.
@@ -30,17 +29,9 @@ A continuación se describe cada uno de los tres modelos a evaluar: qué los dis
 
 ### ShuffleNetV2-x1.0
 
-**ShuffleNetV2-x1.0** es una CNN diseñada por Megvii (Face++) en 2018 explícitamente para
-inferencia eficiente en dispositivos móviles <sup>[[17]](#ref-17)</sup>. Su contribución es un
-conjunto de guías prácticas de diseño, que no se limitan a minimizar FLOPs sino que también
-atienden al costo real de memoria y acceso, materializadas en dos operaciones. La primera es
-**channel split + channel shuffle**, que divide los canales en dos ramas y, tras procesarlas,
-los baraja para que la información fluya entre grupos sin convoluciones densas costosas. La
-segunda es evitar las convoluciones agrupadas 1x1, esquivando así el cuello de botella de acceso
-a memoria (MAC) que penalizaba a ShuffleNetV1 y priorizando velocidad real sobre FLOPs teóricos.
+**ShuffleNetV2-x1.0** es una CNN diseñada por Megvii (Face++) en 2018 explícitamente para inferencia eficiente en dispositivos móviles <sup>[[17]](#ref-17)</sup>. Su contribución es un conjunto de guías prácticas de diseño, que no se limitan a minimizar FLOPs sino que también atienden al costo real de memoria y acceso, materializadas en dos operaciones. La primera es **channel split + channel shuffle**, que divide los canales en dos ramas y, tras procesarlas, los baraja para que la información fluya entre grupos sin convoluciones densas costosas. La segunda es evitar las convoluciones agrupadas 1x1, esquivando así el cuello de botella de acceso a memoria (MAC) que penalizaba a ShuffleNetV1 y priorizando velocidad real sobre FLOPs teóricos.
 
-En ImageNet-1K alcanza ~69 % de Top-1 con solo ~2.3 M de parámetros, siendo uno de los modelos
-más pequeños del grupo (~5 MB serializado).
+En ImageNet-1K alcanza ~69 % de Top-1 con solo ~2.3 M de parámetros, siendo uno de los modelos más pequeños del grupo (~5 MB serializado).
 
 **Trade-offs relevantes para este proyecto:**
 

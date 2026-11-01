@@ -1,6 +1,6 @@
 # Fase 0 — Auditoría de Procedencia
 
-Antes de evaluar cómo se comportaba el modelo frente a fuentes desconocidas, era indispensable auditar con precisión de dónde venía cada una de las 33,437 imágenes del corpus y qué relación existía entre los repositorios originales y las nueve clases fitosanitarias.
+Antes de evaluar cómo se comportaba el modelo frente a fuentes desconocidas, era indispensable auditar con precisión de dónde venía cada uno de los 33 437 archivos del corpus y qué relación existía entre los repositorios originales y las nueve clases fitosanitarias.
 
 Esta fase inicial de instrumentación permitió mapear la procedencia de cada archivo y verificar la higiene del conjunto de datos.
 
@@ -8,9 +8,9 @@ Esta fase inicial de instrumentación permitió mapear la procedencia de cada ar
 
 ## Mapeo y trazabilidad del corpus
 
-El corpus consolidado reúne imágenes provenientes de 14 fuentes públicas documentadas (repositorios de Kaggle, Mendeley y Roboflow). A través del esquema de nomenclatura de los archivos, derivamos un identificador de procedencia único para cada imagen:
+El corpus consolidado reúne imágenes provenientes de 11 fuentes públicas (14 identificadores de procedencia en el inventario histórico) (repositorios de Kaggle, Mendeley y Roboflow). A través del esquema de nomenclatura de los archivos, derivamos un identificador de procedencia único para cada imagen:
 
-- **100 % de las imágenes trazadas:** Todas las 33,437 fotografías fueron asignadas a su dataset de origen sin ambigüedades.
+- **100 % de las imágenes trazadas:** Todos los 33 437 archivos fueron asignadas a su dataset de origen sin ambigüedades.
 - **Higiene y deduplicación:** Se verificó la integridad mediante hashes criptográficos (SHA-256) y hashes perceptuales. Cualquier duplicado exacto entre carpetas fue descartado para garantizar que no existiera ninguna copia idéntica repetida entre las particiones de entrenamiento y prueba.
 
 ---

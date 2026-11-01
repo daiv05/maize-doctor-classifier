@@ -1,6 +1,6 @@
 # Plan de validación cruzada y generalización
 
-**Estado: PENDIENTE para la configuración posterior al HPO.** Existen resultados históricos, pero no se trasladan automáticamente al corpus ni al checkpoint vigentes.
+**Estado: sin repetir para la configuración posterior al HPO.** Existen resultados históricos, pero no se trasladan automáticamente al corpus ni al checkpoint vigentes.
 
 ## Protocolos separados
 
@@ -28,7 +28,7 @@ El test de `seed_42` no se reutiliza para seleccionar hiperparámetros durante C
 
 ## Resultado observado histórico
 
-La campaña 2×2 previa reportó, para la configuración base, CV estratificada `0.931145 ± 0.009872` y CV source-grouped `0.602575 ± 0.123966` de Macro-F1 evaluable. Los pliegues agrupados tuvieron entre cinco y ocho clases con soporte. La evidencia está en [`kfold_2x2_comparacion.csv`](../resultados/evidencia/kfold_2x2_comparacion.csv).
+La campaña 2×2 previa reportó, para la configuración base, CV estratificada `0.931145 ± 0.009872` y CV source-grouped `0.602575 ± 0.123966` de Macro-F1 evaluable (± es la semiamplitud del IC95; SD de la estratificada 0.0080). El Macro-F1 convencional de la CV agrupada, que cuenta como cero las clases ausentes, es `0.4359`. Los pliegues agrupados tuvieron entre cinco y ocho clases con soporte. La evidencia está en [`kfold_2x2_comparacion.csv`](../resultados/evidencia/kfold_2x2_comparacion.csv).
 
 ## Interpretación
 

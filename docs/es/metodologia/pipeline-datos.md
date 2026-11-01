@@ -32,9 +32,7 @@ La implementación está en `scripts/pipeline/create_splits.py`, `src/data/ident
 
 Dos rutas distintas pueden contener los mismos bytes: tendrán `sample_id` distintos y `sha256` igual. Un archivo reemplazado conservando la ruta mantiene su `sample_id`, pero cambia su `sha256`. Varias muestras pueden compartir `source_id` sin ser duplicados.
 
-La columna sha256 del manifiesto y file_sha256 del inventario de auditoría son el
-mismo digest de los bytes originales. Un file_sha256 diferente no garantiza una
-imagen distinta: dos codificaciones pueden producir exactamente el mismo raster RGB.
+La columna sha256 del manifiesto y file_sha256 del inventario de auditoría son el mismo digest de los bytes originales. Un file_sha256 diferente no garantiza una imagen distinta: dos codificaciones pueden producir exactamente el mismo raster RGB.
 
 ## Representación canónica de píxeles
 
@@ -42,13 +40,10 @@ La auditoría independiente de preparación ejecuta, para cada archivo verificad
 
 1. Decodifica la imagen con Pillow.
 2. Aplica la orientación EXIF con ImageOps.exif_transpose.
-3. Convierte a RGB de tres canales. Registra el modo posterior a EXIF como
-   image_mode y el formato del archivo, pero esos metadatos no entran al digest.
+3. Convierte a RGB de tres canales. Registra el modo posterior a EXIF como image_mode y el formato del archivo, pero esos metadatos no entran al digest.
 4. Conserva el ancho y el alto tras orientar; no redimensiona.
-5. Serializa los bytes RGB en orden de filas. Al convertir a RGB se descarta
-   alpha y no se aplica el perfil ICC, igual que en el cargador vigente.
-6. Antecede los bytes por el separador de versión doctormaiz-pixel-sha256-v1,
-   el modo canónico RGB y ancho/alto como enteros de 32 bits big endian.
+5. Serializa los bytes RGB en orden de filas. Al convertir a RGB se descarta alpha y no se aplica el perfil ICC, igual que en el cargador vigente.
+6. Antecede los bytes por el separador de versión doctormaiz-pixel-sha256-v1, el modo canónico RGB y ancho/alto como enteros de 32 bits big endian.
 7. Calcula SHA-256 de esa secuencia:
 
 ~~~text
@@ -56,9 +51,7 @@ SHA256(UTF8("doctormaiz-pixel-sha256-v1\0RGB\0")
        || uint32be(width) || uint32be(height) || RGB_row_major_bytes)
 ~~~
 
-Así, pixel_sha256 puede detectar archivos recodificados que mantienen exactamente
-los mismos píxeles según esta representación. No calcula similitud perceptual.
-No aplica transforms ni augmentations de entrenamiento.
+Así, pixel_sha256 puede detectar archivos recodificados que mantienen exactamente los mismos píxeles según esta representación. No calcula similitud perceptual. No aplica transforms ni augmentations de entrenamiento.
 
 ## Contrato de `sample_id`
 
@@ -123,41 +116,15 @@ En `seed_42_source_grouped`, las fuentes permanecen completas. Sus proporciones 
 
 ## Cierre de duplicados exactos en seed_42
 
-La [auditoría de píxeles](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md)
-cubrió la materialización canónica corn-clean:/clean y los manifests de
-corn-outputs:/splits/seed_42. Verificó 33 437 rutas y SHA-256 de archivo:
-33 429 muestras elegibles más ocho exclusiones contractuales, sin faltantes,
-discrepancias ni errores de decodificación. El master manifest tiene SHA-256
-64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163
-y el lock 0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8.
+La [auditoría de píxeles](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md) cubrió la materialización canónica corn-clean:/clean y los manifests de corn-outputs:/splits/seed_42. Verificó 33 437 rutas y SHA-256 de archivo: 33 429 muestras elegibles más ocho exclusiones contractuales, sin faltantes, discrepancias ni errores de decodificación. El master manifest tiene SHA-256 64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163 y el lock 0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8.
 
-Entre las muestras elegibles hubo cero grupos duplicados por file_sha256 y cero
-por pixel_sha256; tampoco hubo grupos entre train/validation/test, casos con
-distinto SHA de archivo y mismos píxeles, ni conflictos de etiqueta nuevos.
-Test contiene 5 015 imágenes: cero afectadas, 0 %. Los únicos cuatro grupos
-idénticos aparecen al incluir las ocho imágenes con etiquetas contradictorias
-ya excluidas mediante [dataset_exclusions.csv](../../../config/dataset_exclusions.csv).
-Su source_id se resolvió como maize-beans-tomatoes-africa mediante una familia
-de nombre con correspondencia unívoca en el master manifest; la lista de
-exclusiones no almacena ese campo.
+Entre las muestras elegibles hubo cero grupos duplicados por file_sha256 y cero por pixel_sha256; tampoco hubo grupos entre train/validation/test, casos con distinto SHA de archivo y mismos píxeles, ni conflictos de etiqueta nuevos. Test contiene 5 015 imágenes: cero afectadas, 0 %. Los únicos cuatro grupos idénticos aparecen al incluir las ocho imágenes con etiquetas contradictorias ya excluidas mediante [dataset_exclusions.csv](../../../config/dataset_exclusions.csv). Su source_id se resolvió como maize-beans-tomatoes-africa mediante una familia de nombre con correspondencia unívoca en el master manifest; la lista de exclusiones no almacena ese campo.
 
-El hallazgo histórico de aproximadamente 15 grupos y 0.68 % del test con gemelos
-**no pudo reproducirse sobre la materialización canónica vigente**. Puede
-corresponder a una versión anterior del corpus, una materialización diferente
-o un procedimiento de comparación distinto. La auditoría actual no prueba que
-nunca existió.
+El hallazgo histórico de aproximadamente 15 grupos y 0.68 % del test con gemelos **no pudo reproducirse sobre la materialización canónica vigente**. Puede corresponder a una versión anterior del corpus, una materialización diferente o un procedimiento de comparación distinto. La auditoría actual no prueba que nunca existió.
 
-Se conserva seed_42: la evidencia no justifica regenerarlo, reemplazarlo,
-crear seed_42_v2 ni eliminar más muestras. El baseline y el HPO vigentes no
-requieren invalidación por duplicados exactos cross-split. Esta conclusión
-trata la integridad de la partición, no la generalización entre fuentes o
-dominios. Tampoco cubre casi duplicados, hojas fotografiadas en secuencia,
-recortes, resize, rotaciones, cambios fotométricos ni relaciones semánticas.
+Se conserva seed_42: la evidencia no justifica regenerarlo, reemplazarlo, crear seed_42_v2 ni eliminar más muestras. El baseline y el HPO vigentes no requieren invalidación por duplicados exactos cross-split. Esta conclusión trata la integridad de la partición, no la generalización entre fuentes o dominios. Tampoco cubre casi duplicados, hojas fotografiadas en secuencia, recortes, resize, rotaciones, cambios fotométricos ni relaciones semánticas.
 
-El hash de config/dataset.yaml actual difiere del registrado en el lock.
-El [análisis del drift](../reproducibilidad/evidencia/pixel_duplicate_audit/dataset_yaml_drift_report.md)
-documenta los valores, la búsqueda de la versión anterior y la incertidumbre
-restante; los manifests y la partición congelada conservan sus hashes.
+El hash de config/dataset.yaml actual difiere del registrado en el lock. El [análisis del drift](../reproducibilidad/evidencia/pixel_duplicate_audit/dataset_yaml_drift_report.md) documenta los valores, la búsqueda de la versión anterior y la incertidumbre restante; los manifests y la partición congelada conservan sus hashes.
 
 ## Deduplicación perceptual
 

@@ -1,10 +1,10 @@
 # Síntesis de Experimentos del Pipeline Principal
 
-**Estado: HISTÓRICO.** Resume decisiones de la etapa previa sobre una materialización de 33 433 imágenes. Para el estado vigente consultar [registro de experimentos](/es/experimentos/) y [protocolos](/es/metodologia/protocolos-experimentales).
+**Estado: HISTÓRICO.** Resume decisiones de la etapa previa sobre la materialización de la etapa 2 (33 433 imágenes). Para el estado vigente consultar [registro de experimentos](/es/experimentos/) y [protocolos](/es/metodologia/protocolos-experimentales).
 
-A lo largo del desarrollo del pipeline principal, el foco del proyecto pasó de comparar arquitecturas aisladas a validar decisiones concretas de entrenamiento y regularización sobre el corpus completo de 33,433 imágenes. 
+A lo largo del desarrollo del pipeline principal, el foco del proyecto pasó de comparar arquitecturas aisladas a validar decisiones concretas de entrenamiento y regularización sobre el corpus de 33 433 imágenes de la etapa 2. 
 
-Las decisiones se articularon alrededor de cinco ejes que definieron el artefacto históricamente desplegado:
+Las decisiones se articularon alrededor de cinco ejes que definieron el artefacto de la etapa 2:
 
 ---
 
@@ -22,7 +22,7 @@ Se incorporaron suavizado de etiquetas (*Label Smoothing = 0.10*) y decaimiento 
 Comparamos programadores de tasa de aprendizaje por pasos (*StepLR*), por meseta (*ReduceLROnPlateau*) y por coseno con calentamiento (*Cosine Annealing with Warmup*). El arranque suave de tres épocas lineales seguido del decaimiento armónico por coseno resultó ser el más estable: evitó que los pesos preentrenados de ImageNet se descalibraran en las primeras épocas y facilitó un aterrizaje suave hacia el óptimo.
 
 ### 4. Cuantización y paridad en el borde
-La exportación histórica a Int8 redujo `EfficientNet-Lite0` de 12.9 MB a 3.56 MB y se midió una latencia aproximada de 60 ms en el dispositivo documentado. La evaluación completa del modelo exportado actual sigue pendiente; esta evidencia no se transfiere automáticamente al checkpoint nuevo.
+La exportación a Int8 redujo `EfficientNet-Lite0` de 13.56 MB a 3.74 MB. En el modelo oficial `20260921_204608` el int8 obtiene Macro-F1 0.9489 sobre el test completo, y en el teléfono la inferencia toma unos 23 ms.
 
 ### 5. Consenso multimodelo
 La votación suave histórica combinó `EfficientNet-Lite0`, `EfficientNet-B0` y `ShuffleNet-V2` y alcanzó Macro-F1 0.9567. Es una observación sobre el test estratificado de aquella etapa, no una prueba causal sobre diversidad ni un resultado del baseline actual.

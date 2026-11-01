@@ -15,15 +15,9 @@ Al presionar el botón central **"Escanear"** o el botón de acción rápida en 
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_camera.png" 
-    caption="Cámara Asistida" 
-    subtitle="Retícula foliar con recorte automático" 
-  />
+    src="/app/pixel4_camera.png" caption="Cámara Asistida" subtitle="Retícula foliar con recorte automático" />
   <PhoneMockup 
-    src="/app/camara-marco-guia.png" 
-    caption="Encuadre Óptimo" 
-    subtitle="La lámina vegetal ocupa el recuadro" 
-  />
+    src="/app/camara-marco-guia.png" caption="Encuadre Óptimo" subtitle="La lámina vegetal ocupa el recuadro" />
 </PhoneGallery>
 
 ### Las 4 Reglas de Oro para una Toma Impecable
@@ -48,12 +42,7 @@ Un problema crítico en las aplicaciones agrícolas convencionales es el **"sesg
 DoctorMaiz previene este peligro mediante un **módulo detector OOD (*Out-Of-Distribution*) basado en Distancia de Mahalanobis**:
 
 <PhoneMockup 
-  src="/app/resultado-no-reconocida.png" 
-  caption="Salvaguarda OOD en Acción" 
-  subtitle="Alerta honesta de imagen no reconocida" 
-  maxWidth="280px"
-  center
-/>
+  src="/app/resultado-no-reconocida.png" caption="Salvaguarda OOD en Acción" subtitle="Alerta honesta de imagen no reconocida" maxWidth="280px" center />
 
 ### ¿Cómo Funciona la Detección?
 1. La red neuronal extrae un vector de características (*embeddings*) en su penúltima capa densa.

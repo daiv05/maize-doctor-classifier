@@ -83,18 +83,7 @@ Distribución aproximada de instancias por clase (conteo de etiquetas en todos l
 
 ## Citación
 
-@misc{ corn-leaf-hd9iy_dataset,
-  title = { Corn Leaf Dataset },
-  type = { Open Source Dataset },
-  author = { Labonis Workspace },
-  howpublished = { \url{ https://universe.roboflow.com/labonis-workspace/corn-leaf-hd9iy } },
-  url = { https://universe.roboflow.com/labonis-workspace/corn-leaf-hd9iy },
-  journal = { Roboflow Universe },
-  publisher = { Roboflow },
-  year = { 2026 },
-  month = { may },
-  note = { visited on 2026-06-11 },
-}
+@misc{ corn-leaf-hd9iy_dataset, title = { Corn Leaf Dataset }, type = { Open Source Dataset }, author = { Labonis Workspace }, howpublished = { \url{ https://universe.roboflow.com/labonis-workspace/corn-leaf-hd9iy } }, url = { https://universe.roboflow.com/labonis-workspace/corn-leaf-hd9iy }, journal = { Roboflow Universe }, publisher = { Roboflow }, year = { 2026 }, month = { may }, note = { visited on 2026-06-11 }, }
 
 ## Licencia
 

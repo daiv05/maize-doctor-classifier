@@ -4,9 +4,7 @@ Cada arquitectura se construye desde un registro de modelos único, con backbone
 
 ## Configuración canónica
 
-Todos los baselines comparten exactamente los mismos hiperparámetros de entrenamiento. Fijarlos
-así permite que las diferencias de resultado entre arquitecturas se deban al modelo en sí, no a
-condiciones de entrenamiento distintas.
+Todos los baselines comparten exactamente los mismos hiperparámetros de entrenamiento. Fijarlos así permite que las diferencias de resultado entre arquitecturas se deban al modelo en sí, no a condiciones de entrenamiento distintas.
 
 | Hiperparámetro | Valor |
 |---|---|
@@ -19,34 +17,22 @@ condiciones de entrenamiento distintas.
 | `image_size` | por modelo (los 3 baselines usan 224x224) |
 | Batch size | 32 (auto-escalado según resolución del modelo) |
 
-Cada corrida se versiona en `outputs/baselines/<modelo>/<run_id>/` con `best.pth`, `summary.json`,
-`predictions.csv`, `train_history.csv` y los reportes de test. El `summary.json`, como su nombre indica, resume la corrida y permite comparar resultados generales entre modelos y runs.
+Cada corrida se versiona en `outputs/baselines/<modelo>/<run_id>/` con `best.pth`, `summary.json`, `predictions.csv`, `train_history.csv` y los reportes de test. El `summary.json`, como su nombre indica, resume la corrida y permite comparar resultados generales entre modelos y runs.
 
 ## Modelos baseline
 
-Se adoptan tres arquitecturas ligeras que cubren el eje precisión / eficiencia y que son convertibles a
-TensorFlow Lite para despliegue móvil: `efficientnet_b0`, `shufflenet_v2_x1_0` y `efficientnet_lite0`.
+Se adoptan tres arquitecturas ligeras que cubren el eje precisión / eficiencia y que son convertibles a TensorFlow Lite para despliegue móvil: `efficientnet_b0`, `shufflenet_v2_x1_0` y `efficientnet_lite0`.
 
 ## Dinámica de convergencia
 
-Las tres corridas de 30 épocas sobre GPU en Modal (~60 s/época, ~30 min por modelo) muestran un
-comportamiento sano: el macro-F1 de validación sube rápido, se estabiliza y no colapsa. La figura
-traza el macro-F1 de validación por época; el punto marca la mejor época de cada modelo (la que
-produce `best.pth`).
+Las tres corridas de 30 épocas sobre GPU en Modal (~60 s/época, ~30 min por modelo) muestran un comportamiento sano: el macro-F1 de validación sube rápido, se estabiliza y no colapsa. La figura traza el macro-F1 de validación por época; el punto marca la mejor época de cada modelo (la que produce `best.pth`).
 
 ![Convergencia - macro-F1 de validación por época](/baselines/baseline_convergencia.png)
 
 Dos observaciones tienen valor práctico:
 
-- **El backbone pre-entrenado en ImageNet paga desde el inicio.** `efficientnet_b0` y
-  `efficientnet_lite0` cruzan la meta de 0.85 en 3–7 épocas. `shufflenet_v2_x1_0` arranca mucho más
-  abajo (0.57 en la época 1) y necesita 6 épocas para alcanzarla: converge más lento pero llega al
-  mismo rango final. Esto sugiere que, para shufflenet, un presupuesto de épocas mayor o un
-  warmup de learning rate podrían dar margen adicional.
-- **No hay sobreajuste destructivo.** El macro-F1 de validación se mantiene en meseta alta
-  (~0.88–0.91) hasta la época 30 sin degradarse, aunque el train macro-F1 ya supera 0.99. El gap
-  train/val es el esperado con este tamaño de dataset y no exige early-stopping agresivo; aun así,
-  se conserva `best.pth` (mejor época) además de `last.pth`.
+- **El backbone pre-entrenado en ImageNet paga desde el inicio.** `efficientnet_b0` y `efficientnet_lite0` cruzan la meta de 0.85 en 3–7 épocas. `shufflenet_v2_x1_0` arranca mucho más abajo (0.57 en la época 1) y necesita 6 épocas para alcanzarla: converge más lento pero llega al mismo rango final. Esto sugiere que, para shufflenet, un presupuesto de épocas mayor o un warmup de learning rate podrían dar margen adicional.
+- **No hay sobreajuste destructivo.** El macro-F1 de validación se mantiene en meseta alta (~0.88–0.91) hasta la época 30 sin degradarse, aunque el train macro-F1 ya supera 0.99. El gap train/val es el esperado con este tamaño de dataset y no exige early-stopping agresivo; aun así, se conserva `best.pth` (mejor época) además de `last.pth`.
 
 ## Ejecución
 

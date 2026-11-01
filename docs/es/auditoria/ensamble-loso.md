@@ -38,7 +38,7 @@ Se evalúan las 5 816 imágenes del conjunto retenido externo sobre las 3 clases
 
 *(Desviaciones estándar muestrales con $ddof=1$, $n=3$).*
 
-![Deltas Pareados del Ensamble vs B0](/auditoria/ensemble_paired_deltas.png)
+![Deltas Pareados del Ensamble vs B0](../reproducibilidad/evidencia/ensemble_loso/ensemble_paired_deltas.png)
 
 ---
 
@@ -55,18 +55,15 @@ Se evalúan las 5 816 imágenes del conjunto retenido externo sobre las 3 clases
 * En la **semilla 123**, el ensamble corrigió 150 errores de B0 pero **introdujo 169 nuevos errores** (−19 aciertos netos). Por esta razón, el Macro-$F_1$ del ensamble cayó por debajo del modelo individual.
 * En la semilla 2026, corrigió 194 e introdujo 118 (+76 aciertos netos).
 
-![Matriz de Confusión Normalizada del Ensamble bajo LOSO](/auditoria/ensemble_confusion_normalized.png)
+![Matriz de Confusión Normalizada del Ensamble bajo LOSO](../reproducibilidad/evidencia/ensemble_loso/ensemble_confusion_normalized.png)
 
 ---
 
 ## 4. Conclusiones Objetivas
 
-1. **La ventaja del ensamble es mixta e inestable fuera de dominio:**
-   A diferencia del test de desarrollo estratificado (donde el ensamble superaba a todos los modelos de forma consistente), ante una fuente no vista la mejora promedio se redujo a la mitad ($+0.0045$) y su desviación típica ($\pm 0.0080$) resultó mayor que la propia mejora.
-2. **Degradación de la calibración:**
-   Promediar probabilidades de modelos no calibrados fuera de dominio incrementa la sobreconfianza en las predicciones erróneas, duplicando el ECE (de 4.4 % a 8.9 %).
-3. **Implicación para el despliegue del sistema:**
-   Estos resultados respaldan la decisión de no sobrecargar la arquitectura móvil con ensambles pesados fuera de dominio: un modelo individual bien optimizado y calibrado (`EfficientNet-Lite0` o `B0`) ofrece mayor predictibilidad ante fuentes no observadas.
+1. **La ventaja del ensamble es mixta e inestable fuera de dominio:** A diferencia del test de desarrollo estratificado (donde el ensamble superaba a todos los modelos de forma consistente), ante una fuente no vista la mejora promedio se redujo a la mitad ($+0.0045$) y su desviación típica ($\pm 0.0080$) resultó mayor que la propia mejora.
+2. **Degradación de la calibración:** Promediar probabilidades de modelos no calibrados fuera de dominio incrementa la sobreconfianza en las predicciones erróneas, duplicando el ECE (de 4.4 % a 8.9 %).
+3. **Implicación para el despliegue del sistema:** Estos resultados respaldan la decisión de no sobrecargar la arquitectura móvil con ensambles pesados fuera de dominio: un modelo individual bien optimizado y calibrado (`EfficientNet-Lite0` o `B0`) ofrece mayor predictibilidad ante fuentes no observadas.
 
 ---
 

@@ -61,8 +61,7 @@ La auditoría analizó el **100 % del volumen canónico** (33 437 archivos descu
 
 ## 4. Límite Metodológico Declarado con Transparencia
 
-> [!WARNING] Alcance: Duplicados Exactos vs. Similitud Perceptual
-> La auditoría garantiza matemáticamente la **ausencia total de duplicados exactos** (por bytes y por raster RGB). Sin embargo, la materialización actual no ejecutó deduplicación perceptual (`deduplicate_perceptual=false`), por lo que no prueba la ausencia de imágenes casi duplicadas por rotación, recorte menor o encuadres consecutivos de ráfaga (PHash). Este límite se encuentra debidamente documentado en la metodología del proyecto.
+> [!WARNING] Alcance: Duplicados Exactos vs. Similitud Perceptual La auditoría garantiza matemáticamente la **ausencia total de duplicados exactos** (por bytes y por raster RGB). Sin embargo, la materialización actual no ejecutó deduplicación perceptual (`deduplicate_perceptual=false`), por lo que no prueba la ausencia de imágenes casi duplicadas por rotación, recorte menor o encuadres consecutivos de ráfaga (PHash). Este límite se encuentra debidamente documentado en la metodología del proyecto.
 
 ---
 
@@ -70,6 +69,6 @@ La auditoría analizó el **100 % del volumen canónico** (33 437 archivos descu
 
 Los datos crudos de la auditoría completa están disponibles para inspección directa:
 * Informe formal de la auditoría: [`PIXEL_DUPLICATE_AUDIT.md`](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md)
-* Inventario de hashes de las 33 437 imágenes: [`corpus_preflight.csv`](../reproducibilidad/evidencia/pixel_duplicate_audit/corpus_preflight.csv) (**11.6 MB**)
+* Verificación de rutas y SHA-256 de los 33 437 archivos: [`corpus_preflight.json`](../reproducibilidad/evidencia/pixel_duplicate_audit/corpus_preflight.json)
 * Inventario canónico RGB post-EXIF: [`pixel_hash_inventory.csv`](../reproducibilidad/evidencia/pixel_duplicate_audit/pixel_hash_inventory.csv) (**11.3 MB**)
 * Registro contractual de los 4 conflictos excluidos: `config/dataset_exclusions.csv` y [`pixel_label_conflicts.csv`](../reproducibilidad/evidencia/pixel_duplicate_audit/pixel_label_conflicts.csv)

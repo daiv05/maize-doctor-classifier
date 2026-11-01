@@ -5,7 +5,7 @@ description: Módulo de contribución ciudadana para enriquecer el modelo con da
 
 # Aporte a la Ciencia: Dataset Nacional de Maíz
 
-El entrenamiento de algoritmos de inteligencia artificial depende de la diversidad geográfica de sus fotografías. Sin embargo, en la investigación inicial de DoctorMaiz se evidenció una realidad contundente: **de los 14 datasets públicos internacionales evaluados, ninguno incluía imágenes capturadas en Centroamérica**.
+El entrenamiento de algoritmos de inteligencia artificial depende de la diversidad geográfica de sus fotografías. Sin embargo, en la investigación inicial de DoctorMaiz se evidenció una realidad contundente: **de los datasets públicos internacionales evaluados, ninguno incluía imágenes capturadas en Centroamérica**.
 
 DoctorMaiz convierte a cada agricultor en un colaborador activo de la ciencia mediante su módulo de **Contribución Ciudadana**.
 
@@ -13,15 +13,9 @@ DoctorMaiz convierte a cada agricultor en un colaborador activo de la ciencia me
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_contribute.png" 
-    caption="Módulo de Contribución" 
-    subtitle="Selección y envío de fotografías" 
-  />
+    src="/app/pixel4_contribute.png" caption="Módulo de Contribución" subtitle="Selección y envío de fotografías" />
   <PhoneMockup 
-    src="/app/contribuir.png" 
-    caption="Validación Comunitaria" 
-    subtitle="Aporte a la investigación regional" 
-  />
+    src="/app/contribuir.png" caption="Validación Comunitaria" subtitle="Aporte a la investigación regional" />
 </PhoneGallery>
 
 ---

@@ -1,6 +1,6 @@
 # Baseline principal de desarrollo — EfficientNet-Lite0 `20260921_204608`
 
-Esta corrida es el primer reentrenamiento completo de `EfficientNet-Lite0` sobre la materialización corregida de `seed_42`. Es el **baseline vigente de desarrollo**, pero **no sustituye todavía al modelo TFLite desplegado**.
+Esta corrida es el primer reentrenamiento completo de `EfficientNet-Lite0` sobre la materialización corregida de `seed_42`. Es el **modelo oficial** y el que despliega la app desde el 2026-11-01 en su exportación TFLite int8.
 
 ## Identidad y reproducibilidad
 
@@ -58,18 +58,20 @@ La calibración del test reporta ECE de 0.1397 y Brier binario de acierto de 0.0
 
 ## Interpretación
 
-Frente al `EfficientNet-Lite0` históricamente desplegado (Macro-F1 0.9468), el baseline actual difiere aproximadamente +0.0012 en el test estratificado. Las corridas proceden de materializaciones distintas, por lo que esa resta es descriptiva y no demuestra una mejora. Potasio presenta el F1 más bajo del run (0.8242), y las confusiones N/P/K justifican una revisión cualitativa. La calibración aconseja revisar método y umbrales antes de presentar la confianza como certeza diagnóstica.
+Frente al `EfficientNet-Lite0` de la etapa 2 (Macro-F1 0.9468), el oficial difiere aproximadamente +0.0012 en el test estratificado. Las corridas proceden de materializaciones distintas y solo comparten 2 539 imágenes de test; sobre ellas, McNemar da 23 frente a 22 discordancias (p = 1.00), de modo que no hay diferencia medible. Potasio presenta el F1 más bajo del run (0.8242), y las confusiones N/P/K justifican una revisión cualitativa. La calibración aconseja revisar método y umbrales antes de presentar la confianza como certeza diagnóstica.
 
 ## Limitaciones y decisión de promoción
 
 `seed_42` mezcla las fuentes conocidas entre train, validación y test; es adecuado para desarrollo *in-distribution*, pero no demuestra generalización a una cámara, parcela o repositorio nuevo. Además, esta materialización garantiza separación por identificador, SHA-256 y grupo efectivo, pero se generó con `deduplicate_perceptual=false`: la posible fuga por imágenes casi duplicadas no fue medida.
 
-Antes de promover el checkpoint se debe:
+Quedan por hacer:
 
 1. ejecutar la evaluación agrupada por fuente o *leave-one-source-out*;
 2. auditar solapamiento perceptual entre particiones;
 3. revisar los 110 errores, especialmente las deficiencias y las tres fuentes más débiles;
-4. exportar a TFLite Int8 y comprobar paridad y macro F1 sobre el test completo;
-5. validar latencia, OOD y calibración en el dispositivo objetivo.
+4. la paridad de muestra del int8 (30 imágenes) no se aprobó por una imagen límite (max |Δprob| 0.198 frente al umbral 0.15); la evaluación sobre el test completo sí se hizo (Macro-F1 0.9489, acuerdo con PyTorch 99.74 %);
+5. calibración y umbrales en el dispositivo objetivo.
 
-Los parámetros y métricas exactos se conservan en [`run_20260921_lite0_summary.json`](./evidencia/run_20260921_lite0_summary.json), [`classification_report.csv`](./evidencia/run_20260921_204608_test_classification_report.csv), [`confusion_matrix.csv`](./evidencia/run_20260921_204608_test_confusion_matrix.csv), [`calibration.json`](./evidencia/run_20260921_204608_test_calibration.json), desgloses por [ambiente](./evidencia/run_20260921_204608_test_by_environment.csv) y [fuente](./evidencia/run_20260921_204608_test_by_source.csv), y la corrida está en el [manifiesto de auditoría](./evidencia/manifiesto_corridas.csv).
+La exportación móvil está en [`export_movil_20260921_204608/`](../reproducibilidad/evidencia/export_movil_20260921_204608/export_summary_int8.json).
+
+Los parámetros y métricas exactos se conservan en [`hpo_baseline_summary.json`](../reproducibilidad/evidencia/hpo_baseline_summary.json), [`classification_report.csv`](./evidencia/run_20260921_204608_test_classification_report.csv), [`confusion_matrix.csv`](./evidencia/run_20260921_204608_test_confusion_matrix.csv), [`calibration.json`](./evidencia/run_20260921_204608_test_calibration.json), desgloses por [ambiente](./evidencia/run_20260921_204608_test_by_environment.csv) y [fuente](./evidencia/run_20260921_204608_test_by_source.csv), y la corrida está en el [manifiesto de auditoría](./evidencia/manifiesto_corridas.csv).

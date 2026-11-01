@@ -25,10 +25,10 @@ features:
     details: "Detección de 4 patologías fúngicas/virales, 1 plaga (cogollero), 3 deficiencias nutricionales (N, P, K) y control de hoja sana mediante CNN con transfer learning."
   - icon: ⚡
     title: "Edge AI 100 % Offline"
-    details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite Int8 (≤ 14 MB), con latencia < 300 ms en procesadores móviles sin requerir internet."
+    details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite Int8 (3.74 MB), con inferencia de unos 23 ms en un teléfono de gama media sin requerir internet."
   - icon: 🌾
     title: "Diseñado para el Campo"
-    details: "Resistente a fondos ruidosos mediante encuadre guiado y recorte preventivo, evaluado bajo condiciones reales de iluminación en El Salvador."
+    details: "Encuadre guiado y recorte al marco de la cámara para reducir el fondo. La generalización a fotos de campo externas al corpus es una limitación documentada."
   - icon: 🛡️
     title: "Auditoría y Validación LOSO"
     details: "Evaluación honesta por origen (Leave-One-Source-Out) y módulo de detección fuera de distribución (Mahalanobis OOD) para evitar falsos diagnósticos."
@@ -40,11 +40,11 @@ features:
     <div class="dm-kpi-lbl">Muestras Foliares Curadas</div>
   </div>
   <div class="dm-kpi-card">
-    <div class="dm-kpi-val">&lt; 300 ms</div>
-    <div class="dm-kpi-lbl">Inferencia en CPU Móvil</div>
+    <div class="dm-kpi-val">~23 ms</div>
+    <div class="dm-kpi-lbl">Inferencia en CPU Móvil (mediana)</div>
   </div>
   <div class="dm-kpi-card">
-    <div class="dm-kpi-val">≤ 14 MB</div>
+    <div class="dm-kpi-val">3.74 MB</div>
     <div class="dm-kpi-lbl">Modelo Cuantizado Int8</div>
   </div>
   <div class="dm-kpi-card">
@@ -124,9 +124,9 @@ El sistema evalúa 9 condiciones foliares agrupadas en cuatro categorías fitosa
 El proyecto avanza en fases iterativas siguiendo el ciclo estándar **CRISP-DM**:
 
 1. **Comprensión del negocio**: análisis de las condiciones de campo y limitaciones de conectividad rural en El Salvador.
-2. **Comprensión de los datos**: consolidación multi-fuente de 8 repositorios internacionales; ver [Recopilación de datasets](/es/datasets/).
+2. **Comprensión de los datos**: consolidación multi-fuente de 11 fuentes (`source_id`) internacionales; ver [Recopilación de datasets](/es/datasets/).
 3. **Preparación de los datos**: filtrado de atajos, normalización a 224 × 224 px y balanceo de clases.
-4. **Modelado**: transfer learning y benchmarking con arquitecturas MobileNet, EfficientNet y ResNet.
+4. **Modelado**: transfer learning y benchmarking con EfficientNet-B0, EfficientNet-Lite0 y ShuffleNet-V2.
 5. **Evaluación y Auditoría**: macro-F1, análisis de calibración, partición LOSO por origen y detección de muestras anómalas (OOD).
 6. **Despliegue móvil**: cuantización Int8 post-entrenamiento (TFLite) y empaquetado en aplicación Android nativa offline.
 
@@ -134,7 +134,7 @@ El proyecto avanza en fases iterativas siguiendo el ciclo estándar **CRISP-DM**
 
 ```mermaid
 flowchart LR
-    A["📸 Captura en Campo<br>(Visor con recorte 75 %)"] --> B["⚙️ Preprocesamiento<br>(224×224 px, normalización)"]
+    A["📸 Captura en Campo<br>(Visor con recorte al marco guía)"] --> B["⚙️ Preprocesamiento<br>(224×224 px, normalización)"]
     B --> C["🧠 Inferencia Edge TFLite<br>(EfficientNet-Lite0 Int8)"]
     C --> D{"🛡️ Filtro OOD<br>Mahalanobis"}
     D -- "Fuera de dominio" --> E["⚠️ Alerta Muestra No Reconocida"]
@@ -149,12 +149,12 @@ flowchart LR
     <div class="dm-spec-value">Android 8.0+ (ARM64, gama media/baja)</div>
   </div>
   <div class="dm-spec-item">
-    <div class="dm-spec-label">📦 Peso Máximo Modelo</div>
-    <div class="dm-spec-value">≤ 14 MB (TFLite Int8 post-cuantización)</div>
+    <div class="dm-spec-label">📦 Tamaño del Modelo</div>
+    <div class="dm-spec-value">3.74 MB (TFLite Int8 post-cuantización)</div>
   </div>
   <div class="dm-spec-item">
     <div class="dm-spec-label">⚡ Latencia de Inferencia</div>
-    <div class="dm-spec-value">&lt; 300 ms por fotograma en CPU</div>
+    <div class="dm-spec-value">~23 ms de inferencia y ~98 ms de preprocesado (medianas)</div>
   </div>
   <div class="dm-spec-item" style="border-left: 3px solid #2e7d32;">
     <div class="dm-spec-label">📡 Requisito de Red</div>

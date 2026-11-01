@@ -190,7 +190,6 @@ watch(isDark, () => {
       <span>Cargando diagrama...</span>
     </div>
 
-    <!-- Modal de Pantalla Completa -->
     <Teleport to="body">
       <Transition name="fade">
         <div
@@ -198,7 +197,6 @@ watch(isDark, () => {
           class="mermaid-fullscreen-modal"
           @click.self="closeFullscreen"
         >
-          <!-- Barra superior de controles -->
           <div class="modal-header">
             <div class="modal-title">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -272,7 +270,6 @@ watch(isDark, () => {
             </div>
           </div>
 
-          <!-- Lienzo con scroll, fondo cuadriculado y tarjeta contenedora -->
           <div class="modal-viewport" @wheel="handleWheel">
             <div
               class="modal-canvas-wrapper"
@@ -358,7 +355,6 @@ watch(isDark, () => {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
 }
 
-/* Fix text clipping in Mermaid nodes */
 .mermaid-svg-wrapper :deep(foreignObject) {
   overflow: visible !important;
 }
@@ -430,9 +426,6 @@ watch(isDark, () => {
   word-break: break-all;
 }
 
-/* ==============================================================================
-   Modal de Pantalla Completa - Estilo Tablero de Diseño
-   ============================================================================== */
 .mermaid-fullscreen-modal {
   position: fixed;
   inset: 0;
@@ -632,7 +625,6 @@ watch(isDark, () => {
   text-align: center !important;
 }
 
-/* Animaciones */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;

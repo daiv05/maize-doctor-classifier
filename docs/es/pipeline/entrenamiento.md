@@ -1,6 +1,6 @@
 # Entrenamiento del pipeline principal
 
-Se entrenaron tres arquitecturas en la etapa histórica del pipeline principal. La materialización vigente de `seed_42` contiene **33 429 imágenes** en nueve clases. Un `EfficientNet-Lite0` histórico está desplegado; el checkpoint vigente `20260921_204608` es todavía baseline de desarrollo.
+Se entrenaron tres arquitecturas en la etapa histórica del pipeline principal. La materialización vigente de `seed_42` contiene **33 429 imágenes** en nueve clases. El `EfficientNet-Lite0` `20260921_204608` es el modelo oficial y el que despliega la app; el `20260812_221429` de la etapa 2 es el histórico.
 
 El pipeline produce checkpoints `best.pth` para ensamble, auditoría y exportación. “Best” significa mejor validación dentro del run, no validación de producción.
 
@@ -22,7 +22,7 @@ A diferencia de los baselines (que operaron sobre un subconjunto capado a 10,020
 | **Prueba (`test.csv`)** | 15.0 % | **5,015** | Evaluación final retenida (no vista en entrenamiento) |
 | **Total Corpus** | **100 %** | **33,429** | 9 clases patológicas y nutricionales |
 
-Este split es estratificado por `label + environment`; las fuentes se conservan como metadato y pueden aparecer a ambos lados. Los resultados históricos que aparecen más abajo corresponden a una materialización anterior de 33 433 imágenes. El primer reentrenamiento sobre el split corregido es el [baseline `20260921_204608`](/es/resultados/run-20260921-efficientnet-lite0).
+Este split es estratificado por `label + environment`; las fuentes se conservan como metadato y pueden aparecer a ambos lados. Los resultados históricos que aparecen más abajo corresponden a la materialización de la etapa 2 (33 433 imágenes). El primer reentrenamiento sobre el split corregido es el [baseline `20260921_204608`](/es/resultados/run-20260921-efficientnet-lite0).
 
 ---
 
@@ -30,7 +30,7 @@ Este split es estratificado por `label + environment`; las fuentes se conservan 
 
 Cada arquitectura usa la configuración con la que obtiene su mejor resultado en prueba, que no es la misma para las tres:
 
-| | `EfficientNet-Lite0` (desplegada) | `EfficientNet-B0` y `ShuffleNet-V2` |
+| | `EfficientNet-Lite0` (etapa 2) | `EfficientNet-B0` y `ShuffleNet-V2` |
 |---|:---:|:---:|
 | **Learning Rate** | `1.0e-4` | `4.548e-4` |
 | **Batch Size** | 32 | 64 |
@@ -59,7 +59,7 @@ Los valores de `warmup_epochs` y `weight_decay` de la tabla siguiente son los de
 Se entrenaron de forma independiente tres arquitecturas:
 1. **`EfficientNet-B0`:** Red convolucional de alta capacidad con bloques MBConv y atención de canales (Squeeze & Excitation).
 2. **`ShuffleNet-V2-x1.0`:** Red ultra-ligera de baja latencia con división y barajado de canales (*Channel Split & Shuffle*).
-3. **`EfficientNet-Lite0`:** Variante sin bloques Squeeze & Excitation ni activaciones *swish*, sustituidas por operaciones cuantizables a entero de 8 bits. **Es la arquitectura desplegada.**
+3. **`EfficientNet-Lite0`:** Variante sin bloques Squeeze & Excitation ni activaciones *swish*, sustituidas por operaciones cuantizables a entero de 8 bits. **Es la arquitectura que despliega la app.**
 
 La figura siguiente compara las tres bajo **hiperparámetros idénticos** —los valores por defecto del pipeline— para que la curva refleje la arquitectura y no la configuración:
 
@@ -83,7 +83,7 @@ La figura siguiente compara las tres bajo **hiperparámetros idénticos** —los
 
 Al evaluar los checkpoints finales (`best.pth`) sobre el subconjunto de prueba independiente (`test.csv`), ambos modelos demostraron una capacidad de generalización sobresaliente:
 
-| Métrica Global | EfficientNet-Lite0 (desplegada) | EfficientNet-B0 | ShuffleNet-V2-x1.0 |
+| Métrica Global | EfficientNet-Lite0 (etapa 2) | EfficientNet-B0 | ShuffleNet-V2-x1.0 |
 |---|:---:|:---:|:---:|
 | **Corrida** | `20260812_221429` | `20260910_170120` | `20260910_184521` |
 | **Mejor época** | 35 | 28 | 23 |

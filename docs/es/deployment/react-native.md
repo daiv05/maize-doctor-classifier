@@ -15,10 +15,10 @@ Además del modelo estándar en precisión flotante (FP32), generamos versiones 
 | Arquitectura | Tamaño FP32 | Tamaño cuantizado (Int8) | Reducción de espacio |
 |---|:---:|:---:|:---:|
 | **`shufflenet_v2_x1_0`** | 4.93 MB | **1.42 MB** | 71 % más ligero |
-| **`efficientnet_lite0`** (desplegada) | 12.92 MB | **3.56 MB** | 72 % más ligero |
+| **`efficientnet_lite0`** (oficial) | 13.56 MB | **3.74 MB** | 72 % más ligero |
 | **`efficientnet_b0`** | 15.48 MB | **4.44 MB** | 71 % más ligero |
 
-El modelo elegido para la versión final es **`efficientnet_lite0` cuantizado a Int8** (alrededor de 3.5 MB). Su arquitectura prescinde de activaciones complejas para facilitar la aceleración por hardware en CPUs móviles modestas.
+La app despliega **`efficientnet_lite0` cuantizado a Int8** (3.74 MB), el run oficial `20260921_204608`. Su arquitectura prescinde de activaciones complejas para facilitar la aceleración por hardware en CPUs móviles modestas.
 
 Junto al archivo `.tflite`, el pipeline exporta dos acompañantes fundamentales:
 1. **`labels.json`**: El mapa oficial con el orden exacto de las 9 clases. La aplicación lo lee dinámicamente al iniciar, asegurando que nunca haya desincronizaciones entre el índice de salida y el nombre de la patología.

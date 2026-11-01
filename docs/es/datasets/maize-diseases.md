@@ -44,10 +44,7 @@ Las imágenes de **Common Rust (1 192) y Gray Leaf Spot (513) son idénticas en 
 :::
 
 <ImageCarousel :images="[
-	{ src: '/maize-diseases/img (10).png', alt: 'Fondo negro' },
-	{ src: '/maize-diseases/img (1008).png', alt: 'Entorno real' },
-	{ src: '/maize-diseases/img (1138).png', alt: 'Hoja sana, sin fondo' }
-]" />
+	{ src: '/maize-diseases/img (10).png', alt: 'Fondo negro' }, { src: '/maize-diseases/img (1008).png', alt: 'Entorno real' }, { src: '/maize-diseases/img (1138).png', alt: 'Hoja sana, sin fondo' } ]" />
 
 ## Tamaño y distribución
 

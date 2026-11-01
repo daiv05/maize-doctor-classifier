@@ -11,20 +11,11 @@ description: Documentación oficial de la aplicación móvil DoctorMaiz para dia
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_home_top.png" 
-    caption="Dashboard Agroclimático" 
-    subtitle="Monitoreo GPS y acceso rápido" 
-  />
+    src="/app/pixel4_home_top.png" caption="Dashboard Agroclimático" subtitle="Monitoreo GPS y acceso rápido" />
   <PhoneMockup 
-    src="/app/pixel4_camera.png" 
-    caption="Escáner Asistido" 
-    subtitle="Retícula foliar inteligente" 
-  />
+    src="/app/pixel4_camera.png" caption="Escáner Asistido" subtitle="Retícula foliar inteligente" />
   <PhoneMockup 
-    src="/app/pixel4_detail_scan.png" 
-    caption="Diagnóstico Inmediato" 
-    subtitle="Certeza y severidad en <60 ms" 
-  />
+    src="/app/pixel4_detail_scan.png" caption="Diagnóstico Inmediato" subtitle="Certeza y severidad al instante" />
 </PhoneGallery>
 
 ---
@@ -37,8 +28,8 @@ A diferencia de las soluciones basadas en servidores en la nube, el modelo de vi
 
 | Característica | Especificación en DoctorMaiz | Beneficio en Campo |
 |---|:---:|---|
-| **Velocidad de Inferencia** | **~60 ms** (en procesador móvil) | Diagnóstico instantáneo sin esperas ni pausas |
-| **Tamaño del Modelo** | **3.56 MB** (`efficientnet_lite0_int8`) | No satura el almacenamiento del dispositivo |
+| **Velocidad de Inferencia** | **~23 ms** (mediana, Motorola edge 40 neo) | Diagnóstico instantáneo sin esperas ni pausas |
+| **Tamaño del Modelo** | **3.74 MB** (`efficientnet_lite0_int8`) | No satura el almacenamiento del dispositivo |
 | **Salvaguarda Fuera de Dominio** | **Distancia de Mahalanobis** (OOD) | Rechaza fotos desenfocadas, malezas u objetos extraños |
 | **Monitoreo Agroclimático** | **4 Variables** con caché persistente | Alertas tempranas de roya y deriva de pulverización |
 | **Mapeo Satelital** | **GPS automático por toma** | Cartografía de calor con focos infecciosos en el lote |
@@ -55,7 +46,7 @@ flowchart TD
     A[Inicio en Parcela] --> B[Abrir Cámara con Retícula Foliar]
     B --> C[Captura Centrada a 20-30 cm]
     C --> D[Preprocesamiento Skia: Recorte + Normalización NCHW]
-    D --> E[Inferencia Local TFLite ~60 ms]
+    D --> E[Inferencia Local TFLite ~23 ms]
     E --> F{¿Distancia Mahalanobis > Umbral OOD?}
     F -- Sí --> G[Estado: 'No Reconocida' - Sugerir reenfoque]
     F -- No --> H[Identificación de Patología + Nivel de Confianza]

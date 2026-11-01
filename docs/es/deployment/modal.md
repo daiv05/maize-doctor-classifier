@@ -1,18 +1,12 @@
 # Entrenamiento en la nube con Modal
 
-El proyecto utiliza Modal para ejecutar entrenamientos y análisis de explicabilidad
-en contenedores con GPU. Los scripts remotos invocan los mismos pipelines que la
-ejecución local; la configuración de la imagen y los volúmenes se comparte en
-`scripts/modal/_common.py`.
+El proyecto utiliza Modal para ejecutar entrenamientos y análisis de explicabilidad en contenedores con GPU. Los scripts remotos invocan los mismos pipelines que la ejecución local; la configuración de la imagen y los volúmenes se comparte en `scripts/modal/_common.py`.
 
 ---
 
 ## Cómo encaja en nuestro flujo de trabajo
 
-Cada función remota declara sus recursos de GPU, CPU y memoria. Al ejecutarse,
-el contenedor recibe el código y monta los volúmenes necesarios. Los resultados
-que deban conservarse se escriben en almacenamiento persistente y se confirman
-antes de finalizar la invocación.
+Cada función remota declara sus recursos de GPU, CPU y memoria. Al ejecutarse, el contenedor recibe el código y monta los volúmenes necesarios. Los resultados que deban conservarse se escriben en almacenamiento persistente y se confirman antes de finalizar la invocación.
 
 Todo el almacenamiento se organiza alrededor de dos volúmenes persistentes en la nube que actúan como discos duros compartidos:
 

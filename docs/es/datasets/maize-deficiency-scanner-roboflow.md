@@ -72,18 +72,7 @@ Todas las anotaciones son polígonos de segmentación (312 líneas, 0 bbox), con
 
 ## Citación
 
-@misc{ maize-deficiency-scanner-z2whz_dataset,
-  title = { Maize Deficiency Scanner Dataset },
-  type = { Open Source Dataset },
-  author = { David Deras },
-  howpublished = { \url{ https://universe.roboflow.com/david-deras/maize-deficiency-scanner-z2whz } },
-  url = { https://universe.roboflow.com/david-deras/maize-deficiency-scanner-z2whz },
-  journal = { Roboflow Universe },
-  publisher = { Roboflow },
-  year = { 2026 },
-  month = { aug },
-  note = { visited on 2026-08-11 },
-}
+@misc{ maize-deficiency-scanner-z2whz_dataset, title = { Maize Deficiency Scanner Dataset }, type = { Open Source Dataset }, author = { David Deras }, howpublished = { \url{ https://universe.roboflow.com/david-deras/maize-deficiency-scanner-z2whz } }, url = { https://universe.roboflow.com/david-deras/maize-deficiency-scanner-z2whz }, journal = { Roboflow Universe }, publisher = { Roboflow }, year = { 2026 }, month = { aug }, note = { visited on 2026-08-11 }, }
 
 ## Licencia
 
