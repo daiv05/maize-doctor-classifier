@@ -1,37 +1,25 @@
 ifeq ($(OS),Windows_NT)
-    PYTHON 	:= venv\Scripts\python
-    PIP    	:= venv\Scripts\pip
-    RUFF   	:= venv\Scripts\ruff
-	PYRIGHT := venv\Scripts\pyright
-	MODAL   := venv\Scripts\modal
+    PYTHON := venv\Scripts\python
+    PIP    := venv\Scripts\pip
+    RUFF   := venv\Scripts\ruff
+    PYRIGHT := venv\Scripts\pyright
+    MODAL   := venv\Scripts\modal
 else
-    PYTHON 	:= venv/bin/python
-    PIP    	:= venv/bin/pip
-    RUFF   	:= venv/bin/ruff
-	PYRIGHT := venv/bin/pyright
-	MODAL   := venv/bin/modal
+    PYTHON := venv/bin/python
+    PIP    := venv/bin/pip
+    RUFF   := venv/bin/ruff
+    PYRIGHT := venv/bin/pyright
+    MODAL   := venv/bin/modal
 endif
 
-# ==============================================================================
-# Variables
-# ==============================================================================
-
-# Modelos: MODELS aplica a los baselines, MAIN_MODELS al pipeline principal.
 MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
 MAIN_MODELS ?= efficientnet_b0 shufflenet_v2_x1_0 efficientnet_lite0
 
-# Explicabilidad local: directorio raíz de runs. Vacío = default del script
-# (outputs/baselines).
 OUTPUT_DIR ?=
 MAIN_OUTPUT_DIR ?= outputs/main
 
-# Explicabilidad en Modal: el directorio se elige por nombre de pipeline
-# ("baselines" | "main") y lo resuelve el contenedor sobre el Volume corn-outputs.
-# Pasar rutas absolutas aquí no funciona: MSYS (Git Bash) reescribe /outputs/... a
-# una ruta de Windows antes de que llegue al comando.
 PIPELINE ?= baselines
 
-# Entrenamiento
 EPOCHS ?= 30
 MAIN_EPOCHS ?=
 SPLITS_DIR ?=
@@ -51,15 +39,12 @@ NO_PRETRAINED ?=
 LIME ?=
 DETACH ?=
 
-# Optuna HPO & K-Fold Cross Validation
 N_TRIALS ?= 20
 TIMEOUT ?=
 PRUNER ?= median
-BASELINE_F1 ?= 0.9146
+BASELINE_F1 ?=
 K_FOLDS ?= 5
 
-# Exportacion (ONNX/TFLite). Vacia por defecto: opt-in via EXPORT_FORMATS=onnx[,tflite].
-# QUANTIZE=int8 produce model_int8.<fmt> junto al FP32, sin pisarlo.
 EXPORT_FORMATS ?=
 QUANTIZE ?=
 NO_PARITY ?=
@@ -69,7 +54,6 @@ PARITY_SAMPLE_SIZE ?=
 NO_TORCH_BASELINE ?=
 MAX_MACRO_F1_DROP ?=
 
-# Explicabilidad e inferencia
 NUM_SAMPLES ?=
 SAMPLE_SIZE ?=
 NSAMPLES ?=
@@ -83,14 +67,11 @@ STABILITY_RUNS ?=
 
 .DEFAULT_GOAL := help
 
-# ==============================================================================
-# Ayuda
-# ==============================================================================
-
 .PHONY: help
 help:
 	@echo "Local - setup y datos:"
-	@echo "  install download-dataset upload-dataset splits splits-baseline summary test-loader"
+	@echo "  install download-dataset upload-dataset splits splits-baseline summary test-loader test"
+	@echo "    install incluye los extras dev, analysis, xai, cloud y tuning"
 	@echo "    upload-dataset requiere STAGE_DIR=<dir con ~18GB libres> [DRY_RUN=1] [KEEP_STAGE=1]"
 	@echo ""
 	@echo "Local - baselines (runs en outputs/baselines, var MODELS):"
@@ -99,20 +80,28 @@ help:
 	@echo ""
 	@echo "Local - pipeline principal (runs en $(MAIN_OUTPUT_DIR), var MAIN_MODELS):"
 	@echo "  train-main (alias: train)   [EXPORT_FORMATS=onnx,tflite para exportar al terminar]"
-	@echo "  tune-main (Optuna HPO)      [N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median]"
-	@echo "  tune-dashboard              (inicia optuna-dashboard en el puerto 8080)"
-	@echo "  evaluate-ensemble (alias: ensemble)  (evalúa Soft Voting Ensemble en test.csv)"
+	@echo "  tune-main (alias: tune)     Optuna HPO [N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median BASELINE_F1=<valor>]"
+	@echo "    sin BASELINE_F1 se usa el baseline de validacion del modelo oficial (tuning_study.BASELINE_F1)"
+	@echo "  hpo-main                    protocolo HPO formal Lite0 seed 42"
+	@echo "  tune-dashboard              optuna-dashboard en el puerto 8080 (requiere el extra tuning)"
+	@echo "  evaluate-ensemble (alias: ensemble)  Soft Voting Ensemble sobre test.csv"
+	@echo "  cross-validate (alias: kfold, kfold-main)  [K_FOLDS=5]"
+	@echo "  fairness-report (alias: fairness)"
+	@echo "  predict           (IMAGE=<archivo|carpeta> [MODEL=ensemble TOP_K=4])"
+	@echo "  inference         (IMAGE=<archivo> [MODEL RUN CHECKPOINT STABILITY_RUNS TOP_K])"
 	@echo "  export-main       (EXPORT_FORMATS=onnx,tflite [QUANTIZE=int8])"
-	@echo "  eval-export-main  (mide el .onnx/.tflite sobre el split de test completo)"
+	@echo "  compute-ood-stats (ood_stats.json del modelo exportado [PERCENTILE NUM_WORKERS])"
+	@echo "  eval-export-main  (mide el .onnx/.tflite sobre el split de test completo [NUM_WORKERS])"
+	@echo "  sync-mobile-model (RUN_DIR=<run> DEST=<assets/model de la app> [FORMAT QUANTIZE])"
 	@echo "  explain-visual-main explain-fidelity-main explain-errors-main"
 	@echo "  explain-compare-main explain-global-main   (SHAP: solo pipeline principal)"
 	@echo ""
 	@echo "Modal - infraestructura:"
 	@echo "  modal-seed modal-splits modal-clean-outputs modal-pull"
-	@echo "    modal-seed FORCE=1 vacía el Volume y re-descarga (para actualizar el dataset)"
+	@echo "    modal-seed FORCE=1 vacia el Volume y re-descarga (para actualizar el dataset)"
 	@echo ""
 	@echo "Modal - dataset pre-segmentado (corn-clean-segmented):"
-	@echo "  modal-segment-dataset modal-splits-segmented"
+	@echo "  modal-segment-dataset modal-splits-segmented modal-pull-segmentation-previews"
 	@echo "    modal-train SEGMENTED=1 entrena sobre el dataset segmentado (requiere ambos antes)"
 	@echo ""
 	@echo "Modal - baselines (runs en /outputs/baselines, var MODELS):"
@@ -121,7 +110,12 @@ help:
 	@echo ""
 	@echo "Modal - pipeline principal (runs en /outputs/main, var MAIN_MODELS):"
 	@echo "  modal-train-main (alias: modal-train)"
+	@echo "  modal-tune modal-tune-dashboard"
+	@echo "  modal-hpo-preflight modal-hpo-smoke modal-hpo   (protocolo HPO formal)"
+	@echo "  modal-ensemble (alias: modal-evaluate-ensemble) modal-cross-validate (alias: modal-kfold)"
+	@echo "  modal-fairness (alias: modal-fairness-report)"
 	@echo "  modal-export-main       (EXPORT_FORMATS=onnx,tflite [QUANTIZE=int8])"
+	@echo "  modal-compute-ood-stats (ood_stats.json en Modal [NUM_WORKERS])"
 	@echo "  modal-eval-export-main  (mide el exportado sobre el split de test completo)"
 	@echo "  modal-explain-visual-main modal-explain-fidelity-main modal-explain-errors-main"
 	@echo "  modal-explain-compare-main modal-explain-global-main"
@@ -131,25 +125,22 @@ help:
 	@echo "  modal-provenance-leak  modal-loso  modal-aligned-loso  modal-pull-provenance"
 	@echo "    DETACH=1 deja la corrida viva en Modal aunque se cierre la terminal"
 	@echo ""
-	@echo "Otros: inference lint lint-fix fmt check docs-eda compile-pdf clean-outputs"
+	@echo "Calidad, documentacion y limpieza:"
+	@echo "  lint lint-fix fmt check docs-eda docs (alias: docs-dev) clean-outputs"
+	@echo "  compile-tesina          (3 pasadas de pdflatex en reports/tesina)"
+	@echo "  compile-pdf-first-phase (documentacion de la primera fase)"
 	@echo ""
 	@echo "Los targets sin sufijo (explain-visual, modal-explain-fidelity, ...) son los genericos:"
 	@echo "apuntan a baselines salvo que se pase OUTPUT_DIR (local) o PIPELINE=main (Modal)."
 
-# ==============================================================================
-# Local - setup y datos
-# ==============================================================================
-
 .PHONY: install download-dataset upload-dataset splits splits-baseline summary test-loader
 
 install:
-	$(PIP) install -e ".[dev,analysis,xai,cloud]"
+	$(PIP) install -e ".[dev,analysis,xai,cloud,tuning]"
 
 download-dataset:
 	$(PYTHON) scripts/dataset/download_dataset.py
 
-# STAGE_DIR es obligatorio: el empaquetado necesita ~18 GB libres y el volumen del proyecto
-# no siempre los tiene. DRY_RUN=1 reporta el plan de shards sin escribir ni subir.
 upload-dataset:
 	$(PYTHON) scripts/dataset/upload_to_hf.py --stage-dir $(STAGE_DIR) $(if $(DRY_RUN),--dry-run,) $(if $(KEEP_STAGE),--keep-stage,)
 
@@ -165,13 +156,8 @@ summary:
 test-loader:
 	$(PYTHON) scripts/checks/smoke_loader.py
 
-# ==============================================================================
-# Local - entrenamiento
-# ==============================================================================
-
 .PHONY: train-baselines train train-main
 
-# Baselines: comparación rápida de arquitecturas. Runs en outputs/baselines/<modelo>/.
 train-baselines:
 	$(PYTHON) scripts/pipeline/train_baselines.py --models $(MODELS) --baseline \
 		$(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class $(MAX_PER_CLASS),) \
@@ -185,7 +171,6 @@ train-baselines:
 		$(if $(NO_PRETRAINED),--no-pretrained,) \
 		$(if $(LIME),--lime,)
 
-# Pipeline principal. Runs en outputs/main/<modelo>/.
 train:
 	$(PYTHON) scripts/pipeline/train.py --models $(MAIN_MODELS) \
 		$(if $(MAIN_EPOCHS),--epochs $(MAIN_EPOCHS),) \
@@ -202,7 +187,6 @@ train:
 
 train-main: train
 
-# Optuna HPO - Optimización Bayesiana de Hiperparámetros (Criterio 1 Etapa 2)
 .PHONY: tune tune-main tune-dashboard
 tune:
 	$(PYTHON) scripts/pipeline/tune.py --models $(MAIN_MODELS) \
@@ -211,13 +195,12 @@ tune:
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(TIMEOUT),--timeout $(TIMEOUT),) \
 		$(if $(PRUNER),--pruner $(PRUNER),) \
-		--baseline-f1 $(or $(BASELINE_F1),0.9468) \
+		$(if $(BASELINE_F1),--baseline-f1 $(BASELINE_F1),) \
 		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
 		$(if $(NO_PRETRAINED),--no-pretrained,)
 
 tune-main: tune
 
-# Protocolo formal, mismo motor Optuna; nunca usa los estudios históricos de tuning/.
 .PHONY: hpo-main modal-hpo-preflight modal-hpo-smoke modal-hpo
 hpo-main:
 	$(PYTHON) scripts/pipeline/tune.py --formal-hpo $(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),)
@@ -234,7 +217,6 @@ modal-hpo:
 tune-dashboard:
 	$(PYTHON) -c "from optuna_dashboard._cli import main; main()" sqlite:///outputs/tuning/optuna_study.db --port 8080
 
-# Ensamble por Soft Voting (Criterio 2 Etapa 2)
 .PHONY: evaluate-ensemble ensemble
 evaluate-ensemble:
 	$(PYTHON) scripts/pipeline/evaluate_ensemble.py \
@@ -245,7 +227,6 @@ evaluate-ensemble:
 
 ensemble: evaluate-ensemble
 
-# Validación Cruzada K-Fold (Criterio 3 Etapa 2)
 .PHONY: cross-validate kfold kfold-main
 cross-validate:
 	$(PYTHON) scripts/pipeline/cross_validate.py \
@@ -259,7 +240,6 @@ cross-validate:
 kfold-main: cross-validate
 kfold: cross-validate
 
-# Auditoría de Equidad y Sesgos (Criterio 4 Etapa 2)
 .PHONY: fairness-report fairness
 fairness-report:
 	$(PYTHON) scripts/pipeline/evaluate_fairness.py \
@@ -272,16 +252,8 @@ fairness-report:
 
 fairness: fairness-report
 
-# ==============================================================================
-# Local - exportacion (ONNX/TFLite)
-# ==============================================================================
-# Convierte un checkpoint ya entrenado del pipeline principal. Espeja el flag
-# --export de train.py; usa EXPORT_FORMATS=onnx[,tflite] (default: onnx).
-
 .PHONY: export-main eval-export-main
 
-# Exporta los modelos de MAIN_MODELS. Para uno solo: MAIN_MODELS=<nombre>.
-# (No usa MODEL: esa variable tiene default propio para inference_report.)
 export-main:
 	$(PYTHON) scripts/pipeline/export.py \
 		--models $(MAIN_MODELS) \
@@ -295,10 +267,7 @@ export-main:
 		$(if $(PARITY_SAMPLE_SIZE),--parity-sample-size $(PARITY_SAMPLE_SIZE),) \
 		$(if $(NO_PARITY),--no-parity,)
 
-# Calcula ood_stats.json (centroides + covarianza + umbral Mahalanobis) para
-# MAIN_MODELS, a partir del mismo checkpoint que export-main. Requiere haber
-# exportado antes con FORMATS que incluya el modelo de dos salidas (export-main
-# ya envuelve el checkpoint en FeatureExposedModel).
+.PHONY: compute-ood-stats
 compute-ood-stats:
 	$(PYTHON) scripts/pipeline/compute_ood_stats.py \
 		--models $(MAIN_MODELS) \
@@ -306,10 +275,9 @@ compute-ood-stats:
 		--output-dir $(MAIN_OUTPUT_DIR) \
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
-		$(if $(PERCENTILE),--percentile $(PERCENTILE),)
+		$(if $(PERCENTILE),--percentile $(PERCENTILE),) \
+		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),)
 
-# Mide el archivo exportado sobre el split de test completo (accuracy/macro-F1 reales),
-# no solo la paridad numerica de una muestra que valida export-main.
 eval-export-main:
 	$(PYTHON) scripts/pipeline/evaluate_export.py \
 		--models $(MAIN_MODELS) \
@@ -320,23 +288,16 @@ eval-export-main:
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
 		$(if $(NO_TORCH_BASELINE),--no-torch-baseline,) \
-		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),)
+		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),) \
+		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),)
 
 .PHONY: sync-mobile-model
-# Copia el modelo exportado + labels.json a maize-doctor-app/assets/model, con
-# verificacion de hash. RUN_DIR y DEST son obligatorios.
 sync-mobile-model:
 	$(PYTHON) -m scripts.pipeline.sync_mobile_model \
 		--run-dir $(RUN_DIR) \
 		--dest $(DEST) \
 		$(if $(FORMAT),--format $(FORMAT),) \
 		$(if $(QUANTIZE),--quantize $(QUANTIZE),)
-
-# ==============================================================================
-# Local - explicabilidad (post-hoc)
-# ==============================================================================
-# Los targets genéricos aceptan MODELS y OUTPUT_DIR; sin OUTPUT_DIR apuntan a
-# outputs/baselines. Las variantes -baselines / -main fijan modelos y directorio.
 
 .PHONY: explain-visual explain-fidelity explain-errors explain-compare explain-global \
 	explain-visual-baselines explain-fidelity-baselines explain-errors-baselines \
@@ -371,7 +332,6 @@ explain-global:
 		$(if $(NSAMPLES),--nsamples $(NSAMPLES),) \
 		$(if $(OUTPUT_DIR),--output-dir $(OUTPUT_DIR),)
 
-# Runs de baselines (outputs/baselines).
 explain-visual-baselines:
 	$(MAKE) explain-visual MODELS="$(MODELS)"
 
@@ -381,7 +341,6 @@ explain-fidelity-baselines:
 explain-errors-baselines:
 	$(MAKE) explain-errors MODELS="$(MODELS)"
 
-# Runs del pipeline principal (outputs/main). SHAP (compare/global) es exclusivo de aqui.
 explain-visual-main:
 	$(MAKE) explain-visual MODELS="$(MAIN_MODELS)" OUTPUT_DIR="$(MAIN_OUTPUT_DIR)"
 
@@ -397,17 +356,8 @@ explain-compare-main:
 explain-global-main:
 	$(MAKE) explain-global MODELS="$(MAIN_MODELS)" OUTPUT_DIR="$(MAIN_OUTPUT_DIR)"
 
-# ==============================================================================
-# Local - inferencia puntual
-# ==============================================================================
-# Inferencia + interpretabilidad completa de una imagen.
-# Uso: make inference IMAGE=foto.jpg [MODEL=<nombre> RUN=<run_id> CHECKPOINT=<ruta.pth>
-#      STABILITY_RUNS=<n> TOP_K=<k>]
-
 .PHONY: predict inference
 
-# Predicción rápida en imagen o carpeta (soporta MODEL=ensemble, efficientnet_b0, shufflenet_v2_x1_0).
-# Uso: make predict IMAGE=experiments/clahe/input [MODEL=ensemble TOP_K=4]
 predict:
 	$(PYTHON) scripts/pipeline/predict.py \
 		$(if $(MODEL),--model $(MODEL),--model ensemble) \
@@ -422,14 +372,8 @@ inference:
 		$(if $(STABILITY_RUNS),--stability-runs $(STABILITY_RUNS),) \
 		$(if $(TOP_K),--top-k $(TOP_K),)
 
-# ==============================================================================
-# Modal - infraestructura (Volumes corn-clean / corn-outputs)
-# ==============================================================================
+.PHONY: modal-seed modal-splits modal-splits-segmented modal-clean-outputs modal-pull
 
-.PHONY: modal-seed modal-splits modal-clean-outputs modal-pull
-
-# FORCE=1 vacía el Volume corn-clean antes de descargar: necesario para actualizar el dataset,
-# ya que la extracción de shards no elimina archivos renombrados o borrados aguas arriba.
 modal-seed:
 	$(MODAL) run scripts/modal/train.py::seed_dataset $(if $(FORCE),--force,)
 
@@ -441,8 +385,6 @@ modal-splits:
 		$(if $(ALLOW_INCOMPLETE),--allow-incomplete,) \
 		$(if $(GROUP_BY_SOURCE),--group-by-source,)
 
-# Splits sobre el dataset pre-segmentado (corn-clean-segmented -> splits/seed_42_segmented).
-# Requiere haber corrido antes modal-segment-dataset.
 modal-splits-segmented:
 	$(MODAL) run scripts/modal/train.py::make_splits_segmented
 
@@ -454,8 +396,6 @@ modal-pull:
 
 .PHONY: modal-segment-dataset modal-pull-segmentation-previews
 
-# Pre-segmentación del dataset en GPU Modal (detached con DETACH=1).
-# Uso: make modal-segment-dataset [DETACH=1 PROFILE=crop_mask_letterbox MAX_IMAGES=1000 MAX_PREVIEWS=50]
 modal-segment-dataset:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/segment_dataset.py \
 		$(if $(PROFILE),--profile "$(PROFILE)",) \
@@ -465,19 +405,11 @@ modal-segment-dataset:
 modal-pull-segmentation-previews:
 	$(MODAL) volume get --force corn-outputs segmentation_previews ./outputs/segmentation_previews
 
-# ==============================================================================
-# Procedencia y fuga (docs/es/provenance)
-# ==============================================================================
-
 .PHONY: provenance-audit modal-provenance-leak modal-loso modal-aligned-loso modal-pull-provenance
 
-# Auditoria local: fuente por imagen, duplicados exactos y barrido de casi-duplicados.
-# No requiere GPU ni Modal.
 provenance-audit:
 	$(PYTHON) scripts/experiments/provenance_audit.py
 
-# Test de fuga de procedencia sobre la particion aleatoria (detached con DETACH=1).
-# Uso: make modal-provenance-leak [DETACH=1 ARMS=original,border_ring SEEDS=0,1,2]
 modal-provenance-leak:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/provenance_leak.py \
 		$(if $(ARMS),--arms "$(ARMS)",) \
@@ -485,8 +417,6 @@ modal-provenance-leak:
 		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",) \
 		$(if $(RING_FRACTION),--ring-fraction "$(RING_FRACTION)",)
 
-# Validacion dejando una fuente fuera (detached con DETACH=1).
-# Uso: make modal-loso [DETACH=1 SEED=1 ARM=border_ring BALANCE=1 BACKMIX=0.5]
 modal-loso:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/leave_one_source_out.py \
 		$(if $(SEED),--seed "$(SEED)",) \
@@ -496,21 +426,18 @@ modal-loso:
 		$(if $(BACKMIX),--backmix "$(BACKMIX)",) \
 		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",)
 
-# Validacion por fuente con los componentes del pipeline principal (detached con DETACH=1).
-# Uso: make modal-aligned-loso [DETACH=1 ARM=colour_strong SEED=1 TRAIN_CAP=1000]
 modal-aligned-loso:
-	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/pipeline_aligned_loso.py 		$(if $(ARM),--arm "$(ARM)",) 		$(if $(SEED),--seed "$(SEED)",) 		$(if $(FOLDS),--folds "$(FOLDS)",) 		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",)
+	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/pipeline_aligned_loso.py \
+		$(if $(ARM),--arm "$(ARM)",) \
+		$(if $(SEED),--seed "$(SEED)",) \
+		$(if $(FOLDS),--folds "$(FOLDS)",) \
+		$(if $(TRAIN_CAP),--train-cap "$(TRAIN_CAP)",)
 
 modal-pull-provenance:
 	$(MODAL) volume get --force corn-outputs experiments ./outputs/experiments
 
-# ==============================================================================
-# Modal - entrenamiento
-# ==============================================================================
-
 .PHONY: modal-train-baselines modal-train modal-train-main
 
-# Baselines en GPU. Runs en /outputs/baselines/<modelo>/.
 modal-train-baselines:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py --models "$(MODELS)" --epochs "$(EPOCHS)" \
 		$(if $(NO_CAP),--no-cap,) $(if $(MAX_PER_CLASS),--max-per-class "$(MAX_PER_CLASS)",) \
@@ -523,9 +450,6 @@ modal-train-baselines:
 		$(if $(NO_PRETRAINED),--no-pretrained,) \
 		$(if $(LIME),--lime,)
 
-# Pipeline principal en GPU. Runs en /outputs/main/<modelo>/.
-# SEGMENTED=1 entrena sobre corn-clean-segmented + splits/seed_42_segmented (requiere
-# modal-segment-dataset y modal-splits-segmented corridos antes).
 modal-train:
 	$(MODAL) run $(if $(DETACH),--detach,) scripts/modal/train.py::train_main --models "$(MAIN_MODELS)" \
 		$(if $(MAIN_EPOCHS),--epochs "$(MAIN_EPOCHS)",) \
@@ -554,7 +478,6 @@ modal-tune:
 modal-tune-dashboard:
 	$(MODAL) serve scripts/modal/train.py
 
-# Ensamble, Validación Cruzada y Fairness en GPU Modal (Etapa 2)
 .PHONY: modal-ensemble modal-evaluate-ensemble modal-cross-validate modal-kfold modal-fairness modal-fairness-report
 
 modal-ensemble:
@@ -591,15 +514,8 @@ modal-fairness:
 
 modal-fairness-report: modal-fairness
 
-# ==============================================================================
-# Modal - exportacion (ONNX/TFLite)
-# ==============================================================================
-
 .PHONY: modal-export-main modal-eval-export-main modal-compute-ood-stats
 
-# SEGMENTED=1 en los tres targets de esta seccion: usa DATASET_ROOT=/data_segmented para
-# que la muestra de paridad / eval / features de OOD lean las mismas imagenes que vio el
-# checkpoint (necesario si el run se entreno con SEGMENTED=1 via modal-train).
 modal-export-main:
 	$(MODAL) run scripts/modal/export.py::export_main --models "$(MAIN_MODELS)" \
 		$(if $(RUN),--run $(RUN),) $(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
@@ -621,6 +537,7 @@ modal-eval-export-main:
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
 		$(if $(NO_TORCH_BASELINE),--no-torch-baseline,) \
 		$(if $(MAX_MACRO_F1_DROP),--max-macro-f1-drop $(MAX_MACRO_F1_DROP),) \
+		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
 		$(if $(SEGMENTED),--segmented,)
 
 modal-compute-ood-stats:
@@ -629,13 +546,8 @@ modal-compute-ood-stats:
 		$(if $(SPLITS_DIR),--splits-dir $(SPLITS_DIR),) \
 		$(if $(BATCH_SIZE),--batch-size $(BATCH_SIZE),) \
 		$(if $(PERCENTILE),--percentile $(PERCENTILE),) \
+		$(if $(NUM_WORKERS),--num-workers $(NUM_WORKERS),) \
 		$(if $(SEGMENTED),--segmented,)
-
-# ==============================================================================
-# Modal - explicabilidad (post-hoc)
-# ==============================================================================
-# Mismos genéricos que en local, pero el directorio de runs se elige con
-# PIPELINE=baselines|main. Las variantes -baselines / -main fijan modelos y pipeline.
 
 .PHONY: modal-explain-visual modal-explain-fidelity modal-explain-errors \
 	modal-explain-compare modal-explain-global \
@@ -690,11 +602,10 @@ modal-explain-compare-main:
 modal-explain-global-main:
 	$(MAKE) modal-explain-global MODELS="$(MAIN_MODELS)" PIPELINE=main SEGMENTED="$(SEGMENTED)"
 
-# ==============================================================================
-# Calidad, documentación y limpieza
-# ==============================================================================
+.PHONY: test lint lint-fix fmt check docs-eda compile-pdf-first-phase compile-tesina clean-outputs
 
-.PHONY: lint lint-fix fmt check docs-eda compile-pdf clean-outputs
+test:
+	$(PYTHON) -m pytest -q tests
 
 lint:
 	$(RUFF) check src/ scripts/
@@ -708,7 +619,6 @@ fmt:
 check:
 	$(PYRIGHT) src/ scripts/
 
-# Requiere shell POSIX (Powershell/Git Bash/WSL en Windows) y que existan outputs/eda/eda_*.png
 docs-eda:
 	cp outputs/eda/eda_*.png public/eda/
 
@@ -718,9 +628,14 @@ docs-dev:
 
 docs: docs-dev
 
-compile-pdf:
+compile-pdf-first-phase:
 	cd reports/firts-phase && pdflatex -interaction=nonstopmode documentation_first_phase.tex
 	cd reports/firts-phase && pdflatex -interaction=nonstopmode documentation_first_phase.tex
+
+compile-tesina:
+	cd reports/tesina && pdflatex -interaction=nonstopmode tesina.tex
+	cd reports/tesina && pdflatex -interaction=nonstopmode tesina.tex
+	cd reports/tesina && pdflatex -interaction=nonstopmode tesina.tex
 
 clean-outputs:
 	rm -rf outputs/
