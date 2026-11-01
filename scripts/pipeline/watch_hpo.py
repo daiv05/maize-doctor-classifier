@@ -7,7 +7,6 @@ transitorio. Si el equipo se suspende, Modal sigue trabajando y la recogida espe
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
 import logging
 import subprocess
@@ -16,6 +15,8 @@ import tempfile
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+
+from src.training.filelock import acquire_exclusive
 
 STUDY = "efficientnet_lite0_seed42_hpo_v1"
 REMOTE = f"hpo/efficientnet_lite0/{STUDY}"
@@ -29,10 +30,8 @@ def modal_call(executable: str, *args: str, timeout=90):
 def fetch_json(executable: str, filename: str):
     result = modal_call(executable, "volume", "get", "corn-outputs", f"{REMOTE}/{filename}", "-")
     if result.returncode:
-        # Un archivo aún no creado es normal. Otros errores deben conservarse.
         LOG.info("%s no disponible: %s", filename, result.stderr[-800:].strip())
         return None
-    # Algunas versiones del CLI imprimen un mensaje de éxito detrás del JSON.
     return json.JSONDecoder().raw_decode(result.stdout.lstrip())[0]
 
 
@@ -52,7 +51,6 @@ def collect(executable: str, root: Path, receipts: Path) -> Path:
     )
     if result.returncode:
         raise RuntimeError(f"Descarga incompleta en {receipt}: {result.stderr[-2000:]}")
-    # Modal conserva el nombre del directorio remoto al descargarlo a uno existente.
     study_dir = receipt / STUDY
     if not (study_dir / "study.db").is_file():
         raise RuntimeError(f"Falta SQLite en el estudio descargado: {study_dir}")
@@ -81,7 +79,7 @@ def monitor(executable: str, app_id: str, root: Path, interval: int):
     status_path = monitor_dir / "status.json"
     stopped_checks = 0
     with (monitor_dir / ".watch.lock").open("a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        acquire_exclusive(lock)
         while True:
             try:
                 final = fetch_json(executable, "FINAL_TEST_COMPLETE.json")
@@ -120,7 +118,6 @@ def monitor(executable: str, app_id: str, root: Path, interval: int):
                         )
                         return
             except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
-                # Los fallos de red no demuestran que el entrenamiento se detuvo.
                 write_status(status_path, "connection_retry", app_id=app_id, error=str(error))
             except Exception as error:
                 write_status(status_path, "needs_audit", app_id=app_id, error=str(error))

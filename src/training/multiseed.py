@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fcntl
 import importlib.metadata
 import json
 import math
@@ -26,6 +25,7 @@ from src.data.preparation import (
     validate_split_integrity,
 )
 from src.data.transforms import CornTransformFactory
+from src.training.filelock import acquire_exclusive, release
 from src.training.hyperparameters import load_best_params, validate_effective_hyperparameters
 from src.training.runs import validate_run_contract
 
@@ -81,7 +81,7 @@ def canonical_protocol(root=PROJECT_ROOT):
     configs = {}
     for name, summary in (("baseline", baseline), ("hpo_trial_0", hpo)):
         hp = validate_effective_hyperparameters(summary["hyperparameters"])
-        hp.pop("clahe", None)  # El contrato main registra CLAHE en preprocessing.
+        hp.pop("clahe", None)
         if hp["optimizer"] != "AdamW" or hp["sampler"] is not None or hp["dropout"] is not None:
             raise ValueError("Configuración incompatible con el pipeline main")
         if (
@@ -150,7 +150,6 @@ def audit_splits(directory, expected):
             if source[column].tolist() != frame[column].tolist():
                 raise ValueError(f"Metadatos de {column} incompatibles con master")
     remaining = master[~master.sample_id.isin(set(train.sample_id) | set(val.sample_id))]
-    # Cobertura train/val/resto contractual; no requiere abrir el CSV de test.
     integrity = validate_split_integrity(
         master, {"train": train, "val": val, "held_out": remaining}
     )
@@ -238,13 +237,13 @@ def exclusive_experiment(directory):
     directory.mkdir(parents=True, exist_ok=True)
     with (directory / ".writer.lock").open("a") as handle:
         try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquire_exclusive(handle)
         except BlockingIOError as error:
             raise RuntimeError("Ya existe un escritor multi-seed") from error
         try:
             yield
         finally:
-            fcntl.flock(handle, fcntl.LOCK_UN)
+            release(handle)
 
 
 def freeze_protocol(directory, protocol):
