@@ -1,6 +1,11 @@
 import numpy as np
 
-from src.explainability.leaf_mask import is_coverage_degenerate, leaf_mask, mask_coverage
+from src.explainability.leaf_mask import (
+    is_mask_unreliable,
+    leaf_mask,
+    mask_coverage,
+    mask_fragmentation,
+)
 
 
 def _half_leaf_image() -> np.ndarray:
@@ -27,12 +32,12 @@ def test_coverage_matches_the_green_fraction():
 def test_uniform_image_yields_degenerate_coverage():
     uniform = np.full((32, 32, 3), 128, dtype=np.uint8)
 
-    coverage = mask_coverage(leaf_mask(uniform))
+    mask = leaf_mask(uniform)
 
-    assert is_coverage_degenerate(coverage)
+    assert is_mask_unreliable(mask_coverage(mask), mask_fragmentation(mask))
 
 
 def test_healthy_coverage_is_not_degenerate():
-    assert not is_coverage_degenerate(0.5)
-    assert is_coverage_degenerate(0.01)
-    assert is_coverage_degenerate(0.99)
+    assert not is_mask_unreliable(0.5, 0.0)
+    assert is_mask_unreliable(0.01, 0.0)
+    assert is_mask_unreliable(0.99, 0.0)
