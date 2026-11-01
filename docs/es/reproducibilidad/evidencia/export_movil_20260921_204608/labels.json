@@ -1,0 +1,68 @@
+{
+  "checkpoint_sha256": "860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859",
+  "class_to_idx": {
+    "common_rust": 0,
+    "fall_armyworm": 1,
+    "gray_leaf_spot": 2,
+    "healthy": 3,
+    "lethal_necrosis": 4,
+    "nitrogen_deficiency": 5,
+    "northern_corn_leaf_blight": 6,
+    "phosphorus_deficiency": 7,
+    "potassium_deficiency": 8
+  },
+  "image_size": [
+    224,
+    224
+  ],
+  "labels": [
+    "common_rust",
+    "fall_armyworm",
+    "gray_leaf_spot",
+    "healthy",
+    "lethal_necrosis",
+    "nitrogen_deficiency",
+    "northern_corn_leaf_blight",
+    "phosphorus_deficiency",
+    "potassium_deficiency"
+  ],
+  "model": "efficientnet_lite0",
+  "preprocessing": {
+    "clahe": {
+      "clip_limit": 2.0,
+      "enabled": false,
+      "tile_grid": 8
+    },
+    "loader": {
+      "color_mode": "RGB",
+      "exif_transpose": true
+    },
+    "normalization": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "operation": "zscore",
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    },
+    "purpose": "inference",
+    "resize": {
+      "antialias": true,
+      "aspect_ratio": "stretch",
+      "interpolation": "bilinear",
+      "operation": "resize",
+      "target_size": [
+        224,
+        224
+      ]
+    },
+    "schema_version": 1
+  },
+  "run_id": "20260921_204608",
+  "schema_version": 1
+}

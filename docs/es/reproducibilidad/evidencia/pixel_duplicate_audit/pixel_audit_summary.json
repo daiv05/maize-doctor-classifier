@@ -1,11 +1,8 @@
 {
   "artifacts": [
-    "corpus_preflight.csv",
     "corpus_preflight.json",
     "pixel_hash_inventory.csv",
     "pixel_excluded_images.csv",
-    "pixel_duplicate_groups.csv",
-    "pixel_cross_split_duplicates.csv",
     "pixel_label_conflicts.csv",
     "pixel_audit_summary.json",
     "PIXEL_DUPLICATE_AUDIT.md"

@@ -1,0 +1,49 @@
+{
+  "format": "tflite",
+  "model_path": "/outputs/main/efficientnet_lite0/20260812_221429/export/model_int8.tflite",
+  "quantize": "int8",
+  "n_samples": 5015,
+  "accuracy": 0.9784646061814556,
+  "macro_f1": 0.9473943565067027,
+  "per_class_f1": {
+    "common_rust": 0.9837037037037037,
+    "fall_armyworm": 0.9787234042553191,
+    "gray_leaf_spot": 0.9451327433628318,
+    "healthy": 0.9939301972685888,
+    "lethal_necrosis": 0.9979188345473465,
+    "nitrogen_deficiency": 0.8699186991869918,
+    "northern_corn_leaf_blight": 0.9786614936954413,
+    "phosphorus_deficiency": 0.9520295202952029,
+    "potassium_deficiency": 0.826530612244898
+  },
+  "per_class_support": {
+    "common_rust": 338,
+    "fall_armyworm": 728,
+    "gray_leaf_spot": 290,
+    "healthy": 1311,
+    "lethal_necrosis": 963,
+    "nitrogen_deficiency": 127,
+    "northern_corn_leaf_blight": 1025,
+    "phosphorus_deficiency": 140,
+    "potassium_deficiency": 93
+  },
+  "by_environment": {
+    "lab": {
+      "n": 532,
+      "accuracy": 0.9642857142857143,
+      "macro_f1": 0.934950910761641
+    },
+    "real": {
+      "n": 4483,
+      "accuracy": 0.980147222841847,
+      "macro_f1": 0.9179629784111076
+    }
+  },
+  "torch_accuracy": 0.978863409770688,
+  "torch_macro_f1": 0.9466696173715256,
+  "agreement_rate": 0.996011964107677,
+  "accuracy_delta": -0.00039880358923238823,
+  "macro_f1_delta": 0.0007247391351771215,
+  "evaluated_at": "2026-09-13T15:34:25.962304",
+  "warnings": []
+}

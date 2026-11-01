@@ -1,10 +1,8 @@
 # Evidencia bruta
 
-Artefactos sin procesar de los experimentos de procedencia y fuga. Se versionan para que
-las cifras de los documentos sean auditables sin volver a ejecutar nada.
+Artefactos sin procesar de los experimentos de procedencia y fuga. Se versionan para que las cifras de los documentos sean auditables sin volver a ejecutar nada.
 
-Los artefactos vivos se generan en `outputs/experiments/`, que está en `.gitignore`. Lo que
-hay aquí es la copia congelada de cada ejecución que respalda un documento.
+Los artefactos vivos se generan en `outputs/experiments/`, que está en `.gitignore`. Lo que hay aquí es la copia congelada de cada ejecución que respalda un documento.
 
 ## Fase 0 — Auditoría de procedencia
 
@@ -52,8 +50,7 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-09.
 
 ## Nota sobre `PYTHONIOENCODING`
 
-El CLI de Modal falla en esta máquina con `'charmap' codec can't encode '✓'` si la consola
-usa cp1252. Todas las invocaciones se hicieron con `PYTHONIOENCODING=utf-8`.
+El CLI de Modal falla en esta máquina con `'charmap' codec can't encode '✓'` si la consola usa cp1252. Todas las invocaciones se hicieron con `PYTHONIOENCODING=utf-8`.
 
 ## Fase 2 — Intervenciones
 
@@ -82,9 +79,7 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-10, cuatro corridas en paralelo.
 
 ## Nota sobre los targets del Makefile
 
-`MODAL` y `PYTHON` usan rutas con barra invertida de Windows, así que los targets funcionan
-desde PowerShell pero no desde Git Bash, donde la barra se pierde. Las corridas de este
-directorio se lanzaron invocando Modal directamente:
+`MODAL` y `PYTHON` usan rutas con barra invertida de Windows, así que los targets funcionan desde PowerShell pero no desde Git Bash, donde la barra se pierde. Las corridas de este directorio se lanzaron invocando Modal directamente:
 
 ```bash
 PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -m modal run --detach     scripts/modal/leave_one_source_out.py --balance-groups --arm border_ring
@@ -112,5 +107,4 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-11, con tope de 1 500 imágenes por 
 | `aligned_resumen.csv` | Las tres corridas: macro-F1, marco y dependencia |
 | `aligned_por_fuente.csv` | Exactitud por fuente retenida, con y sin marco |
 
-Las corridas de `colour_strong` usan la definición de brazo con confound descrita en el
-documento: sirven para comparar particiones, no para juzgar el efecto del color.
+Las corridas de `colour_strong` usan la definición de brazo con confound descrita en el documento: sirven para comparar particiones, no para juzgar el efecto del color.

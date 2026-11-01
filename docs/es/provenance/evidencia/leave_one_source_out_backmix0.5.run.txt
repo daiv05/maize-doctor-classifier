@@ -1,12 +1,11 @@
 Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
 ✓ Initialized. View run at 
-https://modal.com/apps/daiv05/main/ap-xBQmWhWF7IOmapxF75TzVT
 ✓ Created objects.
 ├── 🔨 Created mount 
-│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\leave_one_sour
+│   scripts\modal\leave_one_sour
 │   ce_out.py
 ├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
-├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+├── 🔨 Created mount config
 └── 🔨 Created function run_leave_one_source_out.
 [*] casi-duplicados eliminados: 165 de 33433
 [*] grupos de procedencia: 11 | pliegues: 11
@@ -253,4 +252,3 @@ https://modal.com/apps/daiv05/main/ap-xBQmWhWF7IOmapxF75TzVT
 }
 [*] resultados en /outputs/experiments/leave_one_source_out_backmix0.5.json
 ✓ App completed. View run at 
-https://modal.com/apps/daiv05/main/ap-xBQmWhWF7IOmapxF75TzVT

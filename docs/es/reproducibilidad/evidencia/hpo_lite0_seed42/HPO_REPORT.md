@@ -1,7 +1,5 @@
 # HPO formal EfficientNet-Lite0 — resultado
 
-> **Nota sobre los SHA-256:** los hashes de esta página se calcularon sobre archivos con finales de línea LF. En un checkout de Windows con `core.autocrlf=true` el archivo local tiene CRLF y su hash no coincide. Para verificar, normaliza antes: `tr -d '' < archivo | sha256sum`.
-
 ## Study
 
 study_name: `efficientnet_lite0_seed42_hpo_v1`  
@@ -36,13 +34,11 @@ best_epoch: 44.0.
 | warmup_epochs | 1 |
 | weight_decay | 0.005669849511478858 |
 
-Optimizer AdamW y scheduler cosine fijos; dropout de fábrica no buscado.
-Son los mejores hiperparámetros encontrados dentro del espacio y presupuesto evaluados.
+Optimizer AdamW y scheduler cosine fijos; dropout de fábrica no buscado. Son los mejores hiperparámetros encontrados dentro del espacio y presupuesto evaluados.
 
 ## Top 10
 
-Solo hay ocho trials COMPLETE; por eso se muestran ocho candidatos elegibles,
-sin completar la tabla con trials PRUNED o FAIL.
+Solo hay ocho trials COMPLETE; por eso se muestran ocho candidatos elegibles, sin completar la tabla con trials PRUNED o FAIL.
 
 | rank | trial | val_macro_f1 | learning_rate | weight_decay | label_smoothing | batch_size | class_weights | warmup_epochs | best_epoch | duration_seconds |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -68,8 +64,7 @@ sin completar la tabla con trials PRUNED o FAIL.
 | 17 | 0.9688100555836711 | 0.9514834611544697 | 0.012730522627091623 | 0.030057117056292992 | 0.21022297948967378 | 0.7662361078545427 | 0.6000652660576391 | 0.8492063492063492 | 0.9257950530035336 | 0.8387096774193549 |
 | 3 | 0.9730262969116039 | 0.9549330292958265 | 0.019021889292265892 | 0.037115156908043345 | 0.1232277279088922 | 0.8526750033606663 | 0.6414904442562419 | 0.8816326530612245 | 0.948905109489051 | 0.7955801104972375 |
 
-Train se mide con augmentation y modo training; los gaps son diagnósticos, no otro objective.
-La calibración de validation y N/P/K no intervinieron en la selección contractual.
+Train se mide con augmentation y modo training; los gaps son diagnósticos, no otro objective. La calibración de validation y N/P/K no intervinieron en la selección contractual.
 
 ### Región de mejores trials
 
@@ -80,8 +75,7 @@ La calibración de validation y N/P/K no intervinieron en la selección contract
 | label_smoothing | 0.0 | 0.15 |
 | batch_size | 16.0 | 64.0 |
 
-Estos rangos describen los trials mejor posicionados. No demuestran causalidad ni
-estabilidad entre semillas; esa validación corresponde a una fase posterior.
+Estos rangos describen los trials mejor posicionados. No demuestran causalidad ni estabilidad entre semillas; esa validación corresponde a una fase posterior.
 
 ## Convergencia
 
@@ -91,8 +85,7 @@ estabilidad entre semillas; esa validación corresponde a una fase posterior.
 | best_at_20 | 0.9572922254288656 |
 | best_at_25 | 0.9572922254288656 |
 
-Última mejora: trial 0 (índice 0-based).
-No se ejecuta un intento 26: los IDs 0–24 agotan el presupuesto revisado.
+Última mejora: trial 0 (índice 0-based). No se ejecuta un intento 26: los IDs 0–24 agotan el presupuesto revisado.
 
 ## Hyperparameter importance
 
@@ -134,15 +127,11 @@ evaluation_count: 1
 | phosphorus_deficiency | 0.9363295880149812 | 140.0 |
 | potassium_deficiency | 0.8041237113402062 | 93.0 |
 
-Los desgloses por fuente/entorno y N/P/K agrupado están en `final_test/`.
-El checkpoint evaluado corresponde a la mejor época del trial original; no se reentrenó.
+Los desgloses por fuente/entorno y N/P/K agrupado están en `final_test/`. El checkpoint evaluado corresponde a la mejor época del trial original; no se reentrenó.
 
 ## Artefactos y reproducibilidad
 
-Raíz: `efficientnet_lite0_seed42_hpo_v1` en `corn-outputs:/hpo/efficientnet_lite0/`.
-Incluye `study.db`, `trials.csv`, `study_summary.json`, `best_hyperparameters.json`,
-`HPO_SELECTION_LOCK.json`, `trials/trial_000/best.pth`, `figures/`,
-`final_test/`, `FINAL_TEST_COMPLETE.json` y `source_code.zip`.
+Raíz: `efficientnet_lite0_seed42_hpo_v1` en `corn-outputs:/hpo/efficientnet_lite0/`. Incluye `study.db`, `trials.csv`, `study_summary.json`, `best_hyperparameters.json`, `HPO_SELECTION_LOCK.json`, `trials/trial_000/best.pth`, `figures/`, `final_test/`, `FINAL_TEST_COMPLETE.json` y `source_code.zip`.
 
 | artefacto | SHA256 |
 | --- | --- |
@@ -180,12 +169,8 @@ Incluye `study.db`, `trials.csv`, `study_summary.json`, `best_hyperparameters.js
 ¿Study puede reanudarse? Sí; presupuesto agotado, no admite más trials en esta fase.  
 ¿Existe evidencia suficiente para reproducir la búsqueda? Sí, con el corpus congelado y entorno registrado.
 
-El resultado es un HPO winner. No acredita producción ni entrenamiento formal,
-multi-seed, CV, LOSO, ensemble o temperature scaling.
+El resultado es un HPO winner. No acredita producción ni entrenamiento formal, multi-seed, CV, LOSO, ensemble o temperature scaling.
 
 ## Revisión documental posterior al cierre — 2026-09-24
 
-El aumento en validation Macro-F1 no se trasladó a test: baseline 0.948002144
-frente a ganador 0.943125073 (−0.487707 puntos porcentuales). Es una comparación
-descriptiva posterior al lock; no modifica el ganador ni reabre el estudio.
-[Comparación, evidencia del baseline y facturación](../../../tesis/HPO_BASELINE_COMPARISON.md).
+El aumento en validation Macro-F1 no se trasladó a test: baseline 0.948002144 frente a ganador 0.943125073 (−0.487707 puntos porcentuales). Es una comparación descriptiva posterior al lock; no modifica el ganador ni reabre el estudio. [Comparación, evidencia del baseline y facturación](../../../tesis/HPO_BASELINE_COMPARISON.md).

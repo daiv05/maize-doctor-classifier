@@ -1,0 +1,14 @@
+{
+  "schema_version": 4,
+  "model": "efficientnet_lite0",
+  "num_classes": 9,
+  "feature_dim": 1280,
+  "pca_dim": 182,
+  "explained_variance": 0.9900622367858887,
+  "l2_normalized": true,
+  "threshold": 106.372183,
+  "percentile": 95.0,
+  "calibration_split": "val",
+  "ood_stats_sha256": "5eb6cdd1ab2298b99f37fe563e62237685cb58870eaa7fd509b1839c3d91f6e1",
+  "ood_stats_bytes": 1612920
+}

@@ -1,12 +1,11 @@
 Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
 ✓ Initialized. View run at 
-https://modal.com/apps/daiv05/main/ap-rfTblk3JSwwRAo38DB7N3G
 ✓ Created objects.
 ├── 🔨 Created mount 
-│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\pipeline_align
+│   scripts\modal\pipeline_align
 │   ed_loso.py
 ├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
-├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+├── 🔨 Created mount config
 └── 🔨 Created function run_aligned_loso.
 [*] casi-duplicados eliminados: 165 de 33433
 [*] brazo=colour_strong pliegues=11 clases=9 device=cuda
@@ -212,4 +211,3 @@ https://modal.com/apps/daiv05/main/ap-rfTblk3JSwwRAo38DB7N3G
 [*] macro-F1 0.6294 | marco 0.2493 | dependencia 39.6%
 [*] resultados en /outputs/experiments/aligned_source_colour_strong.json
 ✓ App completed. View run at 
-https://modal.com/apps/daiv05/main/ap-hbvP1gl63J2sguAHdaD3cY

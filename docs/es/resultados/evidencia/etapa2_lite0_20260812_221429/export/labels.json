@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "model": "efficientnet_lite0",
+  "image_size": [
+    224,
+    224
+  ],
+  "labels": [
+    "common_rust",
+    "fall_armyworm",
+    "gray_leaf_spot",
+    "healthy",
+    "lethal_necrosis",
+    "nitrogen_deficiency",
+    "northern_corn_leaf_blight",
+    "phosphorus_deficiency",
+    "potassium_deficiency"
+  ]
+}

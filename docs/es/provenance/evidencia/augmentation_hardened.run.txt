@@ -1,12 +1,11 @@
 Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
 ✓ Initialized. View run at 
-https://modal.com/apps/daiv05/main/ap-RQlVN0N9YYy0Dhs4wRRsk4
 ✓ Created objects.
 ├── 🔨 Created mount 
-│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\augmentation_h
+│   scripts\modal\augmentation_h
 │   ardening.py
 ├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
-├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+├── 🔨 Created mount config
 └── 🔨 Created function run_augmentation_hardening.
 [*] casi-duplicados eliminados: 165 de 33433
 [*] augment=hardened pliegues=11 clases=9
@@ -292,4 +291,3 @@ https://modal.com/apps/daiv05/main/ap-RQlVN0N9YYy0Dhs4wRRsk4
     
 [*] resultados en /outputs/experiments/augmentation_hardened.json
 ✓ App completed. View run at 
-https://modal.com/apps/daiv05/main/ap-RQlVN0N9YYy0Dhs4wRRsk4
