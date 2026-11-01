@@ -147,15 +147,13 @@ El an\'alisis exploratorio evidenci\'o tres retos estructurales:
 \begin{minipage}[b]{0.48\linewidth}
 \centering
 \includegraphics[width=\linewidth]{images/eda/eda_01_distribucion_clases.png}
-\caption{Distribuci\'on de muestras por clase.}
-\label{fig:eda_clases}
+\caption*{Distribuci\'on de muestras por clase.}
 \end{minipage}
 \hfill
 \begin{minipage}[b]{0.48\linewidth}
 \centering
 \includegraphics[width=\linewidth]{images/eda/eda_02_lab_vs_real.png}
-\caption{Proporci\'on Laboratorio vs. Campo Real.}
-\label{fig:eda_lab_real}
+\caption*{Proporci\'on Laboratorio vs. Campo Real.}
 \end{minipage}
 \caption{An\'alisis exploratorio de distribuci\'on y balance ambiental del corpus.}
 \label{fig:eda_distribuciones}
@@ -166,15 +164,13 @@ El an\'alisis exploratorio evidenci\'o tres retos estructurales:
 \begin{minipage}[b]{0.48\linewidth}
 \centering
 \includegraphics[width=\linewidth]{images/eda/eda_02b_heatmap_fuente_clase.png}
-\caption{Matriz de contingencia fuente vs. patolog\'ia.}
-\label{fig:eda_heatmap}
+\caption*{Matriz de contingencia fuente vs. patolog\'ia.}
 \end{minipage}
 \hfill
 \begin{minipage}[b]{0.48\linewidth}
 \centering
 \includegraphics[width=\linewidth]{images/eda/eda_03_resoluciones.png}
-\caption{Distribuci\'on de resoluciones espaciales.}
-\label{fig:eda_resoluciones}
+\caption*{Distribuci\'on de resoluciones espaciales.}
 \end{minipage}
 \caption{Concentraci\'on de procedencia y heterogeneidad geom\'etrica en las im\'agenes.}
 \end{figure}
@@ -204,7 +200,7 @@ Se seleccionaron tres redes convolucionales modernas de alta eficiencia, represe
 \subsection{Espacio de B\'usqueda y Poda Temprana}
 La optimizaci\'on de hiperpar\'ametros se formul\'o mediante un estudio bayesiano en \textbf{Optuna} \cite{optuna2019} con el estimador de \'arbol de Parzen multivariado (TPE). La funci\'on objetivo maximiz\'o el Macro $F_1$ sobre el conjunto de validaci\'on oficial. Para no desperdiciar horas de GPU en configuraciones no prometedoras, se incorpor\'o el algoritmo \textbf{MedianPruner}: a partir de la \'epoca 8 (periodo de calentamiento), si el Macro $F_1$ de un ensayo se sit\'ua por debajo de la mediana hist\'orica de los ensayos precedentes, el entrenamiento se detiene autom\'aticamente (\textit{PRUNED}).
 
-El espacio de exploraci\'on abarc\'o siete par\'ametros cr\'iticos (Tabla~\ref{tab:hpo_espacio}).
+El espacio de exploraci\'on abarc\'o seis par\'ametros, m\'as \texttt{clahe} fijo (Tabla~\ref{tab:hpo_espacio}).
 
 \begin{table}[H]
 \caption{Espacio de b\'usqueda de hiperpar\'ametros explorado con Optuna}
@@ -218,9 +214,9 @@ El espacio de exploraci\'on abarc\'o siete par\'ametros cr\'iticos (Tabla~\ref{t
 \midrule
 \texttt{learning\_rate} & Log-uniforme: $[10^{-5}, 3\times10^{-3}]$ & Control de convergencia en optimizador AdamW. \\
 \texttt{batch\_size} & Categ\'orico: $\{16, 32, 64\}$ & Estabilidad del gradiente estoc\'astico y saturaci\'on de GPU. \\
-\texttt{weight\_decay} & Log-uniforme: $[10^{-6}, 10^{-2}]$ & Regularizaci\'on $L_2$ para mitigar memorizaci\'on de fondos. \\
-\texttt{class\_weights} & $\{\text{none}, \text{inv}, \text{sqrt\_inv}\}$ & Ponderaci\'on de p\'erdida para compensar desbalance de clases. \\
-\texttt{label\_smoothing} & Uniforme: $[0.0, 0.15]$ & Calibraci\'on probabil\'istica y prevenci\'on de sobreconfianza. \\
+\texttt{weight\_decay} & Log-uniforme: $[10^{-7}, 10^{-2}]$ & Regularizaci\'on $L_2$ para mitigar memorizaci\'on de fondos. \\
+\texttt{class\_weights} & Categ\'orico: $\{\text{none}, \text{inverse}, \text{sqrt\_inverse}\}$ & Ponderaci\'on de p\'erdida para compensar desbalance de clases. \\
+\texttt{label\_smoothing} & Categ\'orico: $\{0, 0.025, \dots, 0.15\}$ en pasos de 0.025 & Calibraci\'on probabil\'istica y prevenci\'on de sobreconfianza. \\
 \texttt{warmup\_epochs} & Entero: $[1, 5]$ & Calentamiento lineal para proteger pesos preentrenados. \\
 \texttt{clahe} & Fijo en \texttt{False} & Ecualizaci\'on adaptativa excluida de la b\'usqueda; se evalu\'o aparte. \\
 \bottomrule
@@ -242,17 +238,16 @@ Para permitir que \texttt{EfficientNet-Lite0} opere en tel\'efonos sin unidad de
 \begin{equation}
 S_c = \frac{\max_i \lvert W_{f,c,i} \rvert}{127}, \qquad q_{c,i} = \operatorname{clip}\!\left(\left\lfloor \frac{W_{f,c,i}}{S_c} \right\rceil,\; -127,\; 127\right)
 \end{equation}
-La capa lineal final usa una \'unica escala por tensor, porque el kernel de TFLite para \texttt{FULLY\_CONNECTED} dinámico aplica una sola escala. Con escalas por canal, los logits de esa capa quedan multiplicados por una constante distinta por clase sin que el runtime lo señale. Cuantizar todas las capas por tensor, en cambio, degrada las convoluciones \textit{depthwise} de EfficientNet, cuyos pesos tienen rangos muy distintos entre canales; por ello el backbone se cuantiza por canal. La operaci\'on permite que las multiplicaciones de matrices de convoluci\'on se resuelvan con instrucciones vectoriales enteras en la CPU m\'ovil. El consumo energ\'etico no fue medido en este trabajo.
+La capa lineal final usa una \'unica escala por tensor, porque el kernel de TFLite para \texttt{FULLY\_CONNECTED} dinámico aplica una sola escala. Con escalas por canal, los logits de esa capa quedan multiplicados por una constante distinta por clase sin que el runtime lo señale. Cuantizar todas las capas por tensor, en cambio, degrada las convoluciones \textit{depthwise} de EfficientNet, cuyos pesos tienen rangos muy distintos entre canales; por ello el backbone se cuantiza por canal. La operaci\'on permite que las multiplicaciones de matrices de convoluci\'on se resuelvan con instrucciones vectoriales enteras en la CPU m\'ovil. El modelo \texttt{.tflite} desplegado ocupa 3~743~728 bytes (3.74~MB), 72.9\,\% menos que los 13.79~MB del punto de control en coma flotante. El consumo energ\'etico no fue medido en este trabajo.
 
 \subsection{Detector de Anomal\'ias Fuera de Distribuci\'on (OOD)}
-Las redes neuronales pueden emitir clasificaciones con alta confianza cuando reciben im\'agenes que no pertenecen a ninguna de sus clases, por ejemplo suelo, calzado o malezas, porque la confianza softmax solo mide la elecci\'on entre las etiquetas conocidas \cite{lee2018}. Para detectar este caso, DoctorMaiz extrae el vector de activaci\'on de la capa previa a la clasificaci\'on ($d = 1~280$ dimensiones), reduce su dimensionalidad mediante PCA a 186 componentes que retienen el 99\,\% de la varianza y eval\'ua la \textbf{Distancia Relativa de Mahalanobis (RMD)} \cite{ren2021}. La distancia resta un modelo de fondo global para no penalizar caracter\'isticas gen\'ericas de cualquier fotograf\'ia:
-El vector se normaliza a norma L2 unitaria antes de proyectarlo \cite{mahalanobispp2025}. La puntuaci\'on es
+Las redes neuronales pueden emitir clasificaciones con alta confianza cuando reciben im\'agenes que no pertenecen a ninguna de sus clases, por ejemplo suelo, calzado o malezas, porque la confianza softmax solo mide la elecci\'on entre las etiquetas conocidas \cite{lee2018}. Para detectar este caso, DoctorMaiz extrae el vector de activaci\'on de la capa previa a la clasificaci\'on ($d = 1~280$ dimensiones), lo normaliza a norma L2 unitaria \cite{mahalanobispp2025}, reduce su dimensionalidad mediante PCA a 182 componentes que retienen el 99.01\,\% de la varianza y eval\'ua la \textbf{Distancia Relativa de Mahalanobis (RMD)} \cite{ren2021}. La distancia resta un modelo de fondo global para no penalizar caracter\'isticas gen\'ericas de cualquier fotograf\'ia. La puntuaci\'on es
 \begin{equation}
 \text{RMD}(z) = D_M\!\left(z \,\middle|\, \mu_{c^*}, \Sigma\right) - D_M\!\left(z \,\middle|\, \mu_0, \Sigma_0\right)
 \end{equation}
 donde $\mu_{c^*}$ es el centroide de la clase m\'as cercana, $\Sigma$ es la covarianza agrupada entre clases y $\mu_0$, $\Sigma_0$ describen una gaussiana de fondo sobre todo el conjunto de entrenamiento. Ambas covarianzas se regularizan con un t\'ermino ridge proporcional a su traza antes de invertirlas.
 
-El umbral se calibra sobre el conjunto de validaci\'on, no visto durante el entrenamiento, como el percentil 95 de la puntuaci\'on de cada hoja v\'alida. El umbral de la aplicaci\'on instalada est\'a pendiente de regeneraci\'on: el archivo de estad\'isticas OOD que empaqueta la aplicaci\'on no tiene un run de origen registrado. El modelo instalado corresponde al run \texttt{20260812\_221429} (SHA-256 del \texttt{.tflite} verificado), pero su archivo \texttt{ood\_stats.json} no existe en la exportaci\'on de ese run. El valor se obtendr\'a al ejecutar \texttt{compute\_ood\_stats.py} sobre dicho checkpoint. Las pruebas sint\'eticas (pantallas negras, ruido aleatorio) superaron valores de 300 y las fotograf\'ias reales de campo quedaron por debajo del umbral. Si la puntuaci\'on supera el umbral, la aplicaci\'on muestra la advertencia \textbf{«Imagen no reconocida»} y no emite diagn\'ostico.
+El umbral se calibra sobre el conjunto de validaci\'on, no visto durante el entrenamiento, como el percentil 95 de la puntuaci\'on de cada hoja v\'alida. Para el modelo oficial (run \texttt{20260921\_204608}) el umbral es 106.37. Las cinco im\'agenes sint\'eticas de prueba (negro, blanco, gris, ruido y azul) obtuvieron RMD entre 539 y 955 y fueron rechazadas en los cinco casos, mientras que 3.8\,\% de 500 im\'agenes de prueba v\'alidas fueron rechazadas por error. Si la puntuaci\'on supera el umbral, la aplicaci\'on muestra la advertencia \textbf{«Imagen no reconocida»} y no emite diagn\'ostico.
 
 \subsection{Mitigaci\'on en la Interfaz: Marco Gu\'ia y Severidad}
 Como se demostrar\'a en el cap\'itulo de resultados, el software no puede eliminar por completo los atajos de fondo de los repositorios p\'ublicos. Por ello, la soluci\'on integr\'o dos innovaciones directas en la aplicaci\'on:
@@ -261,117 +256,22 @@ Como se demostrar\'a en el cap\'itulo de resultados, el software no puede elimin
 \item \textbf{Gu\'ia de severidad en lenguaje campesino:} Dado que los modelos de clasificaci\'on no pueden predecir el porcentaje de \'area foliar comprometida, la app despliega debajo de la etiqueta una escala visual de tres niveles (baja, moderada, cr\'itica) basada en manuales homologados del CIMMYT e Iowa State, descrita en t\'erminos coloquiales y recomendando bioinsumos accesibles en el agroservicio local.
 \end{enumerate}
 
-\section{Segmentaci\'on de Hojas: dos usos y resultados}
+\section{Segmentaci\'on de Hojas: dos usos y resultados}\label{sec:segmentacion}
 
 El proyecto utiliz\'o la segmentaci\'on foliar en dos l\'ineas distintas, con evidencia y estado diferentes. Ninguna de ellas forma parte de la predicci\'on de la aplicaci\'on instalada, que recorta geom\'etricamente la imagen con el marco gu\'ia.
 
-	extbf{Primer uso: presegmentaci\'on y entrenamiento sobre corpus enmascarado.} El pipeline del clasificador incluye un m\'odulo de segmentaci\'on (	exttt{src/segmentation}) que genera un corpus con m\'ascaras de hoja. Se entren\'o un modelo sobre ese corpus (run 	exttt{20260907\_163546}, EfficientNet-Lite0, sobre el split 	exttt{seed\_42\_segmented}). Su Macro $F_1$ en prueba fue de 	extbf{0.7191} y su accuracy de 0.8903, frente a 0.9480 del baseline de imagen completa vigente. Esta comparaci\'on no es pareada: el conjunto de prueba segmentado no comparte ninguna imagen con el conjunto de prueba original (0 de 5~015 rutas coinciden). El perfil de m\'ascara usado para generar el corpus no est\'a registrado en el resumen del run, por lo que el resultado no permite atribuir la ca\'ida a un perfil concreto. El proyecto clasifica este uso como experimental y no como preprocesamiento general.
+\textbf{Primer uso: presegmentaci\'on y entrenamiento sobre corpus enmascarado.} El pipeline del clasificador incluye un m\'odulo de segmentaci\'on (\texttt{src/segmentation}) que genera un corpus con m\'ascaras de hoja. Se entren\'o un modelo sobre ese corpus (run \texttt{20260907\_163546}, EfficientNet-Lite0, sobre el split \texttt{seed\_42\_segmented}). Su Macro $F_1$ en prueba fue de \textbf{0.7191} y su accuracy de 0.8903, frente a 0.9480 del baseline de imagen completa vigente. Esta comparaci\'on no es pareada: el conjunto de prueba segmentado no comparte ninguna imagen con el conjunto de prueba original (0 de 5~015 rutas coinciden). El perfil de m\'ascara usado para generar el corpus no est\'a registrado en el resumen del run, por lo que el resultado no permite atribuir la ca\'ida a un perfil concreto. El proyecto clasifica este uso como experimental y no como preprocesamiento general.
 
-	extbf{Segundo uso: segmentador de instancias para aislar la hoja.} En un repositorio independiente se entren\'o un segmentador YOLO (	exttt{yolo26n-seg}, Ultralytics 8.4.104) para seleccionar la hoja principal. La configuraci\'on D-01 cambi\'o un solo hiperpar\'ametro (	exttt{mosaic=0}) sobre la configuraci\'on base de semilla 42 y se evalu\'o \'unicamente sobre validaci\'on. Obtuvo 	extit{Mask mAP50-95} de 0.94404 y 	extit{Mask recall} de 0.94309. Sobre 150 hojas enfermas de validaci\'on, el quality gate marc\'o 150 m\'ascaras como 	exttt{reliable}, con IoU medio de 0.98122 y Dice medio de 0.99046. Estos resultados son de una sola semilla y no incluyen evaluaci\'on sobre el conjunto de prueba ni sobre el piloto de fuente externa, que siguen sin ejecutarse.
+\textbf{Segundo uso: segmentador de instancias para aislar la hoja.} En un repositorio independiente se entren\'o un segmentador YOLO (\texttt{yolo26n-seg}) para seleccionar la hoja principal, evaluado \'unicamente sobre validaci\'on y con una sola semilla. Sus m\'etricas no se reproducen en este trabajo porque su evidencia no est\'a versionada en este repositorio; el segmentador no se evalu\'o sobre el conjunto de prueba ni sobre fuentes externas.
 
 La implicaci\'on para el dise\'no es que una m\'ascara puede eliminar se\~nal \'util del fondo. Por ello el proyecto no aplica segmentaci\'on de forma universal, y la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
 
 
 \section{Sincronizaci\'on y Contribuci\'on al Dataset Colaborativo}
 
-La aplicaci\'on funciona sin servidor. Esta secci\'on describe el dise\~no de la sincronizaci\'on opcional, implementado en el repositorio de la API. Su comportamiento descrito aqu\'i proviene del c\'odigo y de la especificaci\'on de dise\~no; las pruebas de integraci\'on previstas en esa especificaci\'on no se han ejecutado en este trabajo.
+La aplicaci\'on funciona sin servidor. La sincronizaci\'on opcional se implementa en el repositorio de la API (FastAPI y MySQL 8.4) con dos endpoints de escritura, \texttt{POST /corrections} y \texttt{POST /dataset-contributions}, que reciben correcciones de diagn\'ostico y aportes fotogr\'aficos de usuarios registrados. Sin cuenta registrada, la aplicaci\'on conserva los aportes en el tel\'efono y no los env\'ia; con cuenta, una cola local los reintenta cuando hay conexi\'on y marca cada registro como sincronizado solo tras la confirmaci\'on del servidor.
 
-El dise\~no contempla dos tipos de registro que la aplicaci\'on env\'ia cuando hay conexi\'on y una cuenta registrada: correcciones de diagn\'ostico y aportes fotogr\'aficos al dataset colaborativo. Ambos se almacenan en MySQL 8.4 y no se incluye telemetr\'ia de escaneos ni coordenadas GPS del historial.
-
-Los dos endpoints de escritura son \texttt{POST /corrections} y \texttt{POST /dataset-contributions}. La especificaci\'on define que ambos sean idempotentes por el par \texttt{(user\_id, client\_id)}: un reenv\'io con el mismo identificador debe devolver el registro existente en lugar de duplicarlo. Tambi\'en define un l\'imite de 30 solicitudes por minuto por usuario autenticado. El env\'io de imagen se valida como archivo de imagen antes de guardarse. Estas tres propiedades son de dise\~no; su verificaci\'on queda pendiente.
-
-El env\'io previsto incluye la fotograf\'ia, la etiqueta elegida, una nota opcional y la fecha del escaneo. No incluye nombre, tel\'efono, correo ni coordenadas GPS. La aplicaci\'on no elimina los metadatos EXIF de la fotograf\'ia antes de enviarla, por lo que este punto queda como pendiente de tratamiento.
-
-Sin cuenta registrada, la aplicaci\'on conserva los aportes en el tel\'efono y no los env\'ia. La cola de sincronizaci\'on reintenta cuando hay conexi\'on.
-
-\subsection{Modelo relacional de la base de datos del servidor}
-
-El servidor almacena cinco tablas en MySQL 8.4, definidas en la migración inicial de Alembic. La Figura~\ref{fig:er_api} muestra sus relaciones. La única dependencia entre tablas es que cada registro de usuario agrupa sus tokens de sesión y sus aportes, y la tabla de versiones de la aplicación no se relaciona con las demás.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-  ent/.style={draw=blue!55!black, fill=blue!4, rounded corners=2pt, align=left, font=\scriptsize, inner sep=4pt, text width=4.2cm},
-  rel/.style={-{Latex[length=2.2mm]}, line width=0.8pt, draw=gray!70}
-]
-\node[ent] (users) {\textbf{users}\\[1pt]
-  id \emph{(PK)}\\ name, email \emph{(único)}\\ password\_hash, created\_at};
-\node[ent, below=1.1cm of users, xshift=-5.6cm] (rt) {\textbf{refresh\_tokens}\\[1pt]
-  id \emph{(PK)}\\ user\_id \emph{(FK)}\\ token\_hash \emph{(único)}, expires\_at, revoked\_at, created\_at};
-\node[ent, below=1.1cm of users, xshift=0cm] (corr) {\textbf{corrections}\\[1pt]
-  id \emph{(PK)}\\ user\_id \emph{(FK)}, client\_id\\ scan\_id, observed\_label, note, status\\ created\_at, received\_at\\ \emph{único:} (user\_id, client\_id)};
-\node[ent, below=1.1cm of users, xshift=5.6cm] (dc) {\textbf{dataset\_contributions}\\[1pt]
-  id \emph{(PK)}\\ user\_id \emph{(FK)}, client\_id\\ image\_path, label, note, status\\ created\_at, received\_at\\ \emph{único:} (user\_id, client\_id)};
-\node[ent, below=5.2cm of users, xshift=0cm] (ar) {\textbf{app\_releases}\\[1pt]
-  id \emph{(PK)}\\ platform, version\_code, version\_name\\ min\_supported\_version\_code\\ download\_url, release\_notes\\ published\_at, is\_active};
-\draw[rel] (users.south west) -- ++(0,-0.4) -| (rt.north);
-\draw[rel] (users.south) -- (corr.north);
-\draw[rel] (users.south east) -- ++(0,-0.4) -| (dc.north);
-\end{tikzpicture}
-\caption{Modelo relacional del servidor. Las flechas van de \texttt{users} a las tablas que referencian su \texttt{id}. \texttt{app\_releases} no tiene relaciones.}
-\label{fig:er_api}
-\end{figure}
-
-\subsection{Flujo de sincronizaci\'on desde la aplicaci\'on}
-
-La Figura~\ref{fig:secuencia_sync} describe el recorrido de un aporte desde que el productor lo guarda hasta que el servidor lo confirma. El guardado es local e inmediato. La sincronizaci\'on se dispara al recuperar la red o por acci\'on del usuario, y antes de enviar comprueba en orden tres condiciones: que existan registros pendientes, que haya conexi\'on y que haya una sesi\'on. Si no hay pendientes, el proceso termina sin enviar nada. Si el servidor responde 401, la aplicaci\'on refresca el token una sola vez y reintenta. Un registro solo se marca como sincronizado tras la confirmaci\'on del servidor; si el env\'io falla, permanece pendiente para el siguiente intento.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-  life/.style={draw=gray!60, line width=0.5pt, dashed},
-  pt/.style={draw=blue!55!black, fill=blue!5, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.7cm, minimum width=2.4cm},
-  msg/.style={-{Latex[length=2mm]}, line width=0.7pt},
-  rmsg/.style={-{Latex[length=2mm]}, line width=0.7pt, dashed},
-  self/.style={font=\tiny, align=left, draw=gray!50, fill=yellow!8, rounded corners=1pt, inner sep=2pt},
-  lab/.style={font=\tiny, fill=white, inner sep=1pt}
-]
-\def\yp{0}
-\node[pt] (P) at (0,0) {Productor};
-\node[pt] (A) at (3.4,0) {App DoctorMaiz};
-\node[pt] (D) at (6.8,0) {SQLite local};
-\node[pt] (S) at (10.2,0) {Servidor (API)};
-\draw[life] (P) -- (0,-9.2);
-\draw[life] (A) -- (3.4,-9.2);
-\draw[life] (D) -- (6.8,-9.2);
-\draw[life] (S) -- (10.2,-9.2);
-
-% 1 productor -> app : toma foto
-\draw[msg] (0,-0.9) -- (3.4,-0.9) node[midway, lab, above] {1. Toma foto};
-% 2 app -> sqlite : guarda pendiente
-\draw[msg] (3.4,-1.6) -- (6.8,-1.6) node[midway, lab, above] {2. Guarda aporte pendiente};
-% 3 confirmacion local
-\draw[rmsg] (6.8,-2.1) -- (3.4,-2.1) node[midway, lab, above] {3. Confirmaci\'on local};
-
-% 4 self: disparo
-\draw[self] (3.4,-2.8) -- (3.4,-2.8);
-\node[self, anchor=west] at (3.6,-2.9) {4. Disparo: cambio de red o bot\'on};
-
-% 5 app -> sqlite : hay pendientes
-\draw[msg] (3.4,-3.6) -- (6.8,-3.6) node[midway, lab, above] {5. \'Hay pendientes?};
-% 6 respuesta
-\draw[rmsg] (6.8,-4.1) -- (3.4,-4.1) node[midway, lab, above] {6. No: termina sin enviar};
-
-% 6b alternative pending yes continues (self note)
-\node[self, anchor=west] at (3.6,-4.8) {7. S\'i: comprueba red (NetInfo) y sesi\'on};
-
-% 7 app -> servidor : POST sin token valido
-\draw[msg] (3.4,-5.6) -- (10.2,-5.6) node[midway, lab, above] {8. POST aporte};
-% 8 servidor -> app : 401
-\draw[rmsg] (10.2,-6.1) -- (3.4,-6.1) node[midway, lab, above] {9. 401 si no hay sesi\'on};
-% 9 refresh and retry
-\draw[msg] (3.4,-6.6) -- (10.2,-6.6) node[midway, lab, above] {10. Refresca token y reintenta};
-% 10 ack
-\draw[rmsg] (10.2,-7.1) -- (3.4,-7.1) node[midway, lab, above] {11. 201 o 200 (confirmaci\'on)};
-% 11 marca synced
-\draw[msg] (3.4,-7.7) -- (6.8,-7.7) node[midway, lab, above] {12. Marca synced = true};
-
-% failure branch note
-\node[self, anchor=west] at (3.6,-8.4) {Si el env\'io falla: el registro queda pendiente};
-\end{tikzpicture}
-\caption{Flujo de sincronizaci\'on de un aporte, desde el guardado local hasta la confirmaci\'on del servidor. Si el env\'io falla, el registro permanece pendiente.}
-\label{fig:secuencia_sync}
-\end{figure}
+El env\'io incluye la fotograf\'ia, la etiqueta elegida, una nota opcional y la fecha del escaneo; no incluye nombre, tel\'efono, correo ni coordenadas GPS del historial. La aplicaci\'on no elimina los metadatos EXIF de la fotograf\'ia antes de enviarla. La idempotencia por el par \texttt{(user\_id, client\_id)}, el l\'imite de 30 solicitudes por minuto y la validaci\'on del archivo de imagen forman parte del dise\~no de la API; las pruebas de integraci\'on de estas propiedades no se ejecutaron en este trabajo.
 
 \section{Arquitectura General del Sistema}
 
@@ -392,7 +292,7 @@ El sistema se compone de cuatro repositorios independientes. La Tabla~\ref{tab:t
 Pipeline del modelo & Entrenamiento, exportaci\'on y explicabilidad & PyTorch (\texttt{torch} 2.4 a 2.12), timm, Optuna, litert-torch y ONNX Runtime para exportaci\'on, Modal (GPU A10) para entrenamiento en la nube, SHAP y LIME. \\
 Aplicaci\'on m\'ovil & Captura, inferencia local y sincronizaci\'on & Expo 57, React Native 0.86, TypeScript 6, \texttt{react-native-fast-tflite} 3 para inferencia, WatermelonDB 0.28 con SQLite local, NativeWind 4. \\
 API de sincronizaci\'on & Versi\'on de la app y aportes al dataset colaborativo & FastAPI 0.115, SQLAlchemy 2.0, Alembic 1.13, MySQL 8.4 en Docker Compose, aiomysql, JWT y bcrypt para autenticaci\'on, slowapi para l\'imites de tasa. \\
-Segmentador de hojas & Aislamiento de la l\'amina foliar (experimental) & Ultralytics 8.4.104 con modelo \texttt{yolo26n-seg}, PyTorch 2.2 a 2.12, Modal para entrenamiento, Pillow y NumPy. \\
+Segmentador de hojas & Aislamiento de la l\'amina foliar (experimental) & Ultralytics con modelo \texttt{yolo26n-seg}, PyTorch 2.2 a 2.12, Modal para entrenamiento, Pillow y NumPy. \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
@@ -415,7 +315,6 @@ La Figura~\ref{fig:arquitectura_flujo} sintetiza la arquitectura de extremo a ex
     phase/.style={font=\scriptsize\bfseries\itshape, text=gray!60!black},
     arrow/.style={-{Latex[length=2.8mm]}, line width=1pt, draw=gray!60}
 ]
-% --- Fila 1: entrenamiento ---
 \node[phase] (lbl1) {Fase de entrenamiento y selecci\'on};
 \node[stage, fill=blue!6, draw=blue!55!black, below=0.35cm of lbl1, xshift=-3.3cm] (datos)
   {\textbf{Fuentes p\'ublicas}\\[2pt]33~429 im\'agenes\\11 fuentes};
@@ -429,10 +328,9 @@ La Figura~\ref{fig:arquitectura_flujo} sintetiza la arquitectura de extremo a ex
 \draw[arrow] (pipe) -- (optuna);
 \draw[arrow] (optuna) -- (lite0);
 
-% --- Fila 2: despliegue ---
 \node[phase, below=1.3cm of datos, xshift=1.2cm] (lbl2) {Fase de despliegue m\'ovil};
 \node[stage, fill=green!6, draw=green!45!black, below=0.35cm of lbl2, xshift=-3.3cm] (quant)
-  {\textbf{Cuantizaci\'on Int8}\\[2pt]PTQ con litert-torch\\(3.56~MB)};
+  {\textbf{Cuantizaci\'on Int8}\\[2pt]PTQ con litert-torch\\(3.74~MB)};
 \node[stage, fill=green!6, draw=green!45!black, right=of quant] (app)
   {\textbf{App DoctorMaiz}\\[2pt]React Native\\y Fast-TFLite};
 \node[stage, fill=green!6, draw=green!45!black, right=of app] (ood)
@@ -443,7 +341,6 @@ La Figura~\ref{fig:arquitectura_flujo} sintetiza la arquitectura de extremo a ex
 \draw[arrow] (app) -- (ood);
 \draw[arrow] (ood) -- (off);
 
-% --- Conexi\'on entre filas ---
 \draw[arrow, dashed] (lite0.south) |- ++(0,-0.55) -| (quant.north);
 \end{tikzpicture}
 \caption{Diagrama de flujo arquitect\'onico integral del sistema DoctorMaiz.}

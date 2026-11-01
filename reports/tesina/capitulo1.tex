@@ -91,7 +91,6 @@ Con el prop\'osito de delimitar anal\'iticamente este problema sin prejuzgar la 
     }
 ]
 
-% --- COLUMNA 1: ENTRADA ---
 \node[header, fill=blue!75!black] (head_in) {Entradas};
 \node[card, fill=blue!3, below=0.15cm of head_in] (box_in) {
   \textbf{Condiciones del Entorno Rural:}
@@ -108,7 +107,6 @@ Con el prop\'osito de delimitar anal\'iticamente este problema sin prejuzgar la 
   \end{itemize}
 };
 
-% --- COLUMNA 2: CAJA NEGRA (PROCESO) ---
 \node[header, fill=gray!80!black, right=1.4cm of head_in] (head_proc) {Procesos};
 \node[card, fill=gray!4, below=0.15cm of head_proc] (box_proc) {
   \textbf{Transformaci\'on Requerida:}
@@ -125,7 +123,6 @@ Con el prop\'osito de delimitar anal\'iticamente este problema sin prejuzgar la 
   \end{itemize}
 };
 
-% --- COLUMNA 3: SALIDA ESPERADA ---
 \node[header, fill=teal!70!black, right=1.4cm of head_proc] (head_out) {Salidas esperadas};
 \node[card, fill=teal!3, below=0.15cm of head_out] (box_out) {
   \textbf{Diagn\'ostico y Bioseguridad:}
@@ -143,7 +140,6 @@ Con el prop\'osito de delimitar anal\'iticamente este problema sin prejuzgar la 
   \end{itemize}
 };
 
-% --- FLECHAS DE CONEXIÓN ---
 \draw[arrow] (box_in.east) -- (box_proc.west);
 \draw[arrow] (box_proc.east) -- (box_out.west);
 
@@ -164,7 +160,7 @@ Desarrollar, evaluar e implementar un sistema de visi\'on artificial embebido (\
 \subsection{Objetivos Espec\'ificos}
 
 \begin{enumerate}
-\item Consolidar, depurar y auditar criptogr\'aficamente un conjunto multimodal de m\'as de 33~000 im\'agenes de la hoja de ma\'iz distribuidas en 9 condiciones agron\'omicas, estableciendo contratos de datos verificables para descartar duplicados y prevenir filtraciones entre particiones.
+\item Consolidar, depurar y auditar criptogr\'aficamente un conjunto de m\'as de 33~000 im\'agenes de la hoja de ma\'iz distribuidas en 9 condiciones agron\'omicas, estableciendo contratos de datos verificables para descartar duplicados y prevenir filtraciones entre particiones.
 \item Optimizar arquitecturas convolucionales ligeras preentrenadas mediante b\'usqueda bayesiana de hiperpar\'ametros (Optuna) y algoritmos de poda temprana, maximizando el Macro $F_1$-Score con un uso eficiente del c\'omputo en GPU.
 \item Dise\~nar una estrategia de ensamble por votaci\'on suave (\textit{Soft Voting}) que combine modelos con diferentes sesgos inductivos, con el fin de elevar la sensibilidad diagn\'ostica en patolog\'ias cr\'iticas de la hoja de ma\'iz y mitigar el desbalance de clases.
 \item Evaluar el desempe\~no del sistema bajo protocolos de validaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}), cuantificando la disparidad de impacto entre laboratorio y campo real, as\'i como la atribuci\'on espacial mediante t\'ecnicas de explicabilidad y ablaci\'on de fondo.
@@ -184,7 +180,7 @@ La aplicaci\'on m\'ovil constituye el punto de interacci\'on directa en manos de
 \item \textbf{Inferencia local aut\'onoma (\textit{Offline}):} Ejecuci\'on integral del motor neuronal en el procesador del tel\'efono mediante modelos cuantizados, asegurando diagn\'osticos instant\'aneos en el surco sin requerir conexi\'on a internet ni datos m\'oviles.
 \item \textbf{Captura asistida con marco gu\'ia foliar:} Interfaz de c\'amara con ret\'icula visual ergon\'omica que orienta al agricultor a encuadrar la l\'amina de la hoja, reduciendo la captura de fondos distractores (suelo, sombras o maleza) antes de procesar la imagen.
 \item \textbf{Detecci\'on preventiva de capturas an\'omalas (Seguridad OOD):} M\'odulo de rechazo ante muestras fuera de dominio capaz de evaluar si la captura no corresponde a una hoja de ma\'iz o presenta incertidumbre excesiva, notificando un estado de «No reconocida» para evitar diagn\'osticos enga\~nosos.
-\item \textbf{Diagn\'ostico y valoraci\'on de severidad:} Presentaci\'on de resultados en lenguaje claro y accesible, categorizando la afecci\'on con una escala visual de severidad en tres niveles (leve, moderada y severa) para apoyar la toma de decisiones.
+\item \textbf{Diagn\'ostico y valoraci\'on de severidad:} Presentaci\'on de resultados en lenguaje claro y accesible, categorizando la afecci\'on con una escala visual de severidad en tres niveles (baja, moderada y cr\'itica) para apoyar la toma de decisiones.
 \item \textbf{Cat\'alogo de manejo integrado y bioinsumos:} Gu\'ia fitosanitaria pr\'actica vinculada al diagn\'ostico que ofrece alternativas de bioinsumos y manejo cultural de bajo costo, previniendo gastos perjudiciales en agroqu\'imicos inapropiados.
 \item \textbf{Historial y georreferenciaci\'on de muestreos:} Registro local persistente de cada evaluaci\'on (fecha, diagn\'ostico, severidad y ubicaci\'on GPS) para que el agricultor monitoree la evoluci\'on de sus parcelas a lo largo del ciclo agr\'icola.
 \item \textbf{Contribuci\'on comunitaria y sincronizaci\'on voluntaria:} M\'odulo opcional que permite almacenar im\'agenes validadas localmente para compartirlas cuando se cuente con conectividad, contribuyendo al monitoreo fitosanitario colectivo.
@@ -194,8 +190,8 @@ La aplicaci\'on m\'ovil constituye el punto de interacci\'on directa en manos de
 El n\'ucleo de aprendizaje profundo embebido abarca:
 \begin{itemize}
 \item \textbf{Cobertura taxon\'omica de 9 clases en hoja de ma\'iz:} Clasificaci\'on supervisada de signos y s\'intomas foliares, cubriendo enfermedades causadas por hongos (tiz\'on foliar, mancha gris y roya com\'un), virosis cr\'itica (necrosis letal del ma\'iz), plagas directas (gusano cogollero), deficiencias nutricionales de suelo (nitr\'ogeno, f\'osforo y potasio) y l\'amina foliar sana.
-\item \textbf{Optimizaci\'on bayesiana, ensamble y cuantizaci\'on Int8:} B\'usqueda automatizada de hiperpar\'ametros (Optuna con poda temprana), combinaci\'on estrat\'egica por votaci\'on suave (\textit{Soft Voting}) y cuantizaci\'on a 8 bits exportada en formato TensorFlow Lite mediante litert-torch, optimizada para inferencia ultrarr\'apida ($\le 100$~ms) en procesadores m\'oviles.
-\item \textbf{Auditor\'ia de sesgos y generalizaci\'on:} Protocolo de evaluaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}) y pruebas de ablaci\'on espacial de fondo para auditar y neutralizar el fen\'omeno de atajos visuales (\textit{Clever Hans effect}).
+\item \textbf{Optimizaci\'on bayesiana, ensamble y cuantizaci\'on Int8:} B\'usqueda automatizada de hiperpar\'ametros (Optuna con poda temprana), combinaci\'on estrat\'egica por votaci\'on suave (\textit{Soft Voting}) y cuantizaci\'on a 8 bits exportada en formato TensorFlow Lite mediante litert-torch, para inferencia en procesadores m\'oviles ($\le 300$~ms).
+\item \textbf{Auditor\'ia de sesgos y generalizaci\'on:} Protocolo de evaluaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}) y pruebas de ablaci\'on espacial de fondo para auditar el fen\'omeno de atajos visuales (\textit{Clever Hans effect}).
 \end{itemize}
 
 \subsection{L\'imites y Fronteras del Proyecto}
@@ -239,7 +235,7 @@ Soluci\'on integral & Modelo Int8 de 20~MB o menos, inferencia de 300~ms o menos
 \section{Justificaci\'on}
 
 \subsection{Justificaci\'on T\'ecnica y Metodol\'ogica}
-La presente investigaci\'on se justifica t\'ecnicamente al trasladar el procesamiento de aprendizaje profundo desde arquitecturas dependientes de servidores en la nube hacia el borde del dispositivo m\'ovil (\textit{Edge AI}). En la literatura especializada de visi\'on por computadora aplicada a la agricultura, predomina el entrenamiento de modelos convolucionales de alta complejidad evaluados sobre particiones aleatorias convencionales, las cuales frecuentemente sufren de fuga de informaci\'on e introducen atajos visuales ligados a fondos controlados \cite{ahmad2023a}. El presente proyecto aborda esta limitaci\'on mediante una metodolog\'ia rigurosa basada en auditor\'ia de duplicados a nivel de p\'ixel, esquemas de validaci\'on cruzada agrupada por procedencia y t\'ecnicas de cuantizaci\'on sim\'etrica a enteros de 8 bits (\textit{Int8}) que reducen dr\'asticamente la demanda computacional sin comprometer la sensibilidad diagn\'ostica \cite{howard2017,tan2019}. Asimismo, integra salvaguardas operacionales como el filtrado de muestras fuera de dominio (\textit{OOD}) \cite{lee2018} y mecanismos de explicabilidad visual mediante mapas de activaci\'on \cite{selvaraju2017}, con el fin de que las predicciones se apoyen en caracter\'isticas de la l\'amina foliar; la verificaci\'on de este objetivo se presenta en el cap\'itulo de resultados.
+La presente investigaci\'on se justifica t\'ecnicamente al trasladar el procesamiento de aprendizaje profundo desde arquitecturas dependientes de servidores en la nube hacia el borde del dispositivo m\'ovil (\textit{Edge AI}). En la literatura especializada de visi\'on por computadora aplicada a la agricultura, predomina el entrenamiento de modelos convolucionales de alta complejidad evaluados sobre particiones aleatorias convencionales, las cuales frecuentemente sufren de fuga de informaci\'on e introducen atajos visuales ligados a fondos controlados \cite{ahmad2023a}. El presente proyecto aborda esta limitaci\'on mediante una metodolog\'ia rigurosa basada en auditor\'ia de duplicados a nivel de p\'ixel, esquemas de validaci\'on cruzada agrupada por procedencia y t\'ecnicas de cuantizaci\'on sim\'etrica a enteros de 8 bits (\textit{Int8}) que reducen la demanda computacional \cite{howard2017,tan2019}. Asimismo, integra salvaguardas operacionales como el filtrado de muestras fuera de dominio (\textit{OOD}) \cite{lee2018} y mecanismos de explicabilidad visual mediante mapas de activaci\'on \cite{selvaraju2017}, con el fin de que las predicciones se apoyen en caracter\'isticas de la l\'amina foliar; la verificaci\'on de este objetivo se presenta en el cap\'itulo de resultados.
 
 \subsection{Justificaci\'on Econ\'omica}
 Para las peque\~nas familias productoras de ma\'iz en El Salvador, el margen de rentabilidad agr\'icola por ciclo es sumamente reducido y altamente vulnerable a sobrecostos imprevistos \cite{mag2023}. Un diagn\'ostico fitosanitario err\'oneo conduce a la compra e intoxicaci\'on del cultivo con agroqu\'imicos comerciales inadecuados, mermando el escaso capital de trabajo disponible. Proveer una aplicaci\'on m\'ovil de uso aut\'onomo, gratuito y local en el propio tel\'efono inteligente del agricultor permite orientar de manera precisa la intervenci\'on fitosanitaria, evitando gastos innecesarios en plaguicidas ante s\'intomas provocados por deficiencias nutricionales y facilitando una acci\'on temprana contra plagas destructivas como el gusano cogollero (\textit{Spodoptera frugiperda}) antes de que comprometan el rendimiento econ\'omico de la milpa \cite{centa2022}.
@@ -258,7 +254,7 @@ La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la 
 
 \begin{figure}[H]
 \centering
-\caption{Diagrama de Gantt de ejecuci\'on temporal del proyecto (Metodolog\'ia CRISP-DM)}
+\caption{Diagrama de Gantt del cronograma planificado (Metodolog\'ia CRISP-DM)}
 \label{fig:gantt_cronograma}
 \resizebox{\textwidth}{!}{%
 \begin{ganttchart}[
@@ -291,7 +287,7 @@ La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la 
 \end{figure}
 
 \begin{table}[H]
-\caption{Cronograma consolidado de actividades y fases del proyecto (CRISP-DM)}
+\caption{Cronograma planificado de actividades y fases del proyecto (CRISP-DM)}
 \label{tab:cronograma}
 \centering
 \small
@@ -304,7 +300,7 @@ La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la 
 \textbf{Fase 2: Preparaci\'on de Datos} & 12/05/26 & 09/06/26 & 4 & 40 h & Auditor\'ia criptogr\'afica de duplicados, balanceo y data augmentation. \\
 \textbf{Fase 3: Modelado Algor\'itmico} & 09/06/26 & 21/07/26 & 6 & 60 h & Transfer learning en arquitecturas ligeras y optimizaci\'on con Optuna. \\
 \textbf{Fase 4: Evaluaci\'on y Auditor\'ia de Sesgos} & 21/07/26 & 18/08/26 & 4 & 40 h & Ensamble Soft Voting, evaluaci\'on ciega de campo y an\'alisis XAI (Grad-CAM). \\
-\textbf{Fase 5: Optimizaci\'on Edge y App M\'ovil} & 18/08/26 & 29/09/26 & 6 & 60 h & Modelo Int8 (3.56~MB), detector OOD y app DoctorMaiz (React Native/Expo). \\
+\textbf{Fase 5: Optimizaci\'on Edge y App M\'ovil} & 18/08/26 & 29/09/26 & 6 & 60 h & Modelo Int8 (3.74~MB), detector OOD y app DoctorMaiz (React Native/Expo). \\
 \textbf{Fase 6: Pruebas Finales y Memoria} & 29/09/26 & 29/10/26 & 4 & 40 h & Evaluaci\'on f\'isica en Motorola edge 40 neo, memoria t\'ecnica y defensa final. \\
 \midrule
 \textbf{Hito Final: Defensa de Proyecto} & \multicolumn{2}{c}{\textbf{29 de octubre de 2026}} & \textbf{28 sem} & \textbf{280 h} & \textbf{Sistema DoctorMaiz liberado} \\
@@ -369,11 +365,11 @@ Los salarios mensuales corresponden al punto medio de la escala de referencia de
 \toprule
 \textbf{Rubro} & \textbf{Detalle T\'ecnico} & \textbf{M\'etrica / Cantidad} & \textbf{Subtotal} \\
 \midrule
-Instancias GPU Modal & NVIDIA A10G (24 GB VRAM) & 15.85 horas medidas $\times$ \$1.10/h & \$17.44 \\
+Instancias GPU Modal & NVIDIA A10G (24 GB VRAM) & 12.65 horas del estudio de optimizaci\'on $\times$ \$1.10/h & \$13.92 \\
 Almacenamiento Cloud & Cloud Volumes y respaldos de pesos & 100 GB $\times$ 6 meses & \$30.00 \\
 Licenciamiento software & PyTorch, Expo, React Native, Optuna & Licencias Open Source / MIT & \$0.00 \\
 \midrule
-\textbf{Total Infraestructura Cloud y Licencias} & — & — & \textbf{\$47.44} \\
+\textbf{Total Infraestructura Cloud y Licencias} & — & — & \textbf{\$43.92} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
@@ -389,13 +385,13 @@ Licenciamiento software & PyTorch, Expo, React Native, Optuna & Licencias Open S
 \toprule
 \textbf{Rubro de Inversi\'on} & \textbf{Monto Total (USD)} & \textbf{Porcentaje (\%)} \\
 \midrule
-Recursos Humanos de Investigaci\'on & \$8,117.97 & 99.42\% \\
-Servicios de c\'omputo en la nube (GPU/Storage) & \$47.44 & 0.58\% \\
+Recursos Humanos de Investigaci\'on & \$8,117.97 & 99.46\% \\
+Servicios de c\'omputo en la nube (GPU/Storage) & \$43.92 & 0.54\% \\
 \midrule
-\textbf{Total General} & \textbf{\$8,165.41} & \textbf{100.00\%} \\
+\textbf{Total General} & \textbf{\$8,161.89} & \textbf{100.00\%} \\
 \bottomrule
 \end{tabular}
 \end{singlespace}
 \end{table}
 
-La ejecuci\'on financiera demuestra que, gracias al aprovechamiento de tecnolog\'ias de c\'odigo abierto y la utilizaci\'on estrat\'egica de cl\'usteres serverless con parada autom\'atica, el costo directo de infraestructura computacional se mantuvo en valores extraordinariamente accesibles (\$47.44 USD, de los cuales \$17.44 corresponden a las 15.85 horas de GPU medidas y \$30.00 al almacenamiento), ratificando la viabilidad econ\'omica de proyectos de investigaci\'on en inteligencia artificial de alto impacto desarrollados en universidades p\'ublicas.
+La ejecuci\'on financiera demuestra que, gracias al aprovechamiento de tecnolog\'ias de c\'odigo abierto y la utilizaci\'on estrat\'egica de cl\'usteres serverless con parada autom\'atica, el costo directo de infraestructura computacional fue de \$43.92 USD, de los cuales \$13.92 corresponden a las 12.65 horas de GPU registradas para el estudio de optimizaci\'on (incluidos los intentos fallidos) y \$30.00 al almacenamiento. El c\'omputo de los dem\'as entrenamientos no se contabiliza.

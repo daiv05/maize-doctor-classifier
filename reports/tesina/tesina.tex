@@ -1,13 +1,11 @@
 \documentclass[12pt,letterpaper]{report}
 
-% --- Paquetes de Formato y Geometría ---
 \usepackage[margin=1in]{geometry}
 \usepackage{times}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[spanish,es-tabla]{babel}
 
-% --- Paquetes Matemáticos y Gráficos ---
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -33,17 +31,12 @@
 
 \sloppy
 
-% --- Rutas de Gráficos ---
-\graphicspath{{images/}{../second-phase/images/}}
-
-% --- Configuración de Encabezados y Pies de Página ---
 \setlength{\headheight}{15pt}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[R]{\thepage}
 \renewcommand{\headrulewidth}{0pt}
 
-% --- Redefinición de Títulos en Español ---
 \renewcommand{\tablename}{Tabla}
 \renewcommand{\figurename}{Figura}
 \renewcommand{\contentsname}{\'Indice General}
@@ -51,7 +44,6 @@
 \renewcommand{\listfigurename}{\'Indice de Figuras}
 \renewcommand{\bibname}{Bibliograf\'ia}
 
-% Personalización del formato de capítulos para estilo tesina UES
 \usepackage{titlesec}
 \titleformat{\chapter}[display]
   {\normalfont\Large\bfseries\centering}
@@ -62,11 +54,7 @@
 
 \begin{document}
 
-% ----------------------------------------------------------------------
-% PÁGINAS PRELIMINARES PROTOCOLARIAS (ESTÁNDAR FIA-UES)
-% ----------------------------------------------------------------------
 
-% 1. Portada Oficial del Curso de Especialización
 \begin{titlepage}
 \centering
 {\normalsize\bfseries UNIVERSIDAD DE EL SALVADOR\par}
@@ -96,7 +84,6 @@
 {\small CIUDAD UNIVERSITARIA, OCTUBRE DE 2026\par}
 \end{titlepage}
 
-% 2. Hoja de Autoridades Universitarias
 \newpage
 \thispagestyle{empty}
 \begin{center}
@@ -143,7 +130,6 @@
 {\normalsize\bfseries MSC. CESAR AUGUSTO GONZ\'ALEZ RODR\'IGUEZ\par}
 \end{center}
 
-% 3. Portada Interior
 \newpage
 \thispagestyle{empty}
 \begin{center}
@@ -186,7 +172,6 @@
 {\small SAN SALVADOR, OCTUBRE DE 2026\par}
 \end{center}
 
-% 4. Hoja de Aprobación del Asesor
 \newpage
 \thispagestyle{empty}
 \begin{center}
@@ -200,7 +185,6 @@
 {\normalsize\bfseries ING. BLADIMIR DIAZ CAMPOS\par}
 \end{center}
 
-% 5. Agradecimientos
 \newpage
 \pagenumbering{roman}
 \setcounter{page}{1}
@@ -258,7 +242,6 @@
 \textit{Elmer Edenilson Rosales Molina}
 \end{flushright}
 
-% 6. Resumen Ejecutivo
 \newpage
 \begin{center}
 {\Large\bfseries Resumen Ejecutivo\par}
@@ -272,17 +255,14 @@ Esta investigaci\'on aborda dichos desaf\'ios mediante el an\'alisis, dise\~no, 
 
 Para el desarrollo experimental se recopil\'o y depur\'o un corpus de \textbf{33~429 im\'agenes} procedentes de 11 repositorios internacionales. Se implement\'o un flujo de procesamiento reproducible que incluy\'o controles de integridad, revisi\'on de duplicados y verificaci\'on de la procedencia de las im\'agenes. La optimizaci\'on de hiperpar\'ametros se realiz\'o mediante optimizaci\'on bayesiana con Optuna y poda temprana mediante MedianPruner, explorando seis dimensiones de configuraci\'on y registrando los tiempos de c\'omputo en GPU de cada ensayo.
 
-Se evalu\'o un ensamble heterog\'eneo de arquitecturas convolucionales compuesto por EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2, utilizando votaci\'on suave (\textit{Soft Voting}). En un conjunto de prueba retenida de 5~015 im\'agenes, el ensamble obtuvo una exactitud del \textbf{98.29\%}, un Macro $F_1$ de \textbf{0.9567} y un Macro Recall del \textbf{95.06\%}. Para la clase de necrosis letal del ma\'iz se registr\'o un \textbf{Recall del 100\% (963 de 963 im\'agenes clasificadas correctamente)}, mientras que la deficiencia de potasio alcanz\'o un $F_1$ de \textbf{0.8475}. Estos resultados corresponden al protocolo experimental empleado y no constituyen, por s\'i solos, una garant\'ia del rendimiento del sistema en condiciones reales de campo.
+El modelo oficial es una EfficientNet-Lite0 entrenada sobre el corpus de 33~429 im\'agenes, que en un conjunto de prueba retenida de 5~015 im\'agenes obtuvo un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\%; en tres semillas, la media fue de $0.9435 \pm 0.0052$. Un ensamble heterog\'eneo de EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 con votaci\'on suave (\textit{Soft Voting}), evaluado en el corpus de 33~433 im\'agenes de una etapa previa, alcanz\'o un Macro $F_1$ de 0.9567 y una exactitud de 98.29\%, sin que se haya desplegado. Estos resultados corresponden al protocolo experimental empleado y no constituyen una garant\'ia del rendimiento en condiciones reales de campo.
 
-La evaluaci\'on de generalizaci\'on mediante validaci\'on cruzada agrupada por fuente (\textit{SourceGroupedKFold}) produjo un Macro $F_1$ de $0.6026 \pm 0.1240$ sobre las clases evaluables en cada pliegue, lo que evidenci\'o limitaciones para transferir los resultados entre fuentes de im\'agenes. Adicionalmente, un experimento de ablaci\'on espacial mostr\'o que, al ocluir la regi\'on central de la hoja, el modelo conserv\'o un \textbf{79.46\% de exactitud}, resultado que motiv\'o el an\'alisis de posibles atajos visuales y la influencia del fondo en las predicciones. Como medidas de mitigaci\'on, se incorporaron un marco gu\'ia para la captura de im\'agenes y un mecanismo de detecci\'on de entradas fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD), basado en la distancia de Mahalanobis y calibrado al percentil 95. Estas medidas buscan reducir los errores asociados a entradas inadecuadas y requieren evaluaciones espec\'ificas para cuantificar su efectividad.
+La evaluaci\'on de generalizaci\'on es la principal limitaci\'on del trabajo. En 97 fotograf\'ias de campo externas al corpus, el modelo oficial acert\'o 41 (42\%) y el detector de entradas fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD) rechaz\'o 49; el modelo de agosto acert\'o 39, de modo que la brecha no se debe al cambio de modelo. La validaci\'on cruzada agrupada por fuente (\textit{SourceGroupedKFold}) produjo un Macro $F_1$ de $0.6026 \pm 0.1240$ (IC95, sobre las clases presentes en cada pliegue; 0.4359 con el macro $F_1$ convencional) frente a $0.9311 \pm 0.0099$ en la partici\'on estratificada. Adem\'as, un experimento de ablaci\'on espacial mostr\'o que, al ocluir la regi\'on central de la hoja, el modelo conserv\'o un \textbf{79.46\% de exactitud}, indicio de que el fondo aporta se\~nal de clase. Como medidas de mitigaci\'on, se incorporaron un marco gu\'ia para la captura de im\'agenes y un detector OOD basado en la distancia de Mahalanobis, con umbral 106.37 calibrado al percentil 95 de validaci\'on; su efecto sobre el sesgo de procedencia no se midi\'o.
 
-Para el despliegue m\'ovil, el modelo \texttt{EfficientNet-Lite0} se cuantiz\'o a enteros de 8 bits (\textbf{Int8}), reduciendo su tama\~no un 72\%, hasta \textbf{3.56~MB}. En pruebas realizadas en un dispositivo f\'isico Motorola edge 40 neo con Android 15, se registr\'o una latencia de inferencia de aproximadamente \textbf{60~milisegundos} para una ejecuci\'on de referencia. La inferencia local permite realizar clasificaciones sin conexi\'on a internet, mientras que las funciones de sincronizaci\'on de im\'agenes requieren conectividad.
+Para el despliegue m\'ovil, el modelo oficial se cuantiz\'o a enteros de 8 bits (\textbf{Int8}), con un tama\~no de \textbf{3.74~MB} (72.9\% menos que el modelo en coma flotante). En la prueba completa, el modelo Int8 obtuvo un Macro $F_1$ de 0.9489 y una exactitud de 97.87\%, con 99.74\% de acuerdo con el modelo original. En un dispositivo f\'isico Motorola edge 40 neo con Android 15, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia, y el tel\'efono reproduce las predicciones del modelo Int8 del servidor en 143 de 143 im\'agenes. La inferencia local permite realizar clasificaciones sin conexi\'on a internet, mientras que las funciones de sincronizaci\'on de im\'agenes requieren conectividad.
 
 En conjunto, Doctor Ma\'iz integra clasificaci\'on mediante aprendizaje profundo, ejecuci\'on en dispositivos m\'oviles y mecanismos de recopilaci\'on colaborativa de im\'agenes. Los resultados demuestran la viabilidad t\'ecnica de la implementaci\'on y, al mismo tiempo, ponen de manifiesto la necesidad de fortalecer la generalizaci\'on entre fuentes y validar el comportamiento del sistema con im\'agenes representativas de condiciones reales de cultivo. Finalmente, se proponen cinco recomendaciones dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA), orientadas a la validaci\'on en campo, la transferencia tecnol\'ogica y el desarrollo progresivo de un conjunto de datos nacional de acceso abierto.
 
-% ----------------------------------------------------------------------
-% ÍNDICES
-% ----------------------------------------------------------------------
 \newpage
 \tableofcontents
 \newpage
@@ -290,15 +270,11 @@ En conjunto, Doctor Ma\'iz integra clasificaci\'on mediante aprendizaje profundo
 \newpage
 \listoffigures
 
-% ----------------------------------------------------------------------
-% CUERPO PRINCIPAL DEL DOCUMENTO
-% ----------------------------------------------------------------------
 \newpage
 \doublespacing
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-% Inclusión de Capítulos Modulares
 \include{capitulo1}
 \include{capitulo2}
 \include{capitulo3}

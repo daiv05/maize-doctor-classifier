@@ -3,30 +3,27 @@
 
 \section*{Conclusiones}
 
-La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema integral, cient\'ificamente riguroso y desplegado operativamente en dispositivos m\'oviles para el agro salvadore\~no. A partir de los resultados cuantitativos y cualitativos obtenidos, se concluye:
+La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema de diagn\'ostico foliar de ma\'iz que se ejecuta sin conexi\'on en dispositivos m\'oviles. A partir de los resultados obtenidos, se concluye:
 
 \begin{enumerate}
-\item \textbf{Rendimiento del modelo en partici\'on estratificada:} El ensamble heterog\'eneo por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de \textbf{0.9567}, una exactitud de \textbf{98.29\%} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba. Este resultado es hist\'orico, de una sola semilla y de una partici\'on que mezcla fuentes; no es el modelo desplegado ni una validaci\'on de generalizaci\'on. El modelo desplegado (EfficientNet-Lite0, run \texttt{20260812\_221429}) alcanz\'o un Macro $F_1$ de \textbf{0.9468}, tambi\'en hist\'orico. El baseline de desarrollo vigente (run \texttt{20260921\_204608}) obtuvo \textbf{0.9480} con una sola semilla.
-\item \textbf{Recall de necrosis letal (MLN):} En la partici\'on estratificada, el ensamble clasific\'o correctamente los 963 casos de MLN del conjunto de prueba. Bajo validaci\'on con fuente no vista (LOSO sobre \texttt{multicrop-disease-maiz}, tres semillas), el recall de MLN del ensamble baja a 0.79--0.81 y el del modelo EfficientNet-Lite0 a 0.72--0.74. La ausencia de falsos negativos no se generaliza y debe seguir monitoreada en campo.
-\item \textbf{Generalizaci\'on entre fuentes:} Con validaci\'on cruzada de cinco pliegues, el Macro $F_1$ pasa de 0.9311 (partici\'on estratificada) a 0.6026 $\pm$ 0.1240 (IC95, clases evaluables por pliegue) agrupando por procedencia; este es un resultado hist\'orico. Con LOSO en tres semillas, el modelo sin \texttt{multicrop-disease-maiz} obtiene 0.9933 $\pm$ 0.0006 en \texttt{maize-diseases} y 0.9019 $\pm$ 0.0044 en \texttt{multicrop-disease-maiz}. La diferencia no permite atribuirse a un factor \'unico. La eficiencia de la b\'usqueda se midi\'o en \'epocas (453 de 1\,500, 30.2\%); no se midieron horas de GPU frente a una b\'usqueda sin poda.
-\item \textbf{Capacidades del diagn\'ostico:} El \textit{Disparate Impact Ratio} entre laboratorio y campo real, comparando las tres clases compartidas, es \textbf{0.9604} sobre Macro $F_1$ y \textbf{0.9901} sobre exactitud, por encima del umbral de 0.80. La ablaci\'on espacial mostr\'o que, al ocluir el centro de la hoja, el modelo conserva un \textbf{79.46\%} de exactitud, y al ocluir la periferia cae a \textbf{42.25\%}. Esto indica sensibilidad al contexto de la escena. El nivel de riesgo global del an\'alisis de equidad se registra como \texttt{CRITICAL} en la evidencia, y se reporta as\'i para su revisi\'on.
-\item \textbf{Prototipo offline medido en un tel\'efono de gama media:} La cuantizaci\'on a 8 bits del modelo hist\'orico produjo un archivo de \textbf{3.56~MB}. En un smartphone f\'isico Motorola edge 40 neo, la mediana de inferencia fue de \textbf{60~milisegundos}, y la aplicaci\'on clasifica sin conexi\'on. La evaluaci\'on en dispositivo del checkpoint vigente est\'a pendiente, y la exactitud de la versi\'on cuantizada sobre el conjunto de prueba completo no fue medida.
-\item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia para la captura y un detector OOD basado en distancia de Mahalanobis relativa, con umbral calibrado al percentil 95. Su efecto sobre el sesgo de procedencia no ha sido medido.
-\item \textbf{Segmentaci\'on de la hoja, como l\'inea experimental:} Un segmentador YOLO entrenado en un repositorio independiente obtuvo, en validaci\'on, un IoU medio de 0.98122 sobre 150 hojas enfermas, con una sola semilla. Un modelo entrenado sobre un corpus enmascarado alcanz\'o un Macro $F_1$ de 0.7191 en prueba, sin pareamiento con el conjunto original. La aplicaci\'on instalada no aplica segmentaci\'on; la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
+\item \textbf{Modelo oficial y su exportaci\'on m\'ovil:} El modelo oficial (EfficientNet-Lite0, run \texttt{20260921\_204608}) obtuvo un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\% sobre 5~015 im\'agenes de prueba, y 0.9435 $\pm$ 0.0052 como media y desviaci\'on muestral de tres semillas. Su versi\'on Int8 pesa \textbf{3.74~MB} (72.9\% menos que el punto de control FP32 de 13.79~MB) y en la prueba completa obtuvo Macro $F_1$ de 0.9489 y exactitud de 97.87\%, con 99.74\% de acuerdo con las predicciones de PyTorch. En el tel\'efono Motorola edge 40 neo, la mediana fue de 98~ms de preprocesado y 23~ms de inferencia, y el dispositivo reproduce las predicciones del modelo Int8 del servidor en 143 de 143 im\'agenes.
+\item \textbf{Ensamble de la etapa 2:} El ensamble por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de 0.9567, una exactitud de 98.29\% y un Macro Recall de 95.06\% en el corpus de 33~433 im\'agenes de esa etapa, con los 963 casos de necrosis letal del ma\'iz (MLN) clasificados correctamente. Es un resultado de una sola semilla en una partici\'on que mezcla fuentes, y el ensamble no est\'a desplegado. Bajo validaci\'on con fuente no vista (LOSO sobre \texttt{multicrop-disease-maiz}, tres semillas), el recall de MLN baja a 0.79--0.81 en el ensamble y a 0.72--0.74 en Lite0.
+\item \textbf{Generalizaci\'on entre fuentes, limitaci\'on principal:} En 97 fotograf\'ias de campo externas, el modelo oficial acert\'o 41 (42\%) y el detector OOD rechaz\'o 49; el Lite0 de agosto acert\'o 39, por lo que la brecha corresponde a la generalizaci\'on y no al cambio de modelo. Coincide con la validaci\'on cruzada agrupada por fuente, donde el Macro $F_1$ pasa de 0.9311 $\pm$ 0.0099 (estratificada) a 0.6026 $\pm$ 0.1240 (IC95, sobre las clases presentes en cada pliegue; 0.4359 con el macro $F_1$ convencional de nueve clases). Con LOSO en tres semillas, el modelo entrenado sin \texttt{maize-diseases} obtiene 0.9933 $\pm$ 0.0006 en esa fuente y el entrenado sin \texttt{multicrop-disease-maiz} obtiene 0.9019 $\pm$ 0.0044 en la suya.
+\item \textbf{Dependencia del fondo:} El \textit{Disparate Impact Ratio} entre laboratorio y campo, en las tres clases compartidas, es 0.9604 sobre Macro $F_1$ y 0.9901 sobre exactitud. La ablaci\'on espacial mostr\'o que al ocluir el centro de la hoja el modelo conserva 79.46\% de exactitud y que al ocluir la periferia cae a 42.25\%, lo que indica sensibilidad al contexto de la escena; el nivel de riesgo global del an\'alisis de equidad se registra como \texttt{CRITICAL}.
+\item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia de captura y un detector OOD basado en distancia de Mahalanobis relativa con umbral 106.37 (percentil 95 de validaci\'on). El detector rechaz\'o las 5 im\'agenes sint\'eticas de prueba y 3.8\% de 500 im\'agenes de prueba v\'alidas. El efecto del marco gu\'ia sobre el sesgo de procedencia no se midi\'o.
+\item \textbf{Segmentaci\'on de la hoja, l\'inea experimental:} Un modelo entrenado sobre un corpus enmascarado alcanz\'o un Macro $F_1$ de 0.7191 en prueba, sin pareamiento con el conjunto original. La aplicaci\'on no aplica segmentaci\'on y la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
 \end{enumerate}
 
 \section*{Recomendaciones}
 
 \begin{enumerate}
-\item \textbf{Transici\'on a ensayos de validaci\'on en campo:} Desplegar un programa piloto de validaci\'on participativa con cooperativas agr\'icolas y ADESCOs en los departamentos de Caba\~nas, Moraz\'an y Ahuachap\'an para evaluar la adopci\'on del marco gu\'ia bajo luz solar intensa y condiciones reales de campo.
-\item \textbf{Consolidaci\'on del dataset colaborativo (propuesta):} Como meta propuesta, integrar de forma prioritaria las primeras 1~000 fotograf\'ias capturadas en milpas salvadore\~nas a trav\'es del m\'odulo de contribuci\'on, permitiendo un reentrenamiento focalizado para cerrar la brecha de dominio detectada en la evaluaci\'on fuera de fuente.
-\item \textbf{Anotaci\'on patom\'etrica para modelos ordinales de severidad:} Establecer un convenio t\'ecnico con fitopat\'ologos del CENTA para calificar un subconjunto de im\'agenes con escalas homologadas de severidad (Cobb modificada, Vieira, Brito), sentando las bases para cabezas de regresi\'on ordinal que predigan el grado de da\~no adem\'as de la clase.
-\item \textbf{Adopci\'on y custodia institucional en el Estado salvadore\~no:} Promover que el Ministerio de Agricultura y Ganader\'ia adopte formalmente el c\'odigo y pesos de DoctorMaiz bajo gobernanza de c\'odigo abierto, asegurando que el conocimiento generado pertenezca a la sociedad y no a intereses corporativos transnacionales.
+\item \textbf{Validaci\'on en campo antes de la adopci\'on institucional:} Evaluar la aplicaci\'on con promotores del CENTA sobre fotograf\'ias propias de cada zona productora, dado que la exactitud en fotograf\'ias de campo externas fue de 42\%.
+\item \textbf{Banco nacional participativo de datos agr\'icolas:} Financiar brigadas fotogr\'aficas junto a la Universidad de El Salvador para capturar variedades y condiciones locales, con el fin de reducir la brecha de dominio detectada.
+\item \textbf{Red de alerta fitosanitaria temprana:} Evaluar el uso de los aportes voluntarios sincronizados para un tablero epidemiol\'ogico centralizado en el MAG, sujeto a una pol\'itica expl\'icita de tratamiento de metadatos y ubicaci\'on.
+\item \textbf{Capacitaci\'on comunitaria:} Ense\~nar a cooperativas y ADESCOs el uso del marco gu\'ia de captura, posicionando la herramienta como apoyo al criterio del productor.
+\item \textbf{Software abierto y protecci\'on de datos:} Conservar el software bajo licencias de c\'odigo abierto y definir las condiciones de uso de los datos aportados por los productores.
 \end{enumerate}
 
-% ----------------------------------------------------------------------
-% BIBLIOGRAFÍA
-% ----------------------------------------------------------------------
 \newpage
 \begin{thebibliography}{99}
 \addcontentsline{toc}{chapter}{Bibliograf\'ia}
@@ -68,7 +65,7 @@ Ministerio de Agricultura y Ganader\'ia (MAG). (2023). \textit{Anuario de Estad\
 Akiba, T., Sano, S., Yanase, T., Ohta, T., \& Koyama, M. (2019). Optuna: A next-generation hyperparameter optimization framework. En \textit{ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)} (pp. 2623--2631).
 
 \bibitem{mahalanobispp2025}
-Ren, J., et al. (2025). Mahalanobis++: Improving OOD detection via feature normalization. \textit{arXiv preprint arXiv:2505.18032}.
+Mueller, M., \& Hein, M. (2025). Mahalanobis++: Improving OOD detection via feature normalization. \textit{arXiv preprint arXiv:2505.18032}.
 
 \bibitem{ren2021}
 Ren, J., Fort, S., Liu, J., Roy, A. G., Padhy, S., \& Lakshminarayanan, B. (2021). A simple fix to Mahalanobis distance for improving near-OOD detection. \textit{arXiv preprint arXiv:2106.09022}.
@@ -84,9 +81,6 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 
 \end{thebibliography}
 
-% ----------------------------------------------------------------------
-% GLOSARIO
-% ----------------------------------------------------------------------
 \newpage
 \chapter*{Glosario de T\'erminos}
 \addcontentsline{toc}{chapter}{Glosario de T\'erminos}
@@ -94,7 +88,7 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 \begin{description}
 \item[Clever Hans Effect:] Fen\'omeno en el cual un modelo de aprendizaje autom\'atico alcanza una aparente alta precisi\'on apoy\'andose en correlaciones espurias o atajos del entorno (fondos, sensores, marcas de agua) en lugar de las caracter\'isticas intr\'insecas de la clase.
 \item[Cosine Annealing:] Esquema de planificaci\'on de tasa de aprendizaje que reduce gradualmente el paso de optimizaci\'on siguiendo la curva de un coseno hasta un m\'inimo establecido, facilitando que el optimizador escape de m\'inimos locales.
-\item[Disparate Impact Ratio (DIR):] M\'etrica de equidad algor\'itmica que cuantifica el cociente entre la tasa favorable del grupo minoritario y la del grupo mayoritario. Un valor inferior a 0.80 denota sesgo o trato dispar regulatorio.
+\item[Disparate Impact Ratio (DIR):] M\'etrica de equidad algor\'itmica que cuantifica el cociente entre la tasa favorable del grupo minoritario y la del grupo mayoritario. Un valor inferior a 0.80 se toma como indicio de trato dispar.
 \item[Edge AI:] Paradigma de inteligencia artificial donde los modelos entrenados se ejecutan directamente en hardware local (dispositivos m\'oviles, microcontroladores) sin enviar datos a servidores en la nube.
 \item[Macro $F_1$-Score:] Media aritm\'etica no ponderada del valor $F_1$ calculado independientemente para cada clase. Asigna el mismo peso relativo a clases minoritarias y mayoritarias, siendo la m\'etrica est\'andar ante conjuntos desbalanceados.
 \item[MLOps (Machine Learning Operations):] Conjunto de pr\'acticas de ingenier\'ia de software destinadas a automatizar, versionar y garantizar la reproducibilidad y monitoreo de pipelines de aprendizaje autom\'atico en producci\'on.
@@ -104,16 +98,13 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 \item[Soft Voting:] Mecanismo de ensamble multimodelo que promedia las probabilidades continuas asignadas por cada red individual mediante la funci\'on Softmax, seleccionando la clase con el m\'aximo consenso medio.
 \end{description}
 
-% ----------------------------------------------------------------------
-% ANEXOS
-% ----------------------------------------------------------------------
 \newpage
 \chapter*{Anexos}
 \addcontentsline{toc}{chapter}{Anexos}
 
 \section*{Anexo A: Registro de Enlaces y Repositorios Abiertos del Proyecto}
 
-El c\'odigo fuente \'integro, los pesos exportados, los pipelines de entrenamiento y los artefactos de evaluaci\'on de \textbf{DoctorMaiz} se encuentran p\'ublicamente accesibles bajo licencias de c\'odigo abierto:
+Los repositorios y recursos de \textbf{DoctorMaiz} son los siguientes:
 
 \begin{itemize}
 \item \textbf{Clasificador (\textit{pipeline} de entrenamiento, evaluaci\'on y exportaci\'on):}\par
@@ -134,7 +125,7 @@ El c\'odigo fuente \'integro, los pesos exportados, los pipelines de entrenamien
 
 \section*{Anexo B: Inventario Criptogr\'afico de Checkpoints Respaldados}
 
-La Tabla~\ref{tab:anexo_checkpoints} detalla los hashes SHA-256 de los principales checkpoints f\'isicos que sustentan la reproducibilidad de la tesina.
+La Tabla~\ref{tab:anexo_checkpoints} detalla los hashes SHA-256 de los principales modelos f\'isicos que sustentan la reproducibilidad de la tesina.
 
 \begin{table}[H]
 \caption{Hashes SHA-256 de los pesos f\'isicos de los modelos respaldados}
@@ -146,10 +137,10 @@ La Tabla~\ref{tab:anexo_checkpoints} detalla los hashes SHA-256 de los principal
 \toprule
 \textbf{Modelo / Protocolo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del Checkpoint (\texttt{best.pth})} \\
 \midrule
-EfficientNet-Lite0 Base (42, oficial) & 12.92 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
-EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.56 MB & \path{0a77ad7937f73e24b795288c68741d14dd00226ffe546d5ddf5b99125fbef24d} \\
-EfficientNet-B0 Referencia & 16.36 MB & Pendiente de verificaci\'on \\
-ShuffleNet-V2-x1.0 Referencia & 5.2 MB & Pendiente de verificaci\'on \\
+EfficientNet-Lite0 Base (42, oficial) & 13.79 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
+EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.74 MB & \path{bb31467a58c11cd474159bd5739a7a57b1f1edfda6b5dbfae8fa91337f3c56b1} \\
+EfficientNet-B0 Referencia & 16.36 MB & \path{0e367a5318c068c9bcc90a6bec0d17a0b029251ca5f98400034bd09de7524fdb} \\
+ShuffleNet-V2-x1.0 Referencia & 5.22 MB & \path{b681a3fd5fffaa5d078802369dff04b46c91cbfed7b333ea80c9d6965fd82c9e} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
