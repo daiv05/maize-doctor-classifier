@@ -32,18 +32,18 @@ Los modelos entrenados con imágenes de otros continentes sufren una pérdida de
 
 ## Cómo Funciona el Envío de Muestras
 
-El agricultor puede postular fotografías de sus escaneos para que formen parte del **Dataset Abierto Nacional**:
+El agricultor puede aportar fotografías, tomadas con la cámara o elegidas de la galería, y asignarles la etiqueta de diagnóstico que considere correcta (el aporte no parte de un escaneo ni usa la predicción del modelo). Las fotos están destinadas al **Dataset Nacional**:
 
 ```mermaid
 graph TD
     A[Foto en Parcela] --> B[DoctorMaiz App]
     B --> C[Opción: 'Aportar al Dataset']
-    C --> D[Envío al servidor con cuenta registrada]
+    C --> D[Se guarda en el teléfono y se envía al servidor con cuenta registrada y conexión]
     D --> E[Revisión por Especialistas Agrónomos]
     E --> F[Inclusión en una futura versión del modelo, si se decide]
 ```
 
 ### Qué se envía
-- **Lo que se envía:** la fotografía, la etiqueta que elegiste, tu nota opcional y la fecha del escaneo.
-- **Lo que no se envía:** tu nombre, teléfono, correo y coordenadas GPS del escaneo. La app no los incluye en el envío.
-- **Pendiente de confirmar:** la app todavía no limpia los metadatos de la fotografía antes de enviarla.
+- **Lo que se envía:** la fotografía, la etiqueta que elegiste, tu nota opcional y la fecha del aporte.
+- **Lo que no se envía:** tu nombre, teléfono, correo y coordenadas GPS. La app no los incluye en el envío; el servidor asocia el aporte a tu cuenta.
+- **Procesamiento de la foto:** antes de guardarse se reduce a 1024 px de ancho y se recodifica como JPEG (calidad 0.8). No se verificó si esa recodificación elimina los metadatos EXIF.

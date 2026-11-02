@@ -5,7 +5,7 @@ description: Atlas fitopatológico de las 9 patologías y deficiencias nutricion
 
 # Catálogo de Sanidad Vegetal del Maíz
 
-DoctorMaiz está calibrada para identificar con alta precisión **9 condiciones fitosanitarias** clave en el cultivo de maíz (*Zea mays*), abarcando hongos destructivos, plagas masticadoras, desbalances nutricionales y tejido sano.
+DoctorMaiz clasifica **9 condiciones fitosanitarias** clave en el cultivo de maíz (*Zea mays*), abarcando hongos, un virus, una plaga masticadora, desbalances nutricionales y tejido sano.
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
@@ -26,6 +26,7 @@ DoctorMaiz está calibrada para identificar con alta precisión **9 condiciones 
 | **Hongo** | [**Mancha Gris**](#2-mancha-foliar-gris-cercospora) | *Cercospora zeae-maydis* | Lesiones rectangulares entre nervaduras |
 | **Hongo** | [**Tizón Foliar**](#3-tizon-foliar-turcicum) | *Exserohilum turcicum* | Manchas elípticas grandes en forma de cigarro |
 | **Insecto** | [**Gusano Cogollero**](#4-gusano-cogollero) | *Spodoptera frugiperda* | Masticaduras y perforaciones en cogollo |
+| **Virus** | [**Necrosis Letal**](#9-necrosis-letal-del-maiz-mln) | MCMV + SCMV | Marchitez progresiva y necrosis desde el ápice hacia la base |
 | **Nutrición** | [**Deficiencia de Nitrógeno**](#5-deficiencia-de-nitrogeno-n) | Carencia de $\text{N}$ | Clorosis en "V" invertida desde la punta |
 | **Nutrición** | [**Deficiencia de Fósforo**](#6-deficiencia-de-fosforo-p) | Carencia de $\text{P}$ | Coloración violácea/púrpura en bordes |
 | **Nutrición** | [**Deficiencia de Potasio**](#7-deficiencia-de-potasio-k) | Carencia de $\text{K}$ | Quemado marginal en bordes de hojas viejas |
@@ -116,3 +117,10 @@ Hojas tiernas con perforaciones alargadas tipo "perdigonada" o ventanillas trans
 ## 8. Planta Sana (*Healthy*)
 - **Estado Óptimo:** Hojas con coloración verde esmeralda uniforme, venación turgente, ausencia de pústulas, perforaciones o clorosis marginal.
 - **Acción:** Mantener monitoreo preventivo semanal y registrar la muestra en la app para documentar el vigor de la parcela.
+
+---
+
+## 9. Necrosis Letal del Maíz (MLN)
+- **Agente Causal:** complejo viral de *Maize chlorotic mottle virus* (MCMV) y *Sugarcane mosaic virus* (SCMV).
+- **Síntomas Visuales:** marchitez progresiva y necrosis que avanza desde el ápice de la hoja hacia la base.
+- **Manejo (según la app):** no existe tratamiento químico efectivo; se eliminan las plantas infectadas para evitar la propagación, se usa semilla certificada libre de virus y se controlan los vectores (trips, áfidos). La app indica consultar con la autoridad fitosanitaria. Es la única condición que la app clasifica con prioridad crítica.

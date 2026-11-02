@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "DoctorMaiz"
   text: "Enfermedades, Plagas y Deficiencias en Maíz"
-  tagline: "Sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales para pequeños productores de maíz en El Salvador, con inferencia completamente offline en dispositivos Android de gama media/baja."
+  tagline: "Sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales para pequeños productores de maíz en El Salvador, con clasificación sin conexión en dispositivos Android."
   image:
     src: /logo.svg
     alt: DoctorMaiz
@@ -31,7 +31,7 @@ features:
     details: "Encuadre guiado y recorte al marco de la cámara para reducir el fondo. La generalización a fotos de campo externas al corpus es una limitación documentada."
   - icon: 🛡️
     title: "Evaluación por fuente y rechazo OOD"
-    details: "Evaluación con fuentes retenidas (Leave-One-Source-Out) y detector fuera de distribución por distancia de Mahalanobis para no emitir diagnósticos sobre imágenes ajenas al entrenamiento."
+    details: "Evaluación con fuentes retenidas (Leave-One-Source-Out) y detector fuera de distribución por distancia de Mahalanobis relativa para no emitir diagnósticos sobre imágenes ajenas al entrenamiento."
 ---
 
 <div class="dm-kpi-banner">
@@ -90,7 +90,7 @@ El proyecto sigue el ciclo **CRISP-DM**:
 
 1. **Comprensión del negocio**: análisis de las condiciones de campo y limitaciones de conectividad rural en El Salvador.
 2. **Comprensión de los datos**: consolidación multi-fuente de 11 fuentes (`source_id`) internacionales; ver [Fuentes de datos](/es/datasets/).
-3. **Preparación de los datos**: filtrado de atajos, normalización a 224 × 224 px y balanceo de clases.
+3. **Preparación de los datos**: exclusión de archivos idénticos con etiquetas contradictorias, normalización a 224 × 224 px y ponderación de clases en la pérdida.
 4. **Modelado**: transfer learning y benchmarking con EfficientNet-B0, EfficientNet-Lite0 y ShuffleNet-V2.
 5. **Evaluación**: macro-F1, calibración, evaluación con fuentes retenidas (LOSO) y detección de muestras anómalas (OOD).
 6. **Despliegue móvil**: cuantización Int8 post-entrenamiento (TFLite) y empaquetado en aplicación Android nativa offline.
@@ -101,8 +101,8 @@ El proyecto sigue el ciclo **CRISP-DM**:
 flowchart LR
     A["📸 Captura en Campo<br>(Visor con recorte al marco guía)"] --> B["⚙️ Preprocesamiento<br>(224×224 px, normalización)"]
     B --> C["🧠 Inferencia Edge TFLite<br>(EfficientNet-Lite0 Int8)"]
-    C --> D{"🛡️ Filtro OOD<br>Mahalanobis"}
-    D -- "Fuera de dominio" --> E["⚠️ Alerta Muestra No Reconocida"]
+    C --> D{"🛡️ Rechazo<br>OOD Mahalanobis relativa,<br>confianza o margen bajos"}
+    D -- "Fuera de dominio" --> E["⚠️ Imagen no reconocida<br>(no se guarda)"]
     D -- "Válida" --> F["✅ Diagnóstico + Recomendación<br>(Persistencia SQLite Local)"]
 ```
 
@@ -111,7 +111,7 @@ flowchart LR
 <div class="dm-spec-grid">
   <div class="dm-spec-item">
     <div class="dm-spec-label">📱 Dispositivo Objetivo</div>
-    <div class="dm-spec-value">Android 8.0+ (ARM64, gama media/baja)</div>
+    <div class="dm-spec-value">Android 7.0+ (API 24); probado en un teléfono de gama media (Motorola edge 40 neo)</div>
   </div>
   <div class="dm-spec-item">
     <div class="dm-spec-label">📦 Tamaño del Modelo</div>
@@ -119,11 +119,11 @@ flowchart LR
   </div>
   <div class="dm-spec-item">
     <div class="dm-spec-label">⚡ Latencia de Inferencia</div>
-    <div class="dm-spec-value">23 ms de inferencia y 98 ms de preprocesado (medianas); meta de 300 ms en total</div>
+    <div class="dm-spec-value">23 ms de inferencia y 98 ms de preprocesado (medianas); meta de 300 ms entre ambos</div>
   </div>
   <div class="dm-spec-item" style="border-left: 3px solid #2e7d32;">
     <div class="dm-spec-label">📡 Requisito de Red</div>
-    <div class="dm-spec-value" style="color: #2e7d32;">Inferencia sin conexión</div>
+    <div class="dm-spec-value" style="color: #2e7d32;">Clasificación sin conexión; el clima, el mapa y la sincronización requieren red</div>
   </div>
 </div>
 
