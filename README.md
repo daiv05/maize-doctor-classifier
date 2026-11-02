@@ -6,7 +6,7 @@
 
 ## Descripción
 
-DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que opera completamente offline.
+DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que clasifica sin conexión.
 
 Este repositorio contiene el pipeline de datos, entrenamiento, evaluación, interpretabilidad y exportación. La aplicación móvil vive en [`maize-doctor-app`](https://github.com/Edenilson-Molina/maize-doctor-app), el backend opcional en [`maize-doctor-api`](https://github.com/daiv05/maize-doctor-api) y el segmentador de hoja en [`maize-doctor-segmenter-leaf`](https://github.com/abner-rivas/maize-doctor-segmenter-leaf).
 
@@ -35,17 +35,17 @@ Las cifras siguientes pertenecen a protocolos y momentos distintos; el estado se
 | `EfficientNet-Lite0` `20260921_204608`, TFLite int8 | 0.9489 | 97.87 % | Desplegado en la app (3.74 MB); mismo test completo, acuerdo con PyTorch 99.74 % |
 | `EfficientNet-Lite0` `20260812_221429` | 0.9468 | 97.91 % | HISTÓRICO: artefacto desplegado en móvil hasta el 2026-11-01 |
 | Ensamble Soft Voting (3 modelos) | 0.9567 | 98.29 % | HISTÓRICO: test estratificado, inferencia en servidor |
-| CV agrupada por fuente, configuración base | 0.6026 ± 0.1240 | 79.69 % ± 11.95 pp | HISTÓRICO: cinco pliegues, 5–8 clases evaluables |
+| CV agrupada por fuente, configuración base | 0.6026 ± 0.1240 | 79.69 % ± 11.95 pp | HISTÓRICO: cinco pliegues, 5–8 clases presentes por pliegue; ± es semiancho del IC95 y el Macro F1 promedia solo las clases presentes (sobre las 9 clases: 0.4359) |
 
 La distancia entre el protocolo estratificado y la CV agrupada muestra una brecha de dominio histórica. No es una comparación pareada del baseline actual ni un resultado LOSO: cambian particiones, soporte de clases y unidad aislada.
 
-**Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430 con σ = 0.0049. No sustituye al multiseed baseline contra HPO, que está incompleto (2 de 10 entrenamientos, solo validación) y cuya diferencia no es interpretable.
+**Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430, SD muestral 0.0049. No sustituye al multiseed baseline contra HPO, que está incompleto (2 de 10 entrenamientos, solo validación) y cuya diferencia no es interpretable.
 
 **Equidad.** Sobre el checkpoint de agosto, macro F1 de 0.9215 en campo real y 0.9423 en laboratorio; la prueba de atajos marca `shortcut_detected=true` (la accuracy cae de 0.9791 a 0.4225 al ocultar la periferia de la imagen). Detalle y limitaciones en [docs/es/resultados/generalizacion.md](docs/es/resultados/generalizacion.md).
 
-**Fotos de campo externas.** En 97 fotos propias ajenas al corpus (`Imagenes/`, no versionadas) el modelo oficial acierta 41 (42 %) y el detector fuera de dominio rechaza 49. Es la limitación principal: la generalización fuera de las fuentes de entrenamiento es mucho menor que la del test estratificado (ver [validación agrupada por fuente](docs/es/resultados/run-20260921-source-grouped.md)).
+**Fotos de campo externas.** En 97 fotos propias ajenas al corpus (`Imagenes/`, no versionadas) el modelo oficial acierta 41 (42 %) y el detector fuera de dominio rechaza 49. Es la limitación principal: la generalización fuera de las fuentes de entrenamiento es mucho menor que la del test estratificado (ver [validación agrupada por fuente](docs/es/resultados/generalizacion.md#benchmark-source-grouped)).
 
-**Alcance: clase, no severidad.** El clasificador dice qué tiene la hoja, pero no cuánto. Nunca se entrenó para medir el grado de daño y la razón es que las imágenes de `data/clean/` vienen etiquetadas por clase, sin ninguna anotación de severidad. Ponérsela no sería limpiar datos, sino sentar a un fitopatólogo a calificar imagen por imagen con la escala que corresponda a cada patógeno; y aun así, repartir en tres grados unas clases que apenas rondan las 300 imágenes dejaría celdas demasiado pequeñas para entrenar sobre ellas. La app cubre el hueco de otra manera, mostrando los niveles del catálogo de severidad reescritos en lenguaje llano para que el agricultor compare su hoja y decida, sin que el sistema afirme un nivel que no midió.
+**Alcance: clase, no severidad.** El clasificador dice qué tiene la hoja, pero no cuánto. Nunca se entrenó para medir el grado de daño y la razón es que las imágenes de `data/clean/` vienen etiquetadas por clase, sin ninguna anotación de severidad. Ponérsela no sería limpiar datos, sino sentar a un fitopatólogo a calificar imagen por imagen con la escala que corresponda a cada patógeno; y aun así, repartir en tres grados las clases más pequeñas (621 a 938 imágenes en las deficiencias nutricionales, 106 de campo en la roya común) dejaría celdas con pocos cientos de imágenes o menos. La app cubre el hueco de otra manera, mostrando los niveles del catálogo de severidad reescritos en lenguaje llano para que el agricultor compare su hoja y decida, sin que el sistema afirme un nivel que no midió.
 
 ---
 
@@ -84,8 +84,8 @@ Los conteos de la tabla corresponden a la materialización vigente: **33 437 arc
 |---|---|---|
 | Macro F1 Score | ≥ 0.85 | 0.9489 en el modelo desplegado (int8, test completo); 0.9567 en el ensamble histórico |
 | Tamaño del modelo (post Int8) | ≤ 20 MB | 3.74 MB (`efficientnet_lite0`) |
-| Latencia de inferencia | ≤ 300 ms/imagen | ~60 ms en Dimensity 7030 |
-| Dispositivo objetivo | Android ≥ 4 GB RAM, Snapdragon 6xx | Validado en Motorola edge 40 neo |
+| Latencia (preprocesado + inferencia) | ≤ 300 ms/imagen | Medianas de 98 ms de preprocesado (p95 279 ms) y 23 ms de inferencia en Dimensity 7030 |
+| Dispositivo objetivo | Android ≥ 4 GB RAM, Snapdragon 6xx | Probado en un Motorola edge 40 neo (Dimensity 7030) |
 | Arquitectura desplegada | - | `efficientnet_lite0` `20260921_204608` Int8, dos salidas (logits + features); umbral OOD 106.37 |
 
 ---
@@ -122,10 +122,17 @@ Guía de instalación local (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md).
 
 ### Del checkpoint al teléfono
 
-`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes. El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula los centroides, la covarianza y el umbral de Mahalanobis que la app usa para rechazar imágenes que no son hojas de maíz. Para el modelo oficial el umbral es 106.37 (percentil 95 de validación, 5 de 5 imágenes sintéticas rechazadas, 3.8 % de falsos rechazos sobre 500 de test). `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` + `ood_stats.json` a la app verificando el hash.
+`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes. El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula, sobre las features normalizadas a norma L2 y proyectadas con PCA (182 componentes, 99.01 % de varianza), los centroides, la covarianza y el umbral de la distancia de Mahalanobis relativa que la app usa para rechazar imágenes fuera de dominio. Para el modelo oficial el umbral es 106.37 (percentil 95 de validación, 5 de 5 imágenes sintéticas rechazadas, 3.8 % de falsos rechazos sobre 500 de test). `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` + `ood_stats.json` a la app y verifica el SHA-256 de la copia del modelo contra el registrado en `export_summary`.
 
-| Arquitectura | FP32 | Int8 | Reducción |
+| Arquitectura | TFLite FP32 | TFLite int8 | Reducción |
 |---|:---:|:---:|:---:|
+| `shufflenet_v2_x1_0` | 5.17 MB | 1.49 MB | 71 % |
+| `efficientnet_lite0` (oficial, desplegada) | 13.56 MB | 3.74 MB | 72 % |
+| `efficientnet_b0` | 16.24 MB | 4.66 MB | 71 % |
+
+Tamaños en MB decimales de los exports de los runs de la etapa 2 (`shufflenet_v2_x1_0` `20260812_185239`, `efficientnet_b0` `20260811_211306`) y del oficial. El `best.pth` de Lite0 pesa 13.79 MB.
+
+---|:---:|:---:|:---:|
 | `shufflenet_v2_x1_0` | 4.93 MB | 1.42 MB | 71 % |
 | `efficientnet_lite0` (oficial, desplegada) | 13.79 MB | 3.74 MB | 73 % |
 | `efficientnet_b0` | 15.48 MB | 4.44 MB | 71 % |
@@ -180,7 +187,7 @@ make compute-ood-stats [MAIN_MODELS=<nombre> RUN=<id> PERCENTILE=<p> NUM_WORKERS
 make eval-export-main [EXPORT_FORMATS=tflite QUANTIZE=int8]  # mide el exportado sobre test completo
 make sync-mobile-model RUN_DIR=<dir> DEST=<dir de la app>
 
-make predict IMAGE=<ruta> [MODEL=ensemble TOP_K=4]           # predicción rápida (default: ensemble)
+make predict IMAGE=<ruta> [MODEL=ensemble TOP_K=4]           # predicción rápida (MODEL por defecto: efficientnet_b0; ensemble = voto suave)
 make inference MODEL=<nombre> IMAGE=<ruta> [STABILITY_RUNS=<n>]   # reporte de inferencia
 
 make explain-visual-main [MAIN_MODELS=<nombre> RUN=<id>]
@@ -252,18 +259,22 @@ Los informes y páginas históricas se preservan con su contexto; no sustituyen 
 maize-doctor-classifier/
 ├── config/
 │   ├── dataset.yaml           # Clases, tamaño de imagen, seed, perfil "baseline", LIME/SHAP
-│   └── dataset.segmented.yaml # Variante sobre el corpus segmentado
+│   ├── dataset.segmented.yaml # Variante sobre el corpus segmentado
+│   └── dataset_exclusions.csv # Exclusiones explícitas por contenido idéntico con etiquetas distintas
 ├── docs/es/                   # Documentación (VitePress): datos, EDA, pipeline, resultados
+├── experiments/               # Experimento de CLAHE
 ├── notebooks/                 # Análisis exploratorio
 ├── reports/                   # Informes LaTeX/HTML de cada entrega
 ├── scripts/
-│   ├── checks/                # Verificaciones puntuales (estabilidad de LIME, etc.)
+│   ├── checks/                # Verificaciones puntuales (estabilidad de LIME, detector OOD, smoke del loader)
+│   ├── cleanup/               # Scripts de limpieza por clase
 │   ├── dataset/               # Subida/descarga de clean/ (Hugging Face Hub, Google Drive)
 │   ├── experiments/           # Evidencia reproducible: auditoría de píxeles, análisis por fuente, LOSO, estabilidad entre semillas, ensamble LOSO, procedencia y fuga, empaquetado de checkpoints
 │   ├── modal/                 # Entrenamiento, exportación y explicabilidad en GPU de Modal
 │   └── pipeline/              # splits, train, tune, ensemble, fairness, export, ood, explain
 ├── src/
 │   ├── analysis/              # Resumen de dataset, equidad, análisis de predicciones
+│   ├── cleanup/               # Búsqueda de duplicados perceptuales
 │   ├── data/                  # CornDataset, loader, splitter, transforms, dedupe, procedencia
 │   ├── explainability/        # LIME + Grad-CAM + SHAP, acuerdo, perfil global, máscara foliar
 │   ├── export/                # ONNX/TFLite, paridad entre runtimes, evaluación del exportado

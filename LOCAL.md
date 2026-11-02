@@ -48,6 +48,7 @@ Variables relevantes:
 | Variable | Descripción |
 |---|---|
 | `DATASET_ROOT` | Ruta local donde vivirá el dataset fuente (debe contener `raw/`, `clean/`). Elige cualquier carpeta de tu máquina, p.ej. `C:/Users/tu_usuario/datasets/corn-leaf-diseases` en Windows o `/Users/tu_usuario/datasets/corn-leaf-diseases` en macOS/Linux. Los artefactos generados (`splits/`, resultados de entrenamiento, reports) viven aparte, en `outputs/` dentro del propio repo - ver `get_output_root()` en `src/config.py`. |
+| `OUTPUT_ROOT` | Raíz de los artefactos generados. Si la ruta no existe, `get_output_root()` usa `outputs/` dentro del repo; en Windows, un valor como `/outputs` se resuelve contra la raíz del repo si esa carpeta existe. |
 | `HF_DATASET_REPO` | Repo de tipo *dataset* en Hugging Face Hub que contiene `clean/` (fuente primaria de descarga). |
 | `HF_TOKEN` | Solo necesario si el repo de HF es privado o no hiciste `huggingface-cli login`. |
 | `GDRIVE_DATASET_ID` | ID de carpeta pública de Google Drive, usada como respaldo si falla la descarga desde HF. |
@@ -72,12 +73,12 @@ make install
 
 Esto corre `pip install -e ".[dev,analysis,xai,cloud,tuning]"` dentro del venv (instala el paquete `src/` en modo editable + todos los extras necesarios para el flujo local, incluida la descarga del dataset). Extras disponibles en `pyproject.toml`:
 
-- `dev`: ipykernel, jupyterlab, matplotlib, seaborn, ruff, pyright
+- `dev`: ipykernel, jupyterlab, matplotlib, seaborn, ruff, pyright, pytest, optuna
 - `analysis`: imagededup (necesario para la deduplicación perceptual de `src/cleanup/find_duplicates.py`)
 - `tuning`: optuna, optuna-dashboard (necesario para `make tune-dashboard`)
 - `xai`: lime, shap, scikit-image, matplotlib (necesario para `make explain-visual`/`fidelity`/`errors`/`compare`/`global`)
-- `cloud`: huggingface_hub, gdown (necesario para descargar/subir el dataset)
-- `export`: onnx, onnxruntime (necesario para `make export-main`/`train --export`; no incluido en `make install` por defecto - instalar con `pip install -e ".[export]"`). TFLite requiere ademas `litert-torch` (renombrado desde `ai-edge-torch`, deprecado) y `ai-edge-litert`, que solo soportan Linux - ya declarados como dependencia condicional (`sys_platform == 'linux'`) dentro del extra `export`, asi que `pip install -e ".[export]"` en un entorno Linux (WSL incluido) los instala automaticamente; no hace falta instalarlos aparte.
+- `cloud`: huggingface_hub, gdown, modal (necesario para descargar/subir el dataset y para los targets `modal-*`)
+- `export`: onnx, onnxruntime, onnxscript (necesario para `make export-main`/`train --export`; no incluido en `make install` por defecto - instalar con `pip install -e ".[export]"`). TFLite requiere ademas `litert-torch` (renombrado desde `ai-edge-torch`, deprecado) y `ai-edge-litert`, que solo soportan Linux - ya declarados como dependencia condicional (`sys_platform == 'linux'`) dentro del extra `export`, asi que `pip install -e ".[export]"` en un entorno Linux (WSL incluido) los instala automaticamente; no hace falta instalarlos aparte.
 
 Si solo necesitas descargar el dataset sin las herramientas de desarrollo/análisis:
 
@@ -124,8 +125,9 @@ No edites los CSV de `outputs/splits/` a mano - son derivados reproducibles.
 
 ```bash
 make summary   # Conteo de imágenes por clase/entorno (valida que clean/ esté bien poblado)
-make lint      # ruff check
-make fmt       # ruff format
+make lint      # ruff check sobre src/ y scripts/
+make check     # pyright sobre src/ y scripts/
+make test      # pytest -q tests
 ```
 
 ## 8. Entrenar
@@ -147,7 +149,7 @@ make explain-errors-main MAIN_MODELS=efficientnet_lite0        # Análisis post-
 ```bash
 make help          # targets y variables vigentes
 make test-loader   # carga un batch (image, label, sample_id)
-make check         # verificaciones configuradas por el proyecto
+make check         # pyright sobre src/ y scripts/
 ```
 
 La especificación de identidad, manifests y splits está en [`docs/es/metodologia/pipeline-datos.md`](docs/es/metodologia/pipeline-datos.md). No regeneres `make splits` si solo quieres reutilizar una materialización contractual existente.
