@@ -55,19 +55,19 @@ F1 por clase de B0 y del ensamble en la fuente excluida (CR `common_rust`, FA `f
 | 123 | 0.9953 → 0.9943 | 0.9115 → 0.9033 | 0.8975 → 0.8972 |
 | 2026 | 0.9897 → 0.9927 | 0.9037 → 0.8934 | 0.8662 → 0.8850 |
 
-En `lethal_necrosis` el recall medio pasa de 0.7778 ± 0.0320 (B0) a 0.8025 ± 0.0103 (ensamble) y el F1 de 0.8746 ± 0.0200 a 0.8901 ± 0.0063. La mejora es de esa clase; `fall_armyworm` empeora en F1 medio.
+En `lethal_necrosis` el recall medio pasa de 0.7778 ± 0.0320 (B0) a 0.8025 ± 0.0103 (ensamble) y el F1 de 0.8746 ± 0.0200 a 0.8901 ± 0.0063. La mayor mejora está en esa clase; `common_rust` sube 0.0019 y `fall_armyworm` baja 0.0040 en F1 medio.
 
 ## Otros experimentos
 
 | Experimento | Resultado | Alcance |
 |---|---|---|
 | [Benchmark source-grouped](../resultados/generalizacion.md), corrida `20260921_180112` | Macro-F1 de validación 0.2669 y de prueba 0.4007 | Fuentes completas por partición; no es LOSO ni el test estándar |
-| [CV estratificada y agrupada](../resultados/evidencia/kfold_2x2_comparacion.csv) | 0.9311 ± 0.0099 estratificada y 0.6026 ± 0.1240 agrupada (± es la semiamplitud del IC95; la agrupada es el Macro-F1 sobre las clases presentes en cada pliegue, el convencional es 0.4359) | Cinco pliegues, Lite0 de la etapa 2 |
+| [CV estratificada y agrupada](../resultados/evidencia/kfold_2x2_comparacion.csv) | 0.9311 ± 0.0099 estratificada y 0.6026 ± 0.1240 agrupada (± es la semiamplitud del IC95; la agrupada es el Macro-F1 sobre las clases presentes en cada pliegue, el convencional es 0.4359) | Cinco pliegues, Lite0, materialización de la etapa 2 |
 | [Corpus segmentado](../resultados/evidencia/manifiesto_corridas.csv), corrida `20260907_163546` | Macro-F1 de prueba 0.7191 y accuracy 0.8903 | Exploratorio; summary y checkpoint no versionados |
 
 ## Integridad de los datos
 
-- Los quince grupos de píxeles idénticos y el 0.68 % de prueba con gemelo en entrenamiento que reportó una materialización anterior no se reproducen en las 33 429 muestras vigentes: hay 0 de 5 015 imágenes de prueba con duplicado exacto entre particiones.
+- Los aproximadamente 15 grupos de píxeles idénticos y el 0.68 % de prueba con gemelo en entrenamiento que reportó una materialización anterior no se reproducen en las 33 429 muestras vigentes: hay 0 de 5 015 imágenes de prueba con duplicado exacto entre particiones.
 - Cuatro grupos con etiquetas contradictorias (ocho archivos) están excluidos del contrato de datos.
 - No se ejecutó PHash, de modo que los casi duplicados no están medidos.
 - El LOSO se midió con dos fuentes y el ensamble bajo una sola exclusión; la comparación pareada baseline/HPO de cinco semillas completó 2 de 10 entrenamientos (solo validación).

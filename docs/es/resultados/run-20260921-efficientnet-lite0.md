@@ -1,6 +1,6 @@
 # Modelo oficial — EfficientNet-Lite0 `20260921_204608`
 
-Primer reentrenamiento completo de EfficientNet-Lite0 sobre la materialización corregida de `seed_42`. Es el modelo oficial y el que despliega la app, en su exportación TFLite int8.
+Entrenamiento de EfficientNet-Lite0 sobre la materialización vigente de `seed_42`. Es el modelo oficial y el que despliega la app, en su exportación TFLite int8.
 
 ## Identidad y reproducibilidad
 
@@ -58,7 +58,7 @@ La calibración del test reporta ECE de 0.1397 y Brier binario de acierto de 0.0
 
 ## Comparación con la etapa 2
 
-Frente al Lite0 de la etapa 2 (Macro-F1 0.9468), el oficial difiere en +0.0012 en el test estratificado. Las corridas proceden de materializaciones distintas y solo comparten 2 539 imágenes de test; sobre ellas McNemar da 23 frente a 22 discordancias (p = 1.00), sin diferencia medible. El ECE de 0.1397 indica que la confianza no debe leerse como probabilidad calibrada.
+Frente al Lite0 de la etapa 2 (Macro-F1 0.9468), el oficial difiere en +0.0012 en el test estratificado. Las corridas proceden de materializaciones distintas y solo comparten 2 539 imágenes de test; sobre ellas McNemar da 23 frente a 22 discordancias (p = 1.00), sin diferencia medible. El ECE de 0.1397 indica que la confianza no debe leerse como probabilidad calibrada: la confianza media (0.841) queda por debajo de la accuracy (0.978).
 
 ## Limitaciones
 

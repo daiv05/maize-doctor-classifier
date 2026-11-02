@@ -84,6 +84,8 @@ Resultado final: 8 COMPLETE, 15 PRUNED y 2 FAIL. Test único: Macro-F1 0.9431250
 | [multiseed_results.csv](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/multiseed_results.csv) | `7e3cb23126189bf07e0426e4c1f11c498990f05c7de1a12d87f33f4dca9f0a95` | Dos runs COMPLETE y ocho sin ejecutar |
 | [multiseed_summary.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/multiseed_summary.json) | `8892a7b7806e73926dc584288cda91b0e6eaa3f1f95a28fa8d9e411bf2b0afd8` | Estadísticos con n = 1 |
 | [protocol.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/protocol.json) | `b654609f33bdbda65099c26d3b8475edd061d3e93a49fc2316c6fe4639ddd081` | Configuración, fuentes y hashes |
+| [validation_predictions_baseline_20261019_203033.csv](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/validation_predictions_baseline_20261019_203033.csv) | `6c91fac5a5768bed2a91ed0b51065aa3c892cc1d606e9e0a6a82c42241aa04b5` | Predicción por imagen de validación (baseline) |
+| [validation_predictions_hpo_trial_0_20261019_211317.csv](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/validation_predictions_hpo_trial_0_20261019_211317.csv) | `462126e3ca1e1a62e4972c1886bb8e45f5a159f465324766e879363b104a6100` | Predicción por imagen de validación (HPO trial 0) |
 | [preflight.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/preflight.json) | `347a19c5ada41cf99d615d8919303184659b34a15d1d347d4bc463688df58b64` | Verificación de splits |
 | [report_hashes.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/report_hashes.json) | `1319445679b55ffc3a0d3544bf4c9a75980508b87190882f684faade31263473` | Hashes de los reportes |
 | [COMPLETE baseline `20261019_203033`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/complete_baseline_20261019_203033.json) | `74e540b57d7925b18858888dc468671fe185ab799063f553be3ceae01430250c` | Val Macro-F1 0.956086; `best.pth` `860180f3…` idéntico al oficial |
@@ -128,13 +130,13 @@ La [síntesis experimental](resultados-por-protocolo.md) reúne los resultados p
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [Síntesis](resultados-por-protocolo.md) | `c5606ebe36f1f6cbe5eb5bc1f19387b9234e20729bc943773e5b1d4594301baf` | Protocolos, resultados y límites |
-| [Guía del paquete](paquete-de-modelos.md) | `1bad6189a660ac2762f8b280f8dd055c4963867a8e7d4e84c49a43d0e0f49842` | Contenido, carga, integridad y distribución |
+| [Síntesis](resultados-por-protocolo.md) | `390cc1a70f9c724cef920a8bde1a36ae73a132933391d722137a182fe6ef2d41` | Protocolos, resultados y límites |
+| [Guía del paquete](paquete-de-modelos.md) | `5727e3a7cf2b43aea1efca643f3084079c69b148b2218597c05644abcf9047a5` | Contenido, carga, integridad y distribución |
 | [model_index.csv](evidencia/model_package/model_index.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
 | [model_comparison_results.csv](evidencia/model_package/model_comparison_results.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |
 | `model_checksums.sha256` | `77940bbbfd9dd8a5a37ee2a65fec618ed28187b7debb45e95370684c4149bb1f` | Comprobación local de los 18 `best.pth` |
 
-El respaldo físico se distribuyó como ocho archivos `.tar.gz` (uno por carpeta `DoctorMaiz_*`); el `sha256sum -c` se ejecuta desde una raíz común que contiene las siete carpetas de checkpoints. Los checkpoints no se versionan en Git.
+El respaldo físico se distribuyó como ocho archivos `.tar.gz` (uno por carpeta `DoctorMaiz_*`); el `sha256sum -c` se ejecuta desde la raíz donde se extrajeron los ocho archivos. Los checkpoints no se versionan en Git.
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
@@ -152,6 +154,7 @@ Run `20260921_204608`, checkpoint `860180f3…`. Los archivos pesados (`model.on
 | int8 sobre el test completo (5 015): Macro-F1 0.9489, accuracy 97.87 % | [eval_tflite_int8.json](../reproducibilidad/evidencia/export_movil_20260921_204608/eval_tflite_int8.json) | `f1430c9bbfff8a0ff9b2bb4c2133455269c1cfc9668c7f68441408222e2b86e2` |
 | Orden de las nueve clases | [labels.json](../reproducibilidad/evidencia/export_movil_20260921_204608/labels.json) | `01eedc9c93ff7cd4ee195062534e04ac1101378b43a7d0bff785ecfc180f9642` |
 | OOD: schema 4, PCA 182 (99.01 % de varianza), umbral 106.37 (percentil 95 de validación) | [ood_stats_metadata.json](../reproducibilidad/evidencia/export_movil_20260921_204608/ood_stats_metadata.json) | `f9b1c4a4c22e3c68fd4d005d656ddb1c5332beeaa5f25306fc2b2fdf083a47fd`; `ood_stats.json` completo: `5eb6cdd1ab2298b99f37fe563e62237685cb58870eaa7fd509b1839c3d91f6e1` |
+| OOD: 5/5 imágenes sintéticas detectadas y 19 de 500 de prueba rechazadas (3.8 %) | [ood_validation.json](../reproducibilidad/evidencia/export_movil_20260921_204608/ood_validation.json) | `5656bf5565717a06ed2dbe57d6eee992982ce2a63023a9cce223dcf18d4ed95e` |
 
 ## Etapa 2 — Lite0 `20260812_221429`
 
@@ -172,3 +175,9 @@ DIR calculado sobre las tres clases presentes en ambos entornos con `scripts/exp
 | Artefacto | SHA-256 |
 |---|---|
 | [`equidad_dir_clases_compartidas.json`](../resultados/evidencia/equidad_dir_clases_compartidas.json) | `e10c22711659c9df322a943cbed070b6c1016255f56ebf055146e03498ac9f27` |
+
+## Campaña de procedencia
+
+| Artefacto | SHA-256 |
+|---|---|
+| [`provenance_leak.json`](../provenance/evidencia/provenance_leak.json): anillo perimetral, solo centro e imagen completa, tres semillas | `aec5c66e15d9c69c2a101ac45de0c51002f4b084c990ee30767d7c52c6d5c694` |

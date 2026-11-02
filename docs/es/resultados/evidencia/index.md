@@ -77,7 +77,7 @@ El valor `0.6026 ± 0.1240` es el Macro-F1 sobre las clases presentes en cada pl
 | `equidad_por_fuente.csv` | los 14 identificadores de procedencia históricos con su clase mayoritaria y macro-F1 evaluable |
 | `equidad_metricas.json` | disparidad por entorno, ablación dual y control nulo |
 
-El macro-F1 de `lab` promedia sobre las 3 clases con soporte y el de `real` sobre las 9, así que el cociente entre ambos no mide disparidad. El DIR publicado restringe los dos subgrupos a las 3 clases compartidas y se recomputa desde `fairness_predictions.csv` unido a `outputs/splits/seed_42/test.csv` por el nombre de fichero.
+El macro-F1 de `lab` promedia sobre las 3 clases con soporte y el de `real` sobre las 9, así que el cociente entre ambos no mide disparidad. El DIR publicado restringe los dos subgrupos a las 3 clases compartidas y se recomputa con `scripts/experiments/equidad_dir.py` desde `etapa2_lite0_20260812_221429/predictions.csv` (etapa 2) y `baseline_test_predictions.csv` de `source_analysis` (modelo oficial).
 
 ## Estabilidad entre semillas
 

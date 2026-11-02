@@ -23,7 +23,7 @@ Generadas por `notebooks/01_eda.ipynb` sobre el corpus ampliado de agosto de 202
 | Figura | Generador | Artefacto fuente |
 |---|---|---|
 | `ensemble/confusion_matrix_ensemble.png` | `scripts/pipeline/evaluate_ensemble.py` | `ensamble_predicciones.csv` y `ensamble_resumen.json` |
-| `resultados/ablacion_control_nulo.png` | `scripts/experiments/figura_ablacion.py` | `equidad_metricas.json` y predicciones de equidad |
+| `resultados/ablacion_control_nulo.png` | `scripts/experiments/figura_ablacion.py` | `equidad_metricas.json` (`shortcut_learning_audit` y `control_nulo_clase_mayoritaria`) |
 | `fairness/disaggregated_confusion_matrices.png` | `scripts/pipeline/evaluate_fairness.py` | predicciones de equidad |
 | `xai/class_profile.png`, `xai/mask_audit.png` | `src/explainability/global_report.py` | `xai_global_summary.csv` y `xai_global_per_image.csv` |
 | `xai/panel_compare_common_rust.png` | `src/explainability/compare_report.py` | run e imagen de la comparación LIME, SHAP y Grad-CAM |

@@ -37,7 +37,7 @@ La partición `seed_42` reparte las mismas fuentes entre train y prueba, por lo 
 | Evaluación | Macro-F1 | Detalle |
 |---|---:|---|
 | LOSO sin `maize-diseases` (3 semillas) | 0.993264 ± 0.000600 | Modelo entrenado sin esa fuente y evaluado en ella |
-| LOSO sin `multicrop-disease-maiz`, Lite0 (3 semillas) | 0.901906 ± 0.004422 | Caída concentrada en `lethal_necrosis` |
+| LOSO sin `multicrop-disease-maiz`, Lite0 (3 semillas) | 0.901906 ± 0.004422 | Macro-F1 sobre las 3 clases de la fuente; exactitud 0.804; `lethal_necrosis` es la clase más débil (F1 0.845) |
 | Benchmark source-grouped (`20260921_180112`) | 0.400665 | Fuentes completas retenidas; validación 0.266927 |
 | Fotos de campo externas al corpus (97) | 41 aciertos (42 %) | El detector OOD rechaza 49 |
 
@@ -59,7 +59,7 @@ Se evaluó el modelo oficial (FP32, imagen completa) sobre 97 fotos propias, aje
 | `healthy` | 10 | 2 |
 | `lethal_necrosis` | 10 | 0 |
 
-El Lite0 de la etapa 2 acierta 39 de las mismas 97, por lo que la brecha no depende del cambio de modelo. Esta cifra no es comparable con el Macro-F1 de 0.9480: aquel mide fuentes presentes en el entrenamiento y esta, imágenes de otro origen. Es la principal limitación del sistema.
+Con el mismo preprocesado, el Lite0 de la etapa 2 acierta 39 de las mismas 97: el cambio de modelo no explica la brecha. Esta cifra no es comparable con el Macro-F1 de 0.9480: aquel mide fuentes presentes en el entrenamiento y esta, imágenes de otro origen. Es la principal limitación del sistema.
 
 ## Exportación móvil
 
@@ -89,10 +89,10 @@ Corridas anteriores sobre otra materialización del corpus (33 433 muestras), co
 | B0 `20260910_170120` | 0.9483 | 97.97 % |
 | ShuffleNet-V2 `20260910_184521` | 0.9330 | 97.31 % |
 | Ensamble por voto suave de esos tres | 0.9567 | 98.29 % |
-| Ensamble `ensemble/` (B0 `20260811_211306` y ShuffleNet `20260812_185239`) | 0.9551 | |
+| Ensamble `ensemble/` (Lite0 `20260812_221429`, B0 `20260811_211306` y ShuffleNet `20260812_185239`) | 0.9551 | 98.21 % |
 | Lite0 con Optuna `20260912_230941` | 0.9379 | |
 | Lite0 con hiperparámetros del trial 12 de B0 `20260912_233321` | 0.9386 | |
 | Lite0 solo con lr y batch de B0 `20260913_031130` | 0.9343 | |
 | Lite0 semillas 1 y 2 (`20260913_151826`, `20260913_152116`) | 0.9448 y 0.9375 | |
 
-El ensamble sigue siendo reconstruible porque los tres miembros están respaldados. Bajo LOSO su ventaja se reduce y es inestable (ver [generalización](/es/resultados/generalizacion)).
+El ensamble sigue siendo reconstruible porque los tres miembros están respaldados. Bajo LOSO su ventaja frente a B0 es de +0.0045 ± 0.0080 y cambia de signo según la semilla (ver [generalización](/es/resultados/generalizacion)).
