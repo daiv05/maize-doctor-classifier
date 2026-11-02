@@ -95,7 +95,7 @@ def completed_hpo(request, monkeypatch):
     return directory
 
 
-def test_report_updates_docs_only_after_verified_completion(completed_hpo, tmp_path):
+def test_report_copies_verified_evidence(completed_hpo, tmp_path):
     report = report_hpo.build_report(completed_hpo)
     budget = json.loads((completed_hpo / "study_summary.json").read_text(encoding="utf-8"))[
         "n_trials_requested"
@@ -104,35 +104,13 @@ def test_report_updates_docs_only_after_verified_completion(completed_hpo, tmp_p
     assert "test_used_during_hpo: NO" in report
     root = tmp_path / "project"
     docs = root / "docs/es"
-    paths = [
-        "experimentos/hpo.md",
-        "tesis/historia-del-proyecto.md",
-        "tesis/DECISION_LOG.md",
-        "tesis/EVIDENCE_REGISTRY.md",
-        "reproducibilidad/figuras.md",
-    ]
-    for name in paths:
-        path = docs / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("# Histórico\n\nPreservar esta tabla y su evidencia.\n", encoding="utf-8")
-    hpo_page = docs / "experimentos/hpo.md"
-    hpo_page.write_text(
-        hpo_page.read_text(encoding="utf-8") + "\n**Estado al 2026-09-23: EN EJECUCIÓN; "
-        "los 60 trials formales aún no se declaran completados.**\n",
-        encoding="utf-8",
-    )
     report_hpo.update_docs(completed_hpo, root, report)
-    first = {name: (docs / name).read_text(encoding="utf-8") for name in paths}
-    report_hpo.update_docs(completed_hpo, root, report)
-    assert first == {name: (docs / name).read_text(encoding="utf-8") for name in paths}
-    assert all("Preservar esta tabla" in content for content in first.values())
-    assert "COMPLETADO" in first["tesis/historia-del-proyecto.md"]
-    assert "EN EJECUCIÓN" not in first["experimentos/hpo.md"]
     evidence = docs / "reproducibilidad/evidencia/hpo_lite0_seed42"
     assert (evidence / "FINAL_TEST_STARTED.json").exists()
+    assert (evidence / "HPO_REPORT.md").read_text(encoding="utf-8") == report
     lock = json.loads((completed_hpo / "HPO_SELECTION_LOCK.json").read_text(encoding="utf-8"))
     assert (evidence / lock["winner_checkpoint"]).with_name("summary.json").exists()
-    assert (docs / "tesis/HPO_BASELINE_COMPARISON.md").exists()
+    assert (root / "public/resultados/hpo_lite0_seed42").is_dir()
 
 
 def test_report_rejects_incomplete_budget(completed_hpo):

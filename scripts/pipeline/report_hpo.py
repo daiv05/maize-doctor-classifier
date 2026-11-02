@@ -279,8 +279,8 @@ multi-seed, CV, LOSO, ensemble o temperature scaling.
 
 
 def update_docs(directory: Path, root: Path, report: str):
-    """Añade evidencia; no sustituye tablas ni texto histórico."""
-    summary, lock, final, _ = validate_evidence(directory)
+    """Copia la evidencia verificada del estudio, su informe y las figuras al repositorio."""
+    lock = validate_evidence(directory)[1]
     docs = root / "docs/es"
     evidence = docs / "reproducibilidad/evidencia/hpo_lite0_seed42"
     evidence.mkdir(parents=True, exist_ok=True)
@@ -311,85 +311,9 @@ def update_docs(directory: Path, root: Path, report: str):
     (evidence / winner_summary).parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(directory / winner_summary, evidence / winner_summary)
     shutil.copytree(directory / "final_test", evidence / "final_test", dirs_exist_ok=True)
-    relative = "../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md"
     (evidence / "HPO_REPORT.md").write_text(report, encoding="utf-8")
-    marker = "<!-- hpo-lite0-seed42-completed -->"
-    date = final["finished_at"][:10]
-    target = summary["n_trials_requested"]
-    winner_line = (
-        f"Study `{summary['study_name']}`: {target} intentos, ganador trial {lock['best_trial']}, "
-        f"validation Macro-F1 {summary['best_value']:.9f}; "
-        f"baseline {summary['baseline_value']:.9f}; "
-        f"delta {(summary['best_value'] - summary['baseline_value']) * 100:+.6f} pp."
-    )
-    additions = {
-        "experimentos/hpo.md": f"## Resultados completados — {date}\n\n{winner_line}\n\n"
-        f"Test único posterior al lock. [Entrega completa, Top 10 y hashes]({relative}).",
-        "tesis/historia-del-proyecto.md": f"## {date} — HPO formal EfficientNet-Lite0\n\n"
-        f"**COMPLETADO: Optuna {target} intentos.** {winner_line}\n\n"
-        f"Se exploraron LR, WD, smoothing, batch, pesos de clase y warmup; test permaneció cerrado "
-        f"hasta congelar ganador/checkpoint. [Parámetros, test final y evidencia]({relative}).",
-        "tesis/DECISION_LOG.md": f"## DEC-012 — Cierre experimental ({date})\n\n{winner_line}\n\n"
-        f"[Configuración seleccionada y resultados]({relative}).",
-        "tesis/EVIDENCE_REGISTRY.md": f"## HPO formal Lite0 — {date}\n\n{winner_line}\n\n"
-        f"[Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final]({relative}). "
-        "Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.",
-        "reproducibilidad/figuras.md": f"## HPO Lite0 seed42 — {date}\n\n"
-        "Study `efficientnet_lite0_seed42_hpo_v1`; generador "
-        "`src/training/tuning.py::save_optimization_plots`; fuente `study.db`/`trials.csv`. "
-        "Código exacto en `source_code.zip`.\n\n"
-        + table(
-            [
-                {"figure": p.name, "SHA256": sha256_file(p)}
-                for p in (directory / "figures").glob("*.png")
-            ],
-            ["figure", "SHA256"],
-        ),
-    }
-    for relative_path, addition in additions.items():
-        path = docs / relative_path
-        original = path.read_text(encoding="utf-8")
-        if marker not in original:
-            if relative_path == "experimentos/hpo.md":
-                original = original.replace(
-                    "**Estado al 2026-09-23: EN EJECUCIÓN; los 60 trials formales aún no se declaran completados.**",
-                    f"**Estado al {date}: COMPLETADO; {target} intentos y test único del ganador verificados.**",
-                ).replace(
-                    "**Estado al 2026-09-23: EN EJECUCIÓN; presupuesto revisado a 25 intentos totales.**",
-                    f"**Estado al {date}: COMPLETADO; {target} intentos y test único del ganador verificados.**",
-                ).replace(
-                    "Los resultados siguen pendientes de completar 60 intentos y el test final. No hay ganador ni mejora\n"
-                    "formal declarados en este corte.",
-                    "El corte inicial del 2026-09-23 todavía no tenía ganador ni mejora formal declarados. "
-                    "El resultado definitivo se documenta en «Resultados completados», al final de esta página.",
-                ).replace(
-                    "El cierre sigue pendiente de completar 25 intentos y el test final; los resultados\n"
-                    "actuales son provisionales.",
-                    "El presupuesto revisado de 25 intentos y el test único ya están verificados; "
-                    "véase «Resultados completados» al final de esta página.",
-                )
-            path.write_text(original.rstrip() + f"\n\n{marker}\n\n{addition}\n", encoding="utf-8")
     figures = root / "public/resultados/hpo_lite0_seed42"
     shutil.copytree(directory / "figures", figures, dirs_exist_ok=True)
-    table_path = docs / "tesis/HPO_BASELINE_COMPARISON.md"
-    table_path.write_text(
-        "# Baseline vs HPO winner\n\n"
-        + table(
-            [
-                {
-                    "model": "Baseline 20260921_204608",
-                    "validation_macro_f1": summary["baseline_value"],
-                },
-                {
-                    "model": f"HPO trial {lock['best_trial']}",
-                    "validation_macro_f1": summary["best_value"],
-                },
-            ],
-            ["model", "validation_macro_f1"],
-        )
-        + f"\n\n[Evidencia]({relative}).\n",
-        encoding="utf-8",
-    )
 
 
 def main():
