@@ -1,0 +1,37 @@
+{
+  "comando": "python -m scripts.checks.validate_ood_detector --model efficientnet_lite0 --checkpoint <run>/best.pth --ood-stats <run>/export/ood_stats.json --splits-dir <splits/seed_42> --n-legit-samples 500",
+  "run_id": "20260921_204608",
+  "ood_stats_sha256": "5eb6cdd1ab2298b99f37fe563e62237685cb58870eaa7fd509b1839c3d91f6e1",
+  "threshold": 106.3722,
+  "sinteticas": {
+    "black": {
+      "md_plana": 1962.54,
+      "rmd": 851.28,
+      "ood": true
+    },
+    "white": {
+      "md_plana": 1934.25,
+      "rmd": 955.42,
+      "ood": true
+    },
+    "gray_solid": {
+      "md_plana": 2016.88,
+      "rmd": 852.68,
+      "ood": true
+    },
+    "random_noise": {
+      "md_plana": 1538.64,
+      "rmd": 538.99,
+      "ood": true
+    },
+    "blue_solid": {
+      "md_plana": 1932.0,
+      "rmd": 820.09,
+      "ood": true
+    }
+  },
+  "sinteticas_detectadas": 5,
+  "test_evaluadas": 500,
+  "test_rechazadas": 19,
+  "tasa_rechazo_test": 0.038
+}
