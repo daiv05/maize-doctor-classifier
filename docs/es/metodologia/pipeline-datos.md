@@ -124,7 +124,7 @@ Un análisis anterior reportó unos 15 grupos y 0.68 % del test con gemelos; no 
 
 `seed_42` se conserva sin cambios. La verificación cubre la integridad de la partición, no la generalización entre fuentes ni los casi duplicados (hojas fotografiadas en secuencia, recortes, resize, rotaciones, cambios fotométricos).
 
-El hash de config/dataset.yaml actual difiere del registrado en el lock. El [análisis del drift](../reproducibilidad/evidencia/pixel_duplicate_audit/dataset_yaml_drift_report.md) documenta los valores, la búsqueda de la versión anterior y la incertidumbre restante; los manifests y la partición congelada conservan sus hashes.
+El `config_sha256` del lock es el SHA-256 de los parámetros efectivos del split (`split_parameters`: semilla, clases, proporciones, estratificación y deduplicación), no del archivo `config/dataset.yaml`. Con la configuración actual, `create_splits.py` regenera `manifest.lock.json` byte a byte (`0db3ff3e…`), con los mismos `sample_id` en train, validación y prueba.
 
 ## Deduplicación perceptual
 

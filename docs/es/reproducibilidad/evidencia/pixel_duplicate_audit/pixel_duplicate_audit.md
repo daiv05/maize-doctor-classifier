@@ -41,10 +41,10 @@ Se conserva seed_42. Las métricas baseline y HPO no requieren invalidación por
 
 ## Configuración y artefactos
 
-- SHA-256 de dataset.yaml en lock: 8f0e560fe78267bb3f96f907d4668e29f1dd22d6a6645f474a84d1fad4db4730.
-- SHA-256 actual: 8e3f5a4feb6947db4d2b33f3b04c963f93096cd6a5e6aacfcb89eb3040010fbc.
+- `config_sha256` del lock: 8f0e560fe78267bb3f96f907d4668e29f1dd22d6a6645f474a84d1fad4db4730. Es el SHA-256 de los parámetros efectivos del split (`split_parameters`), no del archivo dataset.yaml.
+- Parámetros coherentes con el lock y con dataset.yaml: sí.
 
-El drift se analiza en [dataset_yaml_drift_report.md](dataset_yaml_drift_report.md). Los hashes de los CSV canónicos coinciden con el lock; la diferencia del YAML no cambia sus bytes.
+Los hashes de los CSV canónicos coinciden con el lock.
 
 - pixel_hash_inventory.csv: una fila por muestra elegible.
 - pixel_excluded_images.csv: ocho exclusiones auditadas por separado.
