@@ -6,17 +6,17 @@ El corpus reúne imágenes de hojas de maíz de repositorios públicos de Kaggle
 
 | `source_id` | Repositorio | Licencia | Imágenes en el corpus | Clases en el corpus | Entorno | Identificador |
 |---|---|---|---:|---:|---|---|
-| `maize-beans-tomatoes-africa` | [Maize, Beans and Tomatoes Image Dataset for Africa](https://www.kaggle.com/datasets/osutokaggle/maize-beans-and-tomatoes-image-dataset-for-africa) (Kaggle) | Apache 2.0 y CC según el subconjunto | 12 136 | 4 | Campo | Compila TOM2024 `10.17632/3d4yg89rtr.1`, Makerere `10.7910/DVN/LPGHKK`, NUST `10.7910/DVN/6R78HR`, YEESI `10.5281/zenodo.7729284` |
-| `maize-diseases` | [Maize Diseases](https://www.kaggle.com/datasets/kaustavbiswal/maize-diseases/data) (Kaggle, v1.0 y v1.1) | CC BY-NC-SA 4.0 | 6 989 | 3 | Laboratorio y campo | Sin DOI propio |
-| `multicrop-disease-maiz` | [Maize Crop Disease (Leaf)](https://data.mendeley.com/datasets/6w6gsvghfw/1) (Mendeley, Adege 2026) | CC BY 4.0 | 5 816 | 3 | Campo | `10.17632/6w6gsvghfw.1`; la necrosis letal proviene de [Maize Imagery Dataset - Tanzania](https://data.mendeley.com/datasets/fkw49mz3xs/1) |
-| `corn-leaf-roboflow` | [Corn Leaf](https://universe.roboflow.com/labonis-workspace/corn-leaf-hd9iy) (Roboflow, v4) | CC BY 4.0 | 2 919 | 6 | Campo | Solo URL |
-| `cropdg-unified-multidomain` | [CropDG Unified Multi-Domain](https://www.kaggle.com/datasets/saniyaverma914/cropdg-unified-multidomain) (Kaggle) | CC BY-NC-SA 4.0 | 2 562 | 3 | Laboratorio y campo | `10.34740/KAGGLE/DSV/12009964`; reúne PlantVillage `10.3389/fpls.2016.01419` y PlantDoc `10.34740/KAGGLE/DSV/9411594` |
-| `maize-in-field-dataset` | [Maize in Field Dataset](https://www.kaggle.com/datasets/hamishcrazeai/maize-in-field-dataset) (Kaggle, Sudáfrica) | CC BY-NC-SA 4.0 | 852 | 3 | Campo | `10.34740/KAGGLE/DSV/3603983` |
-| `maize-2-roboflow` | [Maize 2](https://universe.roboflow.com/david-deras/maize-2-qag1o-76kth) (Roboflow, v1) | CC BY 4.0 | 846 | 3 | Campo | Solo URL |
-| `corn-leaf-diseases-classification-roboflow` | [Corn Leaf Diseases Classification](https://universe.roboflow.com/david-deras/corn-leaf-diseases-classifcation-nwmtk) (Roboflow, v1) | CC BY 4.0 | 480 | 1 | Campo | Solo URL |
-| `maize-nutrient-deficiency` | [Maize Nutrient Deficiency](https://data.mendeley.com/datasets/34gb2gr7p2/1) (Mendeley, India) | CC BY 4.0 | 340 | 4 | Campo | `10.17632/34gb2gr7p2.1` |
-| `maize-leaf-roboflow` | [Maize Leaf](https://universe.roboflow.com/david-deras/maize-leaf-7zwoi-he5vd) (Roboflow, v1) | CC BY 4.0 | 331 | 1 | Campo | Solo URL |
-| `maize-deficiency-scanner-roboflow` | [Maize Deficiency Scanner](https://universe.roboflow.com/david-deras/maize-deficiency-scanner-z2whz) (Roboflow, v1) | CC BY 4.0 | 158 | 3 | Campo | Solo URL |
+| [`maize-beans-tomatoes-africa`](/es/datasets/maize-beans-tomatoes-africa) | [Maize, Beans and Tomatoes Image Dataset for Africa](https://www.kaggle.com/datasets/osutokaggle/maize-beans-and-tomatoes-image-dataset-for-africa) (Kaggle) | Apache 2.0 y CC según el subconjunto | 12 136 | 4 | Campo | Compila TOM2024 `10.17632/3d4yg89rtr.1`, Makerere `10.7910/DVN/LPGHKK`, NUST `10.7910/DVN/6R78HR`, YEESI `10.5281/zenodo.7729284` |
+| [`maize-diseases`](/es/datasets/maize-diseases) | [Maize Diseases](https://www.kaggle.com/datasets/kaustavbiswal/maize-diseases/data) (Kaggle, v1.0 y v1.1) | CC BY-NC-SA 4.0 | 6 989 | 3 | Laboratorio y campo | Sin DOI propio |
+| [`multicrop-disease-maiz`](/es/datasets/multicrop-disease-maiz-disease-pests-and-disease) | [Maize Crop Disease (Leaf)](https://data.mendeley.com/datasets/6w6gsvghfw/1) (Mendeley, Adege 2026) | CC BY 4.0 | 5 816 | 3 | Campo | `10.17632/6w6gsvghfw.1`; la necrosis letal proviene de [Maize Imagery Dataset - Tanzania](https://data.mendeley.com/datasets/fkw49mz3xs/1) |
+| [`corn-leaf-roboflow`](/es/datasets/corn-leaf-roboflow) | [Corn Leaf](https://universe.roboflow.com/labonis-workspace/corn-leaf-hd9iy) (Roboflow, v4) | CC BY 4.0 | 2 919 | 6 | Campo | Solo URL |
+| [`cropdg-unified-multidomain`](/es/datasets/cropdg-unified-multidomain) | [CropDG Unified Multi-Domain](https://www.kaggle.com/datasets/saniyaverma914/cropdg-unified-multidomain) (Kaggle) | CC BY-NC-SA 4.0 | 2 562 | 3 | Laboratorio y campo | `10.34740/KAGGLE/DSV/12009964`; reúne PlantVillage `10.3389/fpls.2016.01419` y PlantDoc `10.34740/KAGGLE/DSV/9411594` |
+| [`maize-in-field-dataset`](/es/datasets/maize-in-field-dataset) | [Maize in Field Dataset](https://www.kaggle.com/datasets/hamishcrazeai/maize-in-field-dataset) (Kaggle, Sudáfrica) | CC BY-NC-SA 4.0 | 852 | 3 | Campo | `10.34740/KAGGLE/DSV/3603983` |
+| [`maize-2-roboflow`](/es/datasets/maize-2-roboflow) | [Maize 2](https://universe.roboflow.com/david-deras/maize-2-qag1o-76kth) (Roboflow, v1) | CC BY 4.0 | 846 | 3 | Campo | Solo URL |
+| [`corn-leaf-diseases-classification-roboflow`](/es/datasets/corn-leaf-diseases-classification-roboflow) | [Corn Leaf Diseases Classification](https://universe.roboflow.com/david-deras/corn-leaf-diseases-classifcation-nwmtk) (Roboflow, v1) | CC BY 4.0 | 480 | 1 | Campo | Solo URL |
+| [`maize-nutrient-deficiency`](/es/datasets/maize-nutrient-deficiency) | [Maize Nutrient Deficiency](https://data.mendeley.com/datasets/34gb2gr7p2/1) (Mendeley, India) | CC BY 4.0 | 340 | 4 | Campo | `10.17632/34gb2gr7p2.1` |
+| [`maize-leaf-roboflow`](/es/datasets/maize-leaf-roboflow) | [Maize Leaf](https://universe.roboflow.com/david-deras/maize-leaf-7zwoi-he5vd) (Roboflow, v1) | CC BY 4.0 | 331 | 1 | Campo | Solo URL |
+| [`maize-deficiency-scanner-roboflow`](/es/datasets/maize-deficiency-scanner-roboflow) | [Maize Deficiency Scanner](https://universe.roboflow.com/david-deras/maize-deficiency-scanner-z2whz) (Roboflow, v1) | CC BY 4.0 | 158 | 3 | Campo | Solo URL |
 
 Los conteos son muestras elegibles del `seed_42` (train, validación y prueba). Las imágenes del repositorio original que no corresponden a las nueve clases objetivo, o que se descartaron por duplicado o por calidad, no se cuentan.
 
@@ -24,7 +24,7 @@ Los conteos son muestras elegibles del `seed_42` (train, validación y prueba). 
 
 | Repositorio | Licencia | Imágenes | Motivo |
 |---|---|---:|---|
-| [Corn Leaf Diseases (PlantVillage aumentado)](https://www.kaggle.com/datasets/shuvokumarbasak2030/corn-leaf-diseases-plant-village-augmented-data) (`10.34740/KAGGLE/DSV/11077233`) | MIT | 52 360 | Contiene solo imágenes ya aumentadas (17 transformaciones) y no incluye los originales; la mayoría están en otras fuentes. |
+| [Corn Leaf Diseases (PlantVillage aumentado)](/es/datasets/corn-leaf-diseases) · [Kaggle](https://www.kaggle.com/datasets/shuvokumarbasak2030/corn-leaf-diseases-plant-village-augmented-data) (`10.34740/KAGGLE/DSV/11077233`) | MIT | 52 360 | Contiene solo imágenes ya aumentadas (17 transformaciones) y no incluye los originales; la mayoría están en otras fuentes. |
 
 ## Notas por fuente
 

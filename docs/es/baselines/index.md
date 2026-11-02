@@ -95,40 +95,6 @@ Los tres parten de pesos pre-entrenados en ImageNet <sup>[[16]](#ref-16)</sup> y
 
 ---
 
-## Entrenamiento y resultados
-
-Los tres baselines comparten hiperparámetros para que las diferencias dependan solo de la arquitectura. La exploración previa sobre 4 clases comparó hasta ocho arquitecturas ligeras (`efficientnet_b0`, `efficientnet_b4`, `efficientnet_lite0`, `fastvit_t8`, `ghostnetv2_100`, `mobilenet_v3_large`, `mobilenet_v3_small` y `shufflenet_v2_x1_0`) y de ella salieron estos tres.
-
-| Hiperparámetro | Valor |
-|---|---|
-| Clases | 9 (perfil `baseline`, tope de 1 500 por clase) |
-| Épocas | 30 |
-| Optimizador | AdamW (lr 1e-4, weight decay 1e-4) |
-| Pérdida | CrossEntropyLoss sin ponderar por clase |
-| Balanceo | WeightedRandomSampler y augmentation de clases minoritarias |
-| Pesos iniciales | ImageNet |
-| Entrada y lote | 224 × 224; lote 32 |
-
-Cada corrida se guarda en `outputs/baselines/<modelo>/<run_id>/` con `best.pth`, `summary.json`, `predictions.csv`, `train_history.csv` y los reportes de prueba.
-
-| Modelo | Accuracy | Macro-F1 | Loss | Checkpoint |
-|---|---:|---:|---:|---:|
-| `efficientnet_b0` | 0.9521 | 0.9146 | 0.229 | 15.6 MB |
-| `shufflenet_v2_x1_0` | 0.9508 | 0.9030 | 0.169 | 5.0 MB |
-| `efficientnet_lite0` | 0.9474 | 0.8951 | 0.218 | 13.1 MB |
-
-Evaluados sobre `test.csv` (1 503 imágenes, 9 clases), los tres superan la meta de Macro-F1 de 0.85; la diferencia entre ellos es de unos 2 puntos, comparable al margen de ese test. El Macro-F1 de validación se mantiene entre 0.88 y 0.91 hasta la época 30 sin degradarse. Las clases más difíciles son las deficiencias nutricionales, en especial el potasio.
-
-```bash
-make train-baselines
-make modal-train-baselines REGEN_SPLITS=1
-make explain-visual-baselines
-make explain-fidelity-baselines
-make explain-errors-baselines
-```
-
-Las explicaciones de los baselines usan LIME y Grad-CAM; SHAP solo está disponible en el pipeline principal. Sus resultados corresponden a la primera etapa (31 623 imágenes) y no son comparables con los del [modelo oficial](/es/resultados/).
-
 ## Referencias
 
 <a id="ref-6"></a>[6] M. Sandler, A. Howard, M. Zhu, A. Zhmoginov, y L.-C. Chen, "MobileNetV2: Inverted Residuals and Linear Bottlenecks," in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, Salt Lake City, UT, USA, 2018, pp. 4510–4520.
