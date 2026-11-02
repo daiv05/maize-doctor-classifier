@@ -4,12 +4,12 @@ Hay dos estudios multi-semilla. El de [estabilidad baseline/LOSO](../reproducibi
 
 ## Resultados
 
-| Configuración | Semilla | Run | Macro-F1 validación | ECE | Mejor época |
+| Configuración | Semilla | Run | Macro-F1 validación | ECE de validación | Mejor época |
 |---|---:|---|---:|---:|---:|
 | baseline | 42 | `20261019_203033` | 0.956086 | 0.1398 | 39 |
 | HPO trial 0 | 42 | `20261019_211317` | 0.957292 | 0.0579 | 44 |
 
-El `best.pth` del baseline (SHA-256 `860180f3…`) es idéntico al del modelo oficial `20260921_204608`: el entrenamiento se reproduce bit a bit. La diferencia de +0.0012 en validación no es interpretable con una semilla (McNemar p = 0.83). Las ocho corridas restantes (semillas 123, 2026, 3407 y 7777 para cada configuración) no se ejecutaron. Ninguna corrida usó test.
+El `best.pth` del baseline (SHA-256 `860180f3…`) es idéntico al del modelo oficial `20260921_204608`: el entrenamiento se reproduce bit a bit. La diferencia de +0.0012 en validación no es interpretable con una semilla: de 5 014 imágenes, 43 las acierta solo el baseline y 40 solo el HPO (McNemar p = 0.83; predicciones de [baseline](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/validation_predictions_baseline_20261019_203033.csv) y [HPO](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/validation_predictions_hpo_trial_0_20261019_211317.csv)). Las ocho corridas restantes (semillas 123, 2026, 3407 y 7777 para cada configuración) no se ejecutaron. Ninguna corrida usó test.
 
 Los artefactos están en [`multiseed_baseline_vs_hpo/`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/multiseed_summary.json): resultados, protocolo, preflight, hashes de reportes, los dos recibos `COMPLETE` y las sumas SHA-256 de los paquetes de cada run.
 

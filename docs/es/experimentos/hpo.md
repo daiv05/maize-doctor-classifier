@@ -1,8 +1,8 @@
 # Optimización de hiperparámetros (HPO)
 
-Búsqueda de hiperparámetros con Optuna para EfficientNet-Lite0 sobre el split `seed_42`. Ejecutó 25 intentos y evaluó una sola vez el test del ganador. Los estudios anteriores de 15 y 25 trials con techo de 15 épocas son otro experimento.
+Búsqueda de hiperparámetros con Optuna para EfficientNet-Lite0 sobre el split `seed_42`. Ejecutó 25 intentos y evaluó una sola vez el test del ganador. Los estudios anteriores (15 trials sobre B0 y 25 trials sobre Lite0 con techo de 15 épocas) son otro experimento.
 
-El presupuesto original era de 60 intentos y se redujo a 25 durante la ejecución. [`budget_amendment.json`](../reproducibilidad/evidencia/hpo_lite0_seed42/budget_amendment.json) registra ambos protocolos, sus hashes, los trials al corte y el estado del RNG; `budget_revisions/60-to-25/` conserva la base, el código y la evidencia anteriores. El dataset, el modelo y el objetivo no cambiaron.
+El presupuesto original era de 60 intentos y se redujo a 25 durante la ejecución, por consumo de créditos; en ese momento había 2 trials COMPLETE (0 y 1) y el trial 2 en curso. [`budget_amendment.json`](../reproducibilidad/evidencia/hpo_lite0_seed42/budget_amendment.json) registra ambos protocolos, sus hashes, los trials al corte y el estado del RNG; `budget_revisions/60-to-25/` conserva la base, el código y la evidencia anteriores. El dataset, el modelo y el objetivo no cambiaron.
 
 El estudio reutiliza `TuningObjective`, `CornDataset`, los transforms, `run_epoch`, las pérdidas, el scheduler y los contratos de runs. `tuning_study.py` administra la persistencia y el cierre del estudio.
 
@@ -86,4 +86,4 @@ El estudio terminó con 8 trials COMPLETE, 15 PRUNED y 2 FAIL por interrupción.
 | Macro-F1 de prueba | 0.948002 | 0.943125 | −0.4877 |
 | Accuracy de prueba | 0.978066 | 0.975274 | −0.2792 |
 
-En prueba el ganador tiene F1 de 0.8949 en nitrógeno, 0.9363 en fósforo y 0.8041 en potasio (la clase más débil), y un ECE de 0.0600 sin temperature scaling. Al ser una sola semilla, la diferencia en validación no indica mejor generalización y el checkpoint no reemplaza al oficial. El estudio pareado de semillas está en [multi-seed](./multiseed.md).
+En prueba el ganador tiene F1 de 0.8949 en nitrógeno, 0.9363 en fósforo y 0.8041 en potasio (la clase más débil), y un ECE de 0.0600 sin temperature scaling, frente a 0.1397 del baseline en el mismo test. Con una sola semilla por configuración, ninguna de las dos diferencias de Macro-F1 es interpretable: las tres semillas del baseline (42, 123 y 2026) tienen una desviación estándar muestral de 0.0037 en validación y 0.0052 en prueba, mayor que las diferencias de +0.0012 y −0.0049. El checkpoint no reemplaza al oficial. El estudio pareado de semillas está en [multi-seed](./multiseed.md).

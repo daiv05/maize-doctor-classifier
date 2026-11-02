@@ -8,18 +8,18 @@ Las decisiones se articularon alrededor de cinco ejes que definieron el artefact
 
 ---
 
-## Decisiones clave validadas en el camino
+## Decisiones clave
 
 ### 1. Estrategia de balanceo de clases
-Inicialmente se evaluó combinar un remuestreo agresivo en los lotes (*WeightedRandomSampler*) junto con una función de pérdida ponderada. Al probarlo sobre el desbalance real del corpus (14 a 1 entre clases mayoritarias y minoritarias), comprobamos que aplicar ambos mecanismos a la vez sobrecompensaba en exceso, degradando el rendimiento en clases comunes como *Healthy*. 
+El pipeline principal balancea con pérdida ponderada (`sqrt_inverse`) y deja desactivado el *WeightedRandomSampler*: `train.py` documenta que combinar ambos compensaría el mismo desbalance por dos vías. El repositorio no contiene un experimento que compare la combinación con la pérdida sola.
 
-La solución adoptada fue desactivar el remuestreo de lotes y combinar una pérdida ponderada moderada (`sqrt_inverse`) con aumento de datos (*data augmentation*) focalizado exclusivamente en las cuatro clases minoritarias.
+A la pérdida ponderada se suma aumento de datos (*data augmentation*) asimétrico en las clases cuya razón de desbalance supera `minority_ratio_threshold = 4.0`: cuatro clases en el corpus de la etapa 2 (desbalance máximo 14.1×).
 
 ### 2. Regularización y calibración de probabilidades
-Se incorporaron suavizado de etiquetas (*Label Smoothing = 0.10*) y decaimiento de pesos ($L_2 = 10^{-4}$) como regularizadores. El baseline actual todavía presenta ECE 0.1397, por lo que no se considera resuelta la calibración ni se atribuye causalmente su mejora a estos mecanismos.
+Se incorporaron suavizado de etiquetas (*Label Smoothing = 0.10*) y decaimiento de pesos ($L_2 = 10^{-4}$) como regularizadores. El baseline actual presenta ECE 0.1397 con confianza media de 0.844 en los aciertos y exactitud de 0.978: el modelo está subconfiado, la calibración no se considera resuelta y no se atribuye a estos mecanismos ni su efecto ni su ausencia.
 
 ### 3. Dinámica del optimizador y calentamiento
-Comparamos programadores de tasa de aprendizaje por pasos (*StepLR*), por meseta (*ReduceLROnPlateau*) y por coseno con calentamiento (*Cosine Annealing with Warmup*). El arranque suave de tres épocas lineales seguido del decaimiento armónico por coseno resultó ser el más estable: evitó que los pesos preentrenados de ImageNet se descalibraran en las primeras épocas y facilitó un aterrizaje suave hacia el óptimo.
+El pipeline usa coseno con calentamiento lineal de tres épocas. `src/training/optim.py` documenta la elección: a diferencia de *ReduceLROnPlateau*, la curva de tasa de aprendizaje no depende del ruido de validación, así que dos corridas con la misma semilla recorren el mismo camino. El repositorio no contiene una comparación con *StepLR* ni con *ReduceLROnPlateau*.
 
 ### 4. Cuantización y paridad en el borde
 La exportación a Int8 redujo `EfficientNet-Lite0` de 13.56 MB a 3.74 MB. En el modelo oficial `20260921_204608` el int8 obtiene Macro-F1 0.9489 sobre el test completo, y en el teléfono la inferencia toma unos 23 ms.

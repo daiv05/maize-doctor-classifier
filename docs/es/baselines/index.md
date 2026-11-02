@@ -8,7 +8,7 @@ Los tres modelos elegidos, **EfficientNet-B0**, **ShuffleNetV2-x1.0** y **Effici
 
 ## Dataset a utilizar
 
-Los baselines se entrenan sobre el **perfil `baseline`** de la configuración del pipeline: las **9 clases** del dataset actual con un tope de **1 500 imágenes por clase**, solo se recortan las clases mayoritarias, las minoritarias quedan intactas. Esto permite entrenar los modelos candidatos con un **dataset reducido (10,020 imágenes)** que conserva el desbalance natural de clases.
+Los baselines se entrenan sobre el **perfil `baseline`** de la configuración del pipeline: las **9 clases** del dataset actual con un tope de **1 500 imágenes por clase**, solo se recortan las clases que superan el tope, las demás quedan intactas. Esto permite entrenar los modelos candidatos con un **dataset reducido (10,020 imágenes)** que conserva el desbalance natural de clases.
 
 | Split | Imágenes |
 |---|---:|
@@ -17,7 +17,7 @@ Los baselines se entrenan sobre el **perfil `baseline`** de la configuración de
 | Prueba (`test.csv`, 15 %) | 1 503 |
 | **Total** | **10 020** |
 
-Se conservan completas las clases minoritarias (potasio 266, nitrógeno 523, fósforo 612) y limita solo las mayoritarias (healthy, tizones, gusano cogollero). El cap es configurable para permitir experimentar con diferentes tamaños de dataset, pero el valor por defecto es 1 500 imágenes por clase.
+Se conservan completas las clases bajo el tope (potasio 266, nitrógeno 523, fósforo 612 y `gray_leaf_spot`) y se recortan `common_rust`, `fall_armyworm`, `healthy`, `lethal_necrosis` y `northern_corn_leaf_blight`, cuyo soporte de prueba es 225 (224 en la última), es decir el 15 % de 1 500. El cap es configurable para permitir experimentar con diferentes tamaños de dataset, pero el valor por defecto es 1 500 imágenes por clase.
 
 ::: warning Corridas de la primera etapa
 Las cifras y métricas de esta sección corresponden a corridas sobre **31 623 imágenes**, previas a la ampliación. En la materialización vigente de 33 429 elegibles, potasio 621, nitrógeno 846 y fósforo 938 siguen por debajo del tope de 1 500; el total y las métricas cambiarían si se regenerara `splits-baseline`.
@@ -61,13 +61,13 @@ En ImageNet-1K alcanza ~77.1 % de Top-1 con 5.3 M de parámetros: más del doble
 | Velocidad de inferencia | Más lento que ShuffleNetV2-x1.0 en hardware móvil por las operaciones SE en cada bloque y el mayor número de parámetros |
 | Tamaño del modelo | ~16 MB serializado; más pesado que ShuffleNetV2-x1.0 (~5 MB) |
 | Transfer learning | Pre-entrenado en ImageNet con `EfficientNet_B0_Weights.DEFAULT` (IMAGENET1K_V1); se reemplaza `model.classifier[1]` |
-| Regularización implícita | Los bloques MBConv con dropout estructural hacen a EfficientNet-B0 más robusto al overfitting con datasets pequeños |
+| Regularización | `torchvision` aplica dropout 0.2 antes de la capa final |
 
 ### EfficientNet-Lite0
 
 El tercer baseline es un intento de quedarse con lo mejor de los dos mundos anteriores: la precisión de EfficientNet, pero adaptada para que funcione bien una vez cuantizada, algo crítico para el despliegue final del proyecto. **EfficientNet-Lite0** es una variante de EfficientNet-B0 optimizada específicamente para dispositivos de borde con aceleradores de inferencia (Coral Edge TPU, microcontroladores ARM con CMSIS-NN) <sup>[[13]](#ref-13)</sup>.
 
-Las diferencias con B0 son tres. Primero, se eliminan los bloques Squeeze-and-Excitation, porque su operación de reducción global no se mapea eficientemente en aceleradores de inferencia cuantizados. Segundo, se usa ReLU6 en lugar de Swish, más compatible con cuantización INT8, ya que Swish introduce errores de representación no triviales que hacen caer la precisión de ~75 % a ~46 % si no se sustituye <sup>[[13]](#ref-13)</sup>. Tercero, la red evita el stem strided convolution, esquivando así algunas operaciones que rompen la compatibilidad con ciertos compiladores de modelos (TFLite, ONNX para Edge TPU).
+Las diferencias con B0 son dos. Primero, se eliminan los bloques Squeeze-and-Excitation, porque su operación de reducción global no se mapea eficientemente en aceleradores de inferencia cuantizados. Segundo, se usa ReLU6 en lugar de Swish, más compatible con cuantización INT8, ya que Swish introduce errores de representación no triviales que hacen caer la precisión de ~75 % a ~46 % si no se sustituye <sup>[[13]](#ref-13)</sup>.
 
 Se construye con `timm` (`timm.create_model("efficientnet_lite0", pretrained=True, num_classes=9)`) porque `torchvision` no incluye esta variante.
 

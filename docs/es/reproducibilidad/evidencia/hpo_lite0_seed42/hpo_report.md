@@ -85,7 +85,7 @@ Estos rangos describen los trials mejor posicionados. No demuestran causalidad n
 | best_at_20 | 0.9572922254288656 |
 | best_at_25 | 0.9572922254288656 |
 
-Última mejora: trial 0 (índice 0-based). No se ejecuta un intento 26: los IDs 0–24 agotan el presupuesto revisado.
+Última mejora: trial 0 (índice 0-based). No se ejecuta un intento 26: los IDs 0–24 agotan el presupuesto.
 
 ## Hyperparameter importance
 
@@ -98,7 +98,7 @@ Estos rangos describen los trials mejor posicionados. No demuestran causalidad n
 | batch_size | 0.086419501737774 |
 | weight_decay | 0.026872486226236312 |
 
-Importancia descriptiva del estudio; no causal. fANOVA usa seed 42.
+Importancia descriptiva del estudio; no causal. fANOVA (seed 42) se calcula solo con los 8 trials COMPLETE.
 
 ## Evaluación final del ganador sobre test
 
@@ -166,8 +166,8 @@ Raíz: `efficientnet_lite0_seed42_hpo_v1` en `corn-outputs:/hpo/efficientnet_lit
 ¿Optuna superó el baseline en Validation Macro-F1? Sí  
 ¿Test fue utilizado durante selección? No  
 ¿Se completó el presupuesto de 25 trials? Sí  
-¿Study puede reanudarse? Sí; presupuesto agotado, no admite más trials en esta fase.  
-¿Existe evidencia suficiente para reproducir la búsqueda? Sí, con el corpus congelado y entorno registrado.
+¿Study admite más trials? No: presupuesto agotado y selección bloqueada.  
+¿Se archivan código, hashes de splits y entorno de la búsqueda? Sí.
 
 El resultado es un HPO winner. No acredita producción ni entrenamiento formal, multi-seed, CV, LOSO, ensemble o temperature scaling.
 

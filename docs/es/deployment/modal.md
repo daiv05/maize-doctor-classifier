@@ -6,11 +6,12 @@ El proyecto utiliza Modal para ejecutar entrenamientos y análisis de explicabil
 
 ## Funcionamiento
 
-Cada función remota declara sus recursos de GPU, CPU y memoria. Al ejecutarse, el contenedor recibe el código y monta los volúmenes necesarios. Los resultados que deban conservarse se escriben en almacenamiento persistente y se confirman antes de finalizar la invocación.
+Cada función remota declara sus recursos (GPU A10 y CPU en las de entrenamiento) y su tiempo máximo. Al ejecutarse, el contenedor recibe el código y monta los volúmenes necesarios. Los resultados que deban conservarse se escriben en almacenamiento persistente y se confirman antes de finalizar la invocación.
 
-Todo el almacenamiento se organiza alrededor de dos volúmenes persistentes en la nube que actúan como discos duros compartidos:
+El almacenamiento se organiza en volúmenes persistentes de Modal:
 
-- `corn-clean`: almacena el corpus consolidado de imágenes limpias. Se descarga una sola vez desde Hugging Face y queda listo para que cualquier contenedor lo lea a máxima velocidad.
+- `corn-clean`: almacena el corpus consolidado de imágenes limpias, descargado desde Hugging Face con `make modal-seed` (idempotente; `FORCE=1` lo vacía y lo vuelve a descargar).
+- `corn-clean-segmented`: corpus pre-segmentado, usado por las corridas con `SEGMENTED=1`.
 - `corn-outputs`: guarda todos los artefactos generados: particiones de datos (*splits*), checkpoints de los modelos (`best.pth`), historiales de entrenamiento y los reportes de explicabilidad visual.
 
 ---
@@ -23,11 +24,11 @@ Los comandos de la nube están en el `Makefile` del proyecto con el prefijo `mod
 # Entrenar una arquitectura del pipeline principal en GPU remota
 make modal-train-main MAIN_MODELS=efficientnet_lite0 MAIN_EPOCHS=60
 
-# Correr análisis de explicabilidad multimodal en la nube
+# Panel comparado LIME | SHAP | Grad-CAM en la nube
 make modal-explain-compare-main MAIN_MODELS=efficientnet_lite0 SAMPLE_SIZE=20
 
-# Descargar los resultados y checkpoints a la máquina local
+# Descargar el volumen corn-outputs completo a ./outputs-remote
 make modal-pull
 ```
 
-Los scripts ejecutan la lógica en la GPU remota y guardan los registros en el volumen. Al terminar la corrida, `make modal-pull` sincroniza la carpeta remota con el entorno local para evaluar y exportar los modelos.
+Los scripts ejecutan la lógica en la GPU remota y guardan los registros en el volumen. Al terminar la corrida, `make modal-pull` ejecuta `modal volume get --force corn-outputs / ./outputs-remote`: copia todo el volumen a `./outputs-remote` sobrescribiendo los archivos existentes.
