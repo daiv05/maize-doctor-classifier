@@ -22,11 +22,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import yaml
 from PIL import Image, ImageOps
 from PIL import __version__ as pillow_version
 
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root
-from src.data.preparation import sha256_file
+from src.data.preparation import sha256_file, sha256_json
 
 DEFAULT_OUTPUT = PROJECT_ROOT / "docs/es/reproducibilidad/evidencia/pixel_duplicate_audit"
 SPLITS = ("train", "val", "test")
@@ -420,6 +421,9 @@ def _summary_stats(
 def _fingerprint(splits_dir: Path) -> dict[str, Any]:
     lock_path = splits_dir / "manifest.lock.json"
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    parameters = lock["split_parameters"]
+    config = yaml.safe_load((PROJECT_ROOT / "config/dataset.yaml").read_text(encoding="utf-8"))
+    current = config["dataset"]
     return {
         "manifest_lock_sha256": sha256_file(lock_path),
         "master_manifest_sha256": lock["master_manifest_sha256"],
@@ -428,10 +432,11 @@ def _fingerprint(splits_dir: Path) -> dict[str, Any]:
         "test_sha256": lock["test_sha256"],
         "config_sha256_in_lock": lock["config_sha256"],
         "exclusions_sha256_in_lock": lock["exclusions_sha256"],
-        "current_config_sha256": sha256_file(PROJECT_ROOT / "config/dataset.yaml"),
+        "split_parameters_sha256": sha256_json(parameters),
         "current_exclusions_sha256": sha256_file(PROJECT_ROOT / "config/dataset_exclusions.csv"),
-        "configuration_matches_lock": lock["config_sha256"]
-        == sha256_file(PROJECT_ROOT / "config/dataset.yaml"),
+        "configuration_matches_lock": lock["config_sha256"] == sha256_json(parameters)
+        and parameters["seed"] == current["seed"]
+        and parameters["classes"] == current["classes"],
         "exclusions_match_lock": lock["exclusions_sha256"]
         == sha256_file(PROJECT_ROOT / "config/dataset_exclusions.csv"),
     }
@@ -774,12 +779,12 @@ def _write_report(
         "",
         "## Configuración y artefactos",
         "",
-        f"- SHA-256 de dataset.yaml en lock: {fingerprint['config_sha256_in_lock']}.",
-        f"- SHA-256 actual: {fingerprint['current_config_sha256']}.",
+        f"- `config_sha256` del lock: {fingerprint['config_sha256_in_lock']}. Es el SHA-256 de"
+        " los parámetros efectivos del split (`split_parameters`), no del archivo dataset.yaml.",
+        f"- Parámetros coherentes con el lock y con dataset.yaml: "
+        f"{'sí' if fingerprint['configuration_matches_lock'] else 'no'}.",
         "",
-        "El drift se analiza en [dataset_yaml_drift_report.md](dataset_yaml_drift_report.md).",
-        "Los hashes de los CSV",
-        "canónicos coinciden con el lock; la diferencia del YAML no cambia sus bytes.",
+        "Los hashes de los CSV canónicos coinciden con el lock.",
         "",
         "- pixel_hash_inventory.csv: una fila por muestra elegible.",
         "- pixel_excluded_images.csv: ocho exclusiones auditadas por separado.",
