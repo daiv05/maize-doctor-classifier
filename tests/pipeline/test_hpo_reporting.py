@@ -106,8 +106,8 @@ def test_report_copies_verified_evidence(completed_hpo, tmp_path):
     docs = root / "docs/es"
     report_hpo.update_docs(completed_hpo, root, report)
     evidence = docs / "reproducibilidad/evidencia/hpo_lite0_seed42"
-    assert (evidence / "FINAL_TEST_STARTED.json").exists()
-    assert (evidence / "HPO_REPORT.md").read_text(encoding="utf-8") == report
+    assert (evidence / "final_test_started.json").exists()
+    assert (evidence / "hpo_report.md").read_text(encoding="utf-8") == report
     lock = json.loads((completed_hpo / "HPO_SELECTION_LOCK.json").read_text(encoding="utf-8"))
     assert (evidence / lock["winner_checkpoint"]).with_name("summary.json").exists()
     assert (root / "public/resultados/hpo_lite0_seed42").is_dir()

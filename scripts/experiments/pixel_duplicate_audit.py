@@ -653,11 +653,11 @@ def run_audit(
             "pixel_cross_split_duplicates.csv",
             "pixel_label_conflicts.csv",
             "pixel_audit_summary.json",
-            "PIXEL_DUPLICATE_AUDIT.md",
+            "pixel_duplicate_audit.md",
         ],
     }
     _write_json(output_dir / "pixel_audit_summary.json", summary)
-    _write_report(output_dir / "PIXEL_DUPLICATE_AUDIT.md", summary, conflicts)
+    _write_report(output_dir / "pixel_duplicate_audit.md", summary, conflicts)
     checkpoint = output_dir / ".pixel_hash_checkpoint.csv"
     if checkpoint.exists():
         checkpoint.unlink()

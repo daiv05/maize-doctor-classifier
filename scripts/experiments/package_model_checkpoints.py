@@ -618,8 +618,8 @@ def main() -> None:
         },
     )
     for source, target in (
-        (EVIDENCE.parent / "MODEL_PACKAGE_README.md", STAGE / "README.md"),
-        (EVIDENCE.parent / "EXPERIMENTAL_RESULTS_SUMMARY.md", STAGE / "RESULTS_SUMMARY.md"),
+        (EVIDENCE.parent / "paquete-de-modelos.md", STAGE / "README.md"),
+        (EVIDENCE.parent / "resultados-por-protocolo.md", STAGE / "RESULTS_SUMMARY.md"),
         (ROOT / "scripts/experiments/create_model_tars.sh", STAGE / "CREATE_TARS.sh"),
     ):
         copy_checked(source, target)

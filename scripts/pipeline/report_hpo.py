@@ -300,9 +300,9 @@ def update_docs(directory: Path, root: Path, report: str):
         "comparison_vs_baseline.csv",
     ]
     for name in names:
-        shutil.copy2(directory / name, evidence / name)
+        shutil.copy2(directory / name, evidence / name.lower())
     if (directory / "BUDGET_AMENDMENT.json").exists():
-        shutil.copy2(directory / "BUDGET_AMENDMENT.json", evidence / "BUDGET_AMENDMENT.json")
+        shutil.copy2(directory / "BUDGET_AMENDMENT.json", evidence / "budget_amendment.json")
         previous = evidence / "budget_revisions/60-to-25"
         previous.mkdir(parents=True, exist_ok=True)
         for name in ("preflight.json", "source_archive.json", "study_summary.json", "trials.csv"):
@@ -311,7 +311,7 @@ def update_docs(directory: Path, root: Path, report: str):
     (evidence / winner_summary).parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(directory / winner_summary, evidence / winner_summary)
     shutil.copytree(directory / "final_test", evidence / "final_test", dirs_exist_ok=True)
-    (evidence / "HPO_REPORT.md").write_text(report, encoding="utf-8")
+    (evidence / "hpo_report.md").write_text(report, encoding="utf-8")
     figures = root / "public/resultados/hpo_lite0_seed42"
     shutil.copytree(directory / "figures", figures, dirs_exist_ok=True)
 
