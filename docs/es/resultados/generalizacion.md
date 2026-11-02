@@ -13,7 +13,7 @@ Las cifras de protocolos distintos no se restan entre sí. Especificación en [P
 
 ## Asociación entre fuente y clase
 
-El corpus tiene 11 fuentes y 9 clases. De las 99 celdas fuente × clase, 65 están vacías y el V de Cramér es 0.5030 (χ² = 67 673.21), una asociación moderada a fuerte entre origen y patología. Dos fuentes contienen solo `gray_leaf_spot`; `maize-diseases` es 67.8 % `healthy` y aporta el 54.2 % de esa clase; `multicrop-disease-maiz` aporta el 50.4 % de `lethal_necrosis`. Reporte y tablas en [`SOURCE_ANALYSIS.md`](../reproducibilidad/evidencia/source_analysis/SOURCE_ANALYSIS.md).
+El corpus tiene 11 fuentes y 9 clases. De las 99 celdas fuente × clase, 65 están vacías y el V de Cramér es 0.5030 (χ² = 67 673.21), una asociación moderada a fuerte entre origen y patología. Dos fuentes contienen solo `gray_leaf_spot`; `maize-diseases` es 67.8 % `healthy` y aporta el 54.2 % de esa clase; `multicrop-disease-maiz` aporta el 50.4 % de `lethal_necrosis`. Reporte y tablas en [`source_analysis.md`](../reproducibilidad/evidencia/source_analysis/source_analysis.md).
 
 ![Distribución de muestras por fuente](../reproducibilidad/evidencia/source_analysis/source_sizes.png)
 

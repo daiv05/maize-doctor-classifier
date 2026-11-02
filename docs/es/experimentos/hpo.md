@@ -2,7 +2,7 @@
 
 Búsqueda de hiperparámetros con Optuna para EfficientNet-Lite0 sobre el split `seed_42`. Ejecutó 25 intentos y evaluó una sola vez el test del ganador. Los estudios anteriores de 15 y 25 trials con techo de 15 épocas son otro experimento.
 
-El presupuesto original era de 60 intentos y se redujo a 25 durante la ejecución. [`BUDGET_AMENDMENT.json`](../reproducibilidad/evidencia/hpo_lite0_seed42/BUDGET_AMENDMENT.json) registra ambos protocolos, sus hashes, los trials al corte y el estado del RNG; `budget_revisions/60-to-25/` conserva la base, el código y la evidencia anteriores. El dataset, el modelo y el objetivo no cambiaron.
+El presupuesto original era de 60 intentos y se redujo a 25 durante la ejecución. [`budget_amendment.json`](../reproducibilidad/evidencia/hpo_lite0_seed42/budget_amendment.json) registra ambos protocolos, sus hashes, los trials al corte y el estado del RNG; `budget_revisions/60-to-25/` conserva la base, el código y la evidencia anteriores. El dataset, el modelo y el objetivo no cambiaron.
 
 El estudio reutiliza `TuningObjective`, `CornDataset`, los transforms, `run_epoch`, las pérdidas, el scheduler y los contratos de runs. `tuning_study.py` administra la persistencia y el cierre del estudio.
 
@@ -54,7 +54,7 @@ make modal-hpo-smoke MODAL=modal
 make modal-hpo MODAL=modal
 ```
 
-El smoke usa un estudio aparte (sufijo `_smoke_25`) con dos trials de una época, cerrando y reabriendo SQLite entre ambos. No selecciona parámetros ni cuenta entre los 25, y el estudio formal exige su marcador `SMOKE_COMPLETE.json`. Un `FINAL_TEST_STARTED.json` sin `FINAL_TEST_COMPLETE.json` exige una auditoría manual y no dispara otra evaluación de test.
+El smoke usa un estudio aparte (sufijo `_smoke_25`) con dos trials de una época, cerrando y reabriendo SQLite entre ambos. No selecciona parámetros ni cuenta entre los 25, y el estudio formal exige su marcador `SMOKE_COMPLETE.json`. Un `final_test_started.json` sin `final_test_complete.json` exige una auditoría manual y no dispara otra evaluación de test.
 
 ### Evidencia y selección
 
@@ -70,7 +70,7 @@ El smoke usa un estudio aparte (sufijo `_smoke_25`) con dos trials de una época
 
 Cada trial conserva su historial, su resumen, el checkpoint de su mejor época, las predicciones y los diagnósticos de validación; `failure.json` o `interruption.json` guardan los errores. El estudio exporta `trials.csv`, `top_10_trials`, `convergence.json`, `hyperparameter_importance.csv`, `comparison_vs_baseline.csv`, `study_summary.json` y figuras. Los gaps entre train y validación se miden con augmentation y en modo entrenamiento, por lo que son diagnósticos y no una estimación independiente del sobreajuste.
 
-Al completar los 25 intentos, `best_hyperparameters.json` se valida con `load_best_params`. `HPO_SELECTION_LOCK.json` congela el ganador, los parámetros, el split y el checkpoint antes de crear el test, que se evalúa una sola vez sobre el checkpoint de la mejor época. El ganador es el máximo de Macro-F1 de validación entre los COMPLETE (empates: el primer trial).
+Al completar los 25 intentos, `best_hyperparameters.json` se valida con `load_best_params`. `hpo_selection_lock.json` congela el ganador, los parámetros, el split y el checkpoint antes de crear el test, que se evalúa una sola vez sobre el checkpoint de la mejor época. El ganador es el máximo de Macro-F1 de validación entre los COMPLETE (empates: el primer trial).
 
 `scripts/pipeline/report_hpo.py` valida el cierre (25 IDs únicos y la enmienda, concordancia SQLite/CSV, ganador por validación, hashes de checkpoint y artefactos, orden lock → test) y entonces genera el informe.
 
@@ -78,7 +78,7 @@ Entorno: Python 3.11.12, torch 2.12.1+cu126, torchvision 0.27.1+cu126, timm 1.0.
 
 ## Resultados
 
-El estudio terminó con 8 trials COMPLETE, 15 PRUNED y 2 FAIL por interrupción. El ganador es el trial 0 (época 44), con Macro-F1 de validación 0.957292 frente a 0.956086 del baseline (+0.12 pp). En el test único posterior al lock obtuvo Macro-F1 0.943125, accuracy 0.975274 y ECE 0.060042, frente a 0.948002 del baseline: no lo supera. Informe completo, Top 10 y hashes en [HPO_REPORT.md](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md).
+El estudio terminó con 8 trials COMPLETE, 15 PRUNED y 2 FAIL por interrupción. El ganador es el trial 0 (época 44), con Macro-F1 de validación 0.957292 frente a 0.956086 del baseline (+0.12 pp). En el test único posterior al lock obtuvo Macro-F1 0.943125, accuracy 0.975274 y ECE 0.060042, frente a 0.948002 del baseline: no lo supera. Informe completo, Top 10 y hashes en [hpo_report.md](../reproducibilidad/evidencia/hpo_lite0_seed42/hpo_report.md).
 
 | Métrica | Baseline `20260921_204608` | HPO trial 0 | Diferencia (pp) |
 |---|---:|---:|---:|

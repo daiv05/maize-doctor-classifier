@@ -9,8 +9,8 @@ Origen de cada cifra del proyecto: cada afirmación apunta a un artefacto versio
 | 33 437 muestras descubiertas y válidas; 8 exclusiones; 33 429 elegibles | [`split_protocols_summary.json`](../reproducibilidad/evidencia/split_protocols_summary.json) y auditoría remota | preparación vigente | resumen versionado: `9e24dc42…656f0a`; fuente en `corn-outputs:/splits/.../preparation_audit.json` | pipeline de datos, estado actual, evolución |
 | `seed_42` = 23 400 / 5 014 / 5 015, nueve clases por split | mismo resumen + lock exacto | `seed_42` | [`manifest.lock.json`](../reproducibilidad/evidencia/seed_42_manifest_lock.json): `0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8` | metodología, README, baseline actual |
 | Cero solapamiento de `sample_id`, SHA-256 y `effective_group_id` | `preparation_audit.json` remoto, extracto en resumen | `seed_42` | incluido en el lock anterior | pipeline de datos y protocolos |
-| 33 429 elegibles, cero duplicados por pixel_sha256, cero cross-split, 0 % de test afectado; 4 grupos/8 archivos ya excluidos | [resumen e inventario](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md) | `seed_42` vigente | master: `64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163`; lock: `0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8` | metodología y estado actual |
-| 11 fuentes, distribución de 33 429 muestras, V de Cramér 0.5030 y métricas baseline/HPO por fuente | [paquete de análisis por fuente](../reproducibilidad/evidencia/source_analysis/SOURCE_ANALYSIS.md), [resumen y hashes](../reproducibilidad/evidencia/source_analysis/source_analysis_summary.json) | `seed_42`; validation comparativa y test descriptivo post-hoc | hashes SHA-256 de manifests y cuatro CSV de predicciones registrados en el resumen | estado actual y análisis de procedencia; no selecciona modelo |
+| 33 429 elegibles, cero duplicados por pixel_sha256, cero cross-split, 0 % de test afectado; 4 grupos/8 archivos ya excluidos | [resumen e inventario](../reproducibilidad/evidencia/pixel_duplicate_audit/pixel_duplicate_audit.md) | `seed_42` vigente | master: `64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163`; lock: `0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8` | metodología y estado actual |
+| 11 fuentes, distribución de 33 429 muestras, V de Cramér 0.5030 y métricas baseline/HPO por fuente | [paquete de análisis por fuente](../reproducibilidad/evidencia/source_analysis/source_analysis.md), [resumen y hashes](../reproducibilidad/evidencia/source_analysis/source_analysis_summary.json) | `seed_42`; validation comparativa y test descriptivo post-hoc | hashes SHA-256 de manifests y cuatro CSV de predicciones registrados en el resumen | estado actual y análisis de procedencia; no selecciona modelo |
 | LOSO baseline: `maize-diseases` 6 989, F1 0.993124; `multicrop-disease-maiz` 5 816, F1 0.905490; locks previos al holdout | [resultados](../reproducibilidad/evidencia/loso_baseline/loso_results.csv), [CSV](../reproducibilidad/evidencia/loso_baseline/loso_results.csv), [resumen y timestamps](../reproducibilidad/evidencia/loso_baseline/loso_summary.json) | `loso_baseline_seed42_v1`, dos runs seed 42 | checkpoints `b16b1ef8…dcc` y `bd778a28…517`; hashes completos de splits, locks y runs en [protocolo](../reproducibilidad/evidencia/loso_baseline/loso_summary.json) y CSV | comparación descriptiva con validation histórica; no causalidad ni significancia con una semilla |
 | Hash de dataset.yaml distinto del registrado en el lock; causa textual no recuperada | [informe de drift](../reproducibilidad/evidencia/pixel_duplicate_audit/dataset_yaml_drift_report.md) | configuración de `seed_42` | lock: `8f0e560f…`; actual: `8e3f5a4f…` | límite de reproducción de la preparación |
 | PHash no ejecutado; solapamiento perceptual desconocido | `preparation_audit.json`: `deduplicate_perceptual=false`, conteo `null` | ambos protocolos actuales | rutas declaradas dentro del resumen | metodología y limitaciones |
@@ -65,7 +65,7 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 
 Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validation Macro-F1 0.957292225; baseline 0.956086266; delta +0.120596 pp.
 
-[Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md). Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.
+[Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final](../reproducibilidad/evidencia/hpo_lite0_seed42/hpo_report.md). Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.
 
 Resultado final: 8 COMPLETE, 15 PRUNED y 2 FAIL. Test único: Macro-F1 0.9431250727951999, accuracy 0.9752741774675973; no supera el Macro-F1 test del baseline (0.9480021439111501). [Interpretación y límites](/es/experimentos/hpo).
 
@@ -81,15 +81,15 @@ Resultado final: 8 COMPLETE, 15 PRUNED y 2 FAIL. Test único: Macro-F1 0.9431250
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [MULTISEED_RESULTS.csv](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/MULTISEED_RESULTS.csv) | `7e3cb23126189bf07e0426e4c1f11c498990f05c7de1a12d87f33f4dca9f0a95` | Dos runs COMPLETE y ocho sin ejecutar |
-| [MULTISEED_SUMMARY.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/MULTISEED_SUMMARY.json) | `8892a7b7806e73926dc584288cda91b0e6eaa3f1f95a28fa8d9e411bf2b0afd8` | Estadísticos con n = 1 |
-| [PROTOCOL.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/PROTOCOL.json) | `b654609f33bdbda65099c26d3b8475edd061d3e93a49fc2316c6fe4639ddd081` | Configuración, fuentes y hashes |
-| [PREFLIGHT.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/PREFLIGHT.json) | `347a19c5ada41cf99d615d8919303184659b34a15d1d347d4bc463688df58b64` | Verificación de splits |
-| [REPORT_HASHES.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/REPORT_HASHES.json) | `1319445679b55ffc3a0d3544bf4c9a75980508b87190882f684faade31263473` | Hashes de los reportes |
-| [COMPLETE baseline `20261019_203033`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/COMPLETE_baseline_20261019_203033.json) | `74e540b57d7925b18858888dc468671fe185ab799063f553be3ceae01430250c` | Val Macro-F1 0.956086; `best.pth` `860180f3…` idéntico al oficial |
-| [COMPLETE HPO trial 0 `20261019_211317`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/COMPLETE_hpo_trial_0_20261019_211317.json) | `2fa43a41c00c0b9e8eb191f15df74187bb5bf2bfcd40cdc72b2984797136c230` | Val Macro-F1 0.957292; `best.pth` `00ff9aa5…` |
+| [multiseed_results.csv](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/multiseed_results.csv) | `7e3cb23126189bf07e0426e4c1f11c498990f05c7de1a12d87f33f4dca9f0a95` | Dos runs COMPLETE y ocho sin ejecutar |
+| [multiseed_summary.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/multiseed_summary.json) | `8892a7b7806e73926dc584288cda91b0e6eaa3f1f95a28fa8d9e411bf2b0afd8` | Estadísticos con n = 1 |
+| [protocol.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/protocol.json) | `b654609f33bdbda65099c26d3b8475edd061d3e93a49fc2316c6fe4639ddd081` | Configuración, fuentes y hashes |
+| [preflight.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/preflight.json) | `347a19c5ada41cf99d615d8919303184659b34a15d1d347d4bc463688df58b64` | Verificación de splits |
+| [report_hashes.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/report_hashes.json) | `1319445679b55ffc3a0d3544bf4c9a75980508b87190882f684faade31263473` | Hashes de los reportes |
+| [COMPLETE baseline `20261019_203033`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/complete_baseline_20261019_203033.json) | `74e540b57d7925b18858888dc468671fe185ab799063f553be3ceae01430250c` | Val Macro-F1 0.956086; `best.pth` `860180f3…` idéntico al oficial |
+| [COMPLETE HPO trial 0 `20261019_211317`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/complete_hpo_trial_0_20261019_211317.json) | `2fa43a41c00c0b9e8eb191f15df74187bb5bf2bfcd40cdc72b2984797136c230` | Val Macro-F1 0.957292; `best.pth` `00ff9aa5…` |
 
-Las sumas SHA-256 de los paquetes de cada run están en `SHA256SUMS_baseline` y `SHA256SUMS_hpo_trial_0` de la misma carpeta.
+Las sumas SHA-256 de los paquetes de cada run están en `sha256sums_baseline` y `sha256sums_hpo_trial_0` de la misma carpeta.
 
 ## Multi-seed baseline/LOSO
 
@@ -124,21 +124,21 @@ Los CSV completos de predicción, checkpoints, locks y guards permanecen en `cor
 
 ## Síntesis y respaldo de modelos
 
-La [síntesis experimental](EXPERIMENTAL_RESULTS_SUMMARY.md) reúne los resultados por protocolo. El [índice de respaldo](evidencia/model_package/MODEL_INDEX.csv) enumera 18 checkpoints `best.pth` cotejados con el SHA-256 de su evidencia: los 16 del inventario principal y dos B0/ShuffleNet históricos. La [comparación por run](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) conserva test, LOSO, ECE y clases únicamente cuando existe registro. El archivo de checksums `evidencia/model_package/MODEL_CHECKSUMS.sha256` permite verificar los modelos al reunir las carpetas del respaldo.
+La [síntesis experimental](resultados-por-protocolo.md) reúne los resultados por protocolo. El [índice de respaldo](evidencia/model_package/model_index.csv) enumera 18 checkpoints `best.pth` cotejados con el SHA-256 de su evidencia: los 16 del inventario principal y dos B0/ShuffleNet históricos. La [comparación por run](evidencia/model_package/model_comparison_results.csv) conserva test, LOSO, ECE y clases únicamente cuando existe registro. El archivo de checksums `evidencia/model_package/model_checksums.sha256` permite verificar los modelos al reunir las carpetas del respaldo.
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `0856611884319fdda090fff7c9b916f24c8b4bad53df2ee1a401f2b2065a1cbd` | Protocolos, resultados y límites |
-| [Guía del paquete](MODEL_PACKAGE_README.md) | `30c54a09bf7185d8096d40e5a022e3f921d34ac6015ef4f7db0acf6c622cdef6` | Contenido, carga, integridad y distribución |
-| [MODEL_INDEX.csv](evidencia/model_package/MODEL_INDEX.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
-| [MODEL_COMPARISON_RESULTS.csv](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |
-| `MODEL_CHECKSUMS.sha256` | `77940bbbfd9dd8a5a37ee2a65fec618ed28187b7debb45e95370684c4149bb1f` | Comprobación local de los 18 `best.pth` |
+| [Síntesis](resultados-por-protocolo.md) | `c5606ebe36f1f6cbe5eb5bc1f19387b9234e20729bc943773e5b1d4594301baf` | Protocolos, resultados y límites |
+| [Guía del paquete](paquete-de-modelos.md) | `1bad6189a660ac2762f8b280f8dd055c4963867a8e7d4e84c49a43d0e0f49842` | Contenido, carga, integridad y distribución |
+| [model_index.csv](evidencia/model_package/model_index.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
+| [model_comparison_results.csv](evidencia/model_package/model_comparison_results.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |
+| `model_checksums.sha256` | `77940bbbfd9dd8a5a37ee2a65fec618ed28187b7debb45e95370684c4149bb1f` | Comprobación local de los 18 `best.pth` |
 
 El respaldo físico se distribuyó como ocho archivos `.tar.gz` (uno por carpeta `DoctorMaiz_*`); el `sha256sum -c` se ejecuta desde una raíz común que contiene las siete carpetas de checkpoints. Los checkpoints no se versionan en Git.
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [FAILED_RUNS_MANIFEST.json](evidencia/model_package/FAILED_RUNS_MANIFEST.json) | `aaab278ad44978252aa32a5a52c5482a515bad3cffa71963477842390983273e` | Dos intentos interrumpidos excluidos del respaldo |
+| [failed_runs_manifest.json](evidencia/model_package/failed_runs_manifest.json) | `aaab278ad44978252aa32a5a52c5482a515bad3cffa71963477842390983273e` | Dos intentos interrumpidos excluidos del respaldo |
 | [evidence_references.json](evidencia/model_package/evidence_references.json) | `69c69d2d7ab614f43d31d4f204f1e680211ac364c108de577728ea5e6e550184` | Hashes de los documentos fuente |
 
 ## Exportación móvil del modelo oficial

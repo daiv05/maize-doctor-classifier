@@ -131,7 +131,7 @@ Los desgloses por fuente/entorno y N/P/K agrupado están en `final_test/`. El ch
 
 ## Artefactos y reproducibilidad
 
-Raíz: `efficientnet_lite0_seed42_hpo_v1` en `corn-outputs:/hpo/efficientnet_lite0/`. Incluye `study.db`, `trials.csv`, `study_summary.json`, `best_hyperparameters.json`, `HPO_SELECTION_LOCK.json`, `trials/trial_000/best.pth`, `figures/`, `final_test/`, `FINAL_TEST_COMPLETE.json` y `source_code.zip`.
+Raíz: `efficientnet_lite0_seed42_hpo_v1` en `corn-outputs:/hpo/efficientnet_lite0/`. Incluye `study.db`, `trials.csv`, `study_summary.json`, `best_hyperparameters.json`, `hpo_selection_lock.json`, `trials/trial_000/best.pth`, `figures/`, `final_test/`, `final_test_complete.json` y `source_code.zip`.
 
 | artefacto | SHA256 |
 | --- | --- |
@@ -145,7 +145,7 @@ Raíz: `efficientnet_lite0_seed42_hpo_v1` en `corn-outputs:/hpo/efficientnet_lit
 | study.db | 5bc4a3559c5d238bef16a626953f7ab91e93526c4af20e302c044bc4a6d6c0f5 |
 | trials.csv | f11eb2a32c0addd7934dbbf0faf8df7f16a7ed2a5ded5e83bfd2c3e9f6bc8206 |
 | study_summary.json | 5dce99f086b61c5efd7488714bd8fbf1afc03aa1bd953891e53aecc819333eec |
-| HPO_SELECTION_LOCK.json | 8cf49a675cfa7d2b59f7f664c841aceba8232684000b8212561142a4310c86ca |
+| hpo_selection_lock.json | 8cf49a675cfa7d2b59f7f664c841aceba8232684000b8212561142a4310c86ca |
 | source_code.zip | 4532c748ef7097a4d9524ca6156df4cb946fd57cae1b99ead746b545b7e8fa35 |
 
 | component | version |

@@ -5,7 +5,7 @@
     "pixel_excluded_images.csv",
     "pixel_label_conflicts.csv",
     "pixel_audit_summary.json",
-    "PIXEL_DUPLICATE_AUDIT.md"
+    "pixel_duplicate_audit.md"
   ],
   "contractually_excluded_files_expected": 8,
   "contractually_excluded_files_hashed": 8,

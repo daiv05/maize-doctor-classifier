@@ -11,7 +11,7 @@ Hay dos estudios multi-semilla. El de [estabilidad baseline/LOSO](../reproducibi
 
 El `best.pth` del baseline (SHA-256 `860180f3…`) es idéntico al del modelo oficial `20260921_204608`: el entrenamiento se reproduce bit a bit. La diferencia de +0.0012 en validación no es interpretable con una semilla (McNemar p = 0.83). Las ocho corridas restantes (semillas 123, 2026, 3407 y 7777 para cada configuración) no se ejecutaron. Ninguna corrida usó test.
 
-Los artefactos están en [`multiseed_baseline_vs_hpo/`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/MULTISEED_SUMMARY.json): resultados, protocolo, preflight, hashes de reportes, los dos recibos `COMPLETE` y las sumas SHA-256 de los paquetes de cada run.
+Los artefactos están en [`multiseed_baseline_vs_hpo/`](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/multiseed_summary.json): resultados, protocolo, preflight, hashes de reportes, los dos recibos `COMPLETE` y las sumas SHA-256 de los paquetes de cada run.
 
 ## Diseño
 
@@ -54,7 +54,7 @@ EXP=outputs/multiseed/efficientnet_lite0_baseline_vs_hpo
 
 "$PY" -m scripts.pipeline.multiseed plan --splits-dir outputs/multiseed-inputs/frozen/seed_42 --output-dir "$EXP"
 
-modal run --detach scripts/modal/multiseed.py --protocol "$EXP/PROTOCOL.json" --execute --max-new-runs 10
+modal run --detach scripts/modal/multiseed.py --protocol "$EXP/protocol.json" --execute --max-new-runs 10
 
 mkdir -p outputs/multiseed-receipts
 modal volume get corn-outputs /multiseed/efficientnet_lite0_baseline_vs_hpo outputs/multiseed-receipts
@@ -66,7 +66,7 @@ El plan rechaza cambios en las fuentes posteriores a su congelación: ante un ca
 
 ## Reportes
 
-`MULTISEED_SUMMARY.json`, `MULTISEED_RESULTS.csv` y `MULTISEED_REPORT.md` incluyen los valores por semilla, media, mediana, desviación estándar muestral, mínimo, máximo y un IC t del 95 % exploratorio cuando n ≥ 2; los valores pendientes son `null`. Cinco semillas no son validación cruzada ni LOSO. Además, la selección del HPO usó esta misma validación, un sesgo que el multi-semilla no elimina.
+`multiseed_summary.json`, `multiseed_results.csv` y `MULTISEED_REPORT.md` incluyen los valores por semilla, media, mediana, desviación estándar muestral, mínimo, máximo y un IC t del 95 % exploratorio cuando n ≥ 2; los valores pendientes son `null`. Cinco semillas no son validación cruzada ni LOSO. Además, la selección del HPO usó esta misma validación, un sesgo que el multi-semilla no elimina.
 
 ## Pruebas
 
@@ -78,6 +78,6 @@ python -m pytest tests/training tests/data/test_dataset_fail_fast.py tests/data/
 
 | Archivo | SHA-256 |
 |---|---|
-| PROTOCOL.json | `b654609f33bdbda65099c26d3b8475edd061d3e93a49fc2316c6fe4639ddd081` |
-| PREFLIGHT.json | `347a19c5ada41cf99d615d8919303184659b34a15d1d347d4bc463688df58b64` |
-| REPORT_HASHES.json | `1319445679b55ffc3a0d3544bf4c9a75980508b87190882f684faade31263473` |
+| protocol.json | `b654609f33bdbda65099c26d3b8475edd061d3e93a49fc2316c6fe4639ddd081` |
+| preflight.json | `347a19c5ada41cf99d615d8919303184659b34a15d1d347d4bc463688df58b64` |
+| report_hashes.json | `1319445679b55ffc3a0d3544bf4c9a75980508b87190882f684faade31263473` |
