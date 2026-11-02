@@ -3,7 +3,7 @@ Distance (RMD) sobre un espacio de features reducido por PCA.
 
 Para cada modelo, extrae el vector de features pooled (penultima capa, via
 `FeatureExposedModel`) sobre el split de train, normaliza cada vector a norma L2
-unitaria (Mahalanobis++, Ren et al. 2025: arXiv:2505.18032), y proyecta a las
+unitaria (Mahalanobis++, Mueller y Hein 2025: arXiv:2505.18032), y proyecta a las
 componentes principales que explican el 99% de la varianza (`_fit_pca`). Sobre ese
 espacio reducido calcula el centroide por clase mas una covarianza pooled compartida,
 mas una gaussiana de fondo (sin condicionar por clase) sobre todo el split de train. El

@@ -164,6 +164,11 @@ def build_report(directory: Path) -> str:
     for key in ("learning_rate", "weight_decay", "label_smoothing", "batch_size"):
         values = [float(row[key]) for row in top if row.get(key)]
         top_regions.append({"parameter": key, "top10_min": min(values), "top10_max": max(values)})
+    top_note = (
+        f"Solo hay {summary['n_complete']} trials COMPLETE; por eso se muestran {len(top)} candidatos elegibles, sin completar la tabla con trials PRUNED o FAIL.\n\n"
+        if len(top) < 10
+        else ""
+    )
     hashes = [{"artefacto": k, "SHA256": v} for k, v in lock["split_hashes"].items()]
     hashes += [
         {"artefacto": key, "SHA256": sha256_file(directory / key)}
@@ -209,7 +214,7 @@ Son los mejores hiperparámetros encontrados dentro del espacio y presupuesto ev
 
 ## Top 10
 
-{table(top, ["rank", "trial", "val_macro_f1", "learning_rate", "weight_decay", "label_smoothing", "batch_size", "class_weights", "warmup_epochs", "best_epoch", "duration_seconds"])}
+{top_note}{table(top, ["rank", "trial", "val_macro_f1", "learning_rate", "weight_decay", "label_smoothing", "batch_size", "class_weights", "warmup_epochs", "best_epoch", "duration_seconds"])}
 
 ### Diagnósticos de validation
 
@@ -230,13 +235,13 @@ estabilidad entre semillas; esa validación corresponde a una fase posterior.
 {table([{"corte": k, "best_validation": v} for k, v in summary["convergence"].items()], ["corte", "best_validation"])}
 
 Última mejora: trial {lock["best_trial"]} (índice 0-based).
-No se ejecuta trial {summary["n_trials_requested"] + 1} aunque siga existiendo potencial de mejora.
+No se ejecuta un intento {summary["n_trials_requested"] + 1}: los IDs 0–{summary["n_trials_requested"] - 1} agotan el presupuesto.
 
 ## Hyperparameter importance
 
 {table(importance, ["parameter", "importance"]) if importance else "No estimable; consultar logs y número de COMPLETE."}
 
-Importancia descriptiva del estudio; no causal. fANOVA usa seed 42.
+Importancia descriptiva del estudio; no causal. fANOVA (seed 42) se calcula solo con los {summary["n_complete"]} trials COMPLETE.
 
 ## Evaluación final del ganador sobre test
 
@@ -270,8 +275,8 @@ Incluye `study.db`, `trials.csv`, `study_summary.json`, `best_hyperparameters.js
 ¿Optuna superó el baseline en Validation Macro-F1? {"Sí" if delta > 0 else "No"}  
 ¿Test fue utilizado durante selección? No  
 ¿Se completó el presupuesto de {summary["n_trials_requested"]} trials? Sí  
-¿Study puede reanudarse? Sí; presupuesto agotado, no admite más trials en esta fase.  
-¿Existe evidencia suficiente para reproducir la búsqueda? Sí, con el corpus congelado y entorno registrado.
+¿Study admite más trials? No: presupuesto agotado y selección bloqueada.  
+¿Se archivan código, hashes de splits y entorno de la búsqueda? Sí.
 
 El resultado es un HPO winner. No acredita producción ni entrenamiento formal,
 multi-seed, CV, LOSO, ensemble o temperature scaling.
