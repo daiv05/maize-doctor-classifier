@@ -8,7 +8,7 @@ La materialización canónica tiene 33.429 muestras elegibles de nueve clases. E
 
 La [auditoría de integridad](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md) comprobó identidad por `sample_id`, SHA-256 de archivo y píxeles: no encontró solapamientos exactos cross-split en el corpus vigente. Ocho imágenes de cuatro grupos con etiquetas contradictorias ya estaban excluidas. El [análisis por fuente](../reproducibilidad/evidencia/source_analysis/SOURCE_ANALYSIS.md) describió once fuentes y una asociación fuente–etiqueta V de Cramér 0,5030; es una asociación descriptiva, no una demostración de que el modelo use un atajo de procedencia.
 
-Las referencias primarias son el [registro de evidencias](EVIDENCE_REGISTRY.md), la [estabilidad multi-seed/LOSO](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md), el [HPO](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md) y la [evaluación del ensamble LOSO](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md). Las rutas y SHA-256 de los checkpoints respaldados están además en el [índice de modelos](evidencia/model_package/MODEL_INDEX.csv) y la [tabla comparativa](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv), copiados también en el paquete de modelos.
+Las referencias primarias son el [registro de evidencias](evidencias.md), la [estabilidad multi-seed/LOSO](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md), el [HPO](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md) y la [evaluación del ensamble LOSO](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md). Las rutas y SHA-256 de los checkpoints respaldados están además en el [índice de modelos](evidencia/model_package/MODEL_INDEX.csv) y la [tabla comparativa](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv), copiados también en el paquete de modelos.
 
 ## Comparación por protocolo
 
@@ -55,11 +55,11 @@ Estas cifras responden preguntas distintas y no entran al inventario principal d
 
 | Experimento | Resultado registrado | Alcance |
 |---|---|---|
-| [Benchmark source-grouped](../resultados/run-20260921-source-grouped.md), run `20260921_180112` | Validation Macro-F1 0,266927; test Macro-F1 0,400665 | Fuentes indivisibles por split; no es LOSO ni el test estándar |
+| [Benchmark source-grouped](../resultados/generalizacion.md), run `20260921_180112` | Validation Macro-F1 0,266927; test Macro-F1 0,400665 | Fuentes indivisibles por split; no es LOSO ni el test estándar |
 | [CV estratificada y agrupada histórica](../resultados/evidencia/kfold_2x2_comparacion.csv) | 0,931145 ± 0,009872 estratificada; 0,602575 ± 0,123966 agrupada (± es la semiamplitud del IC95; la agrupada es Macro-F1 sobre clases presentes en cada pliegue, el convencional es 0,4359) | Cinco pliegues; no sustituye las tres seeds ni el LOSO vigente |
 | [Clasificación con corpus segmentado](../resultados/evidencia/manifiesto_corridas.csv), run `20260907_163546` | Test Macro-F1 0,719082; accuracy 0,890329 | Resultado exploratorio; summary/checkpoint no versionados aquí |
 
-Las pruebas históricas de explicabilidad, equidad y exportación tienen evidencias en el [registro general](EVIDENCE_REGISTRY.md), pero no se agregan a la tabla principal porque no ofrecen el mismo par protocolo–métrica–checkpoint. Tampoco se vuelve a inferir ni se recalcula el test durante esta síntesis.
+Las pruebas históricas de explicabilidad, equidad y exportación tienen evidencias en el [registro general](evidencias.md), pero no se agregan a la tabla principal porque no ofrecen el mismo par protocolo–métrica–checkpoint. Tampoco se vuelve a inferir ni se recalcula el test durante esta síntesis.
 
 | Seed | CR F1 B0 → ensamble | FA F1 B0 → ensamble | LN F1 B0 → ensamble |
 |---:|---:|---:|---:|

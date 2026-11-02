@@ -28,7 +28,7 @@ Una vez capturada la imagen, la pantalla de resultados muestra el diagnóstico i
 
 ## Tiempos de respuesta y rendimiento real
 
-Tiempos medidos en el Motorola edge 40 neo sobre 143 imágenes (95 fotos de campo externas y 48 del corpus):
+Tiempos medidos en el Motorola edge 40 neo sobre 143 imágenes (95 fotos de campo externas y 48 del corpus). La meta es que preprocesado e inferencia sumen menos de 300 ms:
 
 | Etapa | Tiempo típico (mediana) | Qué ocurre en ese lapso |
 |---|:---:|---|
@@ -56,7 +56,7 @@ Sometimos el prototipo a un conjunto de pruebas con fotografías reales del conj
 
 ![Resultados y rechazo de imágenes fuera de dominio](/app/resultado-potasio.png)
 
-En el teléfono, el intérprete int8 reproduce las predicciones del servidor sobre el mismo tensor de entrada (32 de 32 imágenes). Las diferencias entre teléfono y servidor sobre una misma foto provienen del escalado de la imagen y no del modelo; la paridad de muestra de 30 imágenes del int8 no se aprobó por una sola imagen límite (max |Δprob| 0.198 frente al umbral 0.15).
+En el teléfono, el intérprete int8 reproduce las predicciones del int8 del servidor en 143 de 143 imágenes. Las diferencias entre teléfono y servidor sobre una misma foto provienen del escalado de la imagen y no del modelo; la paridad de muestra de 30 imágenes del int8 no se aprobó por una sola imagen límite (max |Δprob| 0.198 frente al umbral 0.15).
 
 Lo más valioso de las pruebas en dispositivo fue comprobar cómo actúa el **detector de imágenes fuera de dominio (OOD)**. En lugar de forzar una etiqueta cuando una foto resulta confusa o no corresponde a maíz, el sistema activa su salvaguarda:
 

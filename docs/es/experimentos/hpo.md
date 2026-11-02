@@ -74,12 +74,20 @@ Al completar los 25, `best_hyperparameters.json` se valida con `load_best_params
 
 ## Ejecución
 
-El smoke completó sus dos trials y verificó la reanudación ([marcador](../reproducibilidad/evidencia/hpo_smoke_complete.json)). El estudio formal empezó el 2026-09-23 a las 13:25 UTC y, tras la enmienda y el [smoke de reapertura](../reproducibilidad/evidencia/hpo_smoke_complete_25.json), se reanudó a las 20:16 UTC con el protocolo revisado sobre el mismo study. El código original tiene SHA `d768e2ebd591cae0bd2260e086492f30572e687b29f86f0a9f27feb5ec1dbeac` y el de la revisión de presupuesto `1abbfe41c86d2f793da1ad4b569a845d23918df782b6435daef2f93bc0431e09`. Entorno: Python 3.11.12, torch 2.12.1+cu126, torchvision 0.27.1+cu126, timm 1.0.29, Optuna 4.9.0 y GPU NVIDIA A10G con CUDA 12.6.
+El smoke completó sus dos trials y verificó la reanudación ([marcador](../reproducibilidad/evidencia/hpo_smoke_complete.json)). Tras la enmienda de presupuesto y su [smoke de reapertura](../reproducibilidad/evidencia/hpo_smoke_complete_25.json), el estudio se reanudó con el protocolo revisado sobre el mismo study. El código original tiene SHA `d768e2ebd591cae0bd2260e086492f30572e687b29f86f0a9f27feb5ec1dbeac` y el de la revisión de presupuesto `1abbfe41c86d2f793da1ad4b569a845d23918df782b6435daef2f93bc0431e09`. Entorno: Python 3.11.12, torch 2.12.1+cu126, torchvision 0.27.1+cu126, timm 1.0.29, Optuna 4.9.0 y GPU NVIDIA A10G con CUDA 12.6.
 
 `scripts/pipeline/report_hpo.py` valida el cierre: 25 IDs únicos y la enmienda, concordancia SQLite/CSV, ganador por validación, hashes de checkpoint y artefactos y orden temporal lock → test. Solo entonces genera el informe.
 
 ## Resultados
 
-Study `efficientnet_lite0_seed42_hpo_v1`: **8 COMPLETE, 15 PRUNED y 2 FAIL** por interrupción. Ganador trial 0, época 44, con validación Macro-F1 0.957292 frente a 0.956086 del baseline (+0.12 pp). Test único posterior al lock: Macro-F1 **0.943125**, accuracy **0.975274** y ECE **0.060042**, frente a 0.948002 del baseline: el HPO no lo superó en test. No se infiere mejora de generalización ni se cambia la selección utilizando el test. [Informe completo, Top 10 y hashes](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md) y [comparación con el baseline](../tesis/HPO_BASELINE_COMPARISON.md).
+Study `efficientnet_lite0_seed42_hpo_v1`: **8 COMPLETE, 15 PRUNED y 2 FAIL** por interrupción. Ganador trial 0, época 44, con validación Macro-F1 0.957292 frente a 0.956086 del baseline (+0.12 pp). Test único posterior al lock: Macro-F1 **0.943125**, accuracy **0.975274** y ECE **0.060042**, frente a 0.948002 del baseline: el HPO no lo superó en test. No se infiere mejora de generalización ni se cambia la selección utilizando el test. [Informe completo, Top 10 y hashes](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md) y.
 
-El estudio pareado de semillas ([multi-seed](./multiseed.md)) tiene 2 de 10 entrenamientos de validación. Entrenamiento formal, CV, LOSO, ensamble y temperature scaling quedan como fases posteriores.
+| Métrica | Baseline `20260921_204608` | HPO trial 0 | Diferencia (pp) |
+|---|---:|---:|---:|
+| Macro-F1 de validación | 0.956086 | 0.957292 | +0.1206 |
+| Macro-F1 de prueba | 0.948002 | 0.943125 | −0.4877 |
+| Accuracy de prueba | 0.978066 | 0.975274 | −0.2792 |
+
+En prueba, el ganador tiene F1 de 0.8949 en nitrógeno, 0.9363 en fósforo y 0.8041 en potasio (la clase más débil), y un ECE de 0.0600 sin temperature scaling. El ganador tiene una sola semilla, por lo que la diferencia en validación no demuestra mejor generalización y el checkpoint no reemplaza al oficial.
+
+El estudio pareado de semillas ([multi-seed](./multiseed.md)) tiene 2 de 10 entrenamientos de validación.

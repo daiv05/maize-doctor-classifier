@@ -1,4 +1,4 @@
-# Registro de evidencias para tesis
+# Registro de evidencias
 
 Este registro responde **de dónde sale cada cifra**. Una afirmación puede usarse como resultado cuantitativo solo si apunta a un artefacto versionado o a una ruta remota estable. Los hashes son SHA-256.
 
@@ -58,18 +58,18 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 - Una métrica por ambiente o fuente debe indicar su soporte y las clases evaluables.
 - `0.6026 ± 0.1240` significa **CV agrupada por fuente** (Macro-F1 sobre las clases presentes en cada pliegue; ± es la semiamplitud del IC95; el Macro-F1 convencional es 0.4359), no LOSO ni el holdout source-grouped actual.
 - El resultado agrupando N/P/K responde a otra taxonomía y se reporta separado del Macro-F1 de nueve clases.
-- El multi-seed baseline/LOSO de tres semillas ya está cerrado más abajo. El estudio pareado baseline/HPO tiene 2 de 10 entrenamientos de validación. Siguen pendientes CV/LOSO final general y entrenamiento formal. El HPO de 25 intentos no completa esas fases.
+- El multi-seed baseline/LOSO de tres semillas ya está cerrado más abajo. El estudio pareado baseline/HPO tiene 2 de 10 entrenamientos de validación. No se han repetido la validación cruzada ni el LOSO sobre la materialización vigente.
 - El ensamble histórico ya se midió bajo LOSO multicrop con tres seeds: resultado mixto frente a B0 y peor ECE. No equivale a validación general de transferencia ni a selección del modelo formal.
 
-## HPO formal Lite0 — 2026-09-24
+## HPO formal Lite0
 
 Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validation Macro-F1 0.957292225; baseline 0.956086266; delta +0.120596 pp.
 
 [Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md). Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.
 
-Resultado final: **8 COMPLETE / 15 PRUNED / 2 FAIL**. Test único: Macro-F1 0.9431250727951999, accuracy 0.9752741774675973; no supera el Macro-F1 test del baseline (0.9480021439111501). [Interpretación y límites](./HPO_BASELINE_COMPARISON.md).
+Resultado final: **8 COMPLETE / 15 PRUNED / 2 FAIL**. Test único: Macro-F1 0.9431250727951999, accuracy 0.9752741774675973; no supera el Macro-F1 test del baseline (0.9480021439111501). [Interpretación y límites](/es/experimentos/hpo).
 
-| Evidencia añadida al cierre | SHA-256 | Alcance |
+| Evidencia del cierre | SHA-256 | Alcance |
 |---|---|---|
 | [Summary original del baseline](../reproducibilidad/evidencia/hpo_baseline_summary.json) | `20bb0945574913ffa8c736fecbcf25d932e6b87ce3e7a7c59d98439558432346` | Comparación descriptiva de validación/test; no cambia el ganador |
 
@@ -122,14 +122,14 @@ El [informe completo](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_
 
 Los CSV completos de predicción, checkpoints, locks y guards permanecen en `corn-outputs:/ensemble_loso/multicrop-disease-maiz/`; la copia local se ignora en Git bajo `outputs/ensemble_loso/multicrop-disease-maiz/`. La observación 5 se considera **resuelta con resultado mixto**: dos seeds favorecen al ensamble y una a B0. Los deltas del test estándar histórico y el LOSO actual son descriptivos y no estrictamente comparables porque cambiaron materialización y clases presentes.
 
-## Síntesis y respaldo documental — 2026-10-02
+## Síntesis y respaldo de modelos
 
 La [síntesis experimental](EXPERIMENTAL_RESULTS_SUMMARY.md) reúne resultados sin elegir modelo. El [índice de respaldo](evidencia/model_package/MODEL_INDEX.csv) enumera 18 checkpoints `best.pth` cotejados con el SHA-256 de su evidencia: los 16 del inventario principal y dos B0/ShuffleNet históricos. La [comparación por run](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) conserva test, LOSO, ECE y clases únicamente cuando existe registro. El archivo de checksums `evidencia/model_package/MODEL_CHECKSUMS.sha256` permite verificar los modelos al reunir las carpetas del respaldo.
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `01eadc10379d14a22494460d8737d63c28944e41962ec5b659cae18fd1174de6` | Protocolo, resultados, cinco observaciones y límites; sin recomendación de ganador |
-| [Guía del paquete](MODEL_PACKAGE_README.md) | `3bcc569d8f7d1863aff60093d8d736f072d6b8ebd146297e8e0743bb44fbfab8` | Contenido, carga, integridad y formato de distribución |
+| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `9c219112454edf83ace3fcc7a03918b8b4ec9ca35e18f89d7bd97346c7020df2` | Protocolo, resultados, cinco observaciones y límites; sin recomendación de ganador |
+| [Guía del paquete](MODEL_PACKAGE_README.md) | `e7ea074bbb7efecf4adddc645c5846e613c4e7214419a2c30f2d9cfadf373e92` | Contenido, carga, integridad y formato de distribución |
 | [MODEL_INDEX.csv](evidencia/model_package/MODEL_INDEX.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
 | [MODEL_COMPARISON_RESULTS.csv](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |
 | `MODEL_CHECKSUMS.sha256` | `77940bbbfd9dd8a5a37ee2a65fec618ed28187b7debb45e95370684c4149bb1f` | Comprobación local de los 18 `best.pth` |
@@ -141,7 +141,7 @@ El respaldo físico se distribuyó como ocho archivos `.tar.gz` (uno por carpeta
 | [FAILED_RUNS_MANIFEST.json](evidencia/model_package/FAILED_RUNS_MANIFEST.json) | `aaab278ad44978252aa32a5a52c5482a515bad3cffa71963477842390983273e` | Dos intentos interrumpidos excluidos del respaldo |
 | [evidence_references.json](evidencia/model_package/evidence_references.json) | `69c69d2d7ab614f43d31d4f204f1e680211ac364c108de577728ea5e6e550184` | Hashes de los documentos fuente del respaldo |
 
-## Exportación móvil del modelo oficial — 2026-11-01
+## Exportación móvil del modelo oficial
 
 Run `20260921_204608`, checkpoint `860180f3…`. Los archivos pesados (`model.onnx`, `model.tflite`, `model_int8.tflite`, `ood_stats.json`) no se versionan; `ood_stats_metadata.json` conserva los campos escalares y el SHA-256 del archivo completo.
 

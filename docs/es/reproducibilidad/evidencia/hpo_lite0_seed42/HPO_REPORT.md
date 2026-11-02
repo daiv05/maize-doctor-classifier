@@ -173,4 +173,4 @@ El resultado es un HPO winner. No acredita producción ni entrenamiento formal, 
 
 ## Revisión documental posterior al cierre — 2026-09-24
 
-El aumento en validation Macro-F1 no se trasladó a test: baseline 0.948002144 frente a ganador 0.943125073 (−0.487707 puntos porcentuales). Es una comparación descriptiva posterior al lock; no modifica el ganador ni reabre el estudio. [Comparación, evidencia del baseline y facturación](../../../tesis/HPO_BASELINE_COMPARISON.md).
+El aumento en validation Macro-F1 no se trasladó a test: baseline 0.948002144 frente a ganador 0.943125073 (−0.487707 puntos porcentuales). Es una comparación descriptiva posterior al lock; no modifica el ganador ni reabre el estudio. [Comparación, evidencia del baseline y facturación](../../../experimentos/hpo.md).

@@ -44,7 +44,7 @@ Ampliación de agosto 2026 (cuatro datasets Roboflow adicionales):
 
 `corn-leaf-diseases-classification-roboflow        ---> corn_leaf_diseases_classification_roboflow`
 
-## Clases consideradas (junio 2026)
+## Clases consideradas
 
 ### Enfermedades foliares
 
@@ -94,51 +94,6 @@ Ampliación de agosto 2026 (cuatro datasets Roboflow adicionales):
     Este orden garantiza trazabilidad y evita colisiones entre datasets.
 
 4. Revisar y eliminar outliers: imágenes que no correspondan a la enfermedad, que posean carteles o marcas, tomas aéreas o detalles inconsistentes.
-
-## Documentación
-
-- Para cada dataset se registran decisiones y hallazgos (dataset descartado, criterios, problemas de calidad), además de anotar cualquier ajuste al proceso para mantener la trazabilidad del dataset final.
-
-## Resultados obtenidos
-
-> **Instantánea histórica.** Esta sección documenta la ampliación de agosto (33 438). La preparación contractual vigente descubre 33 437 archivos y, tras ocho exclusiones cross-label, utiliza 33 429 muestras. No se reescriben las cifras siguientes porque explican la evolución del corpus.
-
-Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión por calidad, el volumen neto de imágenes útiles integradas en `data/clean/` por clase es el siguiente:
-
-| Clase                        | Lab    | Real   | Total  |
-|------------------------------|-------:|-------:|-------:|
-| `common_rust`                |  2 150 |    106 |  2 256 |
-| `fall_armyworm`              |      0 |  4 858 |  4 858 |
-| `gray_leaf_spot`             |    513 |  1 417 |  1 930 |
-| `healthy`                    |      0 |  8 744 |  8 744 |
-| `lethal_necrosis`            |      0 |  6 415 |  6 415 |
-| `nitrogen_deficiency`        |      0 |    846 |    846 |
-| `northern_corn_leaf_blight`  |    888 |  5 942 |  6 830 |
-| `phosphorus_deficiency`      |      0 |    938 |    938 |
-| `potassium_deficiency`       |      0 |    621 |    621 |
-| **TOTAL**                    |  **3 551** | **29 887** | **33 438** |
-
-> Cifras finales tras la ampliación de agosto 2026, **ya deduplicadas**. El total previo (primera etapa) era de 31 623 imágenes.
-
-### Efecto de la ampliación de agosto 2026
-
-| Clase | Antes | Integradas | Duplicados | Después | Factor |
-|---|---:|---:|---:|---:|---:|
-| `gray_leaf_spot` | 1 119 | +836 | -25 | 1 930 | x1.72 |
-| `nitrogen_deficiency` | 523 | +345 | -22 | 846 | x1.62 |
-| `phosphorus_deficiency` | 612 | +327 | -1 | 938 | x1.53 |
-| `potassium_deficiency` | 266 | +368 | -13 | 621 | x2.33 |
-| **TOTAL** | **31 623** | **+1 876** | **-61** | **33 438** | |
-
-El desbalance máximo frente a `healthy` bajó de **32.9x** (potasio, 266 img) a **14.1x** (potasio, 621 img), sin que ninguna otra clase se moviera.
-
-## Observaciones
-
-> Junio 2026 - Las clases con menor representación son las deficiencias nutricionales (nitrógeno 523, fósforo 612, potasio 266). Se evalúa la posibilidad de incluir datasets adicionales para estas clases. Está pendiente definir un techo de imágenes por clase para evitar sesgos o aplicar técnicas avanzadas para balancear el dataset (oversampling, SMOTE, etc.).
-
-> Agosto 2026 - Se atendió la observación anterior incorporando cuatro datasets Roboflow dirigidos a esas clases. Las deficiencias siguen siendo las clases minoritarias (potasio 621, nitrógeno 846, fósforo 938) pero el desbalance se redujo a menos de la mitad. Las cuatro clases reforzadas **siguen superando** el umbral `max_count/count > 4.0` que activa el pipeline extendido de augmentación y el `WeightedRandomSampler`, así que la composición de clases minoritarias no cambia: potasio 14.08x, nitrógeno 10.34x, fósforo 9.32x y GLS 4.53x. GLS es la que quedó más cerca del límite - si se refuerza un poco más, saldría del grupo minoritario y **cambiaría el comportamiento del entrenamiento**. `common_rust` sigue fuera con 3.88x.
-
-> Agosto 2026 (fuentes) - La ampliación resolvió además el sesgo de **fuente única** que arrastraban las deficiencias: cada una pasó de depender solo de `maize_nutrient` a combinar cuatro fuentes, y `gray_leaf_spot` pasó de una a tres en su porción de campo. Ver el detalle en [EDA - distribución por fuente](/es/exploratory-data-analysis/#distribucion-por-fuente-de-origen).
 
 ## corn-leaf-diseases
 

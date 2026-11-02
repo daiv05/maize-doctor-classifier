@@ -13,43 +13,43 @@ hero:
       text: Empezando
       link: /es/guia/
     - theme: alt
-      text: Ver Datasets
+      text: Fuentes de datos
       link: /es/datasets/
     - theme: alt
-      text: Baselines
-      link: /es/baselines/
+      text: Resultados
+      link: /es/resultados/
 
 features:
   - icon: 🎯
     title: "9 Clases Fitosanitarias"
     details: "Detección de 4 patologías fúngicas/virales, 1 plaga (cogollero), 3 deficiencias nutricionales (N, P, K) y control de hoja sana mediante CNN con transfer learning."
   - icon: ⚡
-    title: "Edge AI 100 % Offline"
-    details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite Int8 (3.74 MB), con inferencia de unos 23 ms en un teléfono de gama media sin requerir internet."
+    title: "Inferencia en el dispositivo"
+    details: "Entrenamiento en PyTorch y exportación a TensorFlow Lite int8 (3.74 MB), con inferencia de 23 ms y preprocesado de 98 ms (medianas) en un teléfono de gama media, sin internet."
   - icon: 🌾
     title: "Diseñado para el Campo"
     details: "Encuadre guiado y recorte al marco de la cámara para reducir el fondo. La generalización a fotos de campo externas al corpus es una limitación documentada."
   - icon: 🛡️
-    title: "Auditoría y Validación LOSO"
-    details: "Evaluación honesta por origen (Leave-One-Source-Out) y módulo de detección fuera de distribución (Mahalanobis OOD) para evitar falsos diagnósticos."
+    title: "Evaluación por fuente y rechazo OOD"
+    details: "Evaluación con fuentes retenidas (Leave-One-Source-Out) y detector fuera de distribución por distancia de Mahalanobis para no emitir diagnósticos sobre imágenes ajenas al entrenamiento."
 ---
 
 <div class="dm-kpi-banner">
   <div class="dm-kpi-card">
     <div class="dm-kpi-val">33 429</div>
-    <div class="dm-kpi-lbl">Muestras Foliares Curadas</div>
+    <div class="dm-kpi-lbl">Muestras elegibles</div>
   </div>
   <div class="dm-kpi-card">
-    <div class="dm-kpi-val">~23 ms</div>
-    <div class="dm-kpi-lbl">Inferencia en CPU Móvil (mediana)</div>
+    <div class="dm-kpi-val">0.948</div>
+    <div class="dm-kpi-lbl">Macro-F1 de prueba (Lite0)</div>
   </div>
   <div class="dm-kpi-card">
     <div class="dm-kpi-val">3.74 MB</div>
-    <div class="dm-kpi-lbl">Modelo Cuantizado Int8</div>
+    <div class="dm-kpi-lbl">Modelo int8</div>
   </div>
   <div class="dm-kpi-card">
-    <div class="dm-kpi-val">100 %</div>
-    <div class="dm-kpi-lbl">Autonomía Offline</div>
+    <div class="dm-kpi-val">23 ms</div>
+    <div class="dm-kpi-lbl">Inferencia en el teléfono (mediana)</div>
   </div>
 </div>
 
@@ -57,42 +57,7 @@ features:
 
 **Detección de Enfermedades Foliares, Plagas y Deficiencias Nutricionales en Cultivos de Maíz mediante Deep Learning en Dispositivos Móviles**
 
-<div class="dm-academic-card">
-  <div class="dm-academic-header" style="display: flex; flex-wrap: wrap; gap: 0.85rem; margin-bottom: 1.25rem;">
-    <span class="dm-badge">🎓 Universidad de El Salvador</span>
-    <span class="dm-badge">🏛️ Facultad de Ingeniería y Arquitectura</span>
-    <span class="dm-badge">💻 Escuela de Sistemas Informáticos</span>
-  </div>
-  <p style="font-size: 0.9rem; color: var(--vp-c-text-2); margin-bottom: 0.85rem;">
-    Trabajo desarrollado en el marco del <strong>Curso de Especialización en Machine Learning</strong> (Ciclo I 2026 — Grupo 02), bajo la cátedra del <strong>Ing. Bladimir Díaz Campos</strong>.
-  </p>
-  <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--vp-c-text-2); margin-top: 1rem;">
-    Equipo de Desarrollo e Investigación
-  </div>
-  <div class="dm-team-grid">
-    <div class="dm-team-member">
-      <div class="dm-team-avatar">JR</div>
-      <div>
-        <div style="font-weight: 700; font-size: 0.9rem; color: var(--vp-c-text-1);">Josias Abner Rivas Fuentes</div>
-        <div style="font-size: 0.78rem; color: var(--vp-c-text-2); font-family: var(--vp-font-family-mono);">RF20010</div>
-      </div>
-    </div>
-    <div class="dm-team-member">
-      <div class="dm-team-avatar">DD</div>
-      <div>
-        <div style="font-weight: 700; font-size: 0.9rem; color: var(--vp-c-text-1);">David Alejandro Deras Cerros</div>
-        <div style="font-size: 0.78rem; color: var(--vp-c-text-2); font-family: var(--vp-font-family-mono);">DC19019</div>
-      </div>
-    </div>
-    <div class="dm-team-member">
-      <div class="dm-team-avatar">ER</div>
-      <div>
-        <div style="font-weight: 700; font-size: 0.9rem; color: var(--vp-c-text-1);">Elmer Edenilson Rosales Molina</div>
-        <div style="font-size: 0.78rem; color: var(--vp-c-text-2); font-family: var(--vp-font-family-mono);">RM20001</div>
-      </div>
-    </div>
-  </div>
-</div>
+Universidad de El Salvador, Facultad de Ingeniería y Arquitectura, Escuela de Sistemas Informáticos. Curso de Especialización en Machine Learning, Ciclo I 2026. Autores: Josias Abner Rivas Fuentes, David Alejandro Deras Cerros y Elmer Edenilson Rosales Molina.
 
 ### Contexto y Problema
 
@@ -117,17 +82,17 @@ El sistema evalúa 9 condiciones foliares agrupadas en cuatro categorías fitosa
 | <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de potasio** | Potassium Deficiency | Carencia de K | Secado y necrosis marginal en hojas inferiores | 0 | 621 | 621 |
 | **Total** | **9 clases objetivo** | — | — | — | **3 551** | **29 878** | **33 429** |
 
-> 📊 **Distribución muestral:** Corpus activo con **33 429 muestras elegibles** (3 551 laboratorio + 29 878 campo real) tras 8 exclusiones metodológicas auditadas. Ver [Auditoría Metodológica](/es/auditoria/) y [Pipeline de Datos](/es/metodologia/pipeline-datos).
+> 📊 **Distribución muestral:** Corpus activo con **33 429 muestras elegibles** (3 551 laboratorio + 29 878 campo real) tras 8 exclusiones metodológicas auditadas. Ver [Generalización entre fuentes](/es/resultados/generalizacion) y [Pipeline de Datos](/es/metodologia/pipeline-datos).
 
 ### Metodología
 
-El proyecto avanza en fases iterativas siguiendo el ciclo estándar **CRISP-DM**:
+El proyecto sigue el ciclo **CRISP-DM**:
 
 1. **Comprensión del negocio**: análisis de las condiciones de campo y limitaciones de conectividad rural en El Salvador.
-2. **Comprensión de los datos**: consolidación multi-fuente de 11 fuentes (`source_id`) internacionales; ver [Recopilación de datasets](/es/datasets/).
+2. **Comprensión de los datos**: consolidación multi-fuente de 11 fuentes (`source_id`) internacionales; ver [Fuentes de datos](/es/datasets/).
 3. **Preparación de los datos**: filtrado de atajos, normalización a 224 × 224 px y balanceo de clases.
 4. **Modelado**: transfer learning y benchmarking con EfficientNet-B0, EfficientNet-Lite0 y ShuffleNet-V2.
-5. **Evaluación y Auditoría**: macro-F1, análisis de calibración, partición LOSO por origen y detección de muestras anómalas (OOD).
+5. **Evaluación**: macro-F1, calibración, evaluación con fuentes retenidas (LOSO) y detección de muestras anómalas (OOD).
 6. **Despliegue móvil**: cuantización Int8 post-entrenamiento (TFLite) y empaquetado en aplicación Android nativa offline.
 
 ### Arquitectura de Inferencia
@@ -154,11 +119,11 @@ flowchart LR
   </div>
   <div class="dm-spec-item">
     <div class="dm-spec-label">⚡ Latencia de Inferencia</div>
-    <div class="dm-spec-value">~23 ms de inferencia y ~98 ms de preprocesado (medianas)</div>
+    <div class="dm-spec-value">23 ms de inferencia y 98 ms de preprocesado (medianas); meta de 300 ms en total</div>
   </div>
   <div class="dm-spec-item" style="border-left: 3px solid #2e7d32;">
     <div class="dm-spec-label">📡 Requisito de Red</div>
-    <div class="dm-spec-value" style="color: #2e7d32;">100 % Autónomo (Cero datos móviles)</div>
+    <div class="dm-spec-value" style="color: #2e7d32;">Inferencia sin conexión</div>
   </div>
 </div>
 

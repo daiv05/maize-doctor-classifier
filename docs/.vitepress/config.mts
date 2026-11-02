@@ -2,203 +2,72 @@ import { defineConfig } from "vitepress";
 
 const esDatasetSidebar = [
   {
-    text: "Guía e inicio",
+    text: "Guía",
     items: [
       { text: "Empezando", link: "/es/guia/" },
+      { text: "Trabajos previos", link: "/es/previous-work/" },
     ],
   },
   {
-    text: "Antecedentes",
-    items: [
-      { text: "Trabajos previos y literatura", link: "/es/previous-work/" },
-    ],
-  },
-  {
-    text: "Procesamiento de Datos",
+    text: "Datos",
     collapsed: false,
     items: [
-      {
-        text: "Limpieza de datos",
-        link: "/es/cleanup-and-ordered/",
-      },
-      {
-        text: "Análisis exploratorio de datos (EDA)",
-        link: "/es/exploratory-data-analysis/",
-      },
-      {
-        text: "Preprocesado y normalización",
-        link: "/es/preprocessed/",
-      },
+      { text: "Fuentes de datos", link: "/es/datasets/" },
+      { text: "Clases foliares", link: "/es/dataset-classes/" },
+      { text: "Limpieza y ordenado", link: "/es/cleanup-and-ordered/" },
+      { text: "Análisis exploratorio (EDA)", link: "/es/exploratory-data-analysis/" },
+      { text: "Preprocesado", link: "/es/preprocessed/" },
+      { text: "Pipeline de datos e identidad", link: "/es/metodologia/pipeline-datos" },
     ],
   },
   {
-    text: "Estudio de Atajos",
+    text: "Modelado",
     collapsed: false,
     items: [
-      { text: "Marco del estudio y objetivos", link: "/es/provenance/" },
-      { text: "Detección de atajos por cámara", link: "/es/provenance/fase-0-auditoria" },
-      { text: "Partición honesta por fuente (LOSO)", link: "/es/provenance/fase-1-particion-honesta" },
-      { text: "Intervenciones y mitigación", link: "/es/provenance/fase-2-intervenciones" },
-      { text: "Consolidación de hallazgos", link: "/es/provenance/consolidacion" },
-      { text: "Evidencia y registros brutos", link: "/es/provenance/evidencia/" },
-    ],
-  },
-  {
-    text: "Modelado Deep Learning",
-    collapsed: false,
-    items: [
-      { text: "Fundamentos teóricos", link: "/es/deep-learning/" },
+      { text: "Arquitecturas y baselines", link: "/es/baselines/" },
       { text: "Interpretabilidad (XAI)", link: "/es/deep-learning/interpretability" },
       { text: "Detección OOD (Mahalanobis)", link: "/es/deep-learning/ood-detection" },
-      { text: "Arquitecturas baseline", link: "/es/baselines/" },
     ],
   },
   {
-    text: "Pipelines de Ejecución",
+    text: "Pipelines",
     collapsed: false,
     items: [
-      {
-        text: "Pipeline Baselines",
-        collapsed: true,
-        items: [
-          { text: "Preprocesado", link: "/es/pipeline-baselines/preprocessed" },
-          { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
-          { text: "Evaluación", link: "/es/pipeline-baselines/evaluacion" },
-          { text: "Interpretabilidad", link: "/es/pipeline-baselines/interpretabilidad" },
-          { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
-        ],
-      },
-      {
-        text: "Pipeline Principal",
-        collapsed: true,
-        items: [
-          { text: "Preprocesado", link: "/es/pipeline/preprocessed" },
-          { text: "Optimización (Optuna)", link: "/es/pipeline/optimizacion" },
-          { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
-          { text: "Contratos de runs", link: "/es/pipeline/contratos-runs" },
-          { text: "Ensamble multimodelo", link: "/es/pipeline/ensamble" },
-          { text: "Evaluación", link: "/es/pipeline/evaluacion" },
-          { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
-          { text: "Experimentos", link: "/es/pipeline/experimentos" },
-        ],
-      },
-    ],
-  },
-  {
-    text: "Metodología Experimental",
-    collapsed: false,
-    items: [
-      { text: "Pipeline de datos", link: "/es/metodologia/pipeline-datos" },
+      { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
+      { text: "Contratos de runs", link: "/es/pipeline/contratos-runs" },
+      { text: "Evaluación y equidad", link: "/es/pipeline/evaluacion" },
+      { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
+      { text: "Ensamble", link: "/es/pipeline/ensamble" },
       { text: "Protocolos experimentales", link: "/es/metodologia/protocolos-experimentales" },
-      { text: "Registro de experimentos", link: "/es/experimentos/" },
-      { text: "Estado actual de ejecución", link: "/es/experimentos/current-status" },
-      { text: "Optimización de hiperparámetros (HPO)", link: "/es/experimentos/hpo" },
-      { text: "Estabilidad multi-semilla", link: "/es/experimentos/multiseed" },
-      { text: "Validación cruzada", link: "/es/experimentos/cross-validation" },
+      { text: "Optimización de hiperparámetros", link: "/es/experimentos/hpo" },
+      { text: "Comparación multi-semilla", link: "/es/experimentos/multiseed" },
     ],
   },
   {
-    text: "Resultados Experimentales",
+    text: "Resultados",
     collapsed: false,
     items: [
-      { text: "Resumen ejecutivo", link: "/es/resultados/" },
-      { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
-      { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
-      { text: "Evaluación rigurosa y métricas finales", link: "/es/resultados/evaluacion" },
-      { text: "Ficha técnica: Baseline Lite0 (seed 42)", link: "/es/resultados/run-20260921-efficientnet-lite0" },
-      { text: "Ficha técnica: Benchmark por fuentes (LOSO)", link: "/es/resultados/run-20260921-source-grouped" },
-      { text: "Análisis de equidad y sesgos", link: "/es/resultados/equidad" },
+      { text: "Modelo oficial y resumen", link: "/es/resultados/" },
+      { text: "Ficha del modelo oficial", link: "/es/resultados/run-20260921-efficientnet-lite0" },
+      { text: "Generalización entre fuentes", link: "/es/resultados/generalizacion" },
     ],
   },
   {
-    text: "Auditoría Metodológica",
+    text: "Reproducibilidad",
     collapsed: false,
     items: [
-      { text: "Marco de auditoría", link: "/es/auditoria/" },
-      { text: "Estabilidad entre semillas", link: "/es/auditoria/estabilidad-semillas" },
-      { text: "Aislamiento de fuentes (Protocolo LOSO)", link: "/es/auditoria/analisis-fuentes-loso" },
-      { text: "Auditoría forense de píxeles", link: "/es/auditoria/auditoria-pixeles" },
-      { text: "Ensamble fuera de dominio", link: "/es/auditoria/ensamble-loso" },
+      { text: "Registro de evidencias", link: "/es/reproducibilidad/evidencias" },
+      { text: "Procedencia de figuras", link: "/es/reproducibilidad/figuras" },
     ],
   },
   {
-    text: "Reproducibilidad e Integridad",
+    text: "Despliegue y app",
     collapsed: false,
     items: [
-      { text: "Procedencia y origen de figuras", link: "/es/reproducibilidad/figuras" },
-      { text: "Auditoría bibliográfica y DOIs", link: "/es/reproducibilidad/referencias" },
-    ],
-  },
-  {
-    text: "Fuentes para Tesis",
-    collapsed: false,
-    items: [
-      { text: "Resultados experimentales consolidados", link: "/es/tesis/EXPERIMENTAL_RESULTS_SUMMARY" },
-      { text: "Comparativa HPO vs Baseline", link: "/es/tesis/HPO_BASELINE_COMPARISON" },
-      { text: "Historia del proyecto", link: "/es/tesis/historia-del-proyecto" },
-      { text: "Registro de decisiones de diseño (ADR)", link: "/es/tesis/DECISION_LOG" },
-      { text: "Registro de evidencias experimentales", link: "/es/tesis/EVIDENCE_REGISTRY" },
-      { text: "Empaquetado de modelos (README)", link: "/es/tesis/MODEL_PACKAGE_README" },
-    ],
-  },
-  {
-    text: "Datasets y Fuentes",
-    collapsed: false,
-    items: [
-      { text: "Catálogo y recopilación general", link: "/es/datasets/" },
-      { text: "Taxonomía y clases foliares", link: "/es/dataset-classes/" },
-      {
-        text: "Maize in Field Dataset",
-        link: "/es/datasets/maize-in-field-dataset",
-      },
-      { text: "Maize Diseases", link: "/es/datasets/maize-diseases" },
-      { text: "Corn Leaf Diseases", link: "/es/datasets/corn-leaf-diseases" },
-      {
-        text: "CropDG Unified Multi-Domain",
-        link: "/es/datasets/cropdg-unified-multidomain",
-      },
-      {
-        text: "Maize, Beans and Tomatoes (Africa)",
-        link: "/es/datasets/maize-beans-tomatoes-africa",
-      },
-      {
-        text: "Multicrop disease maiz pests and disease",
-        link: "/es/datasets/multicrop-disease-maiz-disease-pests-and-disease",
-      },
-      {
-        text: "Maize Nutrient Deficiency",
-        link: "/es/datasets/maize-nutrient-deficiency",
-      },
-      {
-        text: "Corn Leaf - Roboflow",
-        link: "/es/datasets/corn-leaf-roboflow",
-      },
-      {
-        text: "Maize 2 - Roboflow",
-        link: "/es/datasets/maize-2-roboflow",
-      },
-      {
-        text: "Maize Leaf - Roboflow",
-        link: "/es/datasets/maize-leaf-roboflow",
-      },
-      {
-        text: "Maize Deficiency Scanner - Roboflow",
-        link: "/es/datasets/maize-deficiency-scanner-roboflow",
-      },
-      {
-        text: "Corn Leaf Diseases Classification - Roboflow",
-        link: "/es/datasets/corn-leaf-diseases-classification-roboflow",
-      },
-    ],
-  },
-  {
-    text: "Deployment y Aplicación",
-    collapsed: false,
-    items: [
-      { text: "Servicio de inferencia GPU en Modal", link: "/es/deployment/modal" },
-      { text: "Aplicación móvil React Native", link: "/es/deployment/react-native" },
-      { text: "Prototipo de inferencia en dispositivo", link: "/es/deployment/prototipo" },
-      { text: "Manual de usuario DoctorMaiz App", link: "/es/app/" },
+      { text: "GPU en Modal", link: "/es/deployment/modal" },
+      { text: "Aplicación React Native", link: "/es/deployment/react-native" },
+      { text: "Prototipo en dispositivo", link: "/es/deployment/prototipo" },
+      { text: "Manual de la app", link: "/es/app/" },
     ],
   },
 ];
@@ -307,101 +176,43 @@ export default defineConfig({
         "Detección de Enfermedades Foliares en Cultivos de Maíz mediante Deep Learning en Dispositivos Móviles",
       themeConfig: {
         nav: [
-          {
-            text: "Empezando",
-            link: "/es/guia/",
-          },
+          { text: "Empezando", link: "/es/guia/" },
           {
             text: "Datos",
             items: [
-              {
-                text: "Exploración",
-                items: [
-                  { text: "Datasets", link: "/es/datasets/" },
-                  { text: "Limpieza", link: "/es/cleanup-and-ordered/" },
-                  { text: "Análisis Exploratorio", link: "/es/exploratory-data-analysis/" },
-                ],
-              },
-              {
-                text: "Procesamiento",
-                items: [
-                  { text: "Preprocesado", link: "/es/preprocessed/" },
-                ],
-              },
+              { text: "Fuentes de datos", link: "/es/datasets/" },
+              { text: "Limpieza", link: "/es/cleanup-and-ordered/" },
+              { text: "Análisis exploratorio", link: "/es/exploratory-data-analysis/" },
+              { text: "Preprocesado", link: "/es/preprocessed/" },
             ],
           },
           {
             text: "Modelado",
             items: [
-              {
-                text: "Deep Learning",
-                items: [
-                  { text: "Teoría", link: "/es/deep-learning/" },
-                  { text: "Interpretabilidad (XAI)", link: "/es/deep-learning/interpretability" },
-                  { text: "Detección OOD (Mahalanobis)", link: "/es/deep-learning/ood-detection" },
-                  { text: "Baselines", link: "/es/baselines/" },
-                ],
-              },
-              {
-                text: "Pipeline · Baselines",
-                items: [
-                  { text: "Preprocesado", link: "/es/pipeline-baselines/preprocessed" },
-                  { text: "Entrenamiento", link: "/es/pipeline-baselines/entrenamiento" },
-                  { text: "Evaluación", link: "/es/pipeline-baselines/evaluacion" },
-                  { text: "Interpretabilidad", link: "/es/pipeline-baselines/interpretabilidad" },
-                  { text: "Experimentos", link: "/es/pipeline-baselines/experimentos" },
-                ],
-              },
-              {
-                text: "Pipeline · Principal",
-                items: [
-                  { text: "Preprocesado", link: "/es/pipeline/preprocessed" },
-                  { text: "Optimización", link: "/es/pipeline/optimizacion" },
-                  { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
-                  { text: "Contratos de runs", link: "/es/pipeline/contratos-runs" },
-                  { text: "Ensamble", link: "/es/pipeline/ensamble" },
-                  { text: "Evaluación", link: "/es/pipeline/evaluacion" },
-                  { text: "Interpretabilidad", link: "/es/pipeline/interpretabilidad" },
-                  { text: "Experimentos", link: "/es/pipeline/experimentos" },
-                ],
-              },
+              { text: "Arquitecturas y baselines", link: "/es/baselines/" },
+              { text: "Interpretabilidad (XAI)", link: "/es/deep-learning/interpretability" },
+              { text: "Detección OOD", link: "/es/deep-learning/ood-detection" },
+              { text: "Entrenamiento", link: "/es/pipeline/entrenamiento" },
+              { text: "Contratos de runs", link: "/es/pipeline/contratos-runs" },
             ],
           },
           {
             text: "Resultados",
             items: [
-              { text: "Resumen ejecutivo", link: "/es/resultados/" },
-              { text: "Optimización e hiperparámetros", link: "/es/resultados/optimizacion" },
-              { text: "Modelos avanzados y ensamble", link: "/es/resultados/ensamble" },
-              { text: "Evaluación rigurosa y métricas finales", link: "/es/resultados/evaluacion" },
-              { text: "Ficha técnica: Baseline Lite0 (seed 42)", link: "/es/resultados/run-20260921-efficientnet-lite0" },
-              { text: "Ficha técnica: Benchmark por fuentes (LOSO)", link: "/es/resultados/run-20260921-source-grouped" },
-              { text: "Análisis de equidad y sesgos", link: "/es/resultados/equidad" },
+              { text: "Modelo oficial y resumen", link: "/es/resultados/" },
+              { text: "Generalización entre fuentes", link: "/es/resultados/generalizacion" },
+              { text: "Registro de evidencias", link: "/es/reproducibilidad/evidencias" },
             ],
           },
           {
-            text: "Investigación",
-            items: [
-              { text: "Auditoría metodológica (5 puntos)", link: "/es/auditoria/" },
-              { text: "Pipeline y protocolos", link: "/es/metodologia/pipeline-datos" },
-              { text: "Estado experimental", link: "/es/experimentos/current-status" },
-              { text: "Historia del proyecto", link: "/es/tesis/historia-del-proyecto" },
-              { text: "Registro de evidencias", link: "/es/tesis/EVIDENCE_REGISTRY" },
-            ],
-          },
-          {
-            text: "Deployment",
+            text: "Despliegue",
             items: [
               { text: "GPU en Modal", link: "/es/deployment/modal" },
               { text: "App React Native", link: "/es/deployment/react-native" },
               { text: "Prototipo en dispositivo", link: "/es/deployment/prototipo" },
-              { text: "Documentación App Móvil", link: "/es/app/" },
             ],
           },
-          {
-            text: "App Móvil",
-            link: "/es/app/",
-          },
+          { text: "App Móvil", link: "/es/app/" },
         ],
         sidebar: {
           "/es/app/": esAppSidebar,

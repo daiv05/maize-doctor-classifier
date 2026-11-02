@@ -41,7 +41,7 @@ La distancia entre el protocolo estratificado y la CV agrupada muestra una brech
 
 **Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430 con σ = 0.0049. No sustituye al multiseed baseline contra HPO, que está incompleto (2 de 10 entrenamientos, solo validación) y cuya diferencia no es interpretable.
 
-**Equidad.** Sobre el checkpoint de agosto, macro F1 de 0.9215 en campo real y 0.9423 en laboratorio; la prueba de atajos marca `shortcut_detected=true` (la accuracy cae de 0.9791 a 0.4225 al ocultar la periferia de la imagen). Detalle y limitaciones en [docs/es/resultados/equidad.md](docs/es/resultados/equidad.md).
+**Equidad.** Sobre el checkpoint de agosto, macro F1 de 0.9215 en campo real y 0.9423 en laboratorio; la prueba de atajos marca `shortcut_detected=true` (la accuracy cae de 0.9791 a 0.4225 al ocultar la periferia de la imagen). Detalle y limitaciones en [docs/es/resultados/generalizacion.md](docs/es/resultados/generalizacion.md).
 
 **Fotos de campo externas.** En 97 fotos propias ajenas al corpus (`Imagenes/`, no versionadas) el modelo oficial acierta 41 (42 %) y el detector fuera de dominio rechaza 49. Es la limitación principal: la generalización fuera de las fuentes de entrenamiento es mucho menor que la del test estratificado (ver [validación agrupada por fuente](docs/es/resultados/run-20260921-source-grouped.md)).
 
@@ -92,28 +92,9 @@ Los conteos de la tabla corresponden a la materialización vigente: **33 437 arc
 
 ## Datasets
 
-El catálogo inicial documentó **8 repositorios públicos principales**; el `master_manifest.csv` vigente resuelve **11 valores de `source_id`** después de la consolidación y ampliaciones. Catálogo histórico principal:
+El corpus vigente reúne 33 429 imágenes de 11 fuentes públicas (`source_id` en `master_manifest.csv`), con imágenes de laboratorio y de campo. La tabla de fuentes con licencia, conteo, clases, entorno y cita está en [Fuentes de datos](docs/es/datasets/index.md).
 
-| Dataset | Dominio | Imágenes (maíz) | Licencia |
-|---|---|---|---|
-| [Maize in Field](docs/es/datasets/maize-in-field-dataset.md) | Campo real (Sudáfrica) | ~2 223 | CC BY-NC-SA 4.0 |
-| [Maize Diseases](docs/es/datasets/maize-diseases.md) | Lab + campo (PlantVillage v1.0/v1.1) | ~16 162 | CC BY-NC-SA 4.0 |
-| [Corn Leaf Diseases](docs/es/datasets/corn-leaf-diseases.md) | Lab augmentado (x17) | 52 360 | MIT |
-| [CropDG Unified Multidomain](docs/es/datasets/cropdg-unified-multidomain.md) | Multi-dominio | ~13 275 | CC BY-NC-SA 4.0 |
-| [Maize, Beans & Tomatoes Africa](docs/es/datasets/maize-beans-tomatoes-africa.md) | Campo real (África) | 23 286 | Apache 2.0 + CC |
-| [Multicrop Disease - Maize Pests and Disease](docs/es/datasets/multicrop-disease-maiz-disease-pests-and-disease.md) | Mixto | - | Desconocida |
-| [Maize Nutrient Deficiency](docs/es/datasets/maize-nutrient-deficiency.md) | Campo real (India) | 463 | CC BY 4.0 |
-| [Corn Leaf - Roboflow](docs/es/datasets/corn-leaf-roboflow.md) | Campo real | 3 943 | CC BY 4.0 |
-
-### Estrategia de Augmentation
-
-El dataset *Corn Leaf Diseases* aplica 17 técnicas de augmentation documentadas:
-
-`brightness_adjusted` · `contrast_adjusted` · `cropped` · `flipped_horizontal` · `flipped_vertical` · `gaussian_noise` · `high_pass` · `hist_equalized` · `jittered` · `laplacian` · `poisson_noise` · `rotated` · `salt_pepper_noise` · `saturation_adjusted` · `sobel` · `translated` · `unsharp_mask`
-
-### Procedencia y fuga entre fuentes
-
-Una partición estratificada clásica deja que imágenes del mismo repositorio caigan a ambos lados del split, lo que infla las métricas. La línea de trabajo en [docs/es/provenance](docs/es/provenance/index.md) audita ese efecto, construye una partición agrupada por fuente y mide la generalización con *leave-one-source-out*. De ahí sale la tercera cifra de la tabla de resultados.
+Una partición estratificada deja imágenes del mismo repositorio a ambos lados del split e infla las métricas. [Generalización entre fuentes](docs/es/resultados/generalizacion.md) mide ese efecto con particiones agrupadas por fuente y *leave-one-source-out*.
 
 ---
 
@@ -247,10 +228,9 @@ make modal-provenance-leak / modal-loso / modal-aligned-loso / modal-pull-proven
 
 - [Pipeline de datos, identidad y manifests](docs/es/metodologia/pipeline-datos.md)
 - [Protocolos experimentales](docs/es/metodologia/protocolos-experimentales.md)
-- [Registro y estado de experimentos](docs/es/experimentos/index.md)
+- [Resultados](docs/es/resultados/index.md)
 - [Baseline actual `20260921_204608`](docs/es/resultados/run-20260921-efficientnet-lite0.md)
-- [Historia del proyecto](docs/es/tesis/historia-del-proyecto.md)
-- [Registro de evidencias para tesis](docs/es/tesis/EVIDENCE_REGISTRY.md)
+- [Registro de evidencias](docs/es/reproducibilidad/evidencias.md)
 
 Los informes y páginas históricas se preservan con su contexto; no sustituyen estas fuentes vigentes.
 
@@ -273,7 +253,7 @@ maize-doctor-classifier/
 ├── config/
 │   ├── dataset.yaml           # Clases, tamaño de imagen, seed, perfil "baseline", LIME/SHAP
 │   └── dataset.segmented.yaml # Variante sobre el corpus segmentado
-├── docs/es/                   # Documentación (VitePress): datasets, EDA, pipeline, resultados, provenance
+├── docs/es/                   # Documentación (VitePress): datos, EDA, pipeline, resultados
 ├── notebooks/                 # Análisis exploratorio
 ├── reports/                   # Informes LaTeX/HTML de cada entrega
 ├── scripts/
@@ -314,7 +294,7 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 - [x] Ensamble por voto suave de tres arquitecturas
 - [x] Validación cruzada K-Fold y experimento 2x2 de particiones
 - [x] Auditoría de procedencia, fuga entre fuentes y leave-one-source-out
-- [x] Análisis de sesgos, equidad y ética ([docs/es/resultados/equidad.md](docs/es/resultados/equidad.md))
+- [x] Análisis de sesgos, equidad y ética ([docs/es/resultados/generalizacion.md](docs/es/resultados/generalizacion.md))
 - [x] Exportación a ONNX/TFLite Int8 con validación de paridad entre runtimes
 - [x] Detector fuera de dominio (Mahalanobis relativo) y sincronización con la app
 - [x] Aplicación Android con TensorFlow Lite que despliega el modelo oficial `20260921_204608`, validada en dispositivo físico

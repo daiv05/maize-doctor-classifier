@@ -14,7 +14,7 @@
 - `CornDataset` devuelve `(image, label, sample_id)` y conserva `ImageCache`, `max_per_class`, selección de `minority_classes`, transforms y `class_to_idx`. Un fallo carga **esa misma muestra o levanta un error trazable**; nunca cambia a `idx+1`, devuelve `None`, filtra en `collate_fn` ni muta el DataFrame.
 - `seed_42` es desarrollo estratificado por `label + environment`; `source_id` es metadato. `seed_42_source_grouped` es un benchmark separado con fuentes indivisibles. No sustituir uno por otro ni llamar LOSO a ninguno.
 - La materialización actual no ejecutó PHash (`deduplicate_perceptual=false`): solo está demostrado el cero solapamiento exacto.
-- Especificaciones canónicas: `docs/es/metodologia/pipeline-datos.md`, `docs/es/metodologia/protocolos-experimentales.md` y `docs/es/pipeline/contratos-runs.md`. Estado y evidencia: `docs/es/experimentos/current-status.md` y `docs/es/tesis/EVIDENCE_REGISTRY.md`.
+- Especificaciones canónicas: `docs/es/metodologia/pipeline-datos.md`, `docs/es/metodologia/protocolos-experimentales.md` y `docs/es/pipeline/contratos-runs.md`. Resultados y evidencia: `docs/es/resultados/index.md` y `docs/es/reproducibilidad/evidencias.md`.
 
 ## Arquitectura (`src/`)
 

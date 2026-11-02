@@ -120,7 +120,7 @@ help:
 	@echo "  modal-explain-visual-main modal-explain-fidelity-main modal-explain-errors-main"
 	@echo "  modal-explain-compare-main modal-explain-global-main"
 	@echo ""
-	@echo "Procedencia y fuga (docs/es/provenance):"
+	@echo "Procedencia y fuga (docs/es/provenance/evidencia):"
 	@echo "  provenance-audit  (local, sin GPU)"
 	@echo "  modal-provenance-leak  modal-loso  modal-aligned-loso  modal-pull-provenance"
 	@echo "    DETACH=1 deja la corrida viva en Modal aunque se cierre la terminal"

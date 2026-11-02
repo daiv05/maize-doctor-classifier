@@ -30,45 +30,26 @@ La división no crea copias físicas de las imágenes, sino que genera tres CSV 
 
 El dataset completo que se tiene a la fecha está lejos de ser uniforme, algunas clases tienen miles de imágenes y otras apenas un par de cientos. Sin corrección, un modelo entrenado directamente sobre esa distribución tendería a ignorar las clases minoritarias.
 
-### Diagnóstico del desbalance (para train)
+### Desbalance del corpus
 
-| Clase | N | Ratio vs healthy (sana) |
-|---|---|---|
-| potassium_deficiency | 186 | 32.9x |
-| nitrogen_deficiency | 364 | 16.8x |
-| phosphorus_deficiency | 428 | 14.3x |
-| gray_leaf_spot | 778 | 7.9x |
-| common_rust | 1575 | 3.9x |
-| fall_armyworm | 3223 | 1.9x |
-| lethal_necrosis | 4491 | 1.4x |
-| northern_corn_leaf_blight | 4774 | 1.3x |
-| healthy | 6118 | 1.0x |
+| Clase | Muestras elegibles | Razón frente a `healthy` |
+|---|---:|---:|
+| `potassium_deficiency` | 621 | 14.1x |
+| `nitrogen_deficiency` | 846 | 10.3x |
+| `phosphorus_deficiency` | 938 | 9.3x |
+| `gray_leaf_spot` | 1 930 | 4.5x |
+| `common_rust` | 2 256 | 3.9x |
+| `fall_armyworm` | 4 853 | 1.8x |
+| `lethal_necrosis` | 6 415 | 1.4x |
+| `northern_corn_leaf_blight` | 6 830 | 1.3x |
+| `healthy` | 8 740 | 1.0x |
 
-::: warning Cifras de la primera etapa (31 623 imágenes)
-Esta tabla corresponde al split **anterior** a la ampliación de agosto. En la materialización vigente de 33 429 elegibles los ratios aproximados son `potassium_deficiency` **14.1x**, `nitrogen_deficiency` **10.3x**, `phosphorus_deficiency` **9.3x** y `gray_leaf_spot` **4.5x**.
+### Estrategias de balanceo
 
-**La conclusión operativa no cambia:** son exactamente las mismas cuatro clases las que cruzan el umbral de 4x, y `common_rust` (3.9x) sigue justo por debajo. Al regenerar los splits con `make splits`, la composición de clases minoritarias es idéntica - solo se atenúa la magnitud de la corrección.
-:::
+- **`WeightedRandomSampler`:** cada muestra recibe un peso `1 / count_of_its_class`; repite muestras minoritarias dentro de cada época sin cambiar su tamaño y se combina con la augmentation en caliente. Los baselines lo usan con una `CrossEntropyLoss` sin ponderar.
+- **`CrossEntropyLoss` ponderada:** peso por clase `w_i = total / (num_clases x count_i)`, o su variante `sqrt_inverse`. Es la opción del modelo oficial, que mantiene el sampler desactivado para no compensar dos veces el mismo desbalance.
 
-### Técnicas discutidas
-
-Antes de llegar a la estrategia actual se evaluaron otras alternativas más simples, y se descartaron por razones concretas:
-
-- **Undersampling agresivo:** se descartó porque elimina datos reales y escasos. Bajar la enorme variedad de imágenes de clases como `healthy` o `lethal_necrosis` a 500 o 1 000 imágenes por clase sería un desperdicio de información valiosa. Además, el modelo perdería la oportunidad de aprender patrones de fondo y variaciones de iluminación que solo aparecen en clases mayoritarias.
-- **Oversampling físico (crear más copias físicas en disco):** se descartó (de momento) porque con técnicas como `WeightedRandomSampler` se logra el mismo efecto en memoria, es reversible y se combina con la augmentation en caliente.
-- **Focal Loss:** se contempla como opción para el pipeline principal si los resultados no mejoran en las clases minoritarias.
-
-### Estrategia histórica considerada: dos capas
-
-El pipeline principal vigente mantiene el `WeightedRandomSampler` **desactivado** cuando usa pérdida ponderada, para no sobrecompensar el mismo desbalance dos veces. El sampler sigue integrado y puede usarse en otros perfiles; la sección siguiente describe el diseño histórico.
-
-Para el pipeline principal se plantea una estrategia de balanceo de **dos capas**:
-
-**Capa 1: `WeightedRandomSampler`.** Cada muestra recibe un peso `1 / count_of_its_class`. El sampler repite muestras minoritarias dentro de cada epoch sin inflar su tamaño (`num_samples` = tamaño original). Combinado con augmentation en caliente, cada repetición recibe transformaciones distintas.
-
-**Capa 2: `CrossEntropyLoss` ponderada.** Peso por clase `w_i = total / (num_clases x count_i)`. Reforzaría el gradiente de clases minoritarias incluso cuando aparecen en menor proporción dentro de un batch, complementando al sampler que actúa sobre la frecuencia de aparición.
-
-> El **pipeline de baselines** implementa por ahora solo la Capa 1 (sampler) con una `CrossEntropyLoss` estándar sin ponderar, para mantener las corridas simples y comparables entre arquitecturas.
+Se descartaron el submuestreo agresivo, que elimina datos escasos, y el sobremuestreo físico en disco, que el sampler reemplaza en memoria de forma reversible.
 
 ## Data Augmentation
 
