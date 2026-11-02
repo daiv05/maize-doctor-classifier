@@ -1,6 +1,6 @@
 # Pipeline de datos, identidad e integridad
 
-**Estado: VIGENTE.** Esta es la especificación documental principal de preparación de datos. Las demás páginas deben enlazarla en lugar de redefinir `sample_id`, los manifiestos o los protocolos de partición.
+Especificación de la preparación de datos: identidad de las muestras, manifiestos y protocolos de partición.
 
 ## Flujo canónico
 
@@ -21,7 +21,7 @@ dataset clean/
 
 La implementación está en `scripts/pipeline/create_splits.py`, `src/data/identity.py`, `src/data/preparation.py`, `src/data/splitter.py` y `src/data/dataset.py`. `clean/` es la fuente de verdad; los CSV bajo `outputs/splits/` son derivados y no se editan a mano.
 
-## Tres conceptos que no son intercambiables
+## Identificadores
 
 | Campo | Define | Cálculo/Origen | Uso |
 |---|---|---|---|
@@ -105,24 +105,24 @@ La materialización vigente descubrió 33 437 archivos válidos, excluyó ocho a
 
 ## Protocolos de split
 
-| Protocolo | Pregunta | Estrategia | Train / Val / Test | Estado |
+| Protocolo | Pregunta | Estrategia | Train / Val / Test | Uso |
 |---|---|---|---:|---|
-| `seed_42` | selección y desarrollo dentro de fuentes conocidas | estratificación `label + environment` | 23 400 / 5 014 / 5 015 | **VIGENTE, principal** |
-| `seed_42_source_grouped` | generalización a fuentes completas no vistas | 11 `source_id` indivisibles | 16 554 / 7 809 / 9 066 | **VIGENTE como benchmark cross-source** |
+| `seed_42` | selección y desarrollo dentro de fuentes conocidas | estratificación `label + environment` | 23 400 / 5 014 / 5 015 | Principal |
+| `seed_42_source_grouped` | generalización a fuentes completas no vistas | 11 `source_id` indivisibles | 16 554 / 7 809 / 9 066 | Benchmark cross-source |
 
 En `seed_42`, `source_id` es metadato: puede aparecer en varias particiones. Las nueve clases están presentes en train, validación y test. La auditoría reporta cero solapamientos por `sample_id`, `sha256` y `effective_group_id`.
 
-En `seed_42_source_grouped`, las fuentes permanecen completas. Sus proporciones reales son 49.52 / 23.36 / 27.12 % porque once grupos grandes no permiten aproximar 70 / 15 / 15 sin romperlos. Validación no contiene `fall_armyworm` ni `lethal_necrosis`. Esta incompletitud es una propiedad del protocolo y no autoriza sustituirlo por el split de desarrollo.
+En `seed_42_source_grouped`, las fuentes permanecen completas. Sus proporciones reales son 49.52 / 23.36 / 27.12 % porque once grupos grandes no permiten aproximar 70 / 15 / 15 sin romperlos. Validación no contiene `fall_armyworm` ni `lethal_necrosis`. Esa ausencia es una propiedad del protocolo.
 
-## Cierre de duplicados exactos en seed_42
+## Duplicados exactos en seed_42
 
 La [auditoría de píxeles](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md) cubrió la materialización canónica corn-clean:/clean y los manifests de corn-outputs:/splits/seed_42. Verificó 33 437 rutas y SHA-256 de archivo: 33 429 muestras elegibles más ocho exclusiones contractuales, sin faltantes, discrepancias ni errores de decodificación. El master manifest tiene SHA-256 64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163 y el lock 0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8.
 
 Entre las muestras elegibles hubo cero grupos duplicados por file_sha256 y cero por pixel_sha256; tampoco hubo grupos entre train/validation/test, casos con distinto SHA de archivo y mismos píxeles, ni conflictos de etiqueta nuevos. Test contiene 5 015 imágenes: cero afectadas, 0 %. Los únicos cuatro grupos idénticos aparecen al incluir las ocho imágenes con etiquetas contradictorias ya excluidas mediante [dataset_exclusions.csv](../../../config/dataset_exclusions.csv). Su source_id se resolvió como maize-beans-tomatoes-africa mediante una familia de nombre con correspondencia unívoca en el master manifest; la lista de exclusiones no almacena ese campo.
 
-El hallazgo histórico de aproximadamente 15 grupos y 0.68 % del test con gemelos **no pudo reproducirse sobre la materialización canónica vigente**. Puede corresponder a una versión anterior del corpus, una materialización diferente o un procedimiento de comparación distinto. La auditoría actual no prueba que nunca existió.
+Un análisis anterior reportó unos 15 grupos y 0.68 % del test con gemelos; no se reproduce sobre la materialización vigente y puede corresponder a una versión anterior del corpus.
 
-Se conserva seed_42: la evidencia no justifica regenerarlo, reemplazarlo, crear seed_42_v2 ni eliminar más muestras. El baseline y el HPO vigentes no requieren invalidación por duplicados exactos cross-split. Esta conclusión trata la integridad de la partición, no la generalización entre fuentes o dominios. Tampoco cubre casi duplicados, hojas fotografiadas en secuencia, recortes, resize, rotaciones, cambios fotométricos ni relaciones semánticas.
+`seed_42` se conserva sin cambios. La verificación cubre la integridad de la partición, no la generalización entre fuentes ni los casi duplicados (hojas fotografiadas en secuencia, recortes, resize, rotaciones, cambios fotométricos).
 
 El hash de config/dataset.yaml actual difiere del registrado en el lock. El [análisis del drift](../reproducibilidad/evidencia/pixel_duplicate_audit/dataset_yaml_drift_report.md) documenta los valores, la búsqueda de la versión anterior y la incertidumbre restante; los manifests y la partición congelada conservan sus hashes.
 
@@ -130,10 +130,10 @@ El hash de config/dataset.yaml actual difiere del registrado en el lock. El [an�
 
 La implementación de PHash existe y se conserva. Sin embargo, ambas materializaciones anteriores registran `deduplicate_perceptual=false` y `perceptual_overlap_count=null`. Por tanto:
 
-- sí puede afirmarse cero solapamiento por bytes y por raster RGB canónico idéntico entre splits;
-- no puede afirmarse ausencia de imágenes reescaladas, recortadas, volteadas, recomprimidas con pérdida de píxeles o casi duplicadas.
+- Hay cero solapamiento por bytes y por raster RGB canónico idéntico entre splits.
+- No se mide la presencia de imágenes reescaladas, recortadas, volteadas, recomprimidas con pérdida de píxeles o casi duplicadas.
 
-No se encontró una decisión versionada que justifique científicamente omitir PHash en esta materialización. La omisión se documenta como estado observado y la auditoría perceptual queda pendiente.
+PHash no se ejecutó en esta materialización, por lo que los casi duplicados no están medidos.
 
 ## Garantías durante la carga
 

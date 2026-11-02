@@ -2,7 +2,7 @@
 
 El EDA busca responder tres preguntas antes de diseñar el pipeline de entrenamiento: ¿qué hay en el dataset?, ¿qué problemas tiene?, y ¿qué decisiones impone?
 
-El análisis completo y reproducible, con todo el código, está en la notebook [`notebooks/01_eda.ipynb`](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb). Esta página resume los hallazgos y las decisiones que se derivaron de ellos.
+El análisis completo y reproducible, con todo el código, está en la notebook [`notebooks/01_eda.ipynb`](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb). Esta página resume los resultados y las decisiones que se derivaron.
 
 ::: warning Instantánea histórica — agosto de 2026
 Esta página y sus figuras reflejan el corpus ampliado de **33 438 imágenes**, anterior a las exclusiones contractuales vigentes. No es el EDA de `master_manifest.csv` actual, que contiene 33 429 muestras elegibles. Los cambios históricos llevaron el dataset desde **31 623** imágenes y el desbalance máximo desde **32.9x** a **14.1x**.
@@ -55,7 +55,7 @@ Antes de las métricas numéricas, un grid de 4 imágenes aleatorias por clase (
 
 El dataset presenta un **desbalance severo**: `healthy` (8 744 imágenes) supera en **14.1x** a `potassium_deficiency` (621). Con este desbalance se corre el riesgo de que el modelo aprenda a predecir siempre la clase mayoritaria, ignorando las clases minoritarias.
 
-> El ratio venía de **32.9x** antes de la ampliación de agosto 2026. La mejora es sustancial pero **no cambia la estrategia**: las cuatro clases que cruzan el umbral de 4x siguen siendo las mismas (`potassium` 14.1x, `nitrogen` 10.3x, `phosphorus` 9.3x, `gray_leaf_spot` 4.5x), y `common_rust` sigue justo por debajo (3.9x). GLS quedó cerca del límite - si se refuerza más, saldría del grupo minoritario y cambiaría el comportamiento del entrenamiento.
+> El ratio venía de **32.9x** antes de la ampliación de agosto 2026. La mejora es sustancial pero no cambia la estrategia: las cuatro clases que cruzan el umbral de 4x siguen siendo las mismas (`potassium` 14.1x, `nitrogen` 10.3x, `phosphorus` 9.3x, `gray_leaf_spot` 4.5x), y `common_rust` sigue justo por debajo (3.9x). GLS quedó cerca del límite - si se refuerza más, saldría del grupo minoritario y cambiaría el comportamiento del entrenamiento.
 
 ![Distribución de imágenes por clase](/eda/eda_01_distribucion_clases.png)
 
@@ -79,7 +79,7 @@ Además de la segmentación lab/real, un heatmap fuente×clase revela concentrac
 
 ![Heatmap de distribución por fuente y clase](/eda/eda_02b_heatmap_fuente_clase.png)
 
-**Este hallazgo quedó resuelto en la ampliación de agosto 2026.** En la primera etapa las tres deficiencias nutricionales dependían de una **fuente única** (`maize_nutrient`) y `gray_leaf_spot` tenía toda su porción de campo en `maize_field`. Hoy cada deficiencia combina **cuatro** fuentes y GLS **tres** en campo:
+Con la ampliación de agosto 2026 esto cambió. En la primera etapa las tres deficiencias nutricionales dependían de una única fuente (`maize_nutrient`) y `gray_leaf_spot` tenía toda su porción de campo en `maize_field`. Ahora cada deficiencia combina cuatro fuentes y GLS tres en campo:
 
 | Clase | Fuentes de origen (imágenes) |
 |---|---|
@@ -88,7 +88,7 @@ Además de la segmentación lab/real, un heatmap fuente×clase revela concentrac
 | `potassium_deficiency` | maize_2_roboflow (308), corn_leaf_roboflow (210), maize_nutrient (56), maize_deficiency_scanner_roboflow (47) |
 | `gray_leaf_spot` | cropdg (513, lab), maize_field (606), corn_leaf_diseases_classification_roboflow (480), maize_leaf_roboflow (331) |
 
-Queda pendiente el mismo patrón en `lethal_necrosis`, que sigue dependiendo de dos fuentes (`maize_africa` y `multi_desease`), y `common_rust`, cuyo material de laboratorio domina desde `cropdg`/`maize_desease`.
+El mismo patrón persiste en `lethal_necrosis`, que depende de dos fuentes (`maize_africa` y `multi_desease`), y `common_rust`, cuyo material de laboratorio domina desde `cropdg`/`maize_desease`.
 
 - [Ver análisis completo: sección 1.3 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
 
@@ -130,7 +130,7 @@ Se evaluaron tres métricas sobre una muestra estratificada de hasta 400 imágen
 
 > **Efecto de la ampliación de agosto 2026:** las tasas de blur de las cuatro clases reforzadas **subieron** (GLS ~38 % → 44.2 %, potasio ~21 % → 40.8 %). No es una degradación del material: el umbral es absoluto y no normaliza por resolución, y los datasets nuevos aportan fotos de campo de muy alta resolución tomadas a mano, que producen varianza del Laplaciano baja con más facilidad. Refuerza la advertencia metodológica de abajo: conviene revisar este umbral antes de usarlo como criterio de filtrado.
 
-**Hallazgo en los boxplots de brillo:** `common_rust` presenta un brillo mediano notablemente inferior (~95) comparado con el resto (~120-140). Esto es evidencia cuantitativa directa del sesgo de dominio: sus imágenes de laboratorio usan fondos oscuros que bajan el brillo global. Si el modelo aprende a asociar brillo bajo con `common_rust`, fallará en imágenes de campo con fondo de vegetación.
+Boxplots de brillo: `common_rust` presenta un brillo mediano notablemente inferior (~95) comparado con el resto (~120-140). Es un indicio cuantitativo del sesgo de dominio: sus imágenes de laboratorio usan fondos oscuros que bajan el brillo global. Si el modelo aprende a asociar brillo bajo con `common_rust`, fallará en imágenes de campo con fondo de vegetación.
 
 > **Nota metodológica:** el umbral de blur (varianza del Laplaciano < 100) es absoluto y no normaliza por resolución. Imágenes de alta resolución naturalmente tienen mayor varianza que imágenes pequeñas, lo que podría subestimar el blur en imágenes de baja resolución (~256 px) y sobreestimarlo en imágenes grandes (~3000+ px).
 
@@ -154,7 +154,7 @@ Durante la etapa de construcción del dataset se detectaron duplicados entre fue
 
 Se eliminaron **8 599 imágenes** agrupadas en **8 110 grupos**. Las fuentes con mayor contaminación cruzada fueron `maize_desease` (~6 508 eliminadas) y `multi_desease` (~1 980). Sin esta limpieza, imágenes idénticas habrían aparecido tanto en train como en validación, inflando artificialmente las métricas.
 
-> **Deduplicación de agosto 2026.** De ese total, **61 imágenes en 60 grupos** corresponden a los cuatro datasets nuevos. El resultado relevante es que **todos los grupos quedaron contenidos dentro de los datasets nuevos**: no se detectó ni un solo duplicado contra el material preexistente de `clean/`. El desglose fue `maize_2_roboflow` (35 grupos, internos), `corn_leaf_diseases_classification_roboflow` (20, internos) y 5 grupos cruzados entre las dos fuentes nuevas de GLS - estos últimos **byte a byte idénticos**, evidencia de que ambos datasets de Roboflow redistribuyen material común. Solo esos 5 eran copias exactas; los otros 56 son *near-duplicates* que un hash criptográfico no habría detectado.
+> Deduplicación de agosto 2026. De ese total, 61 imágenes en 60 grupos corresponden a los cuatro datasets nuevos, y todos los grupos están dentro de ellos: no hay duplicados contra el material preexistente de `clean/`. El desglose fue `maize_2_roboflow` (35 grupos, internos), `corn_leaf_diseases_classification_roboflow` (20, internos) y 5 grupos cruzados entre las dos fuentes nuevas de GLS - estos últimos idénticos byte a byte, evidencia de que ambos datasets de Roboflow redistribuyen material común. Solo esos 5 eran copias exactas; los otros 56 son *near-duplicates* que un hash criptográfico no habría detectado.
 
 El dataset actual (y publicado en <a href="https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies" target="_blank" rel="noopener noreferrer">Hugging Face</a>) es **post-deduplicación**. Los registros de cada ejecución se almacenan en `src/cleanup/results/` del repositorio oficial.
 
@@ -173,7 +173,7 @@ A partir de los análisis anteriores se identifican cinco sesgos que afectan dir
 | Heterogeneidad visual dentro de la clase | `fall_armyworm` (daño vs. daño + gusano) | Medio-alto |
 | ~~Fuente única en clases pequeñas~~ *(resuelto ago. 2026)* | `nitrogen`, `phosphorus`, `potassium` | Bajo |
 
-> **Qué cambió y qué no (agosto 2026).** El sesgo de **fuente única** en las deficiencias quedó resuelto: cada una pasó de 1 a 4 fuentes, y GLS de 1 a 3 en campo. El **desbalance** se redujo de 32.9x a 14.1x pero sigue clasificado como riesgo alto. Los sesgos de **dominio de laboratorio** en `common_rust` y de **heterogeneidad visual** en `fall_armyworm` **siguen vigentes sin cambio alguno**, porque la ampliación no tocó esas clases - `common_rust` continúa con 95.4 % de imágenes de laboratorio y solo 106 de campo.
+> Qué cambió en agosto 2026: el sesgo de fuente única en las deficiencias se redujo: cada una pasó de 1 a 4 fuentes, y GLS de 1 a 3 en campo. El desbalance bajó de 32.9x a 14.1x pero sigue siendo un riesgo alto. El sesgo de dominio de laboratorio en `common_rust` y la heterogeneidad visual en `fall_armyworm` no cambiaron, porque la ampliación no tocó esas clases - `common_rust` continúa con 95.4 % de imágenes de laboratorio y solo 106 de campo.
 
 El sesgo de `fall_armyworm` es especialmente relevante, se decidió mezclar las dos fuentes de imágenes: `hoja con daño sin insecto visible` y `hoja con daño y gusano visible`. Esto se hizo porque al final la clase es `fall_armyworm` y la clasificación y recomendación de tratamiento no depende de la presencia del insecto, sino del patrón de daño foliar. Sin embargo, esto introduce un sesgo, por lo que se tendrá especial cuidado en la validación y en la interpretación de métricas,
 

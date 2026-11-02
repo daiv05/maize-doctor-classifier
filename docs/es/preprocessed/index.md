@@ -83,7 +83,7 @@ El ColorJitter es conservador (sin saturación ni hue) porque las deficiencias n
 
 Sobre el dataset completo (train, con `healthy` = 6 118 como techo de referencia), las clases que cruzan el umbral de 4x son cuatro: `potassium_deficiency` (32.9x), `nitrogen_deficiency` (16.8x), `phosphorus_deficiency` (14.3x) y `gray_leaf_spot` (7.9x). `common_rust` (3.9x) queda justo por debajo y recibe el pipeline estándar. A esas cuatro clases se les aplica en caliente el pipeline extendido:
 
-> Ratios de la primera etapa; tras la ampliación de agosto 2026 son 14.1x / 10.3x / 9.3x / 4.5x respectivamente. **Las cuatro clases seleccionadas siguen siendo las mismas**, así que este pipeline no cambia. Conviene vigilar `gray_leaf_spot`: con 4.5x quedó cerca del umbral, y un refuerzo adicional lo sacaría de este grupo.
+> Ratios de la primera etapa. Tras la ampliación de agosto 2026 son 14.1x, 10.3x, 9.3x y 4.5x; las cuatro clases son las mismas. `gray_leaf_spot` (4.5x) está cerca del umbral.
 
 ```
 RandomResizedCrop(224x224, scale=(0.7, 1.0))   <--- recortes aleatorios

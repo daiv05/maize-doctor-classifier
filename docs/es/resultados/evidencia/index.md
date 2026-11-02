@@ -1,6 +1,6 @@
 # Evidencia bruta — resultados
 
-Artefactos de las mediciones reportadas en esta sección. Cada cifra publicada se recomputa desde estos ficheros.
+Artefactos de las mediciones de la sección Resultados.
 
 ## Optimización de hiperparámetros
 
@@ -13,7 +13,7 @@ Artefactos de las mediciones reportadas en esta sección. Cada cifra publicada s
 | `run_afinada_lite0_summary.json` | reentrenamiento a presupuesto completo de la primera |
 | `run_afinada_b0_summary.json` | reentrenamiento a presupuesto completo de la segunda |
 
-`run_afinada_b0_summary.json` se conserva por integridad histórica, pero su campo interno `model` dice `efficientnet_lite0`; no debe citarse como B0 hasta resolver la discrepancia.
+El campo interno `model` de `run_afinada_b0_summary.json` dice `efficientnet_lite0`, por lo que no se cita como B0.
 
 ## Baseline de desarrollo actual
 
@@ -39,7 +39,7 @@ Subcarpeta `etapa2_lite0_20260812_221429/`: resumen del run, reporte de clasific
 
 ## Manifiesto de corridas
 
-`manifiesto_corridas.csv` lista las once corridas auditadas del pipeline principal que existen en el Volume `corn-outputs`, con su ruta en Modal, su configuración completa, sus métricas publicadas y el fichero desde el que cada cifra se recomputa. **Las once verifican de forma exacta.**
+`manifiesto_corridas.csv` lista las once corridas auditadas del pipeline principal que existen en el Volume `corn-outputs`, con su ruta en Modal, su configuración completa, sus métricas publicadas y el fichero desde el que cada cifra se recomputa. Las once cifras coinciden de forma exacta.
 
 Dos de ellas —`efficientnet_b0/20260910_170120` y `shufflenet_v2_x1_0/20260910_184521`— no guardaron `predictions.csv` propio; sus cifras se verifican desde la columna correspondiente de `ensamble_predicciones.csv`, que registra la predicción de cada modelo por imagen.
 
@@ -68,7 +68,7 @@ python scripts/experiments/manifiesto_auditoria.py
 | `kfold_agrupado_actual_pliegues.csv` | |
 | `kfold_agrupado_afinada_pliegues.csv` | |
 
-El valor `0.6026 ± 0.1240` es el Macro-F1 sobre las clases presentes en cada pliegue de la **CV agrupada de cinco pliegues** (± es la semiamplitud del IC95); el Macro-F1 convencional de esa misma validación es `0.4359`. No es LOSO ni el holdout source-grouped actual.
+El valor `0.6026 ± 0.1240` es el Macro-F1 sobre las clases presentes en cada pliegue de la CV agrupada de cinco pliegues (± es la semiamplitud del IC95); el Macro-F1 convencional de esa misma validación es `0.4359`. No es LOSO ni el holdout source-grouped actual.
 
 ## Equidad
 
@@ -95,9 +95,9 @@ La semilla 42 es la del modelo desplegado y su resumen vive en el manifiesto. La
 | `xai_global_summary.csv` | perfil por clase y acierto: ratio de atribución foliar, cobertura de máscara, dispersión y exceso de atribución |
 | `xai_global_per_image.csv` | las 270 imágenes del perfil con su procedencia, su máscara y sus métricas individuales |
 
-`attribution_excess` es la columna que sostiene la lectura publicada: ratio de atribución sobre la hoja menos la cobertura de la máscara, que es el nivel de azar de cada imagen. Un ratio alto con cobertura igualmente alta no indica atención foliar, sino que la hoja llena el encuadre.
+`attribution_excess` es la columna que se usa en la lectura de resultados: ratio de atribución sobre la hoja menos la cobertura de la máscara, que es el nivel de azar de cada imagen. Un ratio alto con cobertura igualmente alta no indica atención foliar, sino que la hoja llena el encuadre.
 
-Ninguna fila debe leerse sin mirar `ratio_reliable`, `n_mask_rejected` y `n_ratio_undefined` en la misma fila: tres de las nueve clases tienen la máscara degradada y su ratio no es interpretable. La columna `mask_source` registra que las 270 usan la segmentación del modelo de `maize-doctor-segmenter`, no el umbral cromático ExG.
+Cada fila se lee junto con `ratio_reliable`, `n_mask_rejected` y `n_ratio_undefined` en la misma fila: tres de las nueve clases tienen la máscara degradada y su ratio no es interpretable. La columna `mask_source` registra que las 270 usan la segmentación del modelo de `maize-doctor-segmenter`, no el umbral cromático ExG.
 
 ## Reproducción
 

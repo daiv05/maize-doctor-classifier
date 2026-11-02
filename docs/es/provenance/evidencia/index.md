@@ -44,9 +44,9 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-09.
 | `loso_gate_3seeds.csv` | Resultado consolidado: media y desviación sobre tres semillas |
 | `*_seed1.json`, `*_seed2.json` | Semillas adicionales de ambos brazos, con sus trazas `.run.txt` |
 
-## Nota sobre `PYTHONIOENCODING`
+## Codificación de la consola
 
-El CLI de Modal falla en esta máquina con `'charmap' codec can't encode '✓'` si la consola usa cp1252. Todas las invocaciones se hicieron con `PYTHONIOENCODING=utf-8`.
+En Windows el CLI de Modal requiere `PYTHONIOENCODING=utf-8`; con cp1252 falla al imprimir caracteres no ASCII.
 
 ## Intervenciones
 
@@ -71,9 +71,9 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-10, cuatro corridas en paralelo.
 | `augmentation_crop_colour.json` | Combinación de las dos palancas |
 | `ablacion_augmentation.csv`, `ablacion_augmentation_por_clase.csv` | Tablas resumen de la ablación |
 
-## Nota sobre los targets del Makefile
+## Targets del Makefile en Git Bash
 
-`MODAL` y `PYTHON` usan rutas con barra invertida de Windows, así que los targets funcionan desde PowerShell pero no desde Git Bash, donde la barra se pierde. Las corridas de este directorio se lanzaron invocando Modal directamente:
+`MODAL` y `PYTHON` usan rutas con barra invertida de Windows: los targets funcionan desde PowerShell pero no desde Git Bash. Desde Git Bash se invoca Modal directamente:
 
 ```bash
 PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -m modal run --detach     scripts/modal/leave_one_source_out.py --balance-groups --arm border_ring
@@ -99,4 +99,4 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-11, con tope de 1 500 imágenes por 
 | `aligned_resumen.csv` | Las tres corridas: macro-F1, marco y dependencia |
 | `aligned_por_fuente.csv` | Exactitud por fuente retenida, con y sin marco |
 
-Las corridas de `colour_strong` tienen el brazo confundido con el color: sirven para comparar particiones, no para juzgar el efecto del color.
+En las corridas de `colour_strong` el brazo y el color están confundidos: sirven para comparar particiones, no para medir el efecto del color.

@@ -102,7 +102,7 @@ Con solo la región exterior el modelo conserva ocho de cada diez aciertos, de m
 | Campo real | 4 483 | 98.04 % | 0.9215 (9 clases) |
 | Laboratorio | 532 | 96.80 % | 0.9423 (3 clases) |
 
-Los Macro-F1 no son comparables entre entornos porque el laboratorio solo contiene tres clases. En las tres clases comunes, la roya falla en el 31.25 % de los casos de campo (5 de 16) frente a 0.31 % en laboratorio: el 95 % de las imágenes de roya de prueba proviene de laboratorio. El exceso de atribución de Grad-CAM y SHAP sobre la hoja es en promedio +0.037, con tres clases por encima del azar y tres por debajo. Datos en [`equidad_metricas.json`](./evidencia/equidad_metricas.json).
+Los Macro-F1 no son comparables entre entornos porque el laboratorio solo contiene tres clases. Restringido a esas tres clases, el *Disparate Impact Ratio* (desempeño del peor entorno entre el del mejor; aceptable desde 0.80) es 0.9604 sobre Macro-F1 y 0.9901 sobre accuracy para este modelo, y 0.9636 y 0.9956 para el modelo oficial ([cálculo](./evidencia/equidad_dir_clases_compartidas.json)). Un DIR cercano a uno no descarta disparidades por clase: en las tres clases comunes, la roya falla en el 31.25 % de los casos de campo (5 de 16) frente a 0.31 % en laboratorio: el 95 % de las imágenes de roya de prueba proviene de laboratorio. El exceso de atribución de Grad-CAM y SHAP sobre la hoja es en promedio +0.037, con tres clases por encima del azar y tres por debajo. Datos en [`equidad_metricas.json`](./evidencia/equidad_metricas.json).
 
 ## Implicaciones
 

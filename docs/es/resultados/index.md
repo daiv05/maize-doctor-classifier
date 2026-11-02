@@ -1,6 +1,6 @@
 # Resultados
 
-Modelo oficial: EfficientNet-Lite0, corrida `20260921_204608`, entrenada sobre el split `seed_42` (33 429 muestras: 23 400 train, 5 014 validación y 5 015 prueba, `manifest.lock` `0db3ff3e…`). Es el modelo que despliega la app en su exportación TFLite int8. Cada cifra de esta página se recomputa desde los artefactos listados en el [registro de evidencias](/es/reproducibilidad/evidencias).
+Modelo oficial: EfficientNet-Lite0, corrida `20260921_204608`, entrenada sobre el split `seed_42` (33 429 muestras: 23 400 train, 5 014 validación y 5 015 prueba, `manifest.lock` `0db3ff3e…`). Es el modelo que despliega la app en su exportación TFLite int8. Los artefactos de cada cifra están en el [registro de evidencias](/es/reproducibilidad/evidencias).
 
 ## Modelo oficial
 

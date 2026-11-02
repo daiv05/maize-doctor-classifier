@@ -1,6 +1,6 @@
 # Registro de evidencias
 
-Este registro responde **de dónde sale cada cifra**. Una afirmación puede usarse como resultado cuantitativo solo si apunta a un artefacto versionado o a una ruta remota estable. Los hashes son SHA-256.
+Origen de cada cifra del proyecto: cada afirmación apunta a un artefacto versionado o a una ruta remota estable. Los hashes son SHA-256.
 
 ## Corpus y particiones vigentes
 
@@ -28,8 +28,8 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 | precision, recall, F1 y soporte de las nueve clases | [`classification_report.csv`](../resultados/evidencia/run_20260921_204608_test_classification_report.csv) | `9b18915ab63447f71f572f18f52e443d1b337c20baff33114f4e9b502d49378b` | ficha del run |
 | confusiones exactas, incluidas GLS→NCLB 18 y K→N 15 | [`confusion_matrix.csv`](../resultados/evidencia/run_20260921_204608_test_confusion_matrix.csv) | `0dfdf12e180078d150f48bb96726538da224aa5a96e5b1d910596d2755e65bea` | análisis por clase/N-P-K |
 | ECE 0.139656; confianza aciertos 0.844379 y errores 0.687191 | [`test_calibration.json`](../resultados/evidencia/run_20260921_204608_test_calibration.json) | `8ede2e9d839fdcc87763d1dd4c0a93d235af6b95d0b1f6b1c5cf83422b7cf15d` | calibración |
-| 15 errores con confianza ≥ 0.90 | `predictions.csv` remoto; recuento auditado | `predictions.csv` no versionado | ficha del run; no usar sin esta salvedad |
-| Macro-F1 N/P/K agrupado 0.978385 y accuracy 0.984048 | [`test_grouped_metrics.json`](../resultados/evidencia/run_20260921_204608_test_grouped_metrics.json) | `ca94652860fb7cc53c73fbef5aa7e65c21a560666420f00eeca53bc8f8b44e35` | análisis N/P/K; nunca como métrica principal |
+| 15 errores con confianza ≥ 0.90 | `predictions.csv` remoto; recuento auditado | `predictions.csv` no versionado | ficha del run |
+| Macro-F1 N/P/K agrupado 0.978385 y accuracy 0.984048 | [`test_grouped_metrics.json`](../resultados/evidencia/run_20260921_204608_test_grouped_metrics.json) | `ca94652860fb7cc53c73fbef5aa7e65c21a560666420f00eeca53bc8f8b44e35` | análisis N/P/K |
 | métricas por `lab` y `real` | [`test_by_environment.csv`](../resultados/evidencia/run_20260921_204608_test_by_environment.csv) | `a35eed7ed4d87648dce66171c53ed20a6fabd3f82118817d03d267b1a2bd0f30` | ficha del run |
 | métricas por `source_id` | [`test_by_source.csv`](../resultados/evidencia/run_20260921_204608_test_by_source.csv) | `d744894c8b57c451144fbfdbcf34a63d9c270bed7e8bbe7e882237f49af97e7e` | ficha del run |
 
@@ -54,12 +54,12 @@ Ruta original: `corn-outputs:/main/efficientnet_lite0/20260921_204608/`.
 
 ## Reglas de uso
 
-- Una cifra histórica no se convierte en vigente por aparecer en una página actual.
-- Una métrica por ambiente o fuente debe indicar su soporte y las clases evaluables.
-- `0.6026 ± 0.1240` significa **CV agrupada por fuente** (Macro-F1 sobre las clases presentes en cada pliegue; ± es la semiamplitud del IC95; el Macro-F1 convencional es 0.4359), no LOSO ni el holdout source-grouped actual.
+- Las cifras históricas se marcan como tales y no se mezclan con las del modelo oficial.
+- Las métricas por ambiente o fuente indican su soporte y las clases evaluables.
+- `0.6026 ± 0.1240` significa CV agrupada por fuente (Macro-F1 sobre las clases presentes en cada pliegue; ± es la semiamplitud del IC95; el Macro-F1 convencional es 0.4359), no LOSO ni el holdout source-grouped actual.
 - El resultado agrupando N/P/K responde a otra taxonomía y se reporta separado del Macro-F1 de nueve clases.
-- El multi-seed baseline/LOSO de tres semillas ya está cerrado más abajo. El estudio pareado baseline/HPO tiene 2 de 10 entrenamientos de validación. No se han repetido la validación cruzada ni el LOSO sobre la materialización vigente.
-- El ensamble histórico ya se midió bajo LOSO multicrop con tres seeds: resultado mixto frente a B0 y peor ECE. No equivale a validación general de transferencia ni a selección del modelo formal.
+- El multi-seed baseline/LOSO de tres semillas está en su sección. El estudio pareado baseline/HPO tiene 2 de 10 entrenamientos de validación. La validación cruzada no se repitió sobre la materialización vigente.
+- El ensamble histórico se midió bajo LOSO multicrop con tres semillas: resultado mixto frente a B0 y peor ECE.
 
 ## HPO formal Lite0
 
@@ -67,21 +67,21 @@ Study `efficientnet_lite0_seed42_hpo_v1`: 25 intentos, ganador trial 0, validati
 
 [Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md). Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.
 
-Resultado final: **8 COMPLETE / 15 PRUNED / 2 FAIL**. Test único: Macro-F1 0.9431250727951999, accuracy 0.9752741774675973; no supera el Macro-F1 test del baseline (0.9480021439111501). [Interpretación y límites](/es/experimentos/hpo).
+Resultado final: 8 COMPLETE, 15 PRUNED y 2 FAIL. Test único: Macro-F1 0.9431250727951999, accuracy 0.9752741774675973; no supera el Macro-F1 test del baseline (0.9480021439111501). [Interpretación y límites](/es/experimentos/hpo).
 
 | Evidencia del cierre | SHA-256 | Alcance |
 |---|---|---|
 | [Summary original del baseline](../reproducibilidad/evidencia/hpo_baseline_summary.json) | `20bb0945574913ffa8c736fecbcf25d932e6b87ce3e7a7c59d98439558432346` | Comparación descriptiva de validación/test; no cambia el ganador |
 
-La revisión comprobó concordancia SQLite/CSV, enmienda 60 → 25, código archivado, splits inmutables, ganador por validación, hash del checkpoint y los siete archivos de test. El marcador final registra una evaluación y su lock previo; no se volvió a inferir sobre test durante la revisión/documentación.
+`scripts/pipeline/report_hpo.py` valida la concordancia SQLite/CSV, la enmienda 60 → 25, el código archivado, los splits, el ganador por validación, el hash del checkpoint y los siete archivos de test. El marcador final registra una única evaluación de test posterior al lock.
 
-## Multi-seed pareado baseline/HPO — 2/10 entrenamientos (2026-10-19)
+## Multi-seed pareado baseline/HPO (2 de 10 entrenamientos)
 
-[Protocolo y estado](../experimentos/multiseed.md). Implementación solo de validación con seeds 42, 123, 2026, 3407 y 7777 para baseline y HPO trial 0; se completaron seed 42 de cada configuración. No se ejecutó inferencia sobre el test.
+[Protocolo y estado](../experimentos/multiseed.md). Diseño solo de validación con semillas 42, 123, 2026, 3407 y 7777 para baseline y HPO trial 0; el 2026-10-19 se completó la semilla 42 de cada configuración. No hay inferencia sobre el test.
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [MULTISEED_RESULTS.csv](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/MULTISEED_RESULTS.csv) | `7e3cb23126189bf07e0426e4c1f11c498990f05c7de1a12d87f33f4dca9f0a95` | Dos runs COMPLETE y ocho PENDING |
+| [MULTISEED_RESULTS.csv](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/MULTISEED_RESULTS.csv) | `7e3cb23126189bf07e0426e4c1f11c498990f05c7de1a12d87f33f4dca9f0a95` | Dos runs COMPLETE y ocho sin ejecutar |
 | [MULTISEED_SUMMARY.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/MULTISEED_SUMMARY.json) | `8892a7b7806e73926dc584288cda91b0e6eaa3f1f95a28fa8d9e411bf2b0afd8` | Estadísticos con n = 1 |
 | [PROTOCOL.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/PROTOCOL.json) | `b654609f33bdbda65099c26d3b8475edd061d3e93a49fc2316c6fe4639ddd081` | Configuración, fuentes y hashes |
 | [PREFLIGHT.json](../reproducibilidad/evidencia/multiseed_baseline_vs_hpo/PREFLIGHT.json) | `347a19c5ada41cf99d615d8919303184659b34a15d1d347d4bc463688df58b64` | Verificación de splits |
@@ -91,11 +91,11 @@ La revisión comprobó concordancia SQLite/CSV, enmienda 60 → 25, código arch
 
 Las sumas SHA-256 de los paquetes de cada run están en `SHA256SUMS_baseline` y `SHA256SUMS_hpo_trial_0` de la misma carpeta.
 
-## Multi-seed baseline/LOSO — cerrado 2026-10-01
+## Multi-seed baseline/LOSO
 
-[Informe completo y límites](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md). Nueve resultados: tres `seed=42` reutilizados y seis entrenamientos nuevos (seeds 123 y 2026 por escenario), sin HPO, ensamble, CV ni entrenamiento formal. El primer intento de `maize-diseases/seed_123` fue interrumpido, se preservó fuera de `runs/` y no contribuye a ningún agregado; el segundo terminó y es el resultado válido.
+[Informe completo y límites](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md). Nueve resultados: tres de `seed=42` reutilizados y seis entrenamientos nuevos (semillas 123 y 2026 por escenario). El primer intento de `maize-diseases/seed_123` se interrumpió, se conserva aparte y no entra en ningún agregado.
 
-Los seis `selection.lock.json` nuevos preceden a cualquier test/holdout nuevo. Seis guards registran `evaluation_count=1`, con predicciones reconciliadas por `sample_id`, hash del checkpoint y resultados calculados de nuevo desde el CSV. Los dos LOSO históricos tienen locks previos al holdout; el baseline histórico no tiene un lock pre-test documentado y no se le atribuyó uno retroactivamente. El [registro por evaluación](../reproducibilidad/evidencia/multiseed_source_stability/evaluation_registry.csv) guarda timestamps, IDs y hashes; los tres conteos históricos sin guard nuevo quedan sin valor formal.
+Cada `selection.lock.json` nuevo precede a su evaluación final, que se ejecuta una vez (`evaluation_count=1`). Los dos LOSO de la semilla 42 tienen locks previos al holdout; el baseline de la semilla 42 no tiene un lock previo al test. El [registro por evaluación](../reproducibilidad/evidencia/multiseed_source_stability/evaluation_registry.csv) guarda timestamps, IDs y hashes.
 
 | Afirmación | Evidencia | SHA-256 |
 |---|---|---|
@@ -106,11 +106,11 @@ Los seis `selection.lock.json` nuevos preceden a cualquier test/holdout nuevo. S
 | Orden lock→evaluación, conteo de las seis runs nuevas y procedencia | [evaluation_registry.csv](../reproducibilidad/evidencia/multiseed_source_stability/evaluation_registry.csv) | `00d31902d04945a885d2f437f9bbba0ee148bffacde455d8bcbe327603318ad8` |
 | Rutas y hashes de los nueve checkpoints, manifests, predicciones y locks | [manifest_references.json](../reproducibilidad/evidencia/multiseed_source_stability/manifest_references.json) | `eca316fc57c22384ebf2bc0f012f1c9d9a5fae65ed72c4198c5173dec621d8b5` |
 
-Los locks de manifests son `0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8` (estándar), `6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07` (maize-diseases) y `d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b` (multicrop-disease-maiz). El [preflight de integridad](../reproducibilidad/evidencia/multiseed_source_stability/integrity_preflight.json) registró cero solapamientos por `sample_id`, SHA de archivo y SHA de píxel en cada escenario. Esto descarta fuga **exacta** en la materialización vigente, no casi duplicados ni atajos de fuente. El resultado multicrop es compatible con sensibilidad a la exclusión de esa fuente, sin atribución causal.
+Los locks de manifests son `0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8` (estándar), `6486473932ae2937ff5a97881953d6ffbfac3725aa81170ef2b20a6bb49cbc07` (maize-diseases) y `d8aac805a3d768166a63be664f1a658478926ab7d44a48e617c950f795e1537b` (multicrop-disease-maiz). El [preflight de integridad](../reproducibilidad/evidencia/multiseed_source_stability/integrity_preflight.json) registró cero solapamientos por `sample_id`, SHA de archivo y SHA de píxel en cada escenario. Esto descarta fuga exacta en la materialización vigente, no casi duplicados ni atajos de fuente.
 
-## Ensamble histórico bajo LOSO multicrop — cerrado 2026-10-02
+## Ensamble histórico bajo LOSO multicrop
 
-El [informe completo](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md) documenta la regla original (promedio de tres softmax con pesos iguales), la exclusión de los checkpoints históricos del holdout LOSO, nueve locks de componente previos a evaluación (tres Lite0 previos y seis nuevos), tres guards `evaluation_count=1`, seis entrenamientos nuevos y tres Lite0 reutilizados. La app de entrenamiento y la de evaluación terminaron; un intento B0/seed 42 interrumpido se conserva y no entra al resultado. No hubo ajuste usando el holdout.
+El [informe completo](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md) documenta la regla del ensamble (promedio de tres softmax con pesos iguales), nueve locks de componente previos a la evaluación (tres Lite0 existentes y seis nuevos), tres evaluaciones únicas, seis entrenamientos nuevos y tres Lite0 reutilizados. Un intento B0/semilla 42 interrumpido se conserva y no entra al resultado.
 
 | Afirmación | Evidencia | SHA-256 |
 |---|---|---|
@@ -120,26 +120,26 @@ El [informe completo](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_
 | Timestamps lock→guard→resultado, conteo único y hashes de predicciones | [registro](../reproducibilidad/evidencia/ensemble_loso/ensemble_evaluation_registry.csv) | `7beb03b4e5c06e78502f348f4b549927ed517bd6695d31332c6f4d0b7f67b8da` |
 | Nueve rutas de checkpoints y sus SHA-256, manifest LOSO y materialización congelada | [referencias](../reproducibilidad/evidencia/ensemble_loso/manifest_checkpoint_references.json) | `45100d2b766be46a95f7a6e229031a35d6e5de509f126874215ff70c884c1c28` |
 
-Los CSV completos de predicción, checkpoints, locks y guards permanecen en `corn-outputs:/ensemble_loso/multicrop-disease-maiz/`; la copia local se ignora en Git bajo `outputs/ensemble_loso/multicrop-disease-maiz/`. La observación 5 se considera **resuelta con resultado mixto**: dos seeds favorecen al ensamble y una a B0. Los deltas del test estándar histórico y el LOSO actual son descriptivos y no estrictamente comparables porque cambiaron materialización y clases presentes.
+Los CSV completos de predicción, checkpoints, locks y guards permanecen en `corn-outputs:/ensemble_loso/multicrop-disease-maiz/`; la copia local se ignora en Git bajo `outputs/ensemble_loso/multicrop-disease-maiz/`. Dos semillas favorecen al ensamble y una a B0. Los deltas del test estándar histórico y del LOSO actual no son comparables porque cambian la materialización y las clases presentes.
 
 ## Síntesis y respaldo de modelos
 
-La [síntesis experimental](EXPERIMENTAL_RESULTS_SUMMARY.md) reúne resultados sin elegir modelo. El [índice de respaldo](evidencia/model_package/MODEL_INDEX.csv) enumera 18 checkpoints `best.pth` cotejados con el SHA-256 de su evidencia: los 16 del inventario principal y dos B0/ShuffleNet históricos. La [comparación por run](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) conserva test, LOSO, ECE y clases únicamente cuando existe registro. El archivo de checksums `evidencia/model_package/MODEL_CHECKSUMS.sha256` permite verificar los modelos al reunir las carpetas del respaldo.
+La [síntesis experimental](EXPERIMENTAL_RESULTS_SUMMARY.md) reúne los resultados por protocolo. El [índice de respaldo](evidencia/model_package/MODEL_INDEX.csv) enumera 18 checkpoints `best.pth` cotejados con el SHA-256 de su evidencia: los 16 del inventario principal y dos B0/ShuffleNet históricos. La [comparación por run](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) conserva test, LOSO, ECE y clases únicamente cuando existe registro. El archivo de checksums `evidencia/model_package/MODEL_CHECKSUMS.sha256` permite verificar los modelos al reunir las carpetas del respaldo.
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `9c219112454edf83ace3fcc7a03918b8b4ec9ca35e18f89d7bd97346c7020df2` | Protocolo, resultados, cinco observaciones y límites; sin recomendación de ganador |
-| [Guía del paquete](MODEL_PACKAGE_README.md) | `e7ea074bbb7efecf4adddc645c5846e613c4e7214419a2c30f2d9cfadf373e92` | Contenido, carga, integridad y formato de distribución |
+| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `e75a76f87f5f36959d4a352d749cc2f70cf2fa93feac84d1730029f6330c21f2` | Protocolos, resultados y límites |
+| [Guía del paquete](MODEL_PACKAGE_README.md) | `30c54a09bf7185d8096d40e5a022e3f921d34ac6015ef4f7db0acf6c622cdef6` | Contenido, carga, integridad y distribución |
 | [MODEL_INDEX.csv](evidencia/model_package/MODEL_INDEX.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
 | [MODEL_COMPARISON_RESULTS.csv](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |
 | `MODEL_CHECKSUMS.sha256` | `77940bbbfd9dd8a5a37ee2a65fec618ed28187b7debb45e95370684c4149bb1f` | Comprobación local de los 18 `best.pth` |
 
-El respaldo físico se distribuyó como ocho archivos `.tar.gz` (uno por carpeta `DoctorMaiz_*`); el `sha256sum -c` se ejecuta desde una raíz común que contiene las siete carpetas de checkpoints. Los checkpoints no se versionan en Git. La selección de arquitectura, el entrenamiento formal y la evaluación formal final siguen pendientes de decisión del equipo.
+El respaldo físico se distribuyó como ocho archivos `.tar.gz` (uno por carpeta `DoctorMaiz_*`); el `sha256sum -c` se ejecuta desde una raíz común que contiene las siete carpetas de checkpoints. Los checkpoints no se versionan en Git.
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
 | [FAILED_RUNS_MANIFEST.json](evidencia/model_package/FAILED_RUNS_MANIFEST.json) | `aaab278ad44978252aa32a5a52c5482a515bad3cffa71963477842390983273e` | Dos intentos interrumpidos excluidos del respaldo |
-| [evidence_references.json](evidencia/model_package/evidence_references.json) | `69c69d2d7ab614f43d31d4f204f1e680211ac364c108de577728ea5e6e550184` | Hashes de los documentos fuente del respaldo |
+| [evidence_references.json](evidencia/model_package/evidence_references.json) | `69c69d2d7ab614f43d31d4f204f1e680211ac364c108de577728ea5e6e550184` | Hashes de los documentos fuente |
 
 ## Exportación móvil del modelo oficial
 
@@ -163,3 +163,12 @@ Evidencia en [`resultados/evidencia/etapa2_lite0_20260812_221429/`](../resultado
 | `export/export_summary_int8.json` | `7a3016c3324e903d8e97fb2db7bb3e68768037566fff64c3ae65575023383225` |
 | `export/eval_tflite_int8.json` | `942c1f35c4404c1e08eb104fa079da8dc8864a951957889d38c3dc77344f3fac` |
 | `fairness_por_fuente/fairness_metrics.json` | `1246f3ab71dc808d4c10c7897e22163114789c47122f436d465113d1a236cfc8` |
+| `predictions.csv` (predicción por imagen del test) | `1fe736982c49bbdd509ae7aa121eb772ed88579e707da1f62d71044a51b70e5b` |
+
+## Equidad entre laboratorio y campo
+
+DIR calculado sobre las tres clases presentes en ambos entornos con `scripts/experiments/equidad_dir.py`: modelo oficial 0.9636 (Macro-F1) y 0.9956 (accuracy); etapa 2, 0.9604 y 0.9901. Incluye el F1 por clase y entorno.
+
+| Artefacto | SHA-256 |
+|---|---|
+| [`equidad_dir_clases_compartidas.json`](../resultados/evidencia/equidad_dir_clases_compartidas.json) | `e10c22711659c9df322a943cbed070b6c1016255f56ebf055146e03498ac9f27` |

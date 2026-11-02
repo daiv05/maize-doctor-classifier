@@ -61,7 +61,7 @@ Universidad de El Salvador, Facultad de Ingeniería y Arquitectura, Escuela de S
 
 ### Contexto y Problema
 
-Para entender por qué existe este proyecto conviene partir del peso que tiene la agricultura en El Salvador: representa el **5.6 % del PIB** y es el sustento de más de **2 millones de personas rurales**. El 82.1 % de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz, su principal cultivo, es vulnerable a enfermedades foliares, plagas y deficiencias nutricionales que, sin detección temprana, pueden destruir hasta el 70 % de la cosecha.
+La agricultura representa el 5.6 % del PIB de El Salvador y es el sustento de más de 2 millones de personas rurales. El 82.1 % de los productores son pequeños agricultores, muchos operando a nivel de subsistencia. El maíz, su principal cultivo, es vulnerable a enfermedades foliares, plagas y deficiencias nutricionales que, sin detección temprana, pueden destruir hasta el 70 % de la cosecha.
 
 En zonas rurales el acceso a asistencia agronómica presencial es limitado, por lo que el diagnóstico recae casi exclusivamente en la intuición empírica. Esto provoca detecciones tardías y pérdidas acumuladas significativas.
 
@@ -82,7 +82,7 @@ El sistema evalúa 9 condiciones foliares agrupadas en cuatro categorías fitosa
 | <span class="dm-pill-nut">Nutrición</span> | **Deficiencia de potasio** | Potassium Deficiency | Carencia de K | Secado y necrosis marginal en hojas inferiores | 0 | 621 | 621 |
 | **Total** | **9 clases objetivo** | — | — | — | **3 551** | **29 878** | **33 429** |
 
-> 📊 **Distribución muestral:** Corpus activo con **33 429 muestras elegibles** (3 551 laboratorio + 29 878 campo real) tras 8 exclusiones metodológicas auditadas. Ver [Generalización entre fuentes](/es/resultados/generalizacion) y [Pipeline de Datos](/es/metodologia/pipeline-datos).
+Corpus activo de 33 429 muestras elegibles (3 551 de laboratorio y 29 878 de campo) tras 8 exclusiones. Ver [Generalización entre fuentes](/es/resultados/generalizacion) y [Pipeline de Datos](/es/metodologia/pipeline-datos).
 
 ### Metodología
 

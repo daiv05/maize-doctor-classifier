@@ -1,82 +1,73 @@
-# Resultados experimentales consolidados
+# Resultados experimentales
 
-Estado al 2 de octubre de 2026. Este documento reúne resultados **ya registrados** para que el equipo compare alternativas. No selecciona una arquitectura ni autoriza entrenamiento o evaluación formal. Cada cifra corresponde al protocolo indicado; los test estándar, holdouts LOSO y validaciones internas no son intercambiables. `N/A` significa que no existe una medición comparable en la evidencia consultada.
+Resumen de los experimentos con checkpoint respaldado. Los test estándar, los holdouts LOSO y las validaciones internas miden cosas distintas y no se comparan entre sí. `N/A` indica que no hay una medición comparable.
 
-## Corpus y preguntas experimentales
+## Corpus y protocolos
 
-La materialización canónica tiene 33.429 muestras elegibles de nueve clases. El desarrollo estratificado `seed_42` contiene 23.400 train, 5.014 validation y 5.015 test. Se ensayaron: un baseline EfficientNet-Lite0, HPO de ese modelo, comparación histórica de arquitecturas y ensamble, repetición con tres semillas, exclusión de fuentes y el ensamble bajo exclusión de `multicrop-disease-maiz`. El objetivo de LOSO (*Leave-One-Source-Out*) es entrenar y seleccionar sin una fuente y después medir sobre todas sus muestras elegibles. No es el test estándar, un cambio de semilla ni K-Fold.
+El corpus tiene 33 429 muestras elegibles de nueve clases. El desarrollo estratificado `seed_42` reparte 23 400 de entrenamiento, 5 014 de validación y 5 015 de prueba. Los experimentos son un baseline EfficientNet-Lite0, su optimización de hiperparámetros (HPO), una comparación histórica de arquitecturas y ensamble, la repetición con tres semillas, la exclusión de una fuente (LOSO, *Leave-One-Source-Out*: se entrena y selecciona sin esa fuente y se evalúa sobre todas sus muestras) y el ensamble bajo LOSO.
 
-La [auditoría de integridad](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md) comprobó identidad por `sample_id`, SHA-256 de archivo y píxeles: no encontró solapamientos exactos cross-split en el corpus vigente. Ocho imágenes de cuatro grupos con etiquetas contradictorias ya estaban excluidas. El [análisis por fuente](../reproducibilidad/evidencia/source_analysis/SOURCE_ANALYSIS.md) describió once fuentes y una asociación fuente–etiqueta V de Cramér 0,5030; es una asociación descriptiva, no una demostración de que el modelo use un atajo de procedencia.
-
-Las referencias primarias son el [registro de evidencias](evidencias.md), la [estabilidad multi-seed/LOSO](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md), el [HPO](../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md) y la [evaluación del ensamble LOSO](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md). Las rutas y SHA-256 de los checkpoints respaldados están además en el [índice de modelos](evidencia/model_package/MODEL_INDEX.csv) y la [tabla comparativa](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv), copiados también en el paquete de modelos.
+La [auditoría de píxeles](evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md) no encontró solapamientos exactos entre particiones. El [análisis por fuente](evidencia/source_analysis/SOURCE_ANALYSIS.md) describe once fuentes y una asociación fuente–etiqueta de V de Cramér 0.5030, que es descriptiva. Las fuentes de cada cifra están en el [registro de evidencias](evidencias.md), el [informe de estabilidad multi-semilla y LOSO](evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md), el [informe de HPO](evidencia/hpo_lite0_seed42/HPO_REPORT.md) y el [informe del ensamble LOSO](evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md). Rutas y SHA-256 de los checkpoints: [MODEL_INDEX.csv](evidencia/model_package/MODEL_INDEX.csv) y [MODEL_COMPARISON_RESULTS.csv](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv).
 
 ## Comparación por protocolo
 
-Macro-F1 y ECE son media ± desviación estándar **muestral** cuando aparecen tres semillas; de lo contrario se trata de una sola evaluación. El tamaño exacto, la seed, la mejor época, el checkpoint y el SHA-256 de cada run están en `MODEL_INDEX.csv`. N/P/K agrupado usa otra taxonomía; no sustituye Macro-F1 de nueve clases.
+Con tres semillas se informa media ± desviación estándar muestral; en los demás casos es una sola evaluación. Los valores con más decimales están en `MODEL_COMPARISON_RESULTS.csv`. El Macro-F1 N/P/K agrupado usa otra taxonomía y no reemplaza al de nueve clases.
 
-| Arquitectura / experimento | Seeds | Validation Macro-F1 | Test estándar Macro-F1 | LOSO Macro-F1 | ECE final | N/P/K agrupado | Checkpoints | Bytes por `best.pth` |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| Lite0 baseline vigente | 42, 123, 2026 | 0,956408 ± 0,003723 | 0,943489 ± 0,005158 | N/A | 0,136975 ± 0,002464 | 0,978385 solo seed 42 | 3 | 13.785.701 |
-| Lite0 HPO trial 0 | 42 | 0,957292 | 0,943125 | N/A | 0,060042 | 0,975380 | 1 | 13.801.629 |
-| B0 histórico, test estratificado | no registrada | 0,960982 | 0,948333 | N/A | 0,139307 | 0,978265 | 1 | 16.355.557 |
-| ShuffleNet-V2-x1.0 histórico | no registrada | 0,950249 | 0,932980 | N/A | 0,141539 | 0,974449 | 1 | 5.221.267 |
-| Ensamble histórico de tres modelos | no registrada | N/A | 0,956657 | N/A | N/A | N/A | sin checkpoint único | N/A |
-| Lite0 LOSO `maize-diseases` | 42, 123, 2026 | 0,951942 ± 0,002815 | N/A | 0,993264 ± 0,000600 | 0,131112 ± 0,008749 | N/A | 3 | 13.785.701 |
-| Lite0 LOSO `multicrop-disease-maiz` | 42, 123, 2026 | 0,954282 ± 0,004452 | N/A | 0,901906 ± 0,004422 | 0,046155 ± 0,005557 | N/A | 3 | 13.785.701 |
-| B0 LOSO `multicrop-disease-maiz` | 42, 123, 2026 | ver cada run | N/A | 0,923978 ± 0,009443 | 0,044573 ± 0,012196 | N/A | 3 | 16.355.557 |
-| ShuffleNet LOSO `multicrop-disease-maiz` | 42, 123, 2026 | ver cada run | N/A | ver resultados por seed | ver cada run | N/A | 3 | 5.221.267 |
-| Ensamble LOSO `multicrop-disease-maiz` | 42, 123, 2026 | N/A | N/A | 0,928446 ± 0,004168 | 0,089088 ± 0,006372 | N/A | tres miembros por seed | N/A |
+| Experimento | Semillas | Macro-F1 validación | Macro-F1 test | Macro-F1 LOSO | ECE | N/P/K agrupado | Bytes por `best.pth` |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Lite0 baseline | 42, 123, 2026 | 0.9564 ± 0.0037 | 0.9435 ± 0.0052 | N/A | 0.1370 ± 0.0025 | 0.9784 (semilla 42) | 13 785 701 |
+| Lite0 HPO trial 0 | 42 | 0.9573 | 0.9431 | N/A | 0.0600 | 0.9754 | 13 801 629 |
+| B0 histórico | sin registro | 0.9610 | 0.9483 | N/A | 0.1393 | 0.9783 | 16 355 557 |
+| ShuffleNet-V2-x1.0 histórico | sin registro | 0.9502 | 0.9330 | N/A | 0.1415 | 0.9744 | 5 221 267 |
+| Ensamble histórico de tres modelos | sin registro | N/A | 0.9567 | N/A | N/A | N/A | sin checkpoint único |
+| Lite0 LOSO `maize-diseases` | 42, 123, 2026 | 0.9519 ± 0.0028 | N/A | 0.9933 ± 0.0006 | 0.1311 ± 0.0087 | N/A | 13 785 701 |
+| Lite0 LOSO `multicrop-disease-maiz` | 42, 123, 2026 | 0.9543 ± 0.0045 | N/A | 0.9019 ± 0.0044 | 0.0462 ± 0.0056 | N/A | 13 785 701 |
+| B0 LOSO `multicrop-disease-maiz` | 42, 123, 2026 | ver CSV | N/A | 0.9240 ± 0.0094 | 0.0446 ± 0.0122 | N/A | 16 355 557 |
+| ShuffleNet LOSO `multicrop-disease-maiz` | 42, 123, 2026 | ver CSV | N/A | 0.8959 ± 0.0149 | ver CSV | N/A | 5 221 267 |
+| Ensamble LOSO `multicrop-disease-maiz` | 42, 123, 2026 | N/A | N/A | 0.9284 ± 0.0042 | 0.0891 ± 0.0064 | N/A | tres miembros por semilla |
 
-Los 18 checkpoints físicos respaldados corresponden a las runs individuales de la tabla: 16 exigidos por el inventario principal y dos históricos B0/ShuffleNet incluidos para preservar la comparación original. El Lite0 del ensamble histórico (`20260812_221429`) no está en este respaldo, pero sí en la descarga de artefactos de la etapa 2 (`docs/es/resultados/evidencia/etapa2_lite0_20260812_221429/` conserva su resumen y su evaluación int8), de modo que el ensamble histórico es reconstruible. Las métricas históricas proceden de una materialización anterior y no deben leerse como una comparación pareada con el corpus vigente.
+Los 18 checkpoints respaldados son las corridas individuales de la tabla: 16 del inventario principal y los B0 y ShuffleNet históricos. El Lite0 del ensamble histórico (`20260812_221429`) no está en este respaldo, pero sí en `docs/es/resultados/evidencia/etapa2_lite0_20260812_221429/` (resumen y evaluación int8) y en la descarga de artefactos de la etapa 2. Las métricas históricas proceden de una materialización anterior del corpus y no son comparables punto a punto con el corpus vigente.
 
-## HPO y repetición
+## HPO y semillas
 
-El estudio HPO solicitó 25 intentos: 8 `COMPLETE`, 15 `PRUNED` y 2 `FAIL` por interrupción. El trial 0 se seleccionó **solo por validation** (0,957292 frente a 0,956086 del baseline seed 42); después se hizo una evaluación final única del test, con 0,943125 frente a 0,948002 del baseline seed 42. El test no participó en la búsqueda ni en la poda. Este resultado describe una mejora pequeña en validation que no se trasladó al test; no se lo interpreta como selección de modelo final.
+El estudio HPO ejecutó 25 intentos: 8 completos, 15 podados y 2 fallidos por interrupción. El trial 0 se eligió por validación (0.9573 frente a 0.9561 del baseline) y se evaluó una sola vez en prueba: 0.9431 frente a 0.9480 del baseline. La mejora en validación no se trasladó a prueba y el baseline sigue siendo el modelo oficial.
 
-Las tres semillas 42/123/2026 del baseline dieron test Macro-F1 0,948002 / 0,937867 / 0,944597, media 0,943489 ± 0,005158 y rango 0,937867–0,948002. Para N/P/K en el test estándar, F1 medio por clase fue N 0,891506 ± 0,013902, P 0,927756 ± 0,006590 y K 0,808883 ± 0,014451; los soportes fueron 127, 140 y 93 por seed. La [tabla por clase](../reproducibilidad/evidencia/multiseed_source_stability/baseline_class_multiseed.csv) conserva los valores individuales. Tres semillas permiten observar variación, no establecer significancia estadística fuerte.
+Las tres semillas del baseline dan Macro-F1 de prueba 0.9480, 0.9379 y 0.9446, con media 0.9435 ± 0.0052. En el test estándar, el F1 medio por clase fue 0.8915 ± 0.0139 para nitrógeno, 0.9278 ± 0.0066 para fósforo y 0.8089 ± 0.0145 para potasio, con soportes 127, 140 y 93. Los valores por semilla están en [baseline_class_multiseed.csv](evidencia/multiseed_source_stability/baseline_class_multiseed.csv).
 
 ## Fuente excluida y ensamble
 
-Lite0 LOSO `maize-diseases` obtuvo 0,993124 / 0,992747 / 0,993922 (media 0,993264 ± 0,000600). Lite0 LOSO `multicrop-disease-maiz` obtuvo 0,905490 / 0,896964 / 0,903264 (media 0,901906 ± 0,004422). La segunda fuente contiene 958 `common_rust`, 1.627 `fall_armyworm` y 3.231 `lethal_necrosis` en su holdout de 5.816 muestras. El cambio de fuente también cambia cantidad y distribución de train; la brecha no prueba por sí sola un atajo causal.
+Lite0 sin `maize-diseases` obtuvo 0.9931, 0.9927 y 0.9939 (media 0.9933 ± 0.0006). Lite0 sin `multicrop-disease-maiz` obtuvo 0.9055, 0.8970 y 0.9033 (media 0.9019 ± 0.0044). Esa fuente aporta 958 `common_rust`, 1 627 `fall_armyworm` y 3 231 `lethal_necrosis` al holdout de 5 816 muestras, y su exclusión también cambia la distribución de entrenamiento.
 
-El ensamble histórico promediaba uniformemente las probabilidades softmax de Lite0, B0 y ShuffleNet y decidía por `argmax`. Su delta exacto frente a B0 en el test estratificado anterior fue +0,008323935. Para LOSO multicrop se reutilizaron los tres Lite0 válidos y se entrenaron B0 y ShuffleNet de cada seed sin acceso a esa fuente en train/validation. Los tres locks conjuntos se fijaron antes de inferir; no se ajustaron miembros ni pesos con el holdout.
+El ensamble promedia las probabilidades softmax de Lite0, B0 y ShuffleNet con pesos iguales y decide por `argmax`. En el test estratificado histórico superó a B0 por +0.0083. Bajo LOSO se reutilizaron los tres Lite0 y se entrenaron B0 y ShuffleNet de cada semilla sin acceso a la fuente excluida; los locks conjuntos se fijaron antes de inferir.
 
-| Seed | Lite0 | B0 | ShuffleNet | Ensamble | Δ ensamble − B0 |
+| Semilla | Lite0 | B0 | ShuffleNet | Ensamble | Ensamble − B0 |
 |---:|---:|---:|---:|---:|---:|
-| 42 | 0,905490 | 0,917318 | 0,913037 | 0,930055 | +0,012737 |
-| 123 | 0,896964 | 0,934785 | 0,886505 | 0,931569 | −0,003216 |
-| 2026 | 0,903264 | 0,919831 | 0,888009 | 0,923713 | +0,003883 |
+| 42 | 0.9055 | 0.9173 | 0.9130 | 0.9301 | +0.0127 |
+| 123 | 0.8970 | 0.9348 | 0.8865 | 0.9316 | −0.0032 |
+| 2026 | 0.9033 | 0.9198 | 0.8880 | 0.9237 | +0.0039 |
 
-El delta pareado medio fue +0,004468 ± 0,007993: dos seeds positivas y una negativa. El resultado es **mixto/inestable**; no demuestra superioridad robusta. El ECE medio del ensamble (0,089088) fue peor que el de B0 (0,044573). Los CSV completos de [resultados](../reproducibilidad/evidencia/ensemble_loso/ensemble_loso_results.csv), [componentes](../reproducibilidad/evidencia/ensemble_loso/ensemble_component_results.csv) y [clases](../reproducibilidad/evidencia/ensemble_loso/ensemble_loso_class_metrics.csv) permiten revisar cada medida.
+La diferencia media frente a B0 es +0.0045 ± 0.0080: positiva en dos semillas y negativa en una. El ECE del ensamble (0.0891) es peor que el de B0 (0.0446). Los resultados completos están en [ensemble_loso_results.csv](evidencia/ensemble_loso/ensemble_loso_results.csv), [ensemble_component_results.csv](evidencia/ensemble_loso/ensemble_component_results.csv) y [ensemble_loso_class_metrics.csv](evidencia/ensemble_loso/ensemble_loso_class_metrics.csv).
 
-## Otros experimentos documentados
+F1 por clase de B0 y del ensamble en la fuente excluida (CR `common_rust`, FA `fall_armyworm`, LN `lethal_necrosis`):
 
-Estas cifras responden preguntas distintas y no entran al inventario principal de 18 checkpoints. Se conservan aquí para dar contexto, no para ordenar modelos.
-
-| Experimento | Resultado registrado | Alcance |
-|---|---|---|
-| [Benchmark source-grouped](../resultados/generalizacion.md), run `20260921_180112` | Validation Macro-F1 0,266927; test Macro-F1 0,400665 | Fuentes indivisibles por split; no es LOSO ni el test estándar |
-| [CV estratificada y agrupada histórica](../resultados/evidencia/kfold_2x2_comparacion.csv) | 0,931145 ± 0,009872 estratificada; 0,602575 ± 0,123966 agrupada (± es la semiamplitud del IC95; la agrupada es Macro-F1 sobre clases presentes en cada pliegue, el convencional es 0,4359) | Cinco pliegues; no sustituye las tres seeds ni el LOSO vigente |
-| [Clasificación con corpus segmentado](../resultados/evidencia/manifiesto_corridas.csv), run `20260907_163546` | Test Macro-F1 0,719082; accuracy 0,890329 | Resultado exploratorio; summary/checkpoint no versionados aquí |
-
-Las pruebas históricas de explicabilidad, equidad y exportación tienen evidencias en el [registro general](evidencias.md), pero no se agregan a la tabla principal porque no ofrecen el mismo par protocolo–métrica–checkpoint. Tampoco se vuelve a inferir ni se recalcula el test durante esta síntesis.
-
-| Seed | CR F1 B0 → ensamble | FA F1 B0 → ensamble | LN F1 B0 → ensamble |
+| Semilla | CR B0 → ensamble | FA B0 → ensamble | LN B0 → ensamble |
 |---:|---:|---:|---:|
-| 42 | 0,989659 → 0,993254 | 0,902130 → 0,908673 | 0,860166 → 0,888239 |
-| 123 | 0,995320 → 0,994286 | 0,911542 → 0,903268 | 0,897493 → 0,897152 |
-| 2026 | 0,989659 → 0,992739 | 0,903670 → 0,893421 | 0,866164 → 0,884980 |
+| 42 | 0.9897 → 0.9933 | 0.9021 → 0.9087 | 0.8602 → 0.8882 |
+| 123 | 0.9953 → 0.9943 | 0.9115 → 0.9033 | 0.8975 → 0.8972 |
+| 2026 | 0.9897 → 0.9927 | 0.9037 → 0.8934 | 0.8662 → 0.8850 |
 
-En `lethal_necrosis`, B0 tuvo recall medio 0,777778 ± 0,031967 y F1 0,874607 ± 0,020045; el ensamble 0,802538 ± 0,010260 y 0,890124 ± 0,006301. Es una mejora **descriptiva de esa clase** en el agregado, no una conclusión global: FA empeora en F1 medio y LN no mejora en la seed 123.
+En `lethal_necrosis` el recall medio pasa de 0.7778 ± 0.0320 (B0) a 0.8025 ± 0.0103 (ensamble) y el F1 de 0.8746 ± 0.0200 a 0.8901 ± 0.0063. La mejora es de esa clase; `fall_armyworm` empeora en F1 medio.
 
-## Cierre de las cinco observaciones
+## Otros experimentos
 
-1. **Una sola semilla:** atendida con tres seeds para baseline estándar y las dos fuentes LOSO prioritarias; se informa SD muestral.
-2. **Procedencia:** `maize-diseases` y `multicrop-disease-maiz` medidas con LOSO multi-seed. La asociación fuente–etiqueta y la caída multicrop son descriptivas, no causales.
-3. **Quince grupos píxel-idénticos históricos:** no reproducidos entre las 33.429 muestras elegibles vigentes. Cuatro grupos contradictorios (ocho archivos) ya estaban excluidos del contrato de datos.
-4. **0,68 % de test con gemelo en train histórico:** no reproducido; la auditoría vigente halló `0/5015 = 0 %` de duplicados exactos por píxeles entre splits.
-5. **Ensamble fuera de fuente:** medido en LOSO multicrop con tres seeds; resultado mixto frente a B0. El control extra `maize-diseases` no se ejecutó porque requeriría dos entrenamientos nuevos.
+| Experimento | Resultado | Alcance |
+|---|---|---|
+| [Benchmark source-grouped](../resultados/generalizacion.md), corrida `20260921_180112` | Macro-F1 de validación 0.2669 y de prueba 0.4007 | Fuentes completas por partición; no es LOSO ni el test estándar |
+| [CV estratificada y agrupada](../resultados/evidencia/kfold_2x2_comparacion.csv) | 0.9311 ± 0.0099 estratificada y 0.6026 ± 0.1240 agrupada (± es la semiamplitud del IC95; la agrupada es el Macro-F1 sobre las clases presentes en cada pliegue, el convencional es 0.4359) | Cinco pliegues, Lite0 de la etapa 2 |
+| [Corpus segmentado](../resultados/evidencia/manifiesto_corridas.csv), corrida `20260907_163546` | Macro-F1 de prueba 0.7191 y accuracy 0.8903 | Exploratorio; summary y checkpoint no versionados |
 
-## Alcance pendiente
+## Integridad de los datos
 
-No se ejecutó PHash, por lo que los casi duplicados siguen sin medir. Solo dos fuentes fueron priorizadas en el LOSO inicial y el ensamble se midió bajo una sola exclusión de fuente. El test histórico se ha observado repetidamente; ninguna cifra de esta síntesis se empleó para reajustar configuraciones. Quedan separados y pendientes la comparación formal baseline/HPO de cinco semillas (2/10 entrenamientos de validación, 2026-10-19), CV y LOSO final general, selección por el equipo, entrenamiento formal y evaluación final formal. El respaldo de modelos es una copia verificable de artefactos existentes, no una nueva ejecución experimental.
+- Los quince grupos de píxeles idénticos y el 0.68 % de prueba con gemelo en entrenamiento que reportó una materialización anterior no se reproducen en las 33 429 muestras vigentes: hay 0 de 5 015 imágenes de prueba con duplicado exacto entre particiones.
+- Cuatro grupos con etiquetas contradictorias (ocho archivos) están excluidos del contrato de datos.
+- No se ejecutó PHash, de modo que los casi duplicados no están medidos.
+- El LOSO se midió con dos fuentes y el ensamble bajo una sola exclusión; la comparación pareada baseline/HPO de cinco semillas completó 2 de 10 entrenamientos (solo validación).
