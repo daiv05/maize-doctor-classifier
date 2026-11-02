@@ -180,7 +180,7 @@ La aplicaci\'on m\'ovil constituye el punto de interacci\'on directa en manos de
 \item \textbf{Inferencia local aut\'onoma (\textit{Offline}):} Ejecuci\'on integral del motor neuronal en el procesador del tel\'efono mediante modelos cuantizados, asegurando diagn\'osticos instant\'aneos en el surco sin requerir conexi\'on a internet ni datos m\'oviles.
 \item \textbf{Captura asistida con marco gu\'ia foliar:} Interfaz de c\'amara con ret\'icula visual ergon\'omica que orienta al agricultor a encuadrar la l\'amina de la hoja, reduciendo la captura de fondos distractores (suelo, sombras o maleza) antes de procesar la imagen.
 \item \textbf{Detecci\'on preventiva de capturas an\'omalas (Seguridad OOD):} M\'odulo de rechazo ante muestras fuera de dominio capaz de evaluar si la captura no corresponde a una hoja de ma\'iz o presenta incertidumbre excesiva, notificando un estado de «No reconocida» para evitar diagn\'osticos enga\~nosos.
-\item \textbf{Diagn\'ostico y valoraci\'on de severidad:} Presentaci\'on de resultados en lenguaje claro y accesible, categorizando la afecci\'on con una escala visual de severidad en tres niveles (baja, moderada y cr\'itica) para apoyar la toma de decisiones.
+\item \textbf{Diagn\'ostico y valoraci\'on de severidad:} Presentaci\'on de resultados en lenguaje claro y accesible, con una gu\'ia visual de severidad en tres niveles (baja, moderada y cr\'itica) que el productor compara con su hoja; la aplicaci\'on no mide el da\~no.
 \item \textbf{Cat\'alogo de manejo integrado y bioinsumos:} Gu\'ia fitosanitaria pr\'actica vinculada al diagn\'ostico que ofrece alternativas de bioinsumos y manejo cultural de bajo costo, previniendo gastos perjudiciales en agroqu\'imicos inapropiados.
 \item \textbf{Historial y georreferenciaci\'on de muestreos:} Registro local persistente de cada evaluaci\'on (fecha, diagn\'ostico, severidad y ubicaci\'on GPS) para que el agricultor monitoree la evoluci\'on de sus parcelas a lo largo del ciclo agr\'icola.
 \item \textbf{Contribuci\'on comunitaria y sincronizaci\'on voluntaria:} M\'odulo opcional que permite almacenar im\'agenes validadas localmente para compartirlas cuando se cuente con conectividad, contribuyendo al monitoreo fitosanitario colectivo.
@@ -199,7 +199,7 @@ El n\'ucleo de aprendizaje profundo embebido abarca:
 Con el fin de delimitar con precisi\'on la cobertura de la investigaci\'on, se definen los siguientes l\'imites operacionales:
 \begin{itemize}
 \item \textbf{L\'imite biol\'ogico y sintom\'atico:} El sistema se restringe exclusivamente al an\'alisis de afecciones visibles en la l\'amina foliar del ma\'iz. Quedan fuera del alcance patolog\'ias radiculares, afecciones del tallo interno sin expresi\'on foliar y el monitoreo de plagas subterr\'aneas.
-\item \textbf{L\'imite de plataforma y compatibilidad de hardware:} La soluci\'on m\'ovil se enfoca en dispositivos con sistema operativo Android 8.0 o superior con arquitectura de procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 2~GB de memoria RAM. No se contempla desarrollo nativo para iOS ni para tel\'efonos sin capacidades inteligentes.
+\item \textbf{L\'imite de plataforma y compatibilidad de hardware:} La soluci\'on m\'ovil se enfoca en dispositivos con sistema operativo Android 7.0 (API 24) o superior, el m\'inimo del proyecto, con arquitectura de procesador ARM (v7 o v8); las pruebas en dispositivo se hicieron en Android 15, c\'amara trasera con enfoque autom\'atico y al menos 2~GB de memoria RAM. No se contempla desarrollo nativo para iOS ni para tel\'efonos sin capacidades inteligentes.
 \item \textbf{L\'imite de infraestructura y red:} La aplicaci\'on est\'a dise\~nada para operar desconectada; no existe dependencia de servicios en la nube para emitir el diagn\'ostico, ni se incluye sincronizaci\'on transaccional en tiempo real entre m\'ultiples terminales.
 \item \textbf{L\'imite legal y de diagn\'ostico fitopatol\'ogico:} La herramienta constituye un asistente t\'ecnico de orientaci\'on y apoyo agron\'omico para el productor. En ning\'un caso reemplaza los ensayos fitopatol\'ogicos de laboratorio (cultivos, aislamiento microbiano o pruebas PCR), ni sustituye los dict\'amenes oficiales de cuarentena o certificaci\'on fitosanitaria del Ministerio de Agricultura y Ganader\'ia.
 \end{itemize}
@@ -311,7 +311,7 @@ La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la 
 
 \section{Presupuesto Global Estimado}
 
-El presupuesto del desarrollo y evaluaci\'on de la soluci\'on anal\'itica y embebida abarc\'o dos categor\'ias esenciales: recurso humano especializado e infraestructura de c\'omputo acelerado en la nube (Tablas~\ref{tab:presupuesto_rh} a~\ref{tab:presupuesto_resumen}). Las horas de GPU se tomaron de los registros de ejecuci\'on del repositorio; el resto de rubros son proyecciones.
+El presupuesto del desarrollo y evaluaci\'on de la soluci\'on anal\'itica y embebida abarc\'o dos categor\'ias esenciales: recurso humano especializado e infraestructura de c\'omputo acelerado en la nube (Tablas~\ref{tab:presupuesto_rh} a~\ref{tab:presupuesto_resumen}). Las horas de GPU son la suma de las duraciones de los 25 ensayos del estudio de optimizaci\'on (\texttt{trials.csv}, 45~523~s), incluidos los dos ensayos interrumpidos, que aportan 20~102~s; el resto de rubros son proyecciones.
 
 \begin{table}[H]
 \caption{Presupuesto proyectado: C\'alculo del salario base por rol (280 horas)}
@@ -365,7 +365,7 @@ Los salarios mensuales corresponden al punto medio de la escala de referencia de
 \toprule
 \textbf{Rubro} & \textbf{Detalle T\'ecnico} & \textbf{M\'etrica / Cantidad} & \textbf{Subtotal} \\
 \midrule
-Instancias GPU Modal & NVIDIA A10G (24 GB VRAM) & 12.65 horas del estudio de optimizaci\'on $\times$ \$1.10/h & \$13.92 \\
+Instancias GPU Modal & NVIDIA A10G (24 GB VRAM) & 12.65 horas del estudio de optimizaci\'on (7.06 sin los ensayos interrumpidos) $\times$ \$1.10/h de lista & \$13.92 \\
 Almacenamiento Cloud & Cloud Volumes y respaldos de pesos & 100 GB $\times$ 6 meses & \$30.00 \\
 Licenciamiento software & PyTorch, Expo, React Native, Optuna & Licencias Open Source / MIT & \$0.00 \\
 \midrule
@@ -394,4 +394,4 @@ Servicios de c\'omputo en la nube (GPU/Storage) & \$43.92 & 0.54\% \\
 \end{singlespace}
 \end{table}
 
-La ejecuci\'on financiera demuestra que, gracias al aprovechamiento de tecnolog\'ias de c\'odigo abierto y la utilizaci\'on estrat\'egica de cl\'usteres serverless con parada autom\'atica, el costo directo de infraestructura computacional fue de \$43.92 USD, de los cuales \$13.92 corresponden a las 12.65 horas de GPU registradas para el estudio de optimizaci\'on (incluidos los intentos fallidos) y \$30.00 al almacenamiento. El c\'omputo de los dem\'as entrenamientos no se contabiliza.
+La ejecuci\'on financiera demuestra que, gracias al aprovechamiento de tecnolog\'ias de c\'odigo abierto y la utilizaci\'on estrat\'egica de cl\'usteres serverless con parada autom\'atica, el costo directo de infraestructura computacional se estima en \$43.92 USD, de los cuales \$13.92 corresponden a las 12.65 horas de GPU del estudio de optimizaci\'on a tarifa de lista (incluidos los intentos interrumpidos) y \$30.00 son una proyecci\'on de almacenamiento. El c\'omputo de los dem\'as entrenamientos no se contabiliza.
