@@ -33,7 +33,7 @@ Esta secci\'on reporta el estado de cada criterio de \'exito definido en la Tabl
 \'Epocas de la b\'usqueda $\le 50\%$ del m\'aximo te\'orico & 453 de 1\,500 \'epocas (30.2\%) en 25 ensayos. & Cumple \\
 Macro $F_1 \ge 0.85$ en prueba & 0.9480 (baseline vigente, una semilla); 0.9435 $\pm$ 0.0052 en tres semillas. & Cumple \\
 Recall de MLN $\ge 95\%$ en prueba & 100.0\% en la partici\'on hist\'orica del ensamble; 0.72--0.81 bajo LOSO. & Cumple solo en partici\'on de desarrollo \\
-DIR $\ge 0.80$ entre laboratorio y campo & 0.9604 (Macro $F_1$) y 0.9901 (exactitud), tres clases compartidas. & Cumple \\
+DIR $\ge 0.80$ entre laboratorio y campo & 0.9636 (Macro $F_1$) y 0.9956 (exactitud) con el modelo oficial, en las tres clases compartidas; la roya de campo (16 im\'agenes) queda en $F_1 = 0.77$. & Cumple \\
 Solapamiento cero entre particiones & 0 de 5~015 im\'agenes de prueba en entrenamiento o validaci\'on, por SHA-256 y por p\'ixeles; 33~437 archivos verificados. No incluye similitud perceptual. & Cumple \\
 Int8 de 20~MB o menos & 3.74~MB (3~743~728 bytes) para el modelo oficial \texttt{20260921\_204608}. & Cumple \\
 Preprocesado e inferencia $\le 300$~ms en tel\'efono de gama media & Medianas de 98~ms de preprocesado (p95 de 279~ms) y 23~ms de inferencia con el modelo Int8 en un Motorola edge 40 neo (MediaTek Dimensity 7030). & Cumple \\
@@ -256,7 +256,7 @@ Planta sana & 10 & 2 \\
 
 \subsection{Capacidades del diagn\'ostico: equidad entre entornos}
 
-Se audit\'o el checkpoint de agosto del Lite0 (\texttt{20260812\_221429}), desglosando la prueba entre im\'agenes en condiciones de laboratorio ($N=532$) y campo aut\'entico ($N=4~483$). En las tres clases compartidas (roya, mancha gris y tiz\'on), el \textit{Disparate Impact Ratio} fue $DIR = 0.9604$ sobre Macro $F_1$ y $DIR = 0.9901$ sobre exactitud, por encima del umbral de 0.80 de la regla de los cuatro quintos (Figura~\ref{fig:fairness_panel}). El umbral mide la paridad de resultados entre grupos y no sustituye el an\'alisis de tasas de error por clase, que se presenta a continuaci\'on.
+El \textit{Disparate Impact Ratio} (DIR) divide el desempe\~no del entorno con peor resultado entre el del mejor; la regla de los cuatro quintos lo considera aceptable desde 0.80. Como el subconjunto de laboratorio solo contiene tres clases (roya, mancha gris y tiz\'on), el c\'alculo se restringe a esas tres clases en ambos entornos: comparar el Macro $F_1$ de laboratorio (tres clases) con el de campo (nueve clases) mezclar\'ia conjuntos distintos. Con el modelo oficial (\texttt{20260921\_204608}; 533 im\'agenes de laboratorio y 1~120 de campo en esas clases), el Macro $F_1$ es 0.9383 en laboratorio y 0.9041 en campo, de modo que $DIR = 0.9636$; sobre exactitud, $DIR = 0.9956$. Con el Lite0 de la etapa 2 (\texttt{20260812\_221429}) los valores fueron 0.9604 y 0.9901. Ambos modelos superan el umbral, pero un DIR cercano a uno no descarta disparidades por clase ni la dependencia del fondo (Secci\'on~\ref{sec:dependencia_fondo}). El desglose por clase y las figuras siguientes corresponden al checkpoint de la etapa 2 (Figura~\ref{fig:fairness_panel}).
 
 \begin{figure}[H]
 \centering
@@ -277,7 +277,7 @@ Se audit\'o el checkpoint de agosto del Lite0 (\texttt{20260812\_221429}), desgl
 
 El an\'alisis granular de la tasa de falsos negativos ($FNR$) mostr\'o una asimetr\'ia relevante, aunque con muestras peque\~nas en campo (Tabla~\ref{tab:fnr_c3}):
 \begin{itemize}
-\item La \textbf{Roya Com\'un} es casi infalible en laboratorio ($FNR = 0.31\%$, 1 fallo en 322 casos) pero \textbf{falla en el 31.25\% de los casos en campo real} (5 fallos en 16 casos). Esto ocurre porque el 95\% del corpus hist\'orico de roya proviene de hojas recortadas sobre mesas de laboratorio.
+\item La \textbf{Roya Com\'un} es casi infalible en laboratorio ($FNR = 0.31\%$, 1 fallo en 322 casos) pero \textbf{falla en el 31.25\% de los casos en campo real} (5 fallos en 16 casos). Esto ocurre porque el 95\% del corpus hist\'orico de roya proviene de hojas recortadas sobre mesas de laboratorio. Con el modelo oficial la diferencia persiste: $F_1 = 0.998$ en laboratorio frente a 0.77 en campo; con solo 16 im\'agenes de campo la estimaci\'on es poco estable.
 \item La \textbf{Mancha Gris} exhibe el patr\'on inverso: $15.58\%$ de error en laboratorio frente a solo $5.16\%$ en campo aut\'entico.
 \end{itemize}
 
@@ -299,7 +299,7 @@ Tiz\'on Foliar (NCLB) & 3.01\% & 133 & 1.01\% & 892 \\
 \end{singlespace}
 \end{table}
 
-\subsection{Capacidades del diagn\'ostico: dependencia del fondo}
+\subsection{Capacidades del diagn\'ostico: dependencia del fondo}\label{sec:dependencia_fondo}
 
 Para desentra\~nar si el modelo miraba la hoja o el entorno, se ejecut\'o una auditor\'ia de oclusi\'on espacial geom\'etrica sobre las 5~015 muestras de prueba frente a un predictor nulo constante (Tabla~\ref{tab:ablacion_c3} y Figura~\ref{fig:ablacion_grafico}).
 
