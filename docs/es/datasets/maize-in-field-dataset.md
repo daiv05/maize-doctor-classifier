@@ -49,7 +49,7 @@ Este dataset aporta solo **300 imágenes de campo real de Roya común**. Sumando
 :::
 
 <ImageCarousel :images="[
-	{ src: '/maize-in-field-dataset/117_CIMG3853_1-121-2.JPG', alt: 'Mancha gris de la hoja, a luz clara y con dedos presentes en la parte inferior izquierda' }, { src: '/maize-in-field-dataset/128_CIMG3864_1-7-2.JPG', alt: 'Mancha gris de la hoja, fondo negro con tarjeta verde y manos presentes' }, { src: '/maize-in-field-dataset/157_CIMG3893_1-29-1.JPG', alt: 'Luz y brillo altos, con  tarjeta verde en el fondo' }, { src: '/maize-in-field-dataset/173_CIMG3909_1-220-2.JPG', alt: 'Fondo negro con tarjeta verde y manos presentes' }, { src: '/maize-in-field-dataset/175_CIMG3911_1-190-1.JPG', alt: 'Fondo negro con tarjeta verde y manos presentes' } ]" />
+	{ src: '/maize-in-field-dataset/117_cimg3853_1-121-2.jpg', alt: 'Mancha gris de la hoja, a luz clara y con dedos presentes en la parte inferior izquierda' }, { src: '/maize-in-field-dataset/128_cimg3864_1-7-2.jpg', alt: 'Mancha gris de la hoja, fondo negro con tarjeta verde y manos presentes' }, { src: '/maize-in-field-dataset/157_cimg3893_1-29-1.jpg', alt: 'Luz y brillo altos, con  tarjeta verde en el fondo' }, { src: '/maize-in-field-dataset/173_cimg3909_1-220-2.jpg', alt: 'Fondo negro con tarjeta verde y manos presentes' }, { src: '/maize-in-field-dataset/175_cimg3911_1-190-1.jpg', alt: 'Fondo negro con tarjeta verde y manos presentes' } ]" />
 
 ## Tamaño y distribución
 

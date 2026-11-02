@@ -65,7 +65,7 @@ El Lite0 de la etapa 2 acierta 39 de las mismas 97, por lo que la brecha no depe
 
 | Artefacto | Resultado |
 |---|---|
-| ONNX y TFLite FP32 | Paridad aprobada (máx. \|Δprob\| 3e-6 y 0) |
+| ONNX y TFLite FP32 | Paridad aprobada (máx. \|Δprob\| 3e-6 en ONNX y 4e-7 en TFLite) |
 | TFLite int8 `model_int8.tflite` | 3 743 728 B (72.9 % menos que el FP32 de 13.79 MB), SHA-256 `bb31467a…` |
 | Prueba completa (5 015), int8 | Macro-F1 0.9489 y accuracy 97.87 % (PyTorch 0.9480 y 97.81 %); acuerdo 99.74 % |
 | Int8 por entorno | Laboratorio (n = 533) accuracy 96.81 %, Macro-F1 0.9420; campo (n = 4 482) accuracy 97.99 %, Macro-F1 0.9208 |

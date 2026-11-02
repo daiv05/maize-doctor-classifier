@@ -40,7 +40,7 @@ Cada carpeta posee 17 subcarpetas, cada una con una técnica de data augmentatio
 - Las imágenes tienen una resolución bastante correcta para el entrenamiento (256 x 256 px, aprox +20kb por imagen).
 
 <ImageCarousel :images="[
-    { src: '/corn-leaf-desease/102_contrast_adjusted.png', alt: 'Imagen con ajuste de contraste (Gray_leaf_spot)' }, { src: '/corn-leaf-desease/102_cropped.png', alt: 'Imagen recortada (Gray_leaf_spot)' }, { src: '/corn-leaf-desease/126_laplacian.png', alt: 'Imagen con filtro de Laplaciano (Gray_leaf_spot)' } ]" />
+    { src: '/corn-leaf-diseases/102_contrast_adjusted.png', alt: 'Imagen con ajuste de contraste (Gray_leaf_spot)' }, { src: '/corn-leaf-diseases/102_cropped.png', alt: 'Imagen recortada (Gray_leaf_spot)' }, { src: '/corn-leaf-diseases/126_laplacian.png', alt: 'Imagen con filtro de Laplaciano (Gray_leaf_spot)' } ]" />
 
 ## Tamaño y distribución
 

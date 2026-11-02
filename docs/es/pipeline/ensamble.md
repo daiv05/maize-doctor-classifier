@@ -1,6 +1,6 @@
 # Ensamble Multimodelo por Soft Voting
 
-> [!NOTE] Ámbito metodológico de este diseño Este componente describe la combinación de las tres arquitecturas sobre el conjunto de prueba estratificado de desarrollo (`seed_42`). Para la auditoría de robustez del ensamble ante fuentes no vistas (exclusión completa LOSO en 3 semillas), consulte [Evaluación del Ensamble Fuera de Dominio](/es/auditoria/ensamble-loso).
+> [!NOTE] Ámbito metodológico de este diseño Este componente describe la combinación de las tres arquitecturas sobre el conjunto de prueba estratificado de desarrollo (`seed_42`). Para la auditoría de robustez del ensamble ante fuentes no vistas (exclusión completa LOSO en 3 semillas), consulte [Evaluación del Ensamble Fuera de Dominio](/es/resultados/generalizacion#ensamble-bajo-loso).
 
 Cuando tres expertos agrícolas observan una misma hoja con síntomas dudosos, es probable que se fijen en detalles diferentes: uno prestará más atención a las manchas cloróticas centrales, otro a las quemaduras del borde y el tercero a la textura de la lámina. Si combinamos sus opiniones, el veredicto final suele ser mucho más acertado que el de cualquiera de ellos por separado.
 
