@@ -47,6 +47,7 @@ Todas las anotaciones son polígonos de segmentación (312 líneas, 0 bbox), con
 - **Resolución alta y vertical.** Predomina 3024 x 4032 px (194 imágenes), típico de cámara de teléfono en orientación retrato. Sin redimensionado por parte de Roboflow.
 - La clase `Healthy` **no se integró** en esta incorporación: `healthy` ya es la clase mayoritaria del corpus (8 740 elegibles en la materialización vigente; 8 744 en la instantánea de agosto) y no necesita refuerzo.
 - Sin augmentation aplicada.
+- En el corpus vigente aporta 158 muestras (76 `nitrogen_deficiency`, 35 `phosphorus_deficiency`, 47 `potassium_deficiency`), repartidas 107 / 26 / 25 entre train, validación y prueba de `seed_42`.
 
 ## Tamaño y distribución
 

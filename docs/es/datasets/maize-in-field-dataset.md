@@ -45,7 +45,7 @@ Para este proyecto no se tomarán en cuenta las clases "Otros" y "Síntoma de en
 - Las imágenes tienen una resolución muy alta (3600 x 2700 px, aprox +1.6 MB por imagen), lo que puede requerir un preprocesamiento para reducir su tamaño antes de ser utilizadas.
 
 ::: warning Roya común - clase crítica de campo real
-Este dataset aporta solo **300 imágenes de campo real de Roya común**. Sumando las ~99 del dataset de África, el **total de campo real para esta clase en todo el proyecto es ~399 imágenes**, frente a ~5 775 de NCLB y ~5 437 de GLS. Roya común es la candidata prioritaria a data augmentation sobre imágenes de campo antes del entrenamiento.
+El repositorio tiene **300 imágenes de campo real de Roya común**, de las que el corpus vigente conserva **106**: son las únicas imágenes de roya de campo del corpus, frente a 2 150 de laboratorio. De esta fuente el corpus integra además 606 de `gray_leaf_spot` y 140 de `northern_corn_leaf_blight`.
 :::
 
 <ImageCarousel :images="[

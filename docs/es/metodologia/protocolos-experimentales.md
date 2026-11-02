@@ -21,7 +21,7 @@ Una métrica solo es comparable con otra si comparten pregunta, corpus, partici�
 - Macro-F1 N/P/K agrupado: transforma las tres deficiencias en una categoría y responde otra pregunta. No reemplaza la métrica de nueve clases.
 - Macro-F1 por ambiente/fuente: puede promediar conjuntos diferentes de clases. No se interpreta como comparación causal sin revisar el soporte.
 
-El resultado histórico `0.6026 ± 0.1240` (Macro-F1 sobre las clases presentes en cada pliegue, ± semiamplitud del IC95; el Macro-F1 convencional es `0.4359`) procede de CV agrupada por fuente de cinco pliegues (`kfold_2x2_comparacion.csv`), no del holdout `seed_42_source_grouped` ni de un promedio LOSO. La ejecución LOSO tiene artefactos propios bajo `docs/es/provenance/evidencia/` y se usa para análisis por clase/fuente.
+El resultado histórico `0.6026 ± 0.1240` (Macro-F1 sobre las clases presentes en cada pliegue, ± semiamplitud del IC95; el Macro-F1 convencional es `0.4359`) procede de CV agrupada por fuente de cinco pliegues (`kfold_2x2_comparacion.csv`), no del holdout `seed_42_source_grouped` ni de un promedio LOSO. La ejecución LOSO tiene artefactos propios en `docs/es/reproducibilidad/evidencia/loso_baseline/` (y `loso_gate*.csv` en `docs/es/provenance/evidencia/`) y se usa para análisis por clase/fuente.
 
 ## Regla de selección
 

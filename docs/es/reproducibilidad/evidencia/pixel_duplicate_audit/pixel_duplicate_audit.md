@@ -5,8 +5,7 @@
 - Estado: complete; fecha UTC: 2026-09-29T18:20:00.910892+00:00.
 - Commit: ef3ebe67c05ed1ad18fed39ad0f7055d028440a2 (dirty=True).
 - Fuente canónica: Modal Volume corn-clean:/clean; verified against corn-outputs:/splits/seed_42.
-- No se utilizó el ZIP local filtrado de aproximadamente 28 360 imágenes.
-- Master manifest SHA-256: 64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163.
+- Master manifest SHA-256 (según el lock): 64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163.
 - manifest.lock.json SHA-256: 0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8.
 - 33,429 muestras elegibles y 8 exclusiones verificadas.
 - Preflight: 33,437/33,437 rutas y SHA correctos; errores de decodificación: 0.
@@ -42,13 +41,11 @@ Se conserva seed_42. Las métricas baseline y HPO no requieren invalidación por
 ## Configuración y artefactos
 
 - `config_sha256` del lock: 8f0e560fe78267bb3f96f907d4668e29f1dd22d6a6645f474a84d1fad4db4730. Es el SHA-256 de los parámetros efectivos del split (`split_parameters`), no del archivo dataset.yaml.
-- Parámetros coherentes con el lock y con dataset.yaml: sí.
+- `config_sha256` igual al SHA-256 de `split_parameters` del lock, y semilla y clases del lock iguales a las de dataset.yaml: sí.
 
-Los hashes de los CSV canónicos coinciden con el lock.
+Los hashes de master_manifest.csv, train.csv, val.csv y test.csv se copian del lock; esta auditoría no los recalcula.
 
 - pixel_hash_inventory.csv: una fila por muestra elegible.
 - pixel_excluded_images.csv: ocho exclusiones auditadas por separado.
 - pixel_label_conflicts.csv: los cuatro conflictos ya excluidos.
-- corpus_preflight.json: resumen de la correspondencia de rutas y SHA de archivo (33 437 verificados).
-
-La copia de trabajo en /tmp/doctormaiz_pixel_audit_20260929/ contiene los manifiestos y una descarga local temporal del corpus. La fuente canónica sigue siendo corn-clean:/clean. La copia puede eliminarse con autorización posterior del usuario y no debe incluirse en Git.
+- corpus_preflight.json: resumen de la correspondencia de rutas y SHA de archivo.

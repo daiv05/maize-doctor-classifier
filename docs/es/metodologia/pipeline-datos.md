@@ -28,7 +28,7 @@ La implementación está en `scripts/pipeline/create_splits.py`, `src/data/ident
 | `sample_id` | quién es la muestra lógica | `SHA256(ruta relativa normalizada en UTF-8)` | unión estable de splits, batches y predicciones |
 | `sha256` / `file_sha256` | qué bytes contiene el archivo | SHA-256 del archivo; la auditoría llama `file_sha256` al mismo valor | integridad y duplicados byte a byte |
 | `pixel_sha256` | qué píxeles decodifica la imagen | SHA-256 de la representación RGB canónica, definida abajo | duplicados exactos tras recodificación |
-| `source_id` / `group_id` | con qué dominio o muestras está relacionada | procedencia inferida o manifiesto de grupos | auditoría o agrupación experimental |
+| `source_id` / `group_id` | con qué dominio o muestras está relacionada | `source_id`: dataset de origen derivado del token de fuente del nombre de archivo (`src/data/provenance.py`); `group_id`: grupo explícito del manifiesto de grupos, si no `source_id`, si no `sample_id` | auditoría o agrupación experimental |
 
 Dos rutas distintas pueden contener los mismos bytes: tendrán `sample_id` distintos y `sha256` igual. Un archivo reemplazado conservando la ruta mantiene su `sample_id`, pero cambia su `sha256`. Varias muestras pueden compartir `source_id` sin ser duplicados.
 
@@ -77,8 +77,8 @@ source_id,explicit_group_id,group_id,effective_group_id,group_origin
 - `image_path` es relativa a `DATASET_ROOT`.
 - `environment` solo admite `lab` o `real` en la preparación actual.
 - `explicit_group_id` procede de un manifiesto opcional.
-- `group_id` y `effective_group_id` materializan la relación usada para auditar o agrupar.
-- `group_origin` indica `explicit`, `inferred` o `individual`.
+- `group_id` es el grupo explícito si existe, si no `source_id` (solo cuando el reparto es agrupado), si no `sample_id`; `effective_group_id` repite ese valor como texto.
+- `group_origin` indica `explicit`, `inferred` o `individual`. En `seed_42` las 33 429 filas son `individual`: cada muestra es su propio grupo y `effective_group_id` es su `sample_id`.
 
 No existe una columna genérica llamada `source`; la columna real es `source_id`.
 
@@ -97,11 +97,11 @@ Cada materialización produce:
 |---|---|
 | `master_manifest.csv` | inventario elegible canónico |
 | `train.csv`, `val.csv`, `test.csv` | vistas del manifiesto según el protocolo |
-| `manifest.lock.json` | hashes de configuración, exclusiones, manifiesto y cada CSV; parámetros efectivos |
+| `manifest.lock.json` | SHA-256 de los parámetros efectivos del split (`config_sha256`), del archivo de exclusiones, del manifiesto y de cada CSV; los propios parámetros (`split_parameters`) |
 | `preparation_audit.json` | conteos, distribuciones, conflictos, exclusiones y solapamientos |
 | `split_audit_report.csv` | desglose por split, clase, ambiente, fuente y grupo |
 
-La materialización vigente descubrió 33 437 archivos válidos, excluyó ocho archivos pertenecientes a cuatro hashes con etiquetas contradictorias y dejó 33 429 muestras elegibles. La evidencia resumida y el lock exacto están en [`split_protocols_summary.json`](../reproducibilidad/evidencia/split_protocols_summary.json) y [`seed_42_manifest_lock.json`](../reproducibilidad/evidencia/seed_42_manifest_lock.json).
+La materialización vigente descubrió 33 437 archivos válidos, excluyó ocho archivos pertenecientes a cuatro hashes con etiquetas contradictorias y dejó 33 429 muestras elegibles. Las cuatro copias `fall_armyworm` y las cuatro `healthy` de esos hashes están en `clean/`; la materialización de la etapa 2 (33 433 muestras) conserva las cuatro rutas `fall_armyworm` y no contiene las `healthy`. El corpus de agosto de 2026 analizado en el EDA tenía 33 438 imágenes (una `fall_armyworm` más que `clean/` actual) y el de la primera entrega, 31 623. La evidencia resumida y el lock exacto están en [`split_protocols_summary.json`](../reproducibilidad/evidencia/split_protocols_summary.json) y [`seed_42_manifest_lock.json`](../reproducibilidad/evidencia/seed_42_manifest_lock.json).
 
 ## Protocolos de split
 
@@ -110,9 +110,9 @@ La materialización vigente descubrió 33 437 archivos válidos, excluyó ocho a
 | `seed_42` | selección y desarrollo dentro de fuentes conocidas | estratificación `label + environment` | 23 400 / 5 014 / 5 015 | Principal |
 | `seed_42_source_grouped` | generalización a fuentes completas no vistas | 11 `source_id` indivisibles | 16 554 / 7 809 / 9 066 | Benchmark cross-source |
 
-En `seed_42`, `source_id` es metadato: puede aparecer en varias particiones. Las nueve clases están presentes en train, validación y test. La auditoría reporta cero solapamientos por `sample_id`, `sha256` y `effective_group_id`.
+En `seed_42`, `source_id` es metadato: puede aparecer en varias particiones. Las nueve clases están presentes en train, validación y test. La auditoría reporta cero solapamientos por `sample_id`, `sha256` y `effective_group_id`. En este protocolo esas tres comprobaciones garantizan que ninguna muestra ni ningún contenido byte a byte idéntico cruza particiones: `effective_group_id` es el `sample_id` y el `sha256` es único en el manifiesto tras la deduplicación exacta, por lo que no miden ninguna relación entre fuentes ni entre imágenes parecidas.
 
-En `seed_42_source_grouped`, las fuentes permanecen completas. Sus proporciones reales son 49.52 / 23.36 / 27.12 % porque once grupos grandes no permiten aproximar 70 / 15 / 15 sin romperlos. Validación no contiene `fall_armyworm` ni `lethal_necrosis`. Esa ausencia es una propiedad del protocolo.
+En `seed_42_source_grouped`, las fuentes permanecen completas: 5 fuentes en train, 3 en validación y 3 en test. Sus proporciones reales son 49.52 / 23.36 / 27.12 % porque los 11 grupos indivisibles (de 158 a 12 136 muestras) no permiten aproximar 70 / 15 / 15 sin romperlos. El split se generó con `--allow-incomplete-splits`. Validación no contiene `fall_armyworm` ni `lethal_necrosis`. Esa ausencia es una propiedad del protocolo.
 
 ## Duplicados exactos en seed_42
 
@@ -124,7 +124,7 @@ Un análisis anterior reportó unos 15 grupos y 0.68 % del test con gemelos; no 
 
 `seed_42` se conserva sin cambios. La verificación cubre la integridad de la partición, no la generalización entre fuentes ni los casi duplicados (hojas fotografiadas en secuencia, recortes, resize, rotaciones, cambios fotométricos).
 
-El `config_sha256` del lock es el SHA-256 de los parámetros efectivos del split (`split_parameters`: semilla, clases, proporciones, estratificación y deduplicación), no del archivo `config/dataset.yaml`. Con la configuración actual, `create_splits.py` regenera `manifest.lock.json` byte a byte (`0db3ff3e…`), con los mismos `sample_id` en train, validación y prueba.
+El `config_sha256` del lock es el SHA-256 de los parámetros efectivos del split (`split_parameters`: semilla, clases, proporciones, estratificación y deduplicación), no del archivo `config/dataset.yaml`. Con la configuración actual, `create_splits.py` regenera `manifest.lock.json` byte a byte (`0db3ff3e…`), con los mismos `sample_id` en train, validación y prueba. `exclusions_sha256` sí es el SHA-256 de los bytes de `config/dataset_exclusions.csv` (`4ca25fcb…`); con finales de línea CRLF cambia y el lock regenerado deja de coincidir.
 
 ## Deduplicación perceptual
 
@@ -133,7 +133,7 @@ La implementación de PHash existe y se conserva. Sin embargo, ambas materializa
 - Hay cero solapamiento por bytes y por raster RGB canónico idéntico entre splits.
 - No se mide la presencia de imágenes reescaladas, recortadas, volteadas, recomprimidas con pérdida de píxeles o casi duplicadas.
 
-PHash no se ejecutó en esta materialización, por lo que los casi duplicados no están medidos.
+`create_splits.py` no ejecutó PHash en esta materialización, por lo que los casi duplicados entre particiones no están medidos. La limpieza previa de `clean/` sí aplicó PHash con umbral 0 (ver [Limpieza y ordenado](../cleanup-and-ordered/index.md)); esa distancia solo agrupa imágenes con el mismo hash perceptual.
 
 ## Garantías durante la carga
 

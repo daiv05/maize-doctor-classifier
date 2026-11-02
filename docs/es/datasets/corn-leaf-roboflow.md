@@ -50,7 +50,7 @@ Las anotaciones mezclan formato YOLO bbox (5 campos por línea) y segmentación 
 - Las imágenes son de campo real; no existen contrapartes de laboratorio en este dataset.
 
 ::: warning Desbalance severo en deficiencias nutricionales
-Las clases `Nitrogen Deficiency` (~55 instancias), `Phosphorus Deficiency` (~46) y `Potassium Deficiency` (~52) tienen muy baja representación. Requieren augmentation o fuentes adicionales antes de usarse en entrenamiento.
+Los conteos de instancias de esta ficha corresponden a la versión del repositorio revisada al catalogarlo. En el corpus vigente esta fuente aporta 807 imágenes de `fall_armyworm`, 456 de `healthy`, 424 de `nitrogen_deficiency`, 523 de `northern_corn_leaf_blight`, 499 de `phosphorus_deficiency` y 210 de `potassium_deficiency`.
 :::
 
 ## Tamaño y distribución

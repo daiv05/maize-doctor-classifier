@@ -88,10 +88,10 @@ Ampliación de agosto 2026 (cuatro datasets Roboflow adicionales):
         - healthy
     - Agregar el identificador del dataset (ver sección de [Por procesar](./#por-procesar))
     - Incluir el ambiente: `real` o `lab`.
-    - Terminar con número random de 8 dígitos.
-    - Ejemplo final: `common_rust_maize_africa_lab_1`.
+    - Terminar con un número de identificación; en la ingesta de agosto de 2026, los 8 primeros caracteres del SHA-256 del archivo.
+    - Ejemplo final: `fall_armyworm_maize_africa_real_56642353`.
 
-    Este orden garantiza trazabilidad y evita colisiones entre datasets.
+    Este orden conserva la fuente en el nombre del archivo, de donde `src/data/provenance.py` deriva `source_id`.
 
 4. Revisar y eliminar outliers: imágenes que no correspondan a la enfermedad, que posean carteles o marcas, tomas aéreas o detalles inconsistentes.
 
@@ -126,22 +126,22 @@ El dataset original usa formato YOLO (bounding boxes + polígonos de segmentaci�
 
 ### Resultados de extracción
 
-Imágenes integradas:
+Imágenes de esta fuente en el corpus vigente:
 
-| Clase | Imágenes copiadas |
+| Clase | Imágenes |
 |---|---|
-| `fall_armyworm` | 503 |
-| `healthy` | 619 |
-| `gray_leaf_spot` | 3 946 |
-| `nitrogen_deficiency` | 55 |
-| `northern_corn_leaf_blight` | 292 |
-| `phosphorus_deficiency` | 46 |
-| `potassium_deficiency` | 52 |
+| `fall_armyworm` | 807 |
+| `healthy` | 456 |
+| `gray_leaf_spot` | 0 |
+| `nitrogen_deficiency` | 424 |
+| `northern_corn_leaf_blight` | 523 |
+| `phosphorus_deficiency` | 499 |
+| `potassium_deficiency` | 210 |
 
 ### Decisiones y observaciones
 
 - Las imágenes ya vienen redimensionadas a **640 x 640 px**, lo que puede introducir distorsión (stretch) respecto a las proporciones originales.
-- La clase `nitrogen_deficiency` (~55 instancias en etiquetas) y `phosphorus_deficiency` (~46) tienen muy baja representación.
+- En el corpus vigente `potassium_deficiency` es la clase con menos imágenes de esta fuente (210, frente a 424 de nitrógeno y 499 de fósforo).
 
 ## cropdg-unified-multidomain
 
@@ -161,7 +161,7 @@ Se recopiló un total de **888 imágenes** en un entorno de laboratorio (`lab`)
 
 ### Healthy | Sana
 
-Muestras complementarias evaluadas bajo el mismo estándar de entorno controlado.
+El corpus vigente contiene 1 161 imágenes `healthy` de esta fuente, almacenadas como `real`.
 
 ## maize-beans-tomatoes-africa
 
@@ -223,7 +223,7 @@ Se reunieron alrededor de 1056 imagenes en un entorno de campo abierto. El lugar
 
 ### Healthy | Sana
 
-Muestras originales validadas e integradas en el repositorio consolidado. -5,326 imágenes netas post-deduplicación.
+El corpus vigente contiene 4 741 imágenes `healthy` de esta fuente.
 
 ## maize-in-field-dataset
 
@@ -282,7 +282,7 @@ Todas las imágenes presentes fueron tomadas en entornos reales. Se movieron al 
 
 ### Gray Leaf Spot (GLS) | Cercospora zeae-maydis
 
-Las imagenes con esta enfermedad fueron tomadas 607 en entornos reales. Se movieron al dataset limpio. De 629 imágenes, se encontraron 22 duplicados que fueron eliminados.
+Las imágenes con esta enfermedad fueron tomadas en entornos reales y se movieron al dataset limpio, tras eliminar 22 duplicados. El corpus vigente conserva 606.
 
 ### Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
 
@@ -290,7 +290,7 @@ Se recopilaron alrededor de 140 imágenes con esta enfermedad. Todas fueron toma
 
 ### Healthy | Sana
 
-Las 232 imágenes de la carpeta `NoFoliarSymptoms` fueron validadas y enviadas al dataset limpio bajo la clase `healthy`. No se encontraron imágenes duplicadas.
+La carpeta `NoFoliarSymptoms` contiene 232 imágenes. El corpus vigente no contiene imágenes `healthy` con el identificador `maize_field`.
 
 ## maize-nutrient-deficiency
 
@@ -526,7 +526,7 @@ La trazabilidad no se pierde: el identificador del dataset de origen ya va **en 
 
 ## Deduplicación
 
-Ejecutada con `find_duplicates.py` (PHash, `threshold = 0`) sobre las cuatro clases afectadas. Los CSV quedaron registrados en `src/cleanup/results/` con fecha 2026-08-11.
+Ejecutada con `find_duplicates.py` (PHash, `threshold = 0`) sobre las cuatro clases afectadas, con fecha 2026-08-11. El script escribe sus CSV en `outputs/cleanup/duplicates/`; los de esta ejecución ya no están versionados en el repositorio.
 
 | Clase | Analizadas | Grupos | Eliminadas |
 |---|---:|---:|---:|
@@ -554,5 +554,5 @@ Además:
 - **Los 5 grupos cruzados de GLS son byte a byte idénticos** (mismo SHA-256): los dos datasets de Roboflow redistribuyen material común.
 
 ::: tip Por qué hizo falta PHash y no bastaba el SHA-256
-Solo esos **5** grupos son copias exactas; los **56** restantes son *near-duplicates* - mismo contenido visual pero bytes distintos (reencodings, recortes, recompresión). `create_splits.py` deduplica por SHA-256 al generar los splits, así que habría atrapado los 5 exactos pero **no** los 56 restantes, que habrían provocado *data leakage* entre train y validación.
+Solo esos **5** grupos son copias exactas; los **56** restantes son *near-duplicates* - mismo contenido visual pero bytes distintos (reencodings, recortes, recompresión). `create_splits.py` deduplica por SHA-256 al generar los splits, así que habría atrapado los 5 exactos pero **no** los 56 restantes, que habrían quedado en el corpus y podido cruzar entre train y validación.
 :::
