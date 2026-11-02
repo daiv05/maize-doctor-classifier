@@ -1,6 +1,6 @@
 # Comparación multi-semilla: baseline frente a HPO trial 0
 
-Hay dos estudios multi-semilla. El de [estabilidad baseline/LOSO](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md) usa las semillas 42, 123 y 2026. Esta página describe el segundo: la comparación pareada del baseline frente al ganador del HPO, con diez entrenamientos previstos de los que se completaron 2, ambos de validación, ejecutados en Modal el 2026-10-19.
+Hay dos estudios multi-semilla. El de [estabilidad baseline/LOSO](../reproducibilidad/evidencia/multiseed_source_stability/multiseed_summary.json) usa las semillas 42, 123 y 2026. Esta página describe el segundo: la comparación pareada del baseline frente al ganador del HPO, con diez entrenamientos previstos de los que se completaron 2, ambos de validación, ejecutados en Modal el 2026-10-19.
 
 ## Resultados
 

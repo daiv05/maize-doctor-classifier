@@ -11,7 +11,7 @@ Origen de cada cifra del proyecto: cada afirmación apunta a un artefacto versio
 | Cero solapamiento de `sample_id`, SHA-256 y `effective_group_id` | `preparation_audit.json` remoto, extracto en resumen | `seed_42` | incluido en el lock anterior | pipeline de datos y protocolos |
 | 33 429 elegibles, cero duplicados por pixel_sha256, cero cross-split, 0 % de test afectado; 4 grupos/8 archivos ya excluidos | [resumen e inventario](../reproducibilidad/evidencia/pixel_duplicate_audit/PIXEL_DUPLICATE_AUDIT.md) | `seed_42` vigente | master: `64513d316a850ff1ca66c441f86875d62f829c84c0c4e04ec37f131df84a9163`; lock: `0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9dd650dad8afe8` | metodología y estado actual |
 | 11 fuentes, distribución de 33 429 muestras, V de Cramér 0.5030 y métricas baseline/HPO por fuente | [paquete de análisis por fuente](../reproducibilidad/evidencia/source_analysis/SOURCE_ANALYSIS.md), [resumen y hashes](../reproducibilidad/evidencia/source_analysis/source_analysis_summary.json) | `seed_42`; validation comparativa y test descriptivo post-hoc | hashes SHA-256 de manifests y cuatro CSV de predicciones registrados en el resumen | estado actual y análisis de procedencia; no selecciona modelo |
-| LOSO baseline: `maize-diseases` 6 989, F1 0.993124; `multicrop-disease-maiz` 5 816, F1 0.905490; locks previos al holdout | [resultado y límites](../reproducibilidad/evidencia/loso_baseline/LOSO_RESULTS.md), [CSV](../reproducibilidad/evidencia/loso_baseline/loso_results.csv), [resumen y timestamps](../reproducibilidad/evidencia/loso_baseline/loso_summary.json) | `loso_baseline_seed42_v1`, dos runs seed 42 | checkpoints `b16b1ef8…dcc` y `bd778a28…517`; hashes completos de splits, locks y runs en [protocolo](../reproducibilidad/evidencia/loso_baseline/LOSO_REPORT.md) y CSV | comparación descriptiva con validation histórica; no causalidad ni significancia con una semilla |
+| LOSO baseline: `maize-diseases` 6 989, F1 0.993124; `multicrop-disease-maiz` 5 816, F1 0.905490; locks previos al holdout | [resultados](../reproducibilidad/evidencia/loso_baseline/loso_results.csv), [CSV](../reproducibilidad/evidencia/loso_baseline/loso_results.csv), [resumen y timestamps](../reproducibilidad/evidencia/loso_baseline/loso_summary.json) | `loso_baseline_seed42_v1`, dos runs seed 42 | checkpoints `b16b1ef8…dcc` y `bd778a28…517`; hashes completos de splits, locks y runs en [protocolo](../reproducibilidad/evidencia/loso_baseline/loso_summary.json) y CSV | comparación descriptiva con validation histórica; no causalidad ni significancia con una semilla |
 | Hash de dataset.yaml distinto del registrado en el lock; causa textual no recuperada | [informe de drift](../reproducibilidad/evidencia/pixel_duplicate_audit/dataset_yaml_drift_report.md) | configuración de `seed_42` | lock: `8f0e560f…`; actual: `8e3f5a4f…` | límite de reproducción de la preparación |
 | PHash no ejecutado; solapamiento perceptual desconocido | `preparation_audit.json`: `deduplicate_perceptual=false`, conteo `null` | ambos protocolos actuales | rutas declaradas dentro del resumen | metodología y limitaciones |
 | `seed_42_source_grouped` = 16 554 / 7 809 / 9 066; 5/3/3 fuentes | resumen de protocolos | benchmark actual | fuente remota declarada en JSON | protocolos y ficha cross-source |
@@ -93,7 +93,7 @@ Las sumas SHA-256 de los paquetes de cada run están en `SHA256SUMS_baseline` y 
 
 ## Multi-seed baseline/LOSO
 
-[Informe completo y límites](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md). Nueve resultados: tres de `seed=42` reutilizados y seis entrenamientos nuevos (semillas 123 y 2026 por escenario). El primer intento de `maize-diseases/seed_123` se interrumpió, se conserva aparte y no entra en ningún agregado.
+[Resumen](../reproducibilidad/evidencia/multiseed_source_stability/multiseed_summary.json). Nueve resultados: tres de `seed=42` reutilizados y seis entrenamientos nuevos (semillas 123 y 2026 por escenario). El primer intento de `maize-diseases/seed_123` se interrumpió, se conserva aparte y no entra en ningún agregado.
 
 Cada `selection.lock.json` nuevo precede a su evaluación final, que se ejecuta una vez (`evaluation_count=1`). Los dos LOSO de la semilla 42 tienen locks previos al holdout; el baseline de la semilla 42 no tiene un lock previo al test. El [registro por evaluación](../reproducibilidad/evidencia/multiseed_source_stability/evaluation_registry.csv) guarda timestamps, IDs y hashes.
 
@@ -110,7 +110,7 @@ Los locks de manifests son `0db3ff3ecd3b7674df9fb5e6c207239db92c3690d916a6fd5a9d
 
 ## Ensamble histórico bajo LOSO multicrop
 
-El [informe completo](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md) documenta la regla del ensamble (promedio de tres softmax con pesos iguales), nueve locks de componente previos a la evaluación (tres Lite0 existentes y seis nuevos), tres evaluaciones únicas, seis entrenamientos nuevos y tres Lite0 reutilizados. Un intento B0/semilla 42 interrumpido se conserva y no entra al resultado.
+El [resumen](../reproducibilidad/evidencia/ensemble_loso/ensemble_loso_summary.json) registra la regla del ensamble (promedio de tres softmax con pesos iguales), nueve locks de componente previos a la evaluación (tres Lite0 existentes y seis nuevos), tres evaluaciones únicas, seis entrenamientos nuevos y tres Lite0 reutilizados. Un intento B0/semilla 42 interrumpido se conserva y no entra al resultado.
 
 | Afirmación | Evidencia | SHA-256 |
 |---|---|---|
@@ -128,7 +128,7 @@ La [síntesis experimental](EXPERIMENTAL_RESULTS_SUMMARY.md) reúne los resultad
 
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
-| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `e75a76f87f5f36959d4a352d749cc2f70cf2fa93feac84d1730029f6330c21f2` | Protocolos, resultados y límites |
+| [Síntesis](EXPERIMENTAL_RESULTS_SUMMARY.md) | `0856611884319fdda090fff7c9b916f24c8b4bad53df2ee1a401f2b2065a1cbd` | Protocolos, resultados y límites |
 | [Guía del paquete](MODEL_PACKAGE_README.md) | `30c54a09bf7185d8096d40e5a022e3f921d34ac6015ef4f7db0acf6c622cdef6` | Contenido, carga, integridad y distribución |
 | [MODEL_INDEX.csv](evidencia/model_package/MODEL_INDEX.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
 | [MODEL_COMPARISON_RESULTS.csv](evidencia/model_package/MODEL_COMPARISON_RESULTS.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |

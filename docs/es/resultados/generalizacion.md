@@ -28,7 +28,7 @@ Se excluye una fuente completa de la preparación, el entrenamiento y la selecci
 
 Por semilla en `multicrop-disease-maiz`: 0.905490, 0.896964 y 0.903264. La caída se concentra en `lethal_necrosis`: esa fuente aporta más de la mitad de los casos de la clase, y excluirla altera su distribución de entrenamiento. Ante `maize-diseases` el modelo transfiere casi sin pérdida. La brecha entre fuentes no es uniforme.
 
-Evidencia: [`LOSO_RESULTS.md`](../reproducibilidad/evidencia/loso_baseline/LOSO_RESULTS.md) y [`MULTISEED_SOURCE_STABILITY.md`](../reproducibilidad/evidencia/multiseed_source_stability/MULTISEED_SOURCE_STABILITY.md).
+Evidencia: [`loso_results.csv`](../reproducibilidad/evidencia/loso_baseline/loso_results.csv) y [`multiseed_summary.json`](../reproducibilidad/evidencia/multiseed_source_stability/multiseed_summary.json).
 
 ## Ensamble bajo LOSO
 
@@ -41,7 +41,7 @@ Se reentrenaron desde cero Lite0, B0 y ShuffleNet-V2 excluyendo `multicrop-disea
 | 2026 | 0.903264 | 0.919831 | 0.888009 | 0.923713 | +0.003883 |
 | Media ± SD | 0.901906 ± 0.004422 | 0.923978 ± 0.009443 | 0.895850 ± 0.014896 | 0.928446 ± 0.004168 | +0.004468 ± 0.007993 |
 
-La ventaja del ensamble es positiva en dos semillas y negativa en una. El ECE pasa de 0.0446 en B0 a 0.0891 en el ensamble, porque promediar modelos no calibrados aumenta la confianza en las predicciones erróneas. Por eso la app despliega un solo modelo. Evidencia: [`ENSEMBLE_LOSO_REPORT.md`](../reproducibilidad/evidencia/ensemble_loso/ENSEMBLE_LOSO_REPORT.md).
+La ventaja del ensamble es positiva en dos semillas y negativa en una. El ECE pasa de 0.0446 en B0 a 0.0891 en el ensamble, porque promediar modelos no calibrados aumenta la confianza en las predicciones erróneas. Por eso la app despliega un solo modelo. Evidencia: [`ensemble_loso_summary.json`](../reproducibilidad/evidencia/ensemble_loso/ensemble_loso_summary.json).
 
 ![Deltas pareados del ensamble frente a B0](../reproducibilidad/evidencia/ensemble_loso/ensemble_paired_deltas.png)
 
