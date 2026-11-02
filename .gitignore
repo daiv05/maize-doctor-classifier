@@ -68,3 +68,4 @@ htmlcov/
 !/experiments/**/input/.gitkeep
 /experiments/**/output/
 /experiments/**/comparisons/
+/entrega-final/
