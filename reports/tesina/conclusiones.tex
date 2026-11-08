@@ -11,7 +11,7 @@ La presente investigaci\'on pasa de una prueba de concepto a un sistema de diagn
 \item \textbf{Ensamble:} Macro $F_1$ de 0.9567 en la etapa 2 con votaci\'on suave.
 \item \textbf{Evaluaci\'on:} Macro $F_1$ de 0.6026 en validaci\'on agrupada por fuente frente a 0.9311 en la estratificada; la ablaci\'on dej\'o 79.46\% de exactitud al ocluir el centro y 42.25\% al ocluir la periferia.
 \item \textbf{Despliegue m\'ovil:} Modelo Int8 de 3.74~MB, con 98~ms de preprocesado y 23~ms de inferencia en un tel\'efono de gama media.
-\item \textbf{Propuesta institucional:} Cinco recomendaciones para el MAG y el CENTA (Secci\'on~\ref{sec:recomendaciones}).
+\item \textbf{Propuesta institucional:} Cinco recomendaciones para el MAG y el CENTA, al final de este cap\'itulo.
 \end{itemize}
 
 Las conclusiones se detallan a continuaci\'on.
@@ -33,7 +33,7 @@ Las conclusiones se detallan a continuaci\'on.
 \item \textbf{Alcance del diagn\'ostico:} El sistema indica la clase y no mide la severidad; la gu\'ia de tres niveles la compara el productor con su hoja.
 \item \textbf{B\'usqueda de hiperpar\'ametros:} Fue parcial (30.2\% de las \'epocas) y no se compar\'o con una b\'usqueda sin poda.
 \item \textbf{Beneficio econ\'omico:} Al no existir una cuantificaci\'on nacional de p\'erdidas, el ahorro que el diagn\'ostico podr\'ia producir no se estim\'o.
-\item \textbf{Privacidad y licencias:} La aplicaci\'on no elimina los metadatos EXIF de las fotograf\'ias que sincroniza. Tres fuentes (31.1\% del corpus) tienen licencia CC BY-NC-SA 4.0, por lo que el uso comercial y la redistribuci\'on requieren una revisi\'on legal.
+\item \textbf{Licencias:} Tres fuentes (31.1\% del corpus) tienen licencia CC BY-NC-SA 4.0, por lo que el uso comercial y la redistribuci\'on requieren una revisi\'on legal.
 \end{enumerate}
 
 \section*{Trabajo futuro}
@@ -42,12 +42,20 @@ Las conclusiones se detallan a continuaci\'on.
 \item Reunir y etiquetar fotograf\'ias salvadore\~nas con apoyo t\'ecnico del CENTA o del MAG, incluida la mancha de asfalto, documentando su procedencia, y reentrenar evaluando con fuentes completas retenidas.
 \item Medir cobertura y exactitud con distintos umbrales de rechazo y auditar la similitud perceptual entre particiones.
 \item Probar la aplicaci\'on con productores y asesores, y en tel\'efonos de gama baja.
-\item Eliminar los metadatos EXIF antes de sincronizar o pedir consentimiento expl\'icito para conservarlos, y reducir el tiempo de preprocesado.
+\item Reducir el tiempo de preprocesado en el tel\'efono.
 \end{itemize}
 
 \section*{Recomendaciones}
 
-Las cinco recomendaciones dirigidas al MAG y al CENTA se formulan en la Secci\'on~\ref{sec:recomendaciones}: validaci\'on en campo antes de la adopci\'on institucional, banco nacional participativo de datos agr\'icolas, red de alerta fitosanitaria temprana, capacitaci\'on comunitaria, y software abierto con protecci\'on de datos. Cada una responde a las limitaciones anteriores, en particular a la brecha de generalizaci\'on y a la falta de datos locales.
+Con base en los resultados, se proponen cinco recomendaciones dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA), que responden a las limitaciones anteriores:
+
+\begin{enumerate}
+\item \textbf{Validaci\'on en campo antes de la adopci\'on institucional:} Evaluar la aplicaci\'on con promotores del CENTA sobre fotograf\'ias propias de cada zona productora, dado que la exactitud en fotograf\'ias de campo externas fue de 42\% (Secci\'on~\ref{sec:campo_externo}).
+\item \textbf{Banco nacional participativo de datos agr\'icolas:} Financiar brigadas fotogr\'aficas junto a la Universidad de El Salvador para capturar variedades y condiciones locales, con el fin de reducir la brecha de dominio detectada.
+\item \textbf{Red de alerta fitosanitaria temprana:} Evaluar el uso de los aportes voluntarios sincronizados para un tablero epidemiol\'ogico centralizado en el MAG, sujeto a una pol\'itica expl\'icita de tratamiento de metadatos y ubicaci\'on.
+\item \textbf{Capacitaci\'on comunitaria:} Ense\~nar a cooperativas y ADESCOs el uso del marco gu\'ia de captura, posicionando la herramienta como apoyo al criterio del productor.
+\item \textbf{Software abierto y protecci\'on de datos:} Conservar el software bajo licencias de c\'odigo abierto y definir las condiciones de uso de los datos aportados por los productores.
+\end{enumerate}
 
 \newpage
 \begin{singlespace}
