@@ -3,62 +3,60 @@
 
 \section*{Conclusiones}
 
-La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema de diagn\'ostico foliar de ma\'iz que se ejecuta sin conexi\'on en dispositivos m\'oviles. A partir de los resultados obtenidos, la Tabla~\ref{tab:conclusiones_objetivos} resume el estado de cada objetivo espec\'ifico del Cap\'itulo~1 y a continuaci\'on se detallan las conclusiones.
+La presente investigaci\'on pasa de una prueba de concepto a un sistema de diagn\'ostico foliar de ma\'iz que se ejecuta sin conexi\'on en un tel\'efono. La tabla siguiente resume el estado de cada objetivo espec\'ifico del Cap\'itulo~1.
 
 \begin{table}[H]
-\caption{Estado de los objetivos espec\'ificos}
-\label{tab:conclusiones_objetivos}
 \centering
 \small
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.3cm}}
 \toprule
-\textbf{Objetivo espec\'ifico} & \textbf{Evidencia} & \textbf{Estado} \\
+\textbf{Objetivo} & \textbf{Resultado} & \textbf{Estado} \\
 \midrule
-1. Consolidar y auditar el corpus & 33~429 muestras de 11 fuentes; contratos SHA-256; cero solapamiento por hash y por p\'ixeles entre particiones. La similitud perceptual no se midi\'o. & Cumplido; casi duplicados sin auditar \\
-2. Optimizar con Optuna y poda temprana & 25 ensayos (8 completos, 15 podados, 2 interrumpidos); 453 de 1\,500 \'epocas. El ganador rindi\'o $-0.49$ pp en prueba y no se adopt\'o. & Ejecutado; sin mejora en prueba \\
-3. Ensamble por votaci\'on suave & Macro $F_1$ de 0.9567 en la etapa 2, con una semilla; no desplegado. & Cumplido en la etapa 2; exploratorio \\
-4. Evaluar con validaci\'on agrupada por procedencia, explicabilidad y ablaci\'on & Macro $F_1$ de $0.6026 \pm 0.1240$ agrupado frente a $0.9311 \pm 0.0099$ estratificado; LOSO; ablaci\'on de 79.46\% y 42.25\%. & Cumplido; expone la limitaci\'on principal \\
-5. Cuantizar a Int8 e integrar en la aplicaci\'on & 3.74~MB; 98~ms de preprocesado y 23~ms de inferencia; 143 de 143 predicciones reproducidas. & Parcial: un dispositivo de gama media; gama baja no probada \\
-6. Propuesta para el MAG y el CENTA & Cinco recomendaciones (Secci\'on~\ref{sec:recomendaciones}). & Presentada; sin validaci\'on institucional \\
+Consolidar y auditar el corpus & 33~429 im\'agenes de 11 fuentes; cero solapamiento por hash y por p\'ixeles entre particiones. & Cumplido; similitud perceptual sin medir \\
+\addlinespace[4pt]
+Optimizar con Optuna y poda & 25 ensayos con el 30.2\% de las \'epocas m\'aximas; el ganador rindi\'o 0.49 pp menos en prueba y no se adopt\'o. & Ejecutado, sin mejora \\
+\addlinespace[4pt]
+Ensamble por votaci\'on suave & Macro $F_1$ de 0.9567 en la etapa 2, con una semilla; no desplegado. & Exploratorio \\
+\addlinespace[4pt]
+Validaci\'on agrupada, explicabilidad y ablaci\'on & Macro $F_1$ de 0.6026 agrupado frente a 0.9311 estratificado; ablaci\'on de 79.46\% y 42.25\%. & Cumplido; expone la limitaci\'on principal \\
+\addlinespace[4pt]
+Cuantizar a Int8 e integrar en la app & 3.74~MB; 98~ms de preprocesado y 23~ms de inferencia en un tel\'efono de gama media. & Parcial; gama baja sin probar \\
+\addlinespace[4pt]
+Propuesta para el MAG y el CENTA & Cinco recomendaciones (Secci\'on~\ref{sec:recomendaciones}). & Presentada, sin validaci\'on institucional \\
+\addlinespace[4pt]
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
 
 \begin{enumerate}
-\item \textbf{Modelo oficial y su exportaci\'on m\'ovil:} El modelo oficial (EfficientNet-Lite0, run \texttt{20260921\_204608}) obtuvo un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\% sobre 5~015 im\'agenes de prueba, y 0.9435 $\pm$ 0.0052 como media y desviaci\'on muestral de tres semillas. Su versi\'on Int8 pesa \textbf{3.74~MB} (72.9\% menos que el punto de control FP32 de 13.79~MB) y en la prueba completa obtuvo Macro $F_1$ de 0.9489 y exactitud de 97.87\%, con 99.74\% de acuerdo con las predicciones de PyTorch. En el tel\'efono Motorola edge 40 neo, la mediana fue de 98~ms de preprocesado y 23~ms de inferencia, y el dispositivo reproduce las predicciones del modelo Int8 del servidor en 143 de 143 im\'agenes.
-\item \textbf{Generalizaci\'on entre fuentes, limitaci\'on principal:} En 97 fotograf\'ias de campo externas, el modelo oficial acert\'o 41 (42\%) y el detector OOD rechaz\'o 49; el Lite0 de agosto acert\'o 39, por lo que la brecha no se explica por el cambio de modelo y es compatible con una generalizaci\'on limitada fuera del corpus. Coincide con la validaci\'on cruzada agrupada por fuente, donde el Macro $F_1$ pasa de 0.9311 $\pm$ 0.0099 (estratificada) a 0.6026 $\pm$ 0.1240 (IC95, sobre las clases presentes en cada pliegue; 0.4359 con el macro $F_1$ convencional de nueve clases). Con LOSO en tres semillas, el modelo entrenado sin \texttt{maize-diseases} obtiene 0.9933 $\pm$ 0.0006 en esa fuente y el entrenado sin \texttt{multicrop-disease-maiz} obtiene 0.9019 $\pm$ 0.0044 en la suya; cada fuente retenida contiene solo tres clases.
-\item \textbf{Dependencia del fondo:} El \textit{Disparate Impact Ratio} entre laboratorio y campo, calculado sobre las tres clases presentes en ambos entornos, es 0.9636 sobre Macro $F_1$ y 0.9956 sobre exactitud con el modelo oficial (0.9604 y 0.9901 con el modelo de la etapa 2). Supera el umbral de 0.80, pero no refleja la roya de campo, que con 16 im\'agenes de prueba obtiene $F_1 = 0.77$ frente a 0.998 en laboratorio. La ablaci\'on espacial mostr\'o que al ocluir el centro de la imagen el modelo conserva 79.46\% de exactitud y que al ocluir la periferia cae a 42.25\%; es compatible con sensibilidad a la regi\'on perif\'erica, pero las \'areas visibles difieren y el experimento no separa el fondo de la hoja.
-\item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia de captura y un detector OOD basado en distancia de Mahalanobis relativa con umbral 106.37 (percentil 95 de validaci\'on). El detector rechaz\'o las 5 im\'agenes sint\'eticas de prueba y 3.8\% de 500 im\'agenes de prueba v\'alidas. El efecto del marco gu\'ia sobre el sesgo de procedencia no se midi\'o.
-\item \textbf{Ensamble de la etapa 2:} El ensamble por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de 0.9567, una exactitud de 98.29\% y un Macro Recall de 95.06\% en el corpus de 33~433 im\'agenes de esa etapa, con los 963 casos de necrosis letal del ma\'iz (MLN) clasificados correctamente. Es un resultado de una sola semilla en una partici\'on que mezcla fuentes, y el ensamble no est\'a desplegado. Bajo validaci\'on con fuente no vista (LOSO sobre \texttt{multicrop-disease-maiz}, tres semillas), el recall de MLN baja a 0.79--0.81 en el ensamble y a 0.72--0.74 en Lite0.
-\item \textbf{Segmentaci\'on de la hoja, l\'inea experimental:} Un modelo entrenado sobre un corpus enmascarado alcanz\'o un Macro $F_1$ de 0.7191 en prueba, sin pareamiento con el conjunto original. La aplicaci\'on no aplica segmentaci\'on y la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
+\item \textbf{Modelo oficial y su exportaci\'on m\'ovil:} El modelo oficial (EfficientNet-Lite0, run \texttt{20260921\_204608}) obtuvo un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\% sobre 5~015 im\'agenes de prueba, y 0.9435 $\pm$ 0.0052 con tres semillas. Su versi\'on Int8 pesa \textbf{3.74~MB} (72.9\% menos que el punto de control FP32) y obtuvo un Macro $F_1$ de 0.9489, con 99.74\% de acuerdo con PyTorch. En el Motorola edge 40 neo la mediana fue de 98~ms de preprocesado y 23~ms de inferencia, y el tel\'efono reproduce las predicciones del Int8 del servidor en 143 de 143 im\'agenes.
+\item \textbf{Generalizaci\'on entre fuentes, limitaci\'on principal:} En 97 fotograf\'ias de campo externas el modelo acert\'o 41 (42\%) y el detector OOD rechaz\'o 49. El Lite0 de agosto acert\'o 39, as\'i que la brecha no se explica por el cambio de modelo. Coincide con la validaci\'on agrupada por fuente, donde el Macro $F_1$ baja de 0.9311 $\pm$ 0.0099 a 0.6026 $\pm$ 0.1240, y con LOSO: 0.9933 $\pm$ 0.0006 sin \texttt{maize-diseases} y 0.9019 $\pm$ 0.0044 sin \texttt{multicrop-disease-maiz}, fuentes que contienen solo tres clases cada una.
+\item \textbf{Dependencia del fondo:} El \textit{Disparate Impact Ratio} entre laboratorio y campo, calculado sobre las tres clases presentes en ambos entornos, es 0.9636 con el modelo oficial y supera el umbral de 0.80, pero no refleja la roya de campo, que con 16 im\'agenes obtiene $F_1 = 0.77$ frente a 0.998 en laboratorio. La ablaci\'on espacial dej\'o 79.46\% de exactitud al ocluir el centro y 42.25\% al ocluir la periferia. Es compatible con sensibilidad a la regi\'on perif\'erica, pero las \'areas visibles difieren y el experimento no separa el fondo de la hoja.
+\item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia de captura y un detector OOD basado en distancia de Mahalanobis relativa, con umbral 106.37 (percentil 95 de validaci\'on). El detector rechaz\'o las 5 im\'agenes sint\'eticas de prueba y 3.8\% de 500 im\'agenes v\'alidas. El efecto del marco gu\'ia sobre el sesgo de procedencia no se midi\'o.
+\item \textbf{Ensamble de la etapa 2:} El ensamble de EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de 0.9567 en una partici\'on que mezcla fuentes y con una sola semilla; no est\'a desplegado. Bajo LOSO el recall de MLN baja a 0.79--0.81 en el ensamble y a 0.72--0.74 en Lite0.
 \end{enumerate}
 
 \section*{Limitaciones}
 
 \begin{enumerate}
-\item \textbf{Generalizaci\'on:} Fuera de las fuentes de entrenamiento el desempe\~no cae, de modo que las cifras de la partici\'on estratificada no describen el uso en campo.
-\item \textbf{Asociaci\'on entre fuente y clase:} Ciertas fuentes aportan una sola patolog\'ia y la ablaci\'on es compatible con dependencia de la regi\'on perif\'erica. La similitud perceptual entre particiones no se midi\'o.
-\item \textbf{Cobertura de clases:} La taxonom\'ia no incluye la mancha de asfalto y no hay reportes locales de necrosis letal.
-\item \textbf{Evidencia de campo:} Se desconocen el lugar, la fecha y el criterio de etiquetado de las 97 fotograf\'ias, y el sistema no se evalu\'o con productores.
+\item \textbf{Generalizaci\'on:} Fuera de las fuentes de entrenamiento el desempe\~no cae, de modo que las cifras de la partici\'on estratificada no describen el uso en campo. Adem\'as, ciertas fuentes aportan una sola patolog\'ia y no se midi\'o la similitud perceptual entre particiones.
+\item \textbf{Cobertura y evidencia de campo:} La taxonom\'ia no incluye la mancha de asfalto y no hay reportes locales de necrosis letal. Se desconocen el lugar, la fecha y el criterio de etiquetado de las 97 fotograf\'ias externas, y el sistema no se evalu\'o con productores.
 \item \textbf{Dispositivo:} Las mediciones en tel\'efono provienen de un solo dispositivo de gama media.
 \item \textbf{Alcance del diagn\'ostico:} El sistema indica la clase y no mide la severidad; la gu\'ia de tres niveles la compara el productor con su hoja.
-\item \textbf{Beneficio econ\'omico no medido:} Al no existir una cuantificaci\'on nacional de p\'erdidas, el ahorro que el diagn\'ostico podr\'ia producir no se estim\'o.
 \item \textbf{B\'usqueda de hiperpar\'ametros:} Fue parcial (30.2\% de las \'epocas) y no se compar\'o con una b\'usqueda sin poda.
-\item \textbf{Privacidad:} La aplicaci\'on no elimina los metadatos EXIF de las fotograf\'ias que sincroniza.
-\item \textbf{Licencias:} Tres fuentes (31.1\% del corpus) tienen licencia CC BY-NC-SA 4.0, por lo que el uso comercial y la redistribuci\'on requieren una revisi\'on legal.
+\item \textbf{Beneficio econ\'omico:} Al no existir una cuantificaci\'on nacional de p\'erdidas, el ahorro que el diagn\'ostico podr\'ia producir no se estim\'o.
+\item \textbf{Privacidad y licencias:} La aplicaci\'on no elimina los metadatos EXIF de las fotograf\'ias que sincroniza. Tres fuentes (31.1\% del corpus) tienen licencia CC BY-NC-SA 4.0, por lo que el uso comercial y la redistribuci\'on requieren una revisi\'on legal.
 \end{enumerate}
 
 \section*{Trabajo futuro}
 
 \begin{itemize}
-\item Reunir y etiquetar fotograf\'ias salvadore\~nas con apoyo t\'ecnico del CENTA o del MAG, incluida la mancha de asfalto, y documentar su procedencia.
-\item Reentrenar con esos datos y evaluar reteniendo fuentes completas.
+\item Reunir y etiquetar fotograf\'ias salvadore\~nas con apoyo t\'ecnico del CENTA o del MAG, incluida la mancha de asfalto, documentando su procedencia, y reentrenar evaluando con fuentes completas retenidas.
 \item Medir cobertura y exactitud con distintos umbrales de rechazo y auditar la similitud perceptual entre particiones.
 \item Probar la aplicaci\'on con productores y asesores, y en tel\'efonos de gama baja.
-\item Eliminar los metadatos EXIF antes de sincronizar o pedir consentimiento expl\'icito para conservarlos.
-\item Reducir el tiempo de preprocesado en el tel\'efono.
+\item Eliminar los metadatos EXIF antes de sincronizar o pedir consentimiento expl\'icito para conservarlos, y reducir el tiempo de preprocesado.
 \end{itemize}
 
 \section*{Recomendaciones}
@@ -66,6 +64,7 @@ La presente investigaci\'on consolida la transici\'on desde una prueba de concep
 Las cinco recomendaciones dirigidas al MAG y al CENTA se formulan en la Secci\'on~\ref{sec:recomendaciones}: validaci\'on en campo antes de la adopci\'on institucional, banco nacional participativo de datos agr\'icolas, red de alerta fitosanitaria temprana, capacitaci\'on comunitaria, y software abierto con protecci\'on de datos. Cada una responde a las limitaciones anteriores, en particular a la brecha de generalizaci\'on y a la falta de datos locales.
 
 \newpage
+\begin{singlespace}
 \begin{thebibliography}{99}
 \addcontentsline{toc}{chapter}{Bibliograf\'ia}
 
@@ -136,23 +135,21 @@ Selvaraju, R. R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., \& Batra, D. 
 Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. En \textit{International Conference on Machine Learning (ICML)} (pp. 6105--6114).
 
 \end{thebibliography}
+\end{singlespace}
 
 \newpage
 \chapter*{Glosario de T\'erminos}
 \addcontentsline{toc}{chapter}{Glosario de T\'erminos}
 
+\begin{singlespace}
 \begin{description}
 \item[Clever Hans Effect:] Fen\'omeno en el cual un modelo de aprendizaje autom\'atico alcanza una aparente alta precisi\'on apoy\'andose en correlaciones espurias o atajos del entorno (fondos, sensores, marcas de agua) en lugar de las caracter\'isticas intr\'insecas de la clase.
-\item[Cosine Annealing:] Esquema de planificaci\'on de tasa de aprendizaje que reduce gradualmente el paso de optimizaci\'on siguiendo la curva de un coseno hasta un m\'inimo establecido, facilitando que el optimizador escape de m\'inimos locales.
 \item[Disparate Impact Ratio (DIR):] M\'etrica de equidad que cuantifica el cociente entre el desempe\~no del grupo con peor resultado y el del mejor, aqu\'i medido con Macro $F_1$ o exactitud. Un valor inferior a 0.80 se toma como indicio de trato dispar.
-\item[Edge AI:] Paradigma de inteligencia artificial donde los modelos entrenados se ejecutan directamente en hardware local (dispositivos m\'oviles, microcontroladores) sin enviar datos a servidores en la nube.
 \item[Macro $F_1$-Score:] Media aritm\'etica no ponderada del valor $F_1$ calculado independientemente para cada clase. Asigna el mismo peso relativo a clases minoritarias y mayoritarias, siendo la m\'etrica est\'andar ante conjuntos desbalanceados.
-\item[MLOps (Machine Learning Operations):] Conjunto de pr\'acticas de ingenier\'ia de software destinadas a automatizar, versionar y garantizar la reproducibilidad y monitoreo de pipelines de aprendizaje autom\'atico en producci\'on.
 \item[Necrosis Letal del Ma\'iz (MLN):] Complejo viral provocado por la coinfecci\'on sin\'ergica del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus (como SCMV), con p\'erdidas de rendimiento de hasta 90\% documentadas en Kenia en 2012.
 \item[Out-of-Distribution (OOD):] Condici\'on que presentan aquellas muestras alimentadas a un clasificador cuyas caracter\'isticas estad\'isticas provienen de una distribuci\'on ajena a la utilizada durante el entrenamiento (ej. fotografiar una piedra o una mano frente a un modelo de hojas).
-\item[Post-Training Quantization (PTQ):] T\'ecnica de optimizaci\'on que convierte los pesos y activaciones de una red neuronal entrenada en coma flotante (FP32) a enteros de precisi\'on reducida (Int8), disminuyendo el tama\~no del modelo y la latencia en CPU.
-\item[Soft Voting:] Mecanismo de ensamble multimodelo que promedia las probabilidades continuas asignadas por cada red individual mediante la funci\'on Softmax, seleccionando la clase con el m\'aximo consenso medio.
 \end{description}
+\end{singlespace}
 
 \newpage
 \chapter*{Anexos}
@@ -167,8 +164,6 @@ Los repositorios y recursos de \textbf{DoctorMaiz} son los siguientes:
 \url{https://github.com/daiv05/maize-doctor-classifier}
 \item \textbf{Aplicaci\'on m\'ovil \textbf{DoctorMaiz} (React Native, inferencia \textit{offline}):}\par
 \url{https://github.com/Edenilson-Molina/maize-doctor-app}
-\item \textbf{Segmentador foliar (detecci\'on y segmentaci\'on de instancias de hoja):}\par
-\url{https://github.com/abner-rivas/maize-doctor-segmenter-leaf}
 \item \textbf{API (cuenta de usuario, sincronizaci\'on opcional y avisos de actualizaci\'on):}\par
 \url{https://github.com/daiv05/maize-doctor-api}
 \item \textbf{Sitio web y documentaci\'on t\'ecnica:}\par
@@ -182,11 +177,10 @@ Cada fuente conserva su licencia original (Tabla~\ref{tab:fuentes_dataset}).
 
 \section*{Anexo B: Inventario Criptogr\'afico de Checkpoints Respaldados}
 
-La Tabla~\ref{tab:anexo_checkpoints} detalla los hashes SHA-256 de los principales modelos f\'isicos que sustentan la reproducibilidad de la tesina.
+La tabla siguiente lista los hashes SHA-256 de los modelos que sustentan la reproducibilidad de la tesina.
 
 \begin{table}[H]
-\caption{Hashes SHA-256 de los pesos f\'isicos de los modelos respaldados}
-\label{tab:anexo_checkpoints}
+\caption*{Hashes SHA-256 de los pesos f\'isicos de los modelos respaldados}
 \centering
 \small
 \begin{singlespace}
@@ -197,7 +191,6 @@ La Tabla~\ref{tab:anexo_checkpoints} detalla los hashes SHA-256 de los principal
 EfficientNet-Lite0 Base (42, oficial) & 13.79 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
 EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.74 MB & \path{bb31467a58c11cd474159bd5739a7a57b1f1edfda6b5dbfae8fa91337f3c56b1} \\
 EfficientNet-B0 Referencia & 16.36 MB & \path{0e367a5318c068c9bcc90a6bec0d17a0b029251ca5f98400034bd09de7524fdb} \\
-ShuffleNet-V2-x1.0 Referencia & 5.22 MB & \path{b681a3fd5fffaa5d078802369dff04b46c91cbfed7b333ea80c9d6965fd82c9e} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
