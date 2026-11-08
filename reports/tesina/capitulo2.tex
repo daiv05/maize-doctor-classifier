@@ -15,7 +15,7 @@ Todos los conjuntos de entrenamiento, validaci\'on y prueba quedaron sellados me
 
 \section{Clases Agron\'omicas Objetivo}
 
-El sistema clasifica el estado de salud de la hoja de ma\'iz en nueve categor\'ias mutuamente excluyentes (Tabla~\ref{tab:taxonomia}), abarcando los principales pat\'ogenos f\'ungicos, virales, plagas insectiles y deficiencias nutricionales de impacto econ\'omico en Centroam\'erica.
+El sistema clasifica el estado de salud de la hoja de ma\'iz en nueve categor\'ias mutuamente excluyentes (Tabla~\ref{tab:taxonomia}), abarcando pat\'ogenos f\'ungicos y virales, una plaga insectil y deficiencias nutricionales que el corpus reunido permiti\'o cubrir.
 
 \begin{table}[H]
 \caption{Taxonom\'ia agron\'omica de las nueve clases integradas en DoctorMaiz}
@@ -25,13 +25,13 @@ El sistema clasifica el estado de salud de la hoja de ma\'iz en nueve categor\'i
 \begin{singlespace}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.2cm}}
 \toprule
-\textbf{Clase Agron\'omica} & \textbf{Agente Causal / Tipo} & \textbf{S\'intoma Primario} & \textbf{Riesgo / Impacto en Rendimiento} \\
+\textbf{Clase Agron\'omica} & \textbf{Agente Causal / Tipo} & \textbf{S\'intoma Primario} & \textbf{Consecuencia en el cultivo} \\
 \midrule
-\textbf{Roya Com\'un} & \textit{Puccinia sorghi} (Hongo) & P\'ustulas pulverulentas casta\~no-rojizas en ambas caras. & P\'erdida del 15\% al 30\% en \'areas h\'umedas y altas. \\
-\textbf{Tiz\'on Foliar (NCLB)} & \textit{Exserohilum turcicum} (Hongo) & Lesiones alargadas en forma de cigarro o huso (grises). & Necrosis masiva, p\'erdidas de hasta 50\% antes de floraci\'on. \\
-\textbf{Mancha Gris (GLS)} & \textit{Cercospora zeae-maydis} (Hongo) & Manchas rectangulares delimitadas por venas secundarias. & Destrucci\'on del follaje superior, reducci\'on del grano hasta 40\%. \\
-\textbf{Necrosis Letal (MLN)} & Complejo viral sin\'ergico (MCMV + Potyvirus) & Clorosis severa, moteado, necrosis marginal y secado total. & \textbf{P\'erdida del 100\% de la cosecha}; patolog\'ia de bioseguridad cr\'itica. \\
-\textbf{Gusano Cogollero} & \textit{Spodoptera frugiperda} (Plaga/Insecto) & Perforaciones irregulares y excrementos en el cogollo. & Destrucci\'on meristem\'atica; ca\'ida de rendimiento del 20\% al 60\%. \\
+\textbf{Roya Com\'un} & \textit{Puccinia sorghi} (Hongo) & P\'ustulas pulverulentas casta\~no-rojizas en ambas caras. & Reducci\'on del \'area foliar activa. \\
+\textbf{Tiz\'on Foliar (NCLB)} & \textit{Exserohilum turcicum} (Hongo) & Lesiones alargadas en forma de cigarro o huso (grises). & Necrosis de la l\'amina, con mayor da\~no si aparece antes de la floraci\'on. \\
+\textbf{Mancha Gris (GLS)} & \textit{Cercospora zeae-maydis} (Hongo) & Manchas rectangulares delimitadas por venas secundarias. & Destrucci\'on del follaje y menor llenado del grano. \\
+\textbf{Necrosis Letal (MLN)} & Complejo viral sin\'ergico (MCMV + Potyvirus) & Clorosis severa, moteado, necrosis marginal y secado total. & P\'erdidas de hasta 90\% del rendimiento en Kenia en 2012 \cite{mahuku2015}; clase de vigilancia temprana. \\
+\textbf{Gusano Cogollero} & \textit{Spodoptera frugiperda} (Plaga/Insecto) & Perforaciones irregulares y excrementos en el cogollo. & Da\~no al cogollo y al punto de crecimiento. \\
 \textbf{Deficiencia de Nitr\'ogeno} & Desbalance nutricional abi\'otico & Clorosis en ``V'' invertida desde la punta hacia la base. & Reducci\'on de porte, espigas peque\~nas y bajo llenado. \\
 \textbf{Deficiencia de F\'osforo} & Desbalance nutricional abi\'otico & Coloraci\'on p\'urpura o rojiza en bordes de hojas j\'ovenes. & Retraso radicular y esterilidad parcial de la mazorca. \\
 \textbf{Deficiencia de Potasio} & Desbalance nutricional abi\'otico & Clorosis y necrosis marginal desde el \'apice foliar. & Acame o volcamiento del tallo y grano liviano. \\
@@ -40,6 +40,8 @@ El sistema clasifica el estado de salud de la hoja de ma\'iz en nueve categor\'i
 \end{tabularx}
 \end{singlespace}
 \end{table}
+
+La taxonom\'ia no incluye la mancha de asfalto \cite{deras2015}; el sistema no puede reconocerla y una hoja afectada ser\'a clasificada como otra clase o rechazada.
 
 \begin{figure}[H]
 \centering
@@ -107,39 +109,41 @@ El sistema clasifica el estado de salud de la hoja de ma\'iz en nueve categor\'i
 El corpus final se conform\'o mediante la integraci\'on de \textbf{33~429 im\'agenes elegibles} provenientes de 11 fuentes internacionales consolidadas (Tabla~\ref{tab:fuentes_dataset}). Para resolver el cuello de botella identificado en la primera fase del proyecto —donde la deficiencia de potasio obtuvo un $F_1$ de 0.49 a 0.62 con solo 40 im\'agenes de prueba—, se incorporaron repositorios dirigidos a deficiencias minerales, de modo que hoy cada deficiencia (N, P, K) proviene de cuatro fuentes.
 
 \begin{table}[H]
-\caption{Fuentes de datos recopiladas y distribuci\'on de muestras}
+\caption{Fuentes de datos recopiladas, licencia declarada y distribuci\'on de muestras}
 \label{tab:fuentes_dataset}
 \centering
-\small
+\footnotesize
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{p{6.6cm}ccp{3.6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.7cm}>{\raggedright\arraybackslash}p{1.9cm}cc>{\raggedright\arraybackslash}X}
 \toprule
-\textbf{Identificador de Fuente (\texttt{source\_id})} & \textbf{Muestras} & \textbf{Entorno} & \textbf{Patolog\'ias Principales Aportadas} \\
+\textbf{Identificador de Fuente (\texttt{source\_id})} & \textbf{Licencia declarada} & \textbf{Muestras} & \textbf{Entorno} & \textbf{Clases aportadas} \\
 \midrule
-\texttt{maize-beans-tomatoes-africa} & 12~136 & Campo real & 4 clases. \\
-\texttt{maize-diseases} & 6~989 & Mixto & 3 clases. \\
-\texttt{multicrop-disease-maiz} & 5~816 & Mixto & 3 clases, incluida necrosis letal (MLN). \\
-\texttt{corn-leaf-roboflow} & 2~919 & Campo real & 6 clases. \\
-\texttt{cropdg-unified-multidomain} & 2~562 & Mixto & 3 clases. \\
-\texttt{maize-in-field-dataset} & 852 & Campo real & 3 clases. \\
-\texttt{maize-2-roboflow} & 846 & Campo real & 3 clases. \\
-\texttt{corn-leaf-diseases-}\allowbreak\texttt{classification-roboflow} & 480 & Mixto & 1 clase (\texttt{gray\_leaf\_spot}). \\
-\texttt{maize-nutrient-deficiency} & 340 & Campo real & 4 clases. \\
-\texttt{maize-leaf-roboflow} & 331 & Campo real & 1 clase. \\
-\texttt{maize-deficiency-}\allowbreak\texttt{scanner-roboflow} & 158 & Campo real & 3 clases de deficiencia. \\
+\texttt{maize-beans-tomatoes-africa} & Apache 2.0 y CC, seg\'un el subconjunto & 12~136 & Campo real & 4 clases. \\
+\texttt{maize-diseases} & CC BY-NC-SA 4.0 & 6~989 & Mixto & 3 clases. \\
+\texttt{multicrop-disease-maiz} & CC BY 4.0 & 5~816 & Mixto & 3 clases, incluida necrosis letal (MLN). \\
+\texttt{corn-leaf-roboflow} & CC BY 4.0 & 2~919 & Campo real & 6 clases. \\
+\texttt{cropdg-unified-multidomain} & CC BY-NC-SA 4.0 & 2~562 & Mixto & 3 clases. \\
+\texttt{maize-in-field-dataset} & CC BY-NC-SA 4.0 & 852 & Campo real & 3 clases. \\
+\texttt{maize-2-roboflow} & CC BY 4.0 & 846 & Campo real & 3 clases. \\
+\texttt{corn-leaf-diseases-}\allowbreak\texttt{classification-roboflow} & CC BY 4.0 & 480 & Mixto & 1 clase (\texttt{gray\_leaf\_spot}). \\
+\texttt{maize-nutrient-deficiency} & CC BY 4.0 & 340 & Campo real & 4 clases. \\
+\texttt{maize-leaf-roboflow} & CC BY 4.0 & 331 & Campo real & 1 clase. \\
+\texttt{maize-deficiency-}\allowbreak\texttt{scanner-roboflow} & CC BY 4.0 & 158 & Campo real & 3 clases de deficiencia. \\
 \midrule
-\textbf{Total Elegible Auditado} & \textbf{33~429} & — & \textbf{9 clases agron\'omicas} \\
+\textbf{Total Elegible Auditado} & --- & \textbf{33~429} & --- & \textbf{9 clases agron\'omicas} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
+
+La licencia es la declarada por el repositorio de origen, seg\'un la documentaci\'on del proyecto. Tres fuentes (10~403 im\'agenes, 31.1\% del corpus) se distribuyen bajo CC BY-NC-SA 4.0, que restringe el uso comercial y exige compartir bajo la misma licencia. La redistribuci\'on del corpus consolidado debe respetar esos t\'erminos, y el uso comercial de los datos o de modelos entrenados con ellos requiere una revisi\'on legal previa.
 
 \subsection{Data Profiling y An\'alisis Exploratorio de Datos (EDA)}
 El an\'alisis exploratorio evidenci\'o tres retos estructurales:
 \begin{itemize}
 \item \textbf{Desbalance intr\'inseco:} La clase sana concentra cerca de 8~700 im\'agenes y el tiz\'on foliar cerca de 6~800, mientras que la deficiencia de potasio cuenta con 621 ejemplares (desbalance de 14.1:1 en el corpus vigente, frente a 32.9:1 antes de la ampliaci\'on).
 \item \textbf{Heterogeneidad de resoluci\'on y c\'amaras:} Las resoluciones van desde sensores r\'usticos de $256\times256$ p\'ixeles hasta capturas semiprofesionales de $4000\times3000$ p\'ixeles (Figura~\ref{fig:eda_distribuciones}).
-\item \textbf{Asociaci\'on espuria fuente-clase:} La asociaci\'on estad\'istica entre la procedencia y la etiqueta arroj\'o una \textbf{V de Cram\'er de 0.5030}, indicando que ciertas fuentes p\'ublicas aportan exclusivamente una sola patolog\'ia, lo que puede favorecer que las redes utilicen señales del entorno además de la lesión foliar. Esta relación es descriptiva y no establece una causa.
+\item \textbf{Asociaci\'on espuria fuente-clase:} La asociaci\'on estad\'istica entre la procedencia y la etiqueta arroj\'o una \textbf{V de Cram\'er de 0.5030}, indicando que ciertas fuentes p\'ublicas aportan exclusivamente una sola patolog\'ia, lo que puede favorecer que las redes utilicen se\~nales del entorno adem\'as de la lesi\'on foliar. Esta relaci\'on es descriptiva y no establece una causa. Una sola fuente, \texttt{maize-beans-tomatoes-africa}, aporta 12~136 de las 33~429 im\'agenes (36.3\%).
 \end{itemize}
 
 \begin{figure}[H]
@@ -271,7 +275,7 @@ La implicaci\'on para el dise\'no es que una m\'ascara puede eliminar se\~nal \'
 
 La aplicaci\'on funciona sin servidor. La sincronizaci\'on opcional se implementa en el repositorio de la API (FastAPI y MySQL 8.4) con dos endpoints de escritura, \texttt{POST /corrections} y \texttt{POST /dataset-contributions}, que reciben correcciones de diagn\'ostico y aportes fotogr\'aficos de usuarios registrados. Una cola local reintenta el env\'io cuando hay conexi\'on y marca cada registro como sincronizado solo tras la confirmaci\'on del servidor; sin sesi\'on iniciada el servidor no lo acepta y el registro queda pendiente en el tel\'efono.
 
-El aporte fotogr\'afico incluye la fotograf\'ia, la etiqueta elegida, una nota opcional y la fecha del aporte; la correcci\'on incluye la etiqueta observada, una nota, su estado y el identificador del escaneo, sin fotograf\'ia. Ninguno incluye nombre, tel\'efono, correo ni coordenadas GPS del historial. La aplicaci\'on no elimina los metadatos EXIF de la fotograf\'ia antes de enviarla. La idempotencia por el par \texttt{(user\_id, client\_id)}, el l\'imite de 30 solicitudes por minuto y la validaci\'on del archivo de imagen forman parte del dise\~no de la API; las pruebas de integraci\'on de estas propiedades no se ejecutaron en este trabajo.
+El aporte fotogr\'afico incluye la fotograf\'ia, la etiqueta elegida, una nota opcional y la fecha del aporte; la correcci\'on incluye la etiqueta observada, una nota, su estado y el identificador del escaneo, sin fotograf\'ia. Ninguno incluye nombre, tel\'efono, correo ni coordenadas GPS del historial. La aplicaci\'on no elimina los metadatos EXIF de la fotograf\'ia antes de enviarla; esos metadatos pueden incluir la fecha de captura, el modelo del tel\'efono y, si la c\'amara lo registra, la ubicaci\'on. La idempotencia por el par \texttt{(user\_id, client\_id)}, el l\'imite de 30 solicitudes por minuto y la validaci\'on del archivo de imagen forman parte del dise\~no de la API; las pruebas de integraci\'on de estas propiedades no se ejecutaron en este trabajo.
 
 \section{Arquitectura General del Sistema}
 
