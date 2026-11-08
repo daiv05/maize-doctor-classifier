@@ -1,17 +1,10 @@
 \chapter{An\'alisis y Dise\~no de la Soluci\'on}
 
-\section{Metodolog\'ia de Trabajo y Gobernanza MLOps}
+\section{Trazabilidad de los Datos}
 
-Para garantizar que los hallazgos cient\'ificos de esta investigaci\'on sean verificables y reproducibles, se adopt\'o una metodolog\'ia de ingenier\'ia de software y operaciones de aprendizaje autom\'atico (\textit{MLOps}) basada en contratos de datos inmutables y trazabilidad criptogr\'afica. En proyectos de visi\'on artificial complejos, los errores silenciosos de preparaci\'on —tales como la fuga de datos (\textit{data leakage}), la reordenaci\'on no determinista de lotes o la sustituci\'on inadvertida de im\'agenes corruptas— invalidan cualquier conclusi\'on te\'orica.
+Para que los resultados sean verificables, cada imagen del corpus lleva tres identificadores. El \texttt{sample\_id} es el SHA-256 de su ruta l\'ogica normalizada en UTF-8, de modo que no cambia con el orden de lectura ni con los hilos de carga. El \texttt{sha256} se calcula sobre los bytes del archivo y permite detectar alteraciones o reemplazos entre versiones. La procedencia se guarda como \texttt{source\_id} (la fuente, derivada del nombre del archivo), el entorno de captura (laboratorio o campo) y \texttt{effective\_group\_id}, que es el grupo declarado en un manifiesto o, si no hay, la fuente. Las particiones agrupadas usan este \'ultimo; la partici\'on oficial no agrupa.
 
-La arquitectura de datos de DoctorMaiz desacopla tres conceptos fundamentales:
-\begin{enumerate}
-\item \textbf{Identidad (\texttt{sample\_id}):} Cada fotograf\'ia del corpus posee un identificador \'unico e inmutable calculado como $\text{SHA-256}(\text{ruta l\'ogica normalizada en UTF-8})$. Esto previene que el orden de lectura en el disco o la asignaci\'on estoc\'astica de hilos (\textit{workers}) altere la identidad de la muestra.
-\item \textbf{Integridad (\texttt{sha256}):} Se calcula el hash criptogr\'afico SHA-256 directo sobre los bytes crudos del archivo de imagen. Esto permite auditar de forma autom\'atica si un archivo sufri\'o alteraciones, corrupci\'on o recomposici\'on entre distintas versiones de entrenamiento.
-\item \textbf{Procedencia y Grupo (\texttt{source\_id} y \texttt{effective\_group\_id}):} Cada registro conserva su fuente de origen, derivada del nombre del archivo, y su entorno de captura (laboratorio o campo). Las particiones agrupadas usan \texttt{effective\_group\_id}, que es el grupo declarado en un manifiesto o, en su defecto, la fuente; la partici\'on oficial no agrupa.
-\end{enumerate}
-
-Todos los conjuntos de entrenamiento, validaci\'on y prueba quedaron sellados mediante manifiestos contractuales (\texttt{manifest.lock.json}), que fijan los SHA-256 de los CSV de cada partici\'on; la ausencia de solapamientos se verific\'o en la auditor\'ia descrita m\'as abajo.
+Los conjuntos de entrenamiento, validaci\'on y prueba quedaron sellados con manifiestos (\texttt{manifest.lock.json}) que fijan el SHA-256 del CSV de cada partici\'on. La ausencia de solapamientos se verific\'o en la auditor\'ia descrita m\'as abajo.
 
 \section{Clases Agron\'omicas Objetivo}
 
@@ -141,8 +134,8 @@ La licencia es la declarada por el repositorio de origen, seg\'un la documentaci
 \subsection{Data Profiling y An\'alisis Exploratorio de Datos (EDA)}
 El an\'alisis exploratorio evidenci\'o tres retos estructurales:
 \begin{itemize}
-\item \textbf{Desbalance intr\'inseco:} La clase sana concentra cerca de 8~700 im\'agenes y el tiz\'on foliar cerca de 6~800, mientras que la deficiencia de potasio cuenta con 621 ejemplares (desbalance de 14.1:1 en el corpus vigente, frente a 32.9:1 antes de la ampliaci\'on).
-\item \textbf{Heterogeneidad de resoluci\'on y c\'amaras:} Las resoluciones van desde sensores r\'usticos de $256\times256$ p\'ixeles hasta capturas semiprofesionales de $4000\times3000$ p\'ixeles (Figura~\ref{fig:eda_distribuciones}).
+\item \textbf{Desbalance intr\'inseco:} La clase sana concentra cerca de 8~700 im\'agenes y el tiz\'on foliar cerca de 6~800, mientras que la deficiencia de potasio cuenta con 621 ejemplares (desbalance de 14.1:1 en el corpus vigente, frente a 32.9:1 antes de la ampliaci\'on). Ver Figura~\ref{fig:eda_distribuciones}.
+\item \textbf{Heterogeneidad de resoluci\'on y c\'amaras:} Las resoluciones van desde sensores r\'usticos de $256\times256$ p\'ixeles hasta capturas semiprofesionales de $4000\times3000$ p\'ixeles.
 \item \textbf{Asociaci\'on espuria fuente-clase:} La asociaci\'on estad\'istica entre la procedencia y la etiqueta arroj\'o una \textbf{V de Cram\'er de 0.5030}, indicando que ciertas fuentes p\'ublicas aportan exclusivamente una sola patolog\'ia, lo que puede favorecer que las redes utilicen se\~nales del entorno adem\'as de la lesi\'on foliar. Esta relaci\'on es descriptiva y no establece una causa. Una sola fuente, \texttt{maize-beans-tomatoes-africa}, aporta 12~136 de las 33~429 im\'agenes (36.3\%).
 \end{itemize}
 
@@ -156,27 +149,11 @@ El an\'alisis exploratorio evidenci\'o tres retos estructurales:
 \hfill
 \begin{minipage}[b]{0.48\linewidth}
 \centering
-\includegraphics[width=\linewidth]{images/eda/eda_02_lab_vs_real.png}
-\caption*{Proporci\'on Laboratorio vs. Campo Real.}
-\end{minipage}
-\caption{An\'alisis exploratorio de distribuci\'on y balance ambiental del corpus.}
-\label{fig:eda_distribuciones}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\begin{minipage}[b]{0.48\linewidth}
-\centering
 \includegraphics[width=\linewidth]{images/eda/eda_02b_heatmap_fuente_clase.png}
 \caption*{Matriz de contingencia fuente vs. patolog\'ia.}
 \end{minipage}
-\hfill
-\begin{minipage}[b]{0.48\linewidth}
-\centering
-\includegraphics[width=\linewidth]{images/eda/eda_03_resoluciones.png}
-\caption*{Distribuci\'on de resoluciones espaciales.}
-\end{minipage}
-\caption{Concentraci\'on de procedencia y heterogeneidad geom\'etrica en las im\'agenes.}
+\caption{An\'alisis exploratorio del corpus: balance de clases y concentraci\'on de procedencia.}
+\label{fig:eda_distribuciones}
 \end{figure}
 
 \subsection{Auditor\'ia Criptogr\'afica de P\'ixeles}
@@ -212,19 +189,19 @@ El espacio de exploraci\'on abarc\'o seis par\'ametros, m\'as \texttt{clahe} fij
 \centering
 \small
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{lp{4.2cm}X}
+\begin{tabular}{lp{7.2cm}}
 \toprule
-\textbf{Hiperpar\'ametro} & \textbf{Rango / Opciones} & \textbf{Fundamento Ingenieril} \\
+\textbf{Hiperpar\'ametro} & \textbf{Rango / Opciones} \\
 \midrule
-\texttt{learning\_rate} & Log-uniforme: $[10^{-5}, 3\times10^{-3}]$ & Control de convergencia en optimizador AdamW. \\
-\texttt{batch\_size} & Categ\'orico: $\{16, 32, 64\}$ & Estabilidad del gradiente estoc\'astico y saturaci\'on de GPU. \\
-\texttt{weight\_decay} & Log-uniforme: $[10^{-7}, 10^{-2}]$ & Regularizaci\'on $L_2$ para mitigar memorizaci\'on de fondos. \\
-\texttt{class\_weights} & Categ\'orico: $\{\text{none}, \text{inverse}, \text{sqrt\_inverse}\}$ & Ponderaci\'on de p\'erdida para compensar desbalance de clases. \\
-\texttt{label\_smoothing} & Categ\'orico: $\{0, 0.025, \dots, 0.15\}$ en pasos de 0.025 & Calibraci\'on probabil\'istica y prevenci\'on de sobreconfianza. \\
-\texttt{warmup\_epochs} & Entero: $[1, 5]$ & Calentamiento lineal para proteger pesos preentrenados. \\
-\texttt{clahe} & Fijo en \texttt{False} & Ecualizaci\'on adaptativa excluida de la b\'usqueda; se evalu\'o aparte. \\
+\texttt{learning\_rate} & Log-uniforme: $[10^{-5}, 3\times10^{-3}]$ \\
+\texttt{batch\_size} & Categ\'orico: $\{16, 32, 64\}$ \\
+\texttt{weight\_decay} & Log-uniforme: $[10^{-7}, 10^{-2}]$ \\
+\texttt{class\_weights} & Categ\'orico: $\{\text{none}, \text{inverse}, \text{sqrt\_inverse}\}$ \\
+\texttt{label\_smoothing} & Categ\'orico: $\{0, 0.025, \dots, 0.15\}$ en pasos de 0.025 \\
+\texttt{warmup\_epochs} & Entero: $[1, 5]$ \\
+\texttt{clahe} & Fijo en \texttt{False} \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{singlespace}
 \end{table}
 
@@ -260,17 +237,6 @@ El cap\'itulo de resultados muestra dependencia de la regi\'on perif\'erica y un
 \item \textbf{Gu\'ia de severidad en lenguaje campesino:} Dado que los modelos de clasificaci\'on no pueden predecir el porcentaje de \'area foliar comprometida, la app despliega debajo de la etiqueta una escala visual de tres niveles (baja, moderada, cr\'itica) con descripciones que el productor compara con su hoja, referidas a escalas del CIMMYT y de Iowa State University Extension, en t\'erminos coloquiales y con bioinsumos accesibles en el agroservicio local.
 \end{enumerate}
 
-\section{Segmentaci\'on de Hojas: dos usos y resultados}\label{sec:segmentacion}
-
-El proyecto utiliz\'o la segmentaci\'on foliar en dos l\'ineas distintas, con evidencia y estado diferentes. Ninguna de ellas forma parte de la predicci\'on de la aplicaci\'on instalada, que recorta geom\'etricamente la imagen con el marco gu\'ia.
-
-\textbf{Primer uso: presegmentaci\'on y entrenamiento sobre corpus enmascarado.} El pipeline del clasificador incluye un m\'odulo de segmentaci\'on (\texttt{src/segmentation}) que genera un corpus con m\'ascaras de hoja. Se entren\'o un modelo sobre ese corpus (run \texttt{20260907\_163546}, EfficientNet-Lite0, sobre el split \texttt{seed\_42\_segmented}). Su Macro $F_1$ en prueba fue de \textbf{0.7191} y su accuracy de 0.8903, frente a 0.9480 del baseline de imagen completa vigente. Esta comparaci\'on no es pareada: el conjunto de prueba segmentado no comparte ninguna imagen con el conjunto de prueba original (0 de 5~015 rutas coinciden). El perfil de m\'ascara usado para generar el corpus no est\'a registrado en el resumen del run, por lo que el resultado no permite atribuir la ca\'ida a un perfil concreto. El proyecto clasifica este uso como experimental y no como preprocesamiento general.
-
-\textbf{Segundo uso: segmentador de instancias para aislar la hoja.} En un repositorio independiente se entren\'o un segmentador YOLO (\texttt{yolo26n-seg}) para seleccionar la hoja principal, evaluado \'unicamente sobre validaci\'on y con una sola semilla. Sus m\'etricas no se reproducen en este trabajo porque su evidencia no est\'a versionada en este repositorio; el segmentador no se evalu\'o sobre el conjunto de prueba ni sobre fuentes externas.
-
-La implicaci\'on para el dise\'no es que una m\'ascara puede eliminar se\~nal \'util del fondo. Por ello el proyecto no aplica segmentaci\'on de forma universal, y la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
-
-
 \section{Sincronizaci\'on y Contribuci\'on al Dataset Colaborativo}
 
 La aplicaci\'on funciona sin servidor. La sincronizaci\'on opcional se implementa en el repositorio de la API (FastAPI y MySQL 8.4) con dos endpoints de escritura, \texttt{POST /corrections} y \texttt{POST /dataset-contributions}, que reciben correcciones de diagn\'ostico y aportes fotogr\'aficos de usuarios registrados. Una cola local reintenta el env\'io cuando hay conexi\'on y marca cada registro como sincronizado solo tras la confirmaci\'on del servidor; sin sesi\'on iniciada el servidor no lo acepta y el registro queda pendiente en el tel\'efono.
@@ -281,7 +247,7 @@ El aporte fotogr\'afico incluye la fotograf\'ia, la etiqueta elegida, una nota o
 
 \subsection{Tecnolog\'ias por proyecto}
 
-El sistema se compone de cuatro repositorios independientes. La Tabla~\ref{tab:tecnologias_c2} resume la pila tecnol\'ogica de cada uno, con las versiones fijadas en sus archivos de dependencias.
+El sistema se compone de tres repositorios independientes. La Tabla~\ref{tab:tecnologias_c2} resume la pila tecnol\'ogica de cada uno.
 
 \begin{table}[H]
 \caption{Tecnolog\'ias principales por proyecto}
@@ -293,17 +259,15 @@ El sistema se compone de cuatro repositorios independientes. La Tabla~\ref{tab:t
 \toprule
 \textbf{Proyecto} & \textbf{Funci\'on} & \textbf{Tecnolog\'ias} \\
 \midrule
-Pipeline del modelo & Entrenamiento, exportaci\'on y explicabilidad & PyTorch (\texttt{torch} 2.4 a 2.12), timm, Optuna, litert-torch y ONNX Runtime para exportaci\'on, Modal (GPU A10) para entrenamiento en la nube, SHAP y LIME. \\
-Aplicaci\'on m\'ovil & Captura, inferencia local y sincronizaci\'on & Expo 57, React Native 0.86, TypeScript 6, \texttt{react-native-fast-tflite} 3 para inferencia, WatermelonDB 0.28 con SQLite local, NativeWind 4. \\
-API de sincronizaci\'on & Versi\'on de la app y aportes al dataset colaborativo & FastAPI 0.115, SQLAlchemy 2.0, Alembic 1.13, MySQL 8.4 en Docker Compose, aiomysql, JWT y bcrypt para autenticaci\'on, slowapi para l\'imites de tasa. \\
-Segmentador de hojas & Aislamiento de la l\'amina foliar (experimental) & Ultralytics con modelo \texttt{yolo26n-seg}, PyTorch 2.2 a 2.12, Modal para entrenamiento, Pillow y NumPy. \\
+Pipeline del modelo & Entrenamiento, exportaci\'on y explicabilidad & PyTorch, timm, Optuna, litert-torch y ONNX Runtime para exportaci\'on, Modal (GPU A10) para entrenamiento en la nube, SHAP y LIME. \\
+Aplicaci\'on m\'ovil & Captura, inferencia local y sincronizaci\'on & Expo, React Native, TypeScript, \texttt{react-native-fast-tflite} para inferencia, WatermelonDB con SQLite local y NativeWind. \\
+API de sincronizaci\'on & Versi\'on de la app y aportes al dataset colaborativo & FastAPI, SQLAlchemy, Alembic, MySQL en Docker Compose, JWT y bcrypt para autenticaci\'on y slowapi para l\'imites de tasa. \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
 
 La separaci\'on en repositorios tiene una consecuencia pr\'actica: la aplicaci\'on no depende del entorno de entrenamiento. Solo consume un archivo \texttt{.tflite}, un \texttt{labels.json} y un \texttt{ood\_stats.json} empaquetados. La API y la aplicaci\'on se comunican por HTTP y MySQL solo existe en el servidor.
-
 
 La Figura~\ref{fig:arquitectura_flujo} sintetiza la arquitectura de extremo a extremo que conecta la fase de experimentaci\'on con el despliegue m\'ovil y la extensi\'on institucional.
 
