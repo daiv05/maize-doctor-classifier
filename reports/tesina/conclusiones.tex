@@ -3,26 +3,67 @@
 
 \section*{Conclusiones}
 
-La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema de diagn\'ostico foliar de ma\'iz que se ejecuta sin conexi\'on en dispositivos m\'oviles. A partir de los resultados obtenidos, se concluye:
+La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema de diagn\'ostico foliar de ma\'iz que se ejecuta sin conexi\'on en dispositivos m\'oviles. A partir de los resultados obtenidos, la Tabla~\ref{tab:conclusiones_objetivos} resume el estado de cada objetivo espec\'ifico del Cap\'itulo~1 y a continuaci\'on se detallan las conclusiones.
+
+\begin{table}[H]
+\caption{Estado de los objetivos espec\'ificos}
+\label{tab:conclusiones_objetivos}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.6cm}}
+\toprule
+\textbf{Objetivo espec\'ifico} & \textbf{Evidencia} & \textbf{Estado} \\
+\midrule
+1. Consolidar y auditar el corpus & 33~429 muestras de 11 fuentes; contratos SHA-256; cero solapamiento por hash y por p\'ixeles entre particiones. La similitud perceptual no se midi\'o. & Cumplido; casi duplicados sin auditar \\
+2. Optimizar con Optuna y poda temprana & 25 ensayos (8 completos, 15 podados, 2 interrumpidos); 453 de 1\,500 \'epocas. El ganador rindi\'o $-0.49$ pp en prueba y no se adopt\'o. & Ejecutado; sin mejora en prueba \\
+3. Ensamble por votaci\'on suave & Macro $F_1$ de 0.9567 en la etapa 2, con una semilla; no desplegado. & Cumplido en la etapa 2; exploratorio \\
+4. Evaluar con validaci\'on agrupada por procedencia, explicabilidad y ablaci\'on & Macro $F_1$ de $0.6026 \pm 0.1240$ agrupado frente a $0.9311 \pm 0.0099$ estratificado; LOSO; ablaci\'on de 79.46\% y 42.25\%. & Cumplido; expone la limitaci\'on principal \\
+5. Cuantizar a Int8 e integrar en la aplicaci\'on & 3.74~MB; 98~ms de preprocesado y 23~ms de inferencia; 143 de 143 predicciones reproducidas. & Parcial: un dispositivo de gama media; gama baja no probada \\
+6. Propuesta para el MAG y el CENTA & Cinco recomendaciones (Secci\'on~\ref{sec:recomendaciones}). & Presentada; sin validaci\'on institucional \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
 
 \begin{enumerate}
 \item \textbf{Modelo oficial y su exportaci\'on m\'ovil:} El modelo oficial (EfficientNet-Lite0, run \texttt{20260921\_204608}) obtuvo un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\% sobre 5~015 im\'agenes de prueba, y 0.9435 $\pm$ 0.0052 como media y desviaci\'on muestral de tres semillas. Su versi\'on Int8 pesa \textbf{3.74~MB} (72.9\% menos que el punto de control FP32 de 13.79~MB) y en la prueba completa obtuvo Macro $F_1$ de 0.9489 y exactitud de 97.87\%, con 99.74\% de acuerdo con las predicciones de PyTorch. En el tel\'efono Motorola edge 40 neo, la mediana fue de 98~ms de preprocesado y 23~ms de inferencia, y el dispositivo reproduce las predicciones del modelo Int8 del servidor en 143 de 143 im\'agenes.
-\item \textbf{Ensamble de la etapa 2:} El ensamble por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de 0.9567, una exactitud de 98.29\% y un Macro Recall de 95.06\% en el corpus de 33~433 im\'agenes de esa etapa, con los 963 casos de necrosis letal del ma\'iz (MLN) clasificados correctamente. Es un resultado de una sola semilla en una partici\'on que mezcla fuentes, y el ensamble no est\'a desplegado. Bajo validaci\'on con fuente no vista (LOSO sobre \texttt{multicrop-disease-maiz}, tres semillas), el recall de MLN baja a 0.79--0.81 en el ensamble y a 0.72--0.74 en Lite0.
 \item \textbf{Generalizaci\'on entre fuentes, limitaci\'on principal:} En 97 fotograf\'ias de campo externas, el modelo oficial acert\'o 41 (42\%) y el detector OOD rechaz\'o 49; el Lite0 de agosto acert\'o 39, por lo que la brecha no se explica por el cambio de modelo y es compatible con una generalizaci\'on limitada fuera del corpus. Coincide con la validaci\'on cruzada agrupada por fuente, donde el Macro $F_1$ pasa de 0.9311 $\pm$ 0.0099 (estratificada) a 0.6026 $\pm$ 0.1240 (IC95, sobre las clases presentes en cada pliegue; 0.4359 con el macro $F_1$ convencional de nueve clases). Con LOSO en tres semillas, el modelo entrenado sin \texttt{maize-diseases} obtiene 0.9933 $\pm$ 0.0006 en esa fuente y el entrenado sin \texttt{multicrop-disease-maiz} obtiene 0.9019 $\pm$ 0.0044 en la suya; cada fuente retenida contiene solo tres clases.
 \item \textbf{Dependencia del fondo:} El \textit{Disparate Impact Ratio} entre laboratorio y campo, calculado sobre las tres clases presentes en ambos entornos, es 0.9636 sobre Macro $F_1$ y 0.9956 sobre exactitud con el modelo oficial (0.9604 y 0.9901 con el modelo de la etapa 2). Supera el umbral de 0.80, pero no refleja la roya de campo, que con 16 im\'agenes de prueba obtiene $F_1 = 0.77$ frente a 0.998 en laboratorio. La ablaci\'on espacial mostr\'o que al ocluir el centro de la imagen el modelo conserva 79.46\% de exactitud y que al ocluir la periferia cae a 42.25\%; es compatible con sensibilidad a la regi\'on perif\'erica, pero las \'areas visibles difieren y el experimento no separa el fondo de la hoja.
 \item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia de captura y un detector OOD basado en distancia de Mahalanobis relativa con umbral 106.37 (percentil 95 de validaci\'on). El detector rechaz\'o las 5 im\'agenes sint\'eticas de prueba y 3.8\% de 500 im\'agenes de prueba v\'alidas. El efecto del marco gu\'ia sobre el sesgo de procedencia no se midi\'o.
+\item \textbf{Ensamble de la etapa 2:} El ensamble por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de 0.9567, una exactitud de 98.29\% y un Macro Recall de 95.06\% en el corpus de 33~433 im\'agenes de esa etapa, con los 963 casos de necrosis letal del ma\'iz (MLN) clasificados correctamente. Es un resultado de una sola semilla en una partici\'on que mezcla fuentes, y el ensamble no est\'a desplegado. Bajo validaci\'on con fuente no vista (LOSO sobre \texttt{multicrop-disease-maiz}, tres semillas), el recall de MLN baja a 0.79--0.81 en el ensamble y a 0.72--0.74 en Lite0.
 \item \textbf{Segmentaci\'on de la hoja, l\'inea experimental:} Un modelo entrenado sobre un corpus enmascarado alcanz\'o un Macro $F_1$ de 0.7191 en prueba, sin pareamiento con el conjunto original. La aplicaci\'on no aplica segmentaci\'on y la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
 \end{enumerate}
 
-\section*{Recomendaciones}
+\section*{Limitaciones}
 
 \begin{enumerate}
-\item \textbf{Validaci\'on en campo antes de la adopci\'on institucional:} Evaluar la aplicaci\'on con promotores del CENTA sobre fotograf\'ias propias de cada zona productora, dado que la exactitud en fotograf\'ias de campo externas fue de 42\%.
-\item \textbf{Banco nacional participativo de datos agr\'icolas:} Financiar brigadas fotogr\'aficas junto a la Universidad de El Salvador para capturar variedades y condiciones locales, con el fin de reducir la brecha de dominio detectada.
-\item \textbf{Red de alerta fitosanitaria temprana:} Evaluar el uso de los aportes voluntarios sincronizados para un tablero epidemiol\'ogico centralizado en el MAG, sujeto a una pol\'itica expl\'icita de tratamiento de metadatos y ubicaci\'on.
-\item \textbf{Capacitaci\'on comunitaria:} Ense\~nar a cooperativas y ADESCOs el uso del marco gu\'ia de captura, posicionando la herramienta como apoyo al criterio del productor.
-\item \textbf{Software abierto y protecci\'on de datos:} Conservar el software bajo licencias de c\'odigo abierto y definir las condiciones de uso de los datos aportados por los productores.
+\item \textbf{Generalizaci\'on:} Fuera de las fuentes de entrenamiento el desempe\~no cae, de modo que las cifras de la partici\'on estratificada no describen el uso en campo.
+\item \textbf{Asociaci\'on entre fuente y clase:} Ciertas fuentes aportan una sola patolog\'ia y la ablaci\'on es compatible con dependencia de la regi\'on perif\'erica. La similitud perceptual entre particiones no se midi\'o.
+\item \textbf{Cobertura de clases:} La taxonom\'ia no incluye la mancha de asfalto y no hay reportes locales de necrosis letal.
+\item \textbf{Evidencia de campo:} Se desconocen el lugar, la fecha y el criterio de etiquetado de las 97 fotograf\'ias, y el sistema no se evalu\'o con productores.
+\item \textbf{Dispositivo:} Las mediciones en tel\'efono provienen de un solo dispositivo de gama media.
+\item \textbf{Alcance del diagn\'ostico:} El sistema indica la clase y no mide la severidad; la gu\'ia de tres niveles la compara el productor con su hoja.
+\item \textbf{Beneficio econ\'omico no medido:} Al no existir una cuantificaci\'on nacional de p\'erdidas, el ahorro que el diagn\'ostico podr\'ia producir no se estim\'o.
+\item \textbf{B\'usqueda de hiperpar\'ametros:} Fue parcial (30.2\% de las \'epocas) y no se compar\'o con una b\'usqueda sin poda.
+\item \textbf{Privacidad:} La aplicaci\'on no elimina los metadatos EXIF de las fotograf\'ias que sincroniza.
+\item \textbf{Licencias:} Tres fuentes (31.1\% del corpus) tienen licencia CC BY-NC-SA 4.0, por lo que el uso comercial y la redistribuci\'on requieren una revisi\'on legal.
 \end{enumerate}
+
+\section*{Trabajo futuro}
+
+\begin{itemize}
+\item Reunir y etiquetar fotograf\'ias salvadore\~nas con apoyo t\'ecnico del CENTA o del MAG, incluida la mancha de asfalto, y documentar su procedencia.
+\item Reentrenar con esos datos y evaluar reteniendo fuentes completas.
+\item Medir cobertura y exactitud con distintos umbrales de rechazo y auditar la similitud perceptual entre particiones.
+\item Probar la aplicaci\'on con productores y asesores, y en tel\'efonos de gama baja.
+\item Eliminar los metadatos EXIF antes de sincronizar o pedir consentimiento expl\'icito para conservarlos.
+\item Reducir el tiempo de preprocesado en el tel\'efono.
+\end{itemize}
+
+\section*{Recomendaciones}
+
+Las cinco recomendaciones dirigidas al MAG y al CENTA se formulan en la Secci\'on~\ref{sec:recomendaciones}: validaci\'on en campo antes de la adopci\'on institucional, banco nacional participativo de datos agr\'icolas, red de alerta fitosanitaria temprana, capacitaci\'on comunitaria, y software abierto con protecci\'on de datos. Cada una responde a las limitaciones anteriores, en particular a la brecha de generalizaci\'on y a la falta de datos locales.
 
 \newpage
 \begin{thebibliography}{99}
@@ -39,6 +80,18 @@ Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal ``Enrique \'Alvarez C\'o
 
 \bibitem{deng2009}
 Deng, J., Dong, W., Socher, R., Li, L.-J., Li, K., \& Fei-Fei, L. (2009). ImageNet: A large-scale hierarchical image database. En \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)} (pp. 248--255).
+
+\bibitem{deras2015}
+Deras F., H. R., Flor de Serrano, R., Mej\'ia, C., \& Moreno, W. (2015). Evaluaci\'on de h\'ibridos tri-lineales de ma\'iz (\textit{Zea mays} L.), por su reacci\'on al Complejo Mancha de asfalto causada por los pat\'ogenos (\textit{Phyllachora maydis}, \textit{Monographella maydis} y \textit{Coniothyrium phyllacorae}). \textit{Producci\'on Agropecuaria y Desarrollo Sostenible}, 3, 77--88. \url{https://camjol.info/index.php/PAyDS/article/view/3973}
+
+\bibitem{elmundo2025}
+Diario El Mundo. (2025, 7 de febrero). El d\'eficit de granos b\'asicos supera los 9.9 millones de quintales en 2025. \url{https://diario.elmundo.sv/economia/el-deficit-de-granos-basicos-supera-los-9-9-millones-de-quintales-en-2025}
+
+\bibitem{eash2019}
+Eash, L., Fonte, S. J., Sonder, K., Honsdorf, N., Schmidt, A., Govaerts, B., \& Verhulst, N. (2019). Factors contributing to maize and bean yield gaps in Central America vary with site and agroecological conditions. \textit{The Journal of Agricultural Science}, 157(4). \url{https://doi.org/10.1017/S0021859619000571}
+
+\bibitem{edh2024}
+El Diario de Hoy. (2024, 4 de abril). Las altas temperaturas en El Salvador tendr\'an efecto en el ciclo agr\'icola 2024-2025. \url{https://www.elsalvador.com/?p=1134038}
 
 \bibitem{howard2017}
 Howard, A. G., et al. (2017). MobileNets: Efficient convolutional neural networks for mobile vision applications. \textit{arXiv preprint arXiv:1704.04861}.
@@ -57,6 +110,9 @@ Lundberg, S. M., \& Lee, S.-I. (2017). A unified approach to interpreting model 
 
 \bibitem{ma2018}
 Ma, N., Zhang, X., Zheng, H.-T., \& Sun, J. (2018). ShuffleNet V2: Practical guidelines for efficient CNN architecture design. En \textit{Proceedings of the European Conference on Computer Vision (ECCV)} (pp. 116--131).
+
+\bibitem{mahuku2015}
+Mahuku, G., Lockhart, B. E., Wanjala, B., Jones, M. W., Kimunye, J. N., Stewart, L. R., \ldots{} \& Redinbaugh, M. G. (2015). Maize lethal necrosis (MLN), an emerging threat to maize-based food security in sub-Saharan Africa. \textit{Phytopathology}, 105(7), 956--965. \url{https://doi.org/10.1094/PHYTO-12-14-0367-FI}
 
 \bibitem{mag2023}
 Ministerio de Agricultura y Ganader\'ia (MAG). (2023). \textit{Anuario de Estad\'isticas Agropecuarias y Seguridad Alimentaria en El Salvador 2022-2023}. San Salvador: MAG / Direcci\'on General de Econom\'ia Agropecuaria.
@@ -92,7 +148,7 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 \item[Edge AI:] Paradigma de inteligencia artificial donde los modelos entrenados se ejecutan directamente en hardware local (dispositivos m\'oviles, microcontroladores) sin enviar datos a servidores en la nube.
 \item[Macro $F_1$-Score:] Media aritm\'etica no ponderada del valor $F_1$ calculado independientemente para cada clase. Asigna el mismo peso relativo a clases minoritarias y mayoritarias, siendo la m\'etrica est\'andar ante conjuntos desbalanceados.
 \item[MLOps (Machine Learning Operations):] Conjunto de pr\'acticas de ingenier\'ia de software destinadas a automatizar, versionar y garantizar la reproducibilidad y monitoreo de pipelines de aprendizaje autom\'atico en producci\'on.
-\item[Necrosis Letal del Ma\'iz (MLN):] Complejo viral devastador provocado por la coinfecci\'on sin\'ergica del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus (como SCMV), capaz de destruir el 100\% de una plantaci\'on.
+\item[Necrosis Letal del Ma\'iz (MLN):] Complejo viral provocado por la coinfecci\'on sin\'ergica del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus (como SCMV), con p\'erdidas de rendimiento de hasta 90\% documentadas en Kenia en 2012.
 \item[Out-of-Distribution (OOD):] Condici\'on que presentan aquellas muestras alimentadas a un clasificador cuyas caracter\'isticas estad\'isticas provienen de una distribuci\'on ajena a la utilizada durante el entrenamiento (ej. fotografiar una piedra o una mano frente a un modelo de hojas).
 \item[Post-Training Quantization (PTQ):] T\'ecnica de optimizaci\'on que convierte los pesos y activaciones de una red neuronal entrenada en coma flotante (FP32) a enteros de precisi\'on reducida (Int8), disminuyendo el tama\~no del modelo y la latencia en CPU.
 \item[Soft Voting:] Mecanismo de ensamble multimodelo que promedia las probabilidades continuas asignadas por cada red individual mediante la funci\'on Softmax, seleccionando la clase con el m\'aximo consenso medio.
@@ -118,7 +174,8 @@ Los repositorios y recursos de \textbf{DoctorMaiz} son los siguientes:
 \item \textbf{Sitio web y documentaci\'on t\'ecnica:}\par
 \url{https://doctor-maiz.deras.dev/es}
 \item \textbf{Dataset consolidado en Hugging Face:}\par
-\url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}
+\url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}\par
+Cada fuente conserva su licencia original (Tabla~\ref{tab:fuentes_dataset}).
 \item \textbf{Artefactos de evaluaci\'on y modelos exportados:}\par
 \url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
 \end{itemize}
