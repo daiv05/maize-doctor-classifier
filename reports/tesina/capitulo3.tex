@@ -18,7 +18,7 @@ El r\'egimen de entrenamiento incorpor\'o un programador de tasa de aprendizaje 
 
 \section{Resultados}
 
-Esta secci\'on reporta el estado de cada criterio de \'exito definido en la Tabla~\ref{tab:criterios_exito} y, a continuaci\'on, el detalle de las mediciones. Cuando un criterio no se cumple, no se midi\'o o depende de una corrida pendiente, la tabla lo indica.
+Esta secci\'on reporta el estado de cada criterio de \'exito definido en la Tabla~\ref{tab:criterios_exito} y, a continuaci\'on, el detalle de las mediciones. Cuando un criterio no se cumple, no se midi\'o o depende de una corrida pendiente, la tabla lo indica. Para juzgar la utilidad del sistema en campo pesan m\'as la generalizaci\'on entre fuentes y las fotograf\'ias externas (Secciones~\ref{sec:generalizacion} y~\ref{sec:campo_externo}) que el desempe\~no en la partici\'on estratificada; el ensamble de la etapa 2 se presenta al final como resultado exploratorio, porque no est\'a desplegado.
 
 \begin{table}[H]
 \caption{Estado de los criterios de \'exito al cierre de esta versi\'on}
@@ -91,77 +91,6 @@ Suavizado de Etiquetas & 0.10 & 0.075 & Valor de b\'usqueda \\
 
 \noindent\textbf{Resultado de prueba y decisi\'on de configuraci\'on:} El ensayo ganador no mejor\'o el Macro $F_1$ de prueba frente a la l\'inea base ($-0.49$ pp), aunque s\'i mejor\'o ligeramente la validaci\'on (+0.12 pp). El ganador no se adopt\'o: la configuraci\'on de desarrollo sigue siendo la de la ejecuci\'on \texttt{20260921\_204608} (\texttt{learning\_rate} $10^{-4}$, lote 32, \texttt{sqrt\_inverse}, suavizado 0.1), con Macro $F_1$ de prueba de \textbf{0.9480} y exactitud de 97.81\%. Esa ejecuci\'on, anterior al estudio y primer reentrenamiento completo sobre la materializaci\'on corregida de \texttt{seed\_42}, es la oficial del proyecto y la que despliega la aplicaci\'on. El presupuesto de b\'usqueda se redujo de 60 a 25 intentos despu\'es de observar resultados parciales, mediante una enmienda registrada.
 
-\subsection{Rendimiento del modelo: ensamble y bioseguridad}
-
-El ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) super\'o a las arquitecturas individuales en la partici\'on estratificada hist\'orica (Tabla~\ref{tab:resultados_ensamble_c3} y Figura~\ref{fig:comparativa_ensamble_bar}). Este resultado es hist\'orico, de una sola semilla y en una partici\'on que mezcla fuentes; bajo validaci\'on con fuente no vista la ventaja es mixta (sección de generalizaci\'on).
-
-\begin{table}[H]
-\caption{Desempe\~no del ensamble frente a modelos individuales en la prueba de la etapa 2 (corpus de 33~433 im\'agenes, 5~015 de prueba)}
-\label{tab:resultados_ensamble_c3}
-\centering
-\small
-\begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.2cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
-\toprule
-\textbf{Arquitectura / Modelo} & \textbf{Exactitud} & \textbf{Macro $F_1$} & \textbf{Precision} & \textbf{Recall} \\
-\midrule
-ShuffleNet-V2-x1.0 (\texttt{20260910\_184521}) & 97.31\% & 0.9330 & 0.9388 & 0.9298 \\
-EfficientNet-Lite0 (\texttt{20260812\_221429}) & 97.91\% & 0.9468 & 0.9533 & 0.9413 \\
-EfficientNet-B0 (\texttt{20260910\_170120}) & 97.97\% & 0.9483 & 0.9589 & 0.9400 \\
-\textbf{Ensamble Heterog\'eneo (Soft Voting)} & \textbf{98.29\%} & \textbf{0.9567} & \textbf{0.9642} & \textbf{0.9506} \\
-\midrule
-\textit{Ganancia neta vs. mejor individual} & \textit{+0.32 pp} & \textit{+0.83 pp} & \textit{+0.52 pp} & \textit{+0.93 pp} \\
-\bottomrule
-\end{tabularx}
-\end{singlespace}
-\end{table}
-
-Las filas de la Tabla~\ref{tab:resultados_ensamble_c3} proceden de la etapa 2, con el Lite0 de agosto (\texttt{20260812\_221429}) y una materializaci\'on del conjunto de prueba con 338 im\'agenes de roya com\'un y 290 de mancha gris. El modelo oficial vigente (\texttt{20260921\_204608}, corpus de 33~429 im\'agenes, 339 y 289 im\'agenes en esas clases) obtuvo exactitud 97.81\%, Macro $F_1$ 0.9480, precisi\'on 0.9513 y recall 0.9467 sobre su propia prueba; no se compara de forma pareada con las filas anteriores.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.72\linewidth]{images/ensemble/ensemble_comparison_bar.png}
-\caption{Comparativa de desempe\~no del ensamble frente a modelos individuales.}
-\label{fig:comparativa_ensamble_bar}
-\end{figure}
-
-El hallazgo de mayor trascendencia agron\'omica reside en el \textbf{Macro Recall de 95.06\%}. En fitopatolog\'ia, el costo de un falso negativo es devastador: omitir una infecci\'on incipiente permite que el hongo o virus arrase con la parcela. Como lo demuestra la matriz de confusi\'on normalizada del ensamble (Figura~\ref{fig:matriz_ensamble}), la \textbf{Necrosis Letal del Ma\'iz (MLN)} alcanz\'o un \textbf{Recall perfecto del 100.0\% (963 aciertos sobre 963 casos de prueba, cero falsos negativos)}. La roya com\'un y el tiz\'on superaron el 98\% de detecci\'on.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.68\linewidth]{images/ensemble/confusion_matrix_ensemble.png}
-\caption{Matriz de confusi\'on normalizada del ensamble sobre 5~015 muestras de prueba.}
-\label{fig:matriz_ensamble}
-\end{figure}
-
-Asimismo, la \textbf{deficiencia de potasio}, que en una evaluaci\'on previa de la primera fase alcanzaba 0.49 (protocolo y soporte distintos), subi\'o a \textbf{0.8475} en el ensamble de la etapa 2 y a 0.8242 en el Lite0 oficial vigente. Esta mejora coincide con la incorporaci\'on de nuevos repositorios y con la p\'erdida ponderada \texttt{sqrt\_inverse}, pero no se aisl\'o experimentalmente la contribuci\'on de cada factor.
-
-\begin{table}[H]
-\caption{Desglose de $F_1$ por clase en la prueba de la etapa 2 (corpus de 33~433 im\'agenes; Lite0 \texttt{20260812\_221429})}
-\label{tab:desglose_clases}
-\centering
-\small
-\begin{singlespace}
-\begin{tabular}{lccccc}
-\toprule
-\textbf{Patolog\'ia Agron\'omica} & \textbf{Soporte} & \textbf{Lite0} & \textbf{B0} & \textbf{ShuffleNet} & \textbf{Ensamble} \\
-\midrule
-Necrosis Letal (MLN) & 963 & \textbf{0.9990} & 0.9984 & 0.9974 & \textbf{0.9990} \\
-Planta Sana (Healthy) & 1~311 & 0.9936 & 0.9954 & 0.9901 & \textbf{0.9958} \\
-Roya Com\'un & 338 & 0.9866 & 0.9896 & 0.9867 & \textbf{0.9911} \\
-Gusano Cogollero & 728 & 0.9814 & \textbf{0.9877} & 0.9815 & \textbf{0.9877} \\
-Tiz\'on Foliar (NCLB) & 1~025 & 0.9797 & 0.9769 & 0.9728 & \textbf{0.9811} \\
-Mancha Gris (GLS) & 290 & \textbf{0.9451} & 0.9194 & 0.9120 & 0.9388 \\
-Deficiencia de F\'osforo & 140 & 0.9403 & 0.9527 & 0.9275 & \textbf{0.9632} \\
-Deficiencia de Nitr\'ogeno & 127 & 0.8664 & 0.8939 & 0.8613 & \textbf{0.9057} \\
-Deficiencia de Potasio & 93 & 0.8290 & 0.8208 & 0.7674 & \textbf{0.8475} \\
-\midrule
-\textbf{Macro Promedio} & \textbf{5~015} & 0.9468 & 0.9483 & 0.9330 & \textbf{0.9567} \\
-\bottomrule
-\end{tabular}
-\end{singlespace}
-\end{table}
-
 \subsection{Rendimiento del modelo: generalizaci\'on entre fuentes}\label{sec:generalizacion}
 
 Para poner a prueba los l\'imites del sistema frente al cambio de dominio, se dise\~n\'o un experimento cruzado $2\times2$ de validaci\'on cruzada en 5 pliegues sobre \texttt{EfficientNet-Lite0}, comparando la partici\'on estratificada habitual frente a una partici\'on agrupada por procedencia que veta cualquier solapamiento de fuentes entre entrenamiento y evaluaci\'on (Tabla~\ref{tab:kfold_2x2_c3} y Figura~\ref{fig:kfold_sigmas}).
@@ -228,7 +157,7 @@ En ambos casos el modelo se entren\'o sin la fuente retenida y se evalu\'o sobre
 \subsection{Rendimiento del modelo: fotograf\'ias de campo externas}
 \label{sec:campo_externo}
 
-Se evalu\'o el modelo oficial en 97 fotograf\'ias de campo ajenas al corpus de entrenamiento, organizadas en carpetas por clase (una de ellas tambi\'en figura en el corpus). Con el modelo FP32 en computador y la imagen completa, acert\'o 41 de 97 (42\%); el detector OOD rechaz\'o 49 de las 97 fotograf\'ias. El Lite0 de agosto (\texttt{20260812\_221429}) acert\'o 39 de 97 sobre las mismas fotograf\'ias, de modo que la diferencia con las m\'etricas de prueba no se explica por el cambio de modelo. Es compatible con una generalizaci\'on limitada fuera del corpus, como indican LOSO y la validaci\'on agrupada por fuente, pero no se aisl\'o de otros factores como el etiquetado y el encuadre de las fotograf\'ias. Es la principal limitaci\'on del sistema (Tabla~\ref{tab:campo_externo}).
+Se evalu\'o el modelo oficial en 97 fotograf\'ias de campo ajenas al corpus de entrenamiento, organizadas en carpetas por clase (una de ellas tambi\'en figura en el corpus). Con el modelo FP32 en computador y la imagen completa, acert\'o 41 de 97 (42\%); el detector OOD rechaz\'o 49 de las 97 fotograf\'ias. El Lite0 de agosto (\texttt{20260812\_221429}) acert\'o 39 de 97 sobre las mismas fotograf\'ias, de modo que la diferencia con las m\'etricas de prueba no se explica por el cambio de modelo. Es compatible con una generalizaci\'on limitada fuera del corpus, como indican LOSO y la validaci\'on agrupada por fuente, pero no se aisl\'o de otros factores como el etiquetado y el encuadre de las fotograf\'ias. Es la principal limitaci\'on del sistema (Tabla~\ref{tab:campo_externo}). Se desconocen el lugar, la fecha y el criterio de etiquetado de estas fotograf\'ias.
 
 \begin{table}[H]
 \caption{Aciertos del modelo oficial en fotograf\'ias de campo externas, por clase}
@@ -355,13 +284,13 @@ Al ocluir la regi\'on central de la imagen (36.3\% del \'area), el clasificador 
 
 El modelo oficial \texttt{EfficientNet-Lite0} (\texttt{20260921\_204608}) cuantizado a 8 bits (\textbf{Int8}) ocupa \textbf{3.74~MB} (3~743~728 bytes), una reducci\'on del 72.9\% frente a los 13.79~MB del punto de control FP32. En la prueba completa de 5~015 im\'agenes, el modelo Int8 obtuvo Macro $F_1$ de 0.9489 y exactitud de 97.87\%, frente a 0.9480 y 97.81\% de PyTorch, con un acuerdo de predicciones del 99.74\%. La paridad num\'erica del TFLite FP32 con ONNX y PyTorch fue aprobada (diferencia m\'axima de probabilidad de $3.3\times10^{-6}$ en ONNX y $3.9\times10^{-7}$ en TFLite). La paridad sobre una muestra de 30 im\'agenes no fue aprobada por una sola imagen l\'imite (diferencia m\'axima de probabilidad de 0.198 frente a un tope de 0.15).
 
-La aplicaci\'on m\'ovil \textbf{DoctorMaiz} (React Native, TypeScript y \texttt{react-native-fast-tflite}) se instal\'o y prob\'o en un tel\'efono \textbf{Motorola edge 40 neo} (procesador MediaTek Dimensity 7030 octa-core a 2.5 GHz, 8~GB RAM, Android 15).
+La aplicaci\'on m\'ovil \textbf{DoctorMaiz} (React Native, TypeScript y \texttt{react-native-fast-tflite}) se instal\'o y prob\'o en un tel\'efono \textbf{Motorola edge 40 neo} (procesador MediaTek Dimensity 7030 octa-core a 2.5 GHz, 8~GB RAM, Android 15). Todas las mediciones en tel\'efono provienen de este \'unico dispositivo de gama media; los dispositivos de gama baja y con 2~GB de RAM, contemplados en el alcance, no se probaron en hardware.
 
 Las latencias del modelo Int8 oficial se midieron en el tel\'efono como medianas (Tabla~\ref{tab:latencias_movil_c3}):
 \begin{itemize}
 \item El preprocesado tom\'o una mediana de \textbf{98 ms} (p95 de 279~ms).
 \item La inferencia en la CPU del tel\'efono tom\'o una mediana de \textbf{23 ms}.
-\item Ambas cifras cumplen la meta de 300~ms para preprocesado e inferencia de la Tabla~\ref{tab:estado_criterios_c3}.
+\item Ambas cifras cumplen la meta de 300~ms para preprocesado e inferencia de la Tabla~\ref{tab:estado_criterios_c3}. El preprocesado supera cuatro veces a la inferencia, de modo que el cuello de botella no es el modelo.
 \item El flujo interactivo completo (captura, decodificaci\'on, inferencia, persistencia en SQLite y renderizado) tom\'o una mediana de 473 ms en la medici\'on de la etapa 2 con el modelo de agosto; no se repiti\'o con el modelo oficial y no forma parte de la meta.
 \end{itemize}
 
@@ -385,7 +314,7 @@ Flujo completo & Etapa 2 (\texttt{20260812\_221429}) & 473 ms \\
 
 \noindent\textbf{Fidelidad del tel\'efono frente al servidor:} Se procesaron en el tel\'efono 143 im\'agenes (95 fotograf\'ias de campo externas y 48 del corpus) con el motor de inferencia de la aplicaci\'on. La primera medici\'on revel\'o una diferencia de preprocesado entre entrenamiento y aplicaci\'on: las im\'agenes con alg\'un lado menor de 448 p\'ixeles se escalaban a $224 \times 224$ en un solo paso bilineal sin prefiltro, mientras que el entrenamiento usa el redimensionado con antialias de Pillow. Con ello, el tel\'efono coincid\'ia con el computador solo en el 84\% de las predicciones y el detector OOD rechazaba el doble de im\'agenes del corpus (16.7\% frente a 8.3\%). Al pasar el tensor del propio tel\'efono por el modelo Int8 del servidor se reprodujeron sus predicciones, lo que descart\'o al int\'erprete como causa. Tras portar a la aplicaci\'on el remuestreo de Pillow, verificado byte a byte contra su salida, el tel\'efono coincide con el Int8 del servidor en las 143 im\'agenes. En el tel\'efono, el modelo acert\'o 45 de 48 im\'agenes del corpus (93.8\%, con 8.3\% de rechazo OOD) y 38 de 95 fotograf\'ias de campo (40.0\%, con 52.6\% de rechazo OOD), cifras equivalentes a las del computador (Secci\'on~\ref{sec:campo_externo}).
 
-\noindent\textbf{Comprobaci\'on de la mitigaci\'on en la Interfaz de Usuario (UI/UX):} La aplicaci\'on solventa las limitaciones del modelo mediante un dise\~no ergon\'omico adaptado al productor (Figuras~\ref{fig:app_pantallas_1} y~\ref{fig:app_pantallas_2}):
+\noindent\textbf{Mecanismos de mitigaci\'on en la interfaz de usuario (UI/UX):} La aplicaci\'on incorpora mecanismos que buscan mitigar las limitaciones del modelo mediante un dise\~no ergon\'omico adaptado al productor (Figuras~\ref{fig:app_pantallas_1} y~\ref{fig:app_pantallas_2}). Su efecto sobre el error del modelo no se midi\'o ni se evalu\'o con productores. Los mecanismos son:
 \begin{enumerate}
 \item \textbf{C\'amara con marco gu\'ia foliar (Figura~\ref{fig:app_pantallas_1}):} La app instruye al agricultor a encuadrar la hoja y recorta la captura al marco gu\'ia con un margen de 15\% (3.02 MP a partir de 12.6 MP, el 24\% de la escena, en el dispositivo de prueba), lo que reduce el fondo visible antes de inferir.
 \item \textbf{Detector OOD de Mahalanobis (Figura~\ref{fig:app_pantallas_2}):} Cuando la distancia multivariada supera el umbral 106.37, como ocurri\'o con las cinco im\'agenes sint\'eticas de prueba, el sistema despliega \textbf{«Imagen no reconocida»}; manos, suelo y ropa no se evaluaron de forma cuantificada.
@@ -439,7 +368,78 @@ Flujo completo & Etapa 2 (\texttt{20260812\_221429}) & 473 ms \\
 \label{fig:app_pantallas_2}
 \end{figure}
 
-\section{Impacto Social y Recomendaciones de Pol\'itica P\'ublica}
+\subsection{Resultado exploratorio: ensamble de la etapa 2 (no desplegado)}
+
+El ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) super\'o a las arquitecturas individuales en la partici\'on estratificada hist\'orica (Tabla~\ref{tab:resultados_ensamble_c3} y Figura~\ref{fig:comparativa_ensamble_bar}). Este resultado es hist\'orico, de una sola semilla y en una partici\'on que mezcla fuentes; bajo validaci\'on con fuente no vista la ventaja es mixta (sección de generalizaci\'on).
+
+\begin{table}[H]
+\caption{Desempe\~no del ensamble frente a modelos individuales en la prueba de la etapa 2 (corpus de 33~433 im\'agenes, 5~015 de prueba)}
+\label{tab:resultados_ensamble_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.2cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
+\toprule
+\textbf{Arquitectura / Modelo} & \textbf{Exactitud} & \textbf{Macro $F_1$} & \textbf{Precision} & \textbf{Recall} \\
+\midrule
+ShuffleNet-V2-x1.0 (\texttt{20260910\_184521}) & 97.31\% & 0.9330 & 0.9388 & 0.9298 \\
+EfficientNet-Lite0 (\texttt{20260812\_221429}) & 97.91\% & 0.9468 & 0.9533 & 0.9413 \\
+EfficientNet-B0 (\texttt{20260910\_170120}) & 97.97\% & 0.9483 & 0.9589 & 0.9400 \\
+\textbf{Ensamble Heterog\'eneo (Soft Voting)} & \textbf{98.29\%} & \textbf{0.9567} & \textbf{0.9642} & \textbf{0.9506} \\
+\midrule
+\textit{Ganancia neta vs. mejor individual} & \textit{+0.32 pp} & \textit{+0.83 pp} & \textit{+0.52 pp} & \textit{+0.93 pp} \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+Las filas de la Tabla~\ref{tab:resultados_ensamble_c3} proceden de la etapa 2, con el Lite0 de agosto (\texttt{20260812\_221429}) y una materializaci\'on del conjunto de prueba con 338 im\'agenes de roya com\'un y 290 de mancha gris. El modelo oficial vigente (\texttt{20260921\_204608}, corpus de 33~429 im\'agenes, 339 y 289 im\'agenes en esas clases) obtuvo exactitud 97.81\%, Macro $F_1$ 0.9480, precisi\'on 0.9513 y recall 0.9467 sobre su propia prueba; no se compara de forma pareada con las filas anteriores.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{images/ensemble/ensemble_comparison_bar.png}
+\caption{Comparativa de desempe\~no del ensamble frente a modelos individuales.}
+\label{fig:comparativa_ensamble_bar}
+\end{figure}
+
+En el ensamble, que no est\'a desplegado en la aplicaci\'on, el resultado m\'as relevante para el diagn\'ostico es el \textbf{Macro Recall de 95.06\%}, porque en fitopatolog\'ia un falso negativo puede dejar sin atenci\'on una infecci\'on incipiente. Como muestra la matriz de confusi\'on normalizada del ensamble (Figura~\ref{fig:matriz_ensamble}), la \textbf{Necrosis Letal del Ma\'iz (MLN)} alcanz\'o un recall de 100.0\% (963 aciertos sobre 963 casos de prueba), y la roya com\'un y el tiz\'on superaron el 98\% de detecci\'on. Ese 100\% corresponde a una partici\'on que mezcla fuentes: bajo LOSO el recall de MLN baja a 0.72--0.81, de modo que no debe leerse como garant\'ia de detecci\'on en campo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.68\linewidth]{images/ensemble/confusion_matrix_ensemble.png}
+\caption{Matriz de confusi\'on normalizada del ensamble sobre 5~015 muestras de prueba.}
+\label{fig:matriz_ensamble}
+\end{figure}
+
+Asimismo, la \textbf{deficiencia de potasio}, que en una evaluaci\'on previa de la primera fase alcanzaba 0.49 (protocolo y soporte distintos), subi\'o a \textbf{0.8475} en el ensamble de la etapa 2 y a 0.8242 en el Lite0 oficial vigente. Esta mejora coincide con la incorporaci\'on de nuevos repositorios y con la p\'erdida ponderada \texttt{sqrt\_inverse}, pero no se aisl\'o experimentalmente la contribuci\'on de cada factor.
+
+\begin{table}[H]
+\caption{Desglose de $F_1$ por clase en la prueba de la etapa 2 (corpus de 33~433 im\'agenes; Lite0 \texttt{20260812\_221429})}
+\label{tab:desglose_clases}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Patolog\'ia Agron\'omica} & \textbf{Soporte} & \textbf{Lite0} & \textbf{B0} & \textbf{ShuffleNet} & \textbf{Ensamble} \\
+\midrule
+Necrosis Letal (MLN) & 963 & \textbf{0.9990} & 0.9984 & 0.9974 & \textbf{0.9990} \\
+Planta Sana (Healthy) & 1~311 & 0.9936 & 0.9954 & 0.9901 & \textbf{0.9958} \\
+Roya Com\'un & 338 & 0.9866 & 0.9896 & 0.9867 & \textbf{0.9911} \\
+Gusano Cogollero & 728 & 0.9814 & \textbf{0.9877} & 0.9815 & \textbf{0.9877} \\
+Tiz\'on Foliar (NCLB) & 1~025 & 0.9797 & 0.9769 & 0.9728 & \textbf{0.9811} \\
+Mancha Gris (GLS) & 290 & \textbf{0.9451} & 0.9194 & 0.9120 & 0.9388 \\
+Deficiencia de F\'osforo & 140 & 0.9403 & 0.9527 & 0.9275 & \textbf{0.9632} \\
+Deficiencia de Nitr\'ogeno & 127 & 0.8664 & 0.8939 & 0.8613 & \textbf{0.9057} \\
+Deficiencia de Potasio & 93 & 0.8290 & 0.8208 & 0.7674 & \textbf{0.8475} \\
+\midrule
+\textbf{Macro Promedio} & \textbf{5~015} & 0.9468 & 0.9483 & 0.9330 & \textbf{0.9567} \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
+
+\section{Impacto Social y Recomendaciones de Pol\'itica P\'ublica}\label{sec:recomendaciones}
 
 Con base en los resultados, se proponen cinco recomendaciones dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA):
 
