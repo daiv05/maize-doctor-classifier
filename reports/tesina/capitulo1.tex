@@ -12,25 +12,11 @@ Pese a esa importancia, el efecto de los problemas fitosanitarios sobre la produ
 
 \subsection{Descripci\'on del problema: El diagn\'ostico a ciegas en el surco}
 
-En las parcelas rurales salvadore\~nas no existen microscopios ni laboratorios cercanos. El diagn\'ostico fitosanitario diario descansa por completo en los ojos del agricultor, quien recorre el surco bajo el sol, entre polvo y calor, tratando de interpretar manchas y marchitamientos complejos:
-\begin{itemize}
-\item \textbf{Tiz\'on foliar (\textit{Exserohilum turcicum}) y mancha gris (\textit{Cercospora zeae-maydis}):} Colonizan la l\'amina verde con lesiones alargadas o rectangulares que secan la hoja y detienen el llenado de la mazorca.
-\item \textbf{Roya com\'un (\textit{Puccinia sorghi}):} Forma p\'ustulas pulverulentas casta\~no-rojizas en ambas caras de la hoja que reducen el \'area foliar activa.
-\item \textbf{Gusano cogollero (\textit{Spodoptera frugiperda}):} Mastica los verticilos tiernos y destruye el punto de crecimiento de la planta.
-\item \textbf{Necrosis letal del ma\'iz (MLN):} Complejo viral descrito desde 2011 en \'Africa oriental, donde provoc\'o p\'erdidas de rendimiento de hasta 90\% en Kenia en 2012 \cite{mahuku2015}. No hay reportes publicados de la enfermedad en El Salvador; se incluye como clase de vigilancia temprana.
-\item \textbf{Deficiencias nutricionales de nitr\'ogeno, f\'osforo y potasio (N-P-K):} Provocan clorosis en ``V'', pigmentaciones p\'urpuras y secado marginal que a simple vista se confunden f\'acilmente con hongos o virus.
-\end{itemize}
+En las parcelas rurales salvadore\~nas no existen microscopios ni laboratorios cercanos. El diagn\'ostico fitosanitario diario descansa en los ojos del agricultor, que recorre el surco bajo el sol tratando de interpretar manchas y marchitamientos. Los casos m\'as dif\'iciles son el tiz\'on foliar, la mancha gris, la roya com\'un, el gusano cogollero, la necrosis letal del ma\'iz y las deficiencias de nitr\'ogeno, f\'osforo y potasio (Tabla~\ref{tab:taxonomia}), que a simple vista se confunden entre s\'i y con hongos o virus. La necrosis letal, descrita desde 2011 en \'Africa oriental y con p\'erdidas de hasta 90\% en Kenia en 2012 \cite{mahuku2015}, no tiene reportes publicados en El Salvador y se incluye como clase de vigilancia temprana.
 
 Esta dificultad se agrava ante la marcada limitaci\'on de cobertura en la asistencia t\'ecnica p\'ublica presencial. La relaci\'on entre el personal t\'ecnico extensionista disponible y el n\'umero global de productores agr\'icolas dispersos en la geograf\'ia rural salvadore\~na genera una brecha estructural de atenci\'on, donde una visita agron\'omica especializada suele demorar semanas o no llegar a materializarse durante la ventana cr\'itica de la infecci\'on \cite{centa2022}.
 
 Ante la incertidumbre y el riesgo inminente de p\'erdida de la siembra, el agricultor acude frecuentemente a puntos comerciales de agroservicios. En estos espacios, la falta de diagn\'ostico instrumental propicia recomendaciones emp\'iricas basadas en agroqu\'imicos de amplio espectro para s\'intomas que corresponden a deficiencias nutricionales de suelo. Esta situaci\'on ocasiona p\'erdidas econ\'omicas significativas para el presupuesto familiar al incurrir en gastos fitosanitarios ineficaces, adem\'as de generar impactos ambientales negativos por sobreaplicaci\'on de qu\'imicos y retrasar la atenci\'on correctiva adecuada de pat\'ogenos severos \cite{centa2022}.
-
-\begin{figure}[H]
-\centering
-\includegraphics[height=0.74\textheight,keepaspectratio]{images/eda/eda_00_muestra_visual.png}
-\caption{Diversidad morfol\'ogica, fondos r\'usticos y heterogeneidad geom\'etrica en las afecciones foliares del ma\'iz.}
-\label{fig:eda_samples}
-\end{figure}
 
 \subsection{Planteamiento del problema}
 
@@ -42,16 +28,7 @@ A partir de la situaci\'on descrita, se constata que los mecanismos tradicionale
 \item \textbf{Vulnerabilidad ante la variabilidad del entorno real:} Al haber sido entrenados mayoritariamente sobre im\'agenes de laboratorio con fondos neutros e iluminaci\'on homog\'enea, los algoritmos colapsan al exponerse a la milpa, donde la presencia de suelos r\'usticos, sombras irregulares, malezas y contraluz induce clasificaciones err\'oneas emitidas con un alto grado de sobreconfianza (v\'ease \cite{ahmad2023a}).
 \end{enumerate}
 
-Frente a este escenario, surge la necesidad de replantear el diagn\'ostico automatizado desde las restricciones materiales del entorno agr\'icola. Una herramienta orientada a cerrar esta brecha debe operar directamente en manos del productor, fundament\'andose en cuatro requerimientos operacionales esenciales:
-
-\begin{itemize}
-\item \textbf{Autonom\'ia operativa local:} La capacidad diagn\'ostica debe ejecutarse de forma integral en el propio dispositivo, asegurando disponibilidad inmediata en la parcela sin supeditar su funcionamiento a redes de telecomunicaciones.
-\item \textbf{Austeridad y eficiencia computacional:} El procesamiento debe ajustarse estrictamente a las capacidades t\'ecnicas de los tel\'efonos b\'asicos predominantes en las zonas rurales, garantizando tiempos de respuesta cortos y un consumo m\'inimo de energ\'ia.
-\item \textbf{Resiliencia y bioseguridad ante la captura:} El sistema debe ser capaz de discriminar la sintomatolog\'ia foliar frente al ruido visual del campo y, de manera primordial, reconocer situaciones de incertidumbre o tomas no v\'alidas para abstenerse de emitir diagn\'osticos infundados que perjudiquen la econom\'ia familiar.
-\item \textbf{Traducci\'on agron\'omica orientada a la acci\'on:} El diagn\'ostico visual debe complementarse con una evaluaci\'on comprensible del nivel de da\~no y con alternativas concretas de manejo integrado basadas en bioinsumos accesibles, facilitando una intervenci\'on oportuna y viable para el productor.
-\end{itemize}
-
-Con base en estas consideraciones, se formula la problem\'atica central de la investigaci\'on:
+Con base en lo anterior, se formula la problem\'atica central de la investigaci\'on:
 \begin{quote}
 \centering
 \itshape
@@ -315,87 +292,31 @@ La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la 
 
 \section{Presupuesto Global Estimado}
 
-El presupuesto del desarrollo y evaluaci\'on de la soluci\'on anal\'itica y embebida abarc\'o dos categor\'ias esenciales: recurso humano especializado e infraestructura de c\'omputo acelerado en la nube (Tablas~\ref{tab:presupuesto_rh} a~\ref{tab:presupuesto_resumen}). Las horas de GPU son la suma de las duraciones de los 25 ensayos del estudio de optimizaci\'on (\texttt{trials.csv}, 45~523~s), incluidos los dos ensayos interrumpidos, que aportan 20~102~s; el resto de rubros son proyecciones.
+El presupuesto abarca recurso humano e infraestructura de c\'omputo en la nube (Tabla~\ref{tab:presupuesto}). Las horas de GPU son la suma de las duraciones de los 25 ensayos del estudio de optimizaci\'on (\texttt{trials.csv}, 45~523~s), incluidos los dos ensayos interrumpidos, que aportan 20~102~s; el resto de rubros son proyecciones.
 
 \begin{table}[H]
-\caption{Presupuesto proyectado: C\'alculo del salario base por rol (320 horas)}
-\label{tab:presupuesto_rh}
+\caption{Presupuesto proyectado del proyecto (USD)}
+\label{tab:presupuesto}
 \centering
 \small
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{2.6cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{2.4cm}}
 \toprule
-\textbf{Rol Profesional} & \textbf{Salario mensual de referencia} & \textbf{Meses equivalentes (320 h)} & \textbf{Salario base (USD)} \\
+\textbf{Rubro} & \textbf{Salario base} & \textbf{Cargas} & \textbf{Total} \\
 \midrule
-Ingeniero de Datos / MLOps & \$1,500.00 & 1.8462 & \$2,769.23 \\
-Investigador de Deep Learning & \$1,350.00 & 1.8462 & \$2,492.31 \\
-Desarrollador M\'ovil Edge AI & \$1,250.00 & 1.8462 & \$2,307.69 \\
+Ingeniero de Datos / MLOps & \$2,769.23 & \$611.54 & \$3,380.77 \\
+Investigador de Deep Learning & \$2,492.31 & \$564.22 & \$3,056.53 \\
+Desarrollador M\'ovil Edge AI & \$2,307.69 & \$532.70 & \$2,840.39 \\
+\textbf{Recurso humano (320 h por rol)} & \textbf{\$7,569.23} & \textbf{\$1,708.46} & \textbf{\$9,277.69} \\
 \midrule
-\textbf{Total salario base} & \textbf{\$4,100.00} & — & \textbf{\$7,569.23} \\
+Nube y licencias: GPU A10G, almacenamiento y software libre & --- & --- & \$43.92 \\
+\midrule
+\textbf{Total general} & --- & --- & \textbf{\$9,321.61} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
 
-\begin{table}[H]
-\caption{Presupuesto proyectado: Cargas y prestaciones patronales sobre el salario base}
-\label{tab:presupuesto_cargas}
-\centering
-\small
-\begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{1.75cm}>{\centering\arraybackslash}p{1.75cm}>{\centering\arraybackslash}p{1.75cm}>{\centering\arraybackslash}p{2.0cm}>{\centering\arraybackslash}p{1.75cm}>{\centering\arraybackslash}p{2.0cm}}
-\toprule
-\textbf{Rol Profesional} & \textbf{ISSS 7.5\%} & \textbf{AFP 7.75\%} & \textbf{INSAFORP 1\%} & \textbf{Aguinaldo y vacaciones} & \textbf{Total cargas} & \textbf{Costo total} \\
-\midrule
-Ingeniero de Datos / MLOps & \$138.46 & \$214.62 & \$27.69 & \$230.77 & \$611.54 & \$3,380.77 \\
-Investigador de Deep Learning & \$138.46 & \$193.15 & \$24.92 & \$207.69 & \$564.22 & \$3,056.53 \\
-Desarrollador M\'ovil Edge AI & \$138.46 & \$178.85 & \$23.08 & \$192.31 & \$532.70 & \$2,840.39 \\
-\midrule
-\textbf{Total Recurso Humano} & \textbf{\$415.38} & \textbf{\$586.62} & \textbf{\$75.69} & \textbf{\$630.77} & \textbf{\$1,708.46} & \textbf{\$9,277.69} \\
-\bottomrule
-\end{tabularx}
-\end{singlespace}
-\end{table}
+Los salarios mensuales de referencia (\$1,500, \$1,350 y \$1,250) son el punto medio de la escala del sector p\'ublico salvadore\~no para perfiles equivalentes. El costo se estima solo por horas efectivas: cada integrante trabaja menos de 2 horas diarias de lunes a viernes, se usan 2 horas como cota superior, es decir 10 horas semanales, que suman 320 horas en las 32 semanas del cronograma (Tabla~\ref{tab:cronograma}). Equivale a 1.85 meses de una jornada de 40 horas, y el salario mensual se prorrate\'o por esa proporci\'on. Las cargas son la cuota patronal al ISSS de 7.5\% sobre un salario base m\'aximo de \$1,000 mensuales, la de AFP de 7.75\%, la contribuci\'on al INSAFORP de 1\%, y el aguinaldo y las vacaciones de ley prorrateados.
 
-Los salarios mensuales corresponden al punto medio de la escala de referencia del sector p\'ublico salvadore\~no para Gobierno Central y Ministerios, aplicada a perfiles equivalentes: Ingeniero de Datos / MLOps (rango de \$1,200 a \$1,800, equivalente a Especialista de Base de Datos o Analista de Sistemas), Investigador de Deep Learning (rango de \$1,100 a \$1,600, equivalente a Especialista en An\'alisis de Datos) y Desarrollador M\'ovil (rango de \$1,000 a \$1,500, equivalente a Analista Programador). La Tabla~\ref{tab:presupuesto_rh} calcula el salario base por rol y la Tabla~\ref{tab:presupuesto_cargas} desglosa las cargas patronales y el costo total. El costo se estima solo por las horas efectivas de trabajo. Cada integrante trabaja de lunes a viernes, menos de 2 horas diarias; para la estimaci\'on se usan 2 horas diarias como cota superior, es decir 10 horas semanales, lo que suma 320 horas en las 32 semanas del cronograma (Tabla~\ref{tab:cronograma}). Equivale a 1.85 meses de una jornada de 40 horas, por lo que el salario mensual de referencia se prorrateó por esa proporci\'on. Las cargas consideran: cuota patronal al ISSS de 7.5\% sobre un salario base m\'aximo de \$1,000.00 mensual; cuota patronal a la AFP de 7.75\%; contribuci\'on al INSAFORP de 1\%; y aguinaldo y vacaciones de ley prorrateados.
-
-\begin{table}[H]
-\caption{Presupuesto: Infraestructura Cloud y Licencias}
-\label{tab:presupuesto_hw}
-\centering
-\small
-\begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.8cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{4.0cm}>{\raggedleft\arraybackslash}p{2.0cm}}
-\toprule
-\textbf{Rubro} & \textbf{Detalle T\'ecnico} & \textbf{M\'etrica / Cantidad} & \textbf{Subtotal} \\
-\midrule
-Instancias GPU Modal & NVIDIA A10G (24 GB VRAM) & 12.65 horas del estudio de optimizaci\'on (7.06 sin los ensayos interrumpidos) $\times$ \$1.10/h de lista & \$13.92 \\
-Almacenamiento Cloud & Cloud Volumes y respaldos de pesos & 100 GB $\times$ 6 meses & \$30.00 \\
-Licenciamiento software & PyTorch, Expo, React Native, Optuna & Licencias Open Source / MIT & \$0.00 \\
-\midrule
-\textbf{Total Infraestructura Cloud y Licencias} & — & — & \textbf{\$43.92} \\
-\bottomrule
-\end{tabularx}
-\end{singlespace}
-\end{table}
-
-\begin{table}[H]
-\caption{Resumen presupuestario global de la investigaci\'on}
-\label{tab:presupuesto_resumen}
-\centering
-\small
-\begin{singlespace}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Rubro de Inversi\'on} & \textbf{Monto Total (USD)} & \textbf{Porcentaje (\%)} \\
-\midrule
-Recursos Humanos de Investigaci\'on & \$9,277.69 & 99.53\% \\
-Servicios de c\'omputo en la nube (GPU/Storage) & \$43.92 & 0.47\% \\
-\midrule
-\textbf{Total General} & \textbf{\$9,321.61} & \textbf{100.00\%} \\
-\bottomrule
-\end{tabular}
-\end{singlespace}
-\end{table}
-
-La ejecuci\'on financiera demuestra que, gracias al aprovechamiento de tecnolog\'ias de c\'odigo abierto y la utilizaci\'on estrat\'egica de cl\'usteres serverless con parada autom\'atica, el costo directo de infraestructura computacional se estima en \$43.92 USD, de los cuales \$13.92 corresponden a las 12.65 horas de GPU del estudio de optimizaci\'on a tarifa de lista (incluidos los intentos interrumpidos) y \$30.00 son una proyecci\'on de almacenamiento. El c\'omputo de los dem\'as entrenamientos no se contabiliza.
+La infraestructura cuesta \$43.92: \$13.92 de las 12.65 horas de GPU del estudio de optimizaci\'on a tarifa de lista (incluidos los intentos interrumpidos) y \$30.00 proyectados de almacenamiento (100~GB durante 6 meses). El c\'omputo de los dem\'as entrenamientos no se contabiliza.
