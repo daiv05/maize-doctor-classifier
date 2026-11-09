@@ -133,63 +133,63 @@ Para delimitar el problema el sistema se representa como una caja negra (Figura~
 
 \subsection{Objetivo General}
 
-Desarrollar, evaluar e implementar un sistema de visi\'on artificial embebido (\textit{Edge AI}) para el diagn\'ostico fitosanitario a partir de im\'agenes de la hoja de ma\'iz en El Salvador, desplegado mediante una aplicaci\'on m\'ovil nativa de operaci\'on completamente desconectada (\textit{offline}), capaz de clasificar afecciones foliares con alta sensibilidad y baja latencia en tel\'efonos inteligentes de gama baja o media.
+Desarrollar y evaluar un sistema de visi\'on artificial para el diagn\'ostico fitosanitario de la hoja de ma\'iz en El Salvador, integrado en una aplicaci\'on m\'ovil que funcione sin conexi\'on (\textit{Edge AI}) en tel\'efonos de gama baja o media, con alta sensibilidad y baja latencia.
 
 \subsection{Objetivos Espec\'ificos}
 
 \begin{enumerate}
-\item Consolidar, depurar y auditar criptogr\'aficamente un conjunto de m\'as de 33~000 im\'agenes de la hoja de ma\'iz distribuidas en 9 condiciones agron\'omicas, estableciendo contratos de datos verificables para descartar duplicados y prevenir filtraciones entre particiones.
-\item Optimizar arquitecturas convolucionales ligeras preentrenadas mediante b\'usqueda bayesiana de hiperpar\'ametros (Optuna) y algoritmos de poda temprana, maximizando el Macro $F_1$-Score con un uso eficiente del c\'omputo en GPU.
-\item Dise\~nar una estrategia de ensamble por votaci\'on suave (\textit{Soft Voting}) que combine modelos con diferentes sesgos inductivos, con el fin de elevar la sensibilidad diagn\'ostica en patolog\'ias cr\'iticas de la hoja de ma\'iz y mitigar el desbalance de clases.
-\item Evaluar el desempe\~no del sistema bajo protocolos de validaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}), cuantificando la disparidad de impacto entre laboratorio y campo real, as\'i como la atribuci\'on espacial mediante t\'ecnicas de explicabilidad y ablaci\'on de fondo.
-\item Cuantizar la arquitectura neuronal a enteros de 8 bits (Int8) e integrarla en una aplicaci\'on m\'ovil nativa provista de marco gu\'ia de encuadre y detector de tomas an\'omalas, validando su precisi\'on y fluidez en un tel\'efono inteligente f\'isico de gama media.
-\item Formular una propuesta estrat\'egica de integraci\'on institucional y pol\'iticas p\'ublicas orientada al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA, que facilite la transferencia tecnol\'ogica y el acompa\~namiento t\'ecnico a los peque\~nos productores de ma\'iz.
+\item Reunir y depurar un conjunto de m\'as de 33~000 im\'agenes de la hoja de ma\'iz en nueve condiciones agron\'omicas, con controles verificables (hashes de archivo y de p\'ixeles) que descarten duplicados y eviten que una misma imagen aparezca en m\'as de una partici\'on.
+\item Ajustar arquitecturas convolucionales ligeras preentrenadas mediante b\'usqueda bayesiana de hiperpar\'ametros (Optuna) con poda temprana, y comprobar si mejoran el Macro $F_1$ de la configuraci\'on inicial sin un gasto excesivo de GPU.
+\item Evaluar un ensamble por votaci\'on suave (\textit{Soft Voting}) de modelos con arquitecturas distintas, para medir si aumenta la sensibilidad en las enfermedades m\'as graves y en las clases con menos im\'agenes.
+\item Evaluar el sistema con validaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}), medir la diferencia de desempe\~no entre im\'agenes de laboratorio y de campo, y analizar en qu\'e regiones de la imagen se apoya el modelo mediante explicabilidad y ablaci\'on espacial.
+\item Cuantizar el modelo a enteros de 8 bits (Int8), integrarlo en una aplicaci\'on m\'ovil con marco gu\'ia de captura y detector de im\'agenes fuera de distribuci\'on, y medir su exactitud y su latencia en un tel\'efono f\'isico de gama media.
+\item Formular recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA para validar la herramienta en campo, ampliar el conjunto de datos con im\'agenes nacionales y definir las condiciones de su uso institucional.
 \end{enumerate}
 
 \section{Alcance y L\'imites del Proyecto}
 
 \subsection{Alcance del Proyecto}
 
-El alcance del presente proyecto comprende la investigaci\'on, dise\~no, desarrollo e implementaci\'on de una soluci\'on integral de diagn\'ostico fitosanitario orientada a los peque\~nos productores de ma\'iz en El Salvador. La soluci\'on se materializa en dos componentes tecnol\'ogicos articulados: la aplicaci\'on m\'ovil nativa para el usuario final y el motor anal\'itico de visi\'on artificial embebida.
+El proyecto abarca el dise\~no, el desarrollo y la evaluaci\'on de una herramienta de diagn\'ostico fitosanitario para los peque\~nos productores de ma\'iz en El Salvador. Tiene dos componentes: la aplicaci\'on m\'ovil que usa el agricultor y el modelo de visi\'on artificial que se ejecuta dentro de ella.
 
 \subsubsection{Alcance de la Aplicaci\'on M\'ovil (DoctorMaiz)}
-La aplicaci\'on m\'ovil constituye el punto de interacci\'on directa en manos del agricultor y abarca las siguientes capacidades funcionales:
+La aplicaci\'on incluye:
 \begin{itemize}
-\item \textbf{Inferencia local aut\'onoma (\textit{Offline}):} Ejecuci\'on integral del motor neuronal en el procesador del tel\'efono mediante modelos cuantizados, asegurando diagn\'osticos instant\'aneos en el surco sin requerir conexi\'on a internet ni datos m\'oviles.
-\item \textbf{Captura asistida con marco gu\'ia foliar:} Interfaz de c\'amara con ret\'icula visual ergon\'omica que orienta al agricultor a encuadrar la l\'amina de la hoja, reduciendo la captura de fondos distractores (suelo, sombras o maleza) antes de procesar la imagen.
-\item \textbf{Detecci\'on preventiva de capturas an\'omalas (Seguridad OOD):} M\'odulo de rechazo ante muestras fuera de dominio capaz de evaluar si la captura no corresponde a una hoja de ma\'iz o presenta incertidumbre excesiva, notificando un estado de «No reconocida» para evitar diagn\'osticos enga\~nosos.
-\item \textbf{Diagn\'ostico y valoraci\'on de severidad:} Presentaci\'on de resultados en lenguaje claro y accesible, con una gu\'ia visual de severidad en tres niveles (baja, moderada y cr\'itica) que el productor compara con su hoja; la aplicaci\'on no mide el da\~no.
-\item \textbf{Cat\'alogo de manejo integrado y bioinsumos:} Gu\'ia fitosanitaria pr\'actica vinculada al diagn\'ostico que ofrece alternativas de bioinsumos y manejo cultural de bajo costo, previniendo gastos perjudiciales en agroqu\'imicos inapropiados.
-\item \textbf{Historial y georreferenciaci\'on de muestreos:} Registro local persistente de cada evaluaci\'on (fecha, diagn\'ostico, severidad y ubicaci\'on GPS) para que el agricultor monitoree la evoluci\'on de sus parcelas a lo largo del ciclo agr\'icola.
-\item \textbf{Contribuci\'on comunitaria y sincronizaci\'on voluntaria:} M\'odulo opcional que permite almacenar im\'agenes validadas localmente para compartirlas cuando se cuente con conectividad, contribuyendo al monitoreo fitosanitario colectivo.
+\item \textbf{Diagn\'ostico sin conexi\'on.} El modelo cuantizado se ejecuta en el procesador del tel\'efono, sin internet ni datos m\'oviles.
+\item \textbf{Captura con marco gu\'ia.} La c\'amara muestra un marco con la silueta de la hoja para que el agricultor la encuadre y deje fuera la mayor parte del suelo, las sombras y la maleza.
+\item \textbf{Rechazo de im\'agenes dudosas.} Si la captura no parece una hoja de ma\'iz o el modelo no est\'a seguro, la aplicaci\'on muestra «No reconocida» en lugar de un diagn\'ostico.
+\item \textbf{Resultado y gu\'ia de severidad.} El resultado se presenta en lenguaje sencillo, con una gu\'ia visual de tres niveles (baja, moderada y cr\'itica) que el productor compara con su hoja, la aplicaci\'on no mide el da\~no.
+\item \textbf{Recomendaciones de manejo.} Para cada diagn\'ostico se ofrecen alternativas de bioinsumos y de manejo cultural de bajo costo.
+\item \textbf{Historial.} Cada evaluaci\'on se guarda en el tel\'efono con fecha, diagn\'ostico, severidad y ubicaci\'on GPS, para que el agricultor siga la evoluci\'on de su parcela durante el ciclo.
+\item \textbf{Aportes voluntarios.} El usuario puede guardar fotograf\'ias en el tel\'efono y enviarlas cuando tenga conexi\'on, con fines de monitoreo fitosanitario colectivo.
 \end{itemize}
 
-\subsubsection{Alcance del Componente de Inteligencia Artificial Embebida}
-El n\'ucleo de aprendizaje profundo embebido abarca:
+\subsubsection{Alcance del Componente de Inteligencia Artificial}
+El componente de inteligencia artificial abarca:
 \begin{itemize}
-\item \textbf{Cobertura taxon\'omica de 9 clases en hoja de ma\'iz:} Clasificaci\'on supervisada de signos y s\'intomas foliares, cubriendo enfermedades causadas por hongos (tiz\'on foliar, mancha gris y roya com\'un), virosis cr\'itica (necrosis letal del ma\'iz), plagas directas (gusano cogollero), deficiencias nutricionales de suelo (nitr\'ogeno, f\'osforo y potasio) y l\'amina foliar sana.
-\item \textbf{Optimizaci\'on bayesiana, ensamble y cuantizaci\'on Int8:} B\'usqueda automatizada de hiperpar\'ametros (Optuna con poda temprana), combinaci\'on estrat\'egica por votaci\'on suave (\textit{Soft Voting}) y cuantizaci\'on a 8 bits exportada en formato TensorFlow Lite mediante litert-torch, para inferencia en procesadores m\'oviles ($\le 300$~ms).
-\item \textbf{Auditor\'ia de sesgos y generalizaci\'on:} Protocolo de evaluaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}) y pruebas de ablaci\'on espacial de fondo para auditar el fen\'omeno de atajos visuales (\textit{Clever Hans effect}).
+\item \textbf{Nueve clases.} Tres enfermedades causadas por hongos (tiz\'on foliar, mancha gris y roya com\'un), una virosis (necrosis letal del ma\'iz), una plaga (gusano cogollero), tres deficiencias nutricionales (nitr\'ogeno, f\'osforo y potasio) y la hoja sana.
+\item \textbf{Entrenamiento y exportaci\'on.} B\'usqueda de hiperpar\'ametros con Optuna y poda temprana, un ensamble por votaci\'on suave (\textit{Soft Voting}) y cuantizaci\'on a 8 bits en formato TensorFlow Lite con litert-torch, con una meta de 300~ms o menos para preprocesado e inferencia en el tel\'efono.
+\item \textbf{Evaluaci\'on de sesgos.} Validaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}) y ablaci\'on espacial, para detectar si el modelo se apoya en atajos visuales del fondo (efecto \textit{Clever Hans}).
 \end{itemize}
 
-\subsection{L\'imites y Fronteras del Proyecto}
+\subsection{L\'imites del Proyecto}
 
-Con el fin de delimitar con precisi\'on la cobertura de la investigaci\'on, se definen los siguientes l\'imites operacionales:
+El proyecto tiene los siguientes l\'imites:
 \begin{itemize}
-\item \textbf{L\'imite biol\'ogico y sintom\'atico:} El sistema se restringe exclusivamente al an\'alisis de afecciones visibles en la l\'amina foliar del ma\'iz. Quedan fuera del alcance patolog\'ias radiculares, afecciones del tallo interno sin expresi\'on foliar y el monitoreo de plagas subterr\'aneas.
-\item \textbf{L\'imite de plataforma y compatibilidad de hardware:} La soluci\'on m\'ovil se enfoca en dispositivos con sistema operativo Android 7.0 (API 24) o superior, el m\'inimo del proyecto, con arquitectura de procesador ARM (v7 o v8); las pruebas en dispositivo se hicieron en Android 15, c\'amara trasera con enfoque autom\'atico y al menos 2~GB de memoria RAM. No se contempla desarrollo nativo para iOS ni para tel\'efonos sin capacidades inteligentes.
-\item \textbf{L\'imite de infraestructura y red:} La aplicaci\'on est\'a dise\~nada para operar desconectada; no existe dependencia de servicios en la nube para emitir el diagn\'ostico, ni se incluye sincronizaci\'on transaccional en tiempo real entre m\'ultiples terminales.
-\item \textbf{L\'imite legal y de diagn\'ostico fitopatol\'ogico:} La herramienta constituye un asistente t\'ecnico de orientaci\'on y apoyo agron\'omico para el productor. En ning\'un caso reemplaza los ensayos fitopatol\'ogicos de laboratorio (cultivos, aislamiento microbiano o pruebas PCR), ni sustituye los dict\'amenes oficiales de cuarentena o certificaci\'on fitosanitaria del Ministerio de Agricultura y Ganader\'ia.
-\item \textbf{L\'imite de cobertura de clases y de evidencia de campo:} Las nueve clases son las que el corpus reunido permiti\'o cubrir; no incluyen la mancha de asfalto, la enfermedad foliar con la reducci\'on de rendimiento mejor documentada en El Salvador \cite{deras2015}. El corpus procede de 11 repositorios p\'ublicos internacionales y la evidencia de campo externa se limita a 97 fotograf\'ias (Secci\'on~\ref{sec:campo_externo}). El conjunto de datos nacional es, por ahora, el mecanismo de aportes voluntarios de la aplicaci\'on y no un corpus ya reunido.
+\item \textbf{Solo la hoja.} El sistema analiza s\'intomas visibles en la l\'amina de la hoja. No cubre enfermedades de la ra\'iz, da\~nos internos del tallo sin s\'intomas en la hoja ni plagas del suelo.
+\item \textbf{Solo Android.} La aplicaci\'on requiere Android 7.0 (API 24) o superior, procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 2~GB de RAM. Las pruebas en dispositivo se hicieron en Android 15. No hay versi\'on para iOS ni para tel\'efonos que no sean inteligentes.
+\item \textbf{Sin dependencia de la nube.} El diagn\'ostico no usa servicios en la nube, y no hay sincronizaci\'on en tiempo real entre varios tel\'efonos.
+\item \textbf{Herramienta de orientaci\'on.} La aplicaci\'on orienta al productor, pero no reemplaza los an\'alisis de laboratorio, ni los dict\'amenes oficiales de cuarentena o certificaci\'on fitosanitaria del MAG.
+\item \textbf{Clases y evidencia de campo.} Las nueve clases son las que el corpus reunido permiti\'o cubrir; no incluyen la mancha de asfalto, la enfermedad foliar con la reducci\'on de rendimiento mejor documentada en El Salvador \cite{deras2015}. El corpus procede de 11 repositorios p\'ublicos internacionales y la evidencia de campo externa se limita a 97 fotograf\'ias (Secci\'on~\ref{sec:campo_externo}). El conjunto de datos nacional es, por ahora, el mecanismo de aportes voluntarios de la aplicaci\'on y no un corpus ya reunido.
 \end{itemize}
 
 \section{Hip\'otesis}
 
 \subsection{Hip\'otesis General}
-El dise\~no propone un sistema de visi\'on artificial embebido en una aplicaci\'on m\'ovil nativa, con captura asistida y operaci\'on completamente desconectada, capaz de clasificar nueve condiciones agron\'omicas de la hoja de ma\'iz en tel\'efonos inteligentes de gama baja o media del sector rural salvadore\~no. Se considera alcanzado el objetivo general si se cumplen los criterios de la Tabla~\ref{tab:criterios_exito}.
+Un modelo convolucional ligero, cuantizado a enteros de 8 bits y ejecutado sin conexi\'on en un tel\'efono de gama baja o media, puede clasificar nueve condiciones de la hoja de ma\'iz con un Macro $F_1$ de al menos 0.85 en una partici\'on de prueba retenida, con 300~ms o menos de preprocesado e inferencia y con un desempe\~no comparable entre im\'agenes de laboratorio y de campo. La hip\'otesis se considera aceptada si se cumplen los criterios de la Tabla~\ref{tab:criterios_exito}.
 
 \subsection{Criterios de \'Exito Espec\'ificos}
-Los criterios siguientes son las condiciones que el sistema debe cumplir para considerar alcanzado cada objetivo. Se verifican en el cap\'itulo de resultados y se agrupan en cinco temas.
+Cada criterio tiene un umbral medible y se verifica en el Cap\'itulo~3. Se agrupan en cinco temas.
 
 \begin{table}[H]
 \caption{Criterios de \'exito del proyecto, agrupados por tema}
