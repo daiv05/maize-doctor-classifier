@@ -81,7 +81,7 @@
 \vspace{0.2cm}
 {\normalsize\bfseries INGENIERO(A) DE SISTEMAS INFORM\'ATICOS\par}
 \vfill
-{\small CIUDAD UNIVERSITARIA, OCTUBRE DE 2026\par}
+{\small CIUDAD UNIVERSITARIA, 24 DE NOVIEMBRE DE 2026\par}
 \end{titlepage}
 
 \newpage
@@ -99,7 +99,7 @@
 
 \noindent \small SECRETARIO GENERAL:
 \begin{center}
-{\normalsize\bfseries LCDO. PEDRO ROSARIO ESCOBAR CASTANEDA\par}
+{\normalsize\bfseries LCDO. PEDRO ROSALIO ESCOBAR CASTANEDA\par}
 \end{center}
 \vspace{1.0cm}
 
@@ -163,13 +163,17 @@
 
 \noindent \small Trabajo de Graduaci\'on Aprobado por:\par
 \vspace{0.25cm}
-\noindent \small \hspace*{0.6cm} Docente Asesor(a):
+\noindent \small \hspace*{0.6cm} Docentes Asesores:
 \begin{center}
 {\normalsize\bfseries ING. BLADIMIR DIAZ CAMPOS\par}
+\vspace{0.15cm}
+{\normalsize\bfseries ING. KAREN ELVIRA PE\~NATE AVILES\par}
+\vspace{0.15cm}
+{\normalsize\bfseries ING. RODRIGO ERNESTO VASQUEZ ESCALANTE\par}
 \end{center}
 \vfill
 \begin{center}
-{\small SAN SALVADOR, OCTUBRE DE 2026\par}
+{\small SAN SALVADOR, 24 DE NOVIEMBRE DE 2026\par}
 \end{center}
 
 \newpage
@@ -180,9 +184,13 @@
 \end{center}
 \vspace{2.5cm}
 
-\noindent \small Docente Asesor:
+\noindent \small Docentes Asesores:
 \begin{center}
 {\normalsize\bfseries ING. BLADIMIR DIAZ CAMPOS\par}
+\vspace{0.4cm}
+{\normalsize\bfseries ING. KAREN ELVIRA PE\~NATE AVILES\par}
+\vspace{0.4cm}
+{\normalsize\bfseries ING. RODRIGO ERNESTO VASQUEZ ESCALANTE\par}
 \end{center}
 
 \newpage
@@ -213,13 +221,13 @@
 \end{center}
 \vspace{0.5cm}
 
-\noindent A Dios, por guiar mis pasos, iluminar mi entendimiento y brindarme salud y perseverancia en cada tramo de este largo camino universitario.
+\noindent A Dios, por darme salud, fortaleza y la oportunidad de llegar hasta este momento.
 
-\noindent A mis padres y hermanos, por su amor inquebrantable, su fe en mis capacidades y por ense\~narme que ning\'un obst\'aculo es insuperable cuando se trabaja con disciplina y honestidad. Cada p\'agina de este esfuerzo tambi\'en les pertenece.
+\noindent A mis padres y hermanos, por su apoyo, paciencia y confianza durante todo este proceso. Gracias por acompa\~narme y motivarme a seguir adelante, incluso en los momentos dif\'iciles.
 
-\noindent A mis compa\~neros de equipo, Josias y Elmer, por compartir la misma pasi\'on por la excelencia tecnol\'ogica y el rigor cient\'ifico. Las largas noches resolviendo problemas de modelos y arquitecturas forjaron no solo un gran proyecto, sino una amistad inquebrantable.
+\noindent A mis compa\~neros de equipo, Josias y Elmer, por el esfuerzo, la dedicaci\'on y el compromiso que compartimos durante el desarrollo de este proyecto. Gracias por el trabajo en equipo, las experiencias y todo lo aprendido en el camino.
 
-\noindent A todos los profesores y asesores que nos exigieron dar lo mejor de nosotros y nos ense\~naron a buscar siempre el impacto social de la inform\'atica.
+\noindent A nuestros profesores y asesores, por compartir sus conocimientos, orientarnos y brindarnos su apoyo durante nuestra formaci\'on acad\'emica y el desarrollo de este trabajo.
 
 \begin{flushright}
 \textit{David Alejandro Deras Cerros}
@@ -256,7 +264,7 @@ Esta investigaci\'on presenta \textbf{Doctor Ma\'iz}, una aplicaci\'on m\'ovil q
 
 Se reuni\'o un corpus de \textbf{33~429 im\'agenes} de 11 repositorios internacionales, con control de integridad, revisi\'on de duplicados y registro de la procedencia. La b\'usqueda de hiperpar\'ametros con Optuna no mejor\'o el resultado en prueba, por lo que el modelo oficial, una EfficientNet-Lite0, conserva la configuraci\'on inicial: Macro $F_1$ de \textbf{0.9480} y exactitud de 97.81\% en 5~015 im\'agenes de prueba ($0.9435 \pm 0.0052$ con tres semillas). Un ensamble de tres redes alcanz\'o 0.9567 en una etapa previa, pero no se despleg\'o.
 
-La limitaci\'on principal es la generalizaci\'on. En 97 fotograf\'ias de campo ajenas al corpus el modelo acert\'o 41 (42\%) y el detector rechaz\'o 49. La validaci\'on agrupada por fuente dio un Macro $F_1$ de $0.6026 \pm 0.1240$, frente a $0.9311 \pm 0.0099$ en la partici\'on estratificada. La ablaci\'on espacial sugiere dependencia de la periferia de la imagen (79.46\% de exactitud al ocluir el centro y 42.25\% al ocluir la periferia), aunque el experimento no separa el fondo de la hoja. El efecto del marco gu\'ia y del detector sobre ese sesgo no se midi\'o.
+La limitaci\'on principal es la generalizaci\'on. En 97 fotograf\'ias de campo ajenas al corpus el modelo acert\'o 41 (42\%) y el detector rechaz\'o 49. La validaci\'on agrupada por fuente dio un Macro $F_1$ de $0.6026 \pm 0.1240$, frente a $0.9311 \pm 0.0099$ en la partici\'on estratificada. La ablaci\'on espacial sugiere dependencia de la periferia de la imagen (79.46\% de exactitud al ocluir el centro y 42.25\% al ocluir la periferia), aunque el experimento no separa el fondo de la hoja.
 
 El modelo se cuantiz\'o a enteros de 8 bits (Int8) y pesa \textbf{3.74~MB}, 72.9\% menos que en coma flotante, con un Macro $F_1$ de 0.9489 en la prueba completa. En un Motorola edge 40 neo con Android 15, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia, y el tel\'efono reproduce las predicciones del servidor en 143 de 143 im\'agenes. La clasificaci\'on funciona sin conexi\'on; la sincronizaci\'on de aportes s\'i la necesita. Se proponen cinco recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA: validaci\'on en campo, un banco nacional de datos, una red de alerta fitosanitaria, capacitaci\'on comunitaria y software abierto.
 
