@@ -8,17 +8,17 @@ La agricultura representa el 5.6\% del Producto Interno Bruto (PIB) de El Salvad
 
 En los \'ultimos a\~nos esta producci\'on ha quedado m\'as expuesta a anomal\'ias clim\'aticas y a problemas fitosanitarios \cite{mag2023}. En una milpa con estr\'es h\'idrico o t\'ermico tambi\'en aparecen enfermedades foliares y plagas, y si una infecci\'on o un ataque no se atiende a tiempo, reduce el llenado del grano y el rendimiento de la cosecha \cite{centa2022}. Para un hogar que vive de su parcela, esa p\'erdida afecta directamente su alimentaci\'on.
 
-Pese a esa importancia, el efecto de los problemas fitosanitarios sobre la producci\'on nacional no est\'a cuantificado: la informaci\'on p\'ublica disponible no permite estimar cu\'anto ma\'iz pierde El Salvador por enfermedades foliares, plagas o deficiencias nutricionales. Las p\'erdidas recientes mejor documentadas son de origen clim\'atico: en el ciclo 2023-2024 se reportaron unos 1.46 millones de quintales perdidos, el 9.8\% de los 14.9 millones producidos, con m\'as de 24\% en cada departamento del oriente \cite{edh2024}, y en el ciclo 2024-2025 la cosecha fue de 10.9 millones de quintales frente a 18.8 millones requeridos \cite{elmundo2025}. En el frente fitosanitario solo se dispone de evidencias puntuales: en un ensayo de h\'ibridos del CENTA, los tres sitios con presi\'on de mancha de asfalto rindieron cerca de 51\% menos que los sitios sin la enfermedad \cite{deras2015}, y en un ensayo de 2017 en La Libertad el control optimizado de plagas y enfermedades elev\'o el rendimiento 15\% pero redujo la utilidad neta en US\$395 por hect\'area \cite{eash2019}.
+Pese a esa importancia, el efecto de los problemas fitosanitarios sobre la producci\'on nacional no est\'a cuantificado, la informaci\'on p\'ublica disponible no permite estimar cu\'anto ma\'iz pierde El Salvador por enfermedades foliares, plagas o deficiencias nutricionales. Las p\'erdidas recientes mejor documentadas son de origen clim\'atico: en el ciclo 2023-2024 se reportaron unos 1.46 millones de quintales perdidos, el 9.8\% de los 14.9 millones producidos, con m\'as de 24\% en cada departamento del oriente \cite{edh2024}, y en el ciclo 2024-2025 la cosecha fue de 10.9 millones de quintales frente a 18.8 millones requeridos \cite{elmundo2025}. En el frente fitosanitario solo se dispone de evidencias puntuales: en un ensayo de h\'ibridos del CENTA, los tres sitios con presi\'on de mancha de asfalto rindieron cerca de 51\% menos que los sitios sin la enfermedad \cite{deras2015}, y en un ensayo de 2017 en La Libertad el control optimizado de plagas y enfermedades elev\'o el rendimiento 15\% pero redujo la utilidad neta en US\$395 por hect\'area \cite{eash2019}.
 
-Esa falta de cifras es parte del problema y tambi\'en afect\'o a este proyecto. Sin un registro de diagn\'osticos nadie puede decir qu\'e enfermedades predominan en cada zona ni cu\'anto cuestan, y el productor decide sin referencia; el ensayo de La Libertad muestra que tratar no siempre compensa el gasto. Con los datos para entrenar un modelo ocurre lo mismo. El corpus re\'une 33~429 im\'agenes de 11 repositorios internacionales y ninguna fotograf\'ia salvadore\~na etiquetada; la \'unica enfermedad con una p\'erdida local medida, la mancha de asfalto, qued\'o fuera de las nueve clases del modelo. La misma carencia impidi\'o estimar el ahorro econ\'omico que el diagn\'ostico podr\'ia producir. Por eso la aplicaci\'on incluye un m\'odulo de aportes voluntarios con el que podr\'ia formarse, con el tiempo, el registro que hoy falta.
+Esa falta de cifras es parte del problema y tambi\'en afect\'o a este proyecto, porque sin un registro de diagn\'osticos nadie puede decir qu\'e enfermedades predominan en cada zona ni cu\'anto cuestan, y el productor decide sin referencia; el ensayo de La Libertad muestra que tratar no siempre compensa el gasto. Con los datos para entrenar un modelo ocurre lo mismo. El corpus re\'une 33~429 im\'agenes de 11 repositorios internacionales y ninguna fotograf\'ia salvadore\~na etiquetada. La misma carencia impidi\'o estimar el ahorro econ\'omico que el diagn\'ostico podr\'ia producir. Por eso la aplicaci\'on incluye un m\'odulo de aportes voluntarios con el que podr\'ia formarse, con el tiempo, el registro que hoy falta.
 
 \subsection{Descripci\'on del problema}
 
-En las parcelas rurales salvadore\~nas no hay laboratorios cercanos, y el diagn\'ostico se hace a simple vista: el agricultor observa las manchas o el marchitamiento de la hoja e intenta reconocer la causa. Los casos m\'as dif\'iciles son el tiz\'on foliar, la mancha gris, la roya com\'un, el gusano cogollero, la necrosis letal del ma\'iz y las deficiencias de nitr\'ogeno, f\'osforo y potasio (Tabla~\ref{tab:taxonomia}), cuyos s\'intomas se confunden entre s\'i y con los de otros hongos o virus.
+En las parcelas rurales salvadore\~nas no hay laboratorios cercanos, y el diagn\'ostico se hace a simple vista, el agricultor observa las manchas o el marchitamiento de la hoja e intenta reconocer la causa. Los casos m\'as dif\'iciles son el tiz\'on foliar, la mancha gris, la roya com\'un, el gusano cogollero, la necrosis letal del ma\'iz y las deficiencias de nitr\'ogeno, f\'osforo y potasio (Tabla~\ref{tab:taxonomia}), cuyos s\'intomas se confunden entre s\'i y con los de otros hongos o virus.
 
-La asistencia t\'ecnica p\'ublica no alcanza para cubrir esa necesidad. Hay pocos extensionistas para el n\'umero de productores dispersos en la zona rural, y una visita agron\'omica puede tardar semanas o no llegar mientras la infecci\'on avanza \cite{centa2022}.
+La asistencia t\'ecnica p\'ublica no alcanza para cubrir esa necesidad, hay pocos extensionistas para el n\'umero de productores dispersos en la zona rural, y una visita agron\'omica puede tardar semanas o no llegar mientras la infecci\'on avanza \cite{centa2022}.
 
-Ante el riesgo de perder la siembra, el agricultor suele acudir a un agroservicio. Sin un diagn\'ostico de por medio, la recomendaci\'on tiende a ser un agroqu\'imico de amplio espectro, aun cuando los s\'intomas se deben a una deficiencia nutricional del suelo. El productor paga por un producto que no resuelve el problema, se aplican qu\'imicos de m\'as y el tratamiento adecuado se retrasa \cite{centa2022}.
+Ante el riesgo de perder la siembra, el agricultor suele acudir a un agroservicio, y sin un diagn\'ostico de por medio, la recomendaci\'on tiende a ser un agroqu\'imico de amplio espectro, aun cuando los s\'intomas se deben a una deficiencia nutricional del suelo, entonces el productor paga por un producto que no resuelve el problema, se aplican qu\'imicos de m\'as y el tratamiento adecuado se retrasa \cite{centa2022}.
 
 \subsection{Planteamiento del problema}
 
@@ -26,7 +26,7 @@ La extensi\'on agron\'omica no alcanza a cubrir a los peque\~nos productores de 
 
 \begin{enumerate}
 \item \textbf{Dependen de la conexi\'on.} La mayor\'ia env\'ia la fotograf\'ia a un servidor para procesarla. En muchas zonas rurales la cobertura celular es inestable o nula y los agricultores no tienen un plan de datos, de modo que la herramienta no funciona en la parcela.
-\item \textbf{Exigen tel\'efonos potentes.} Los modelos de aprendizaje profundo convencionales necesitan m\'as memoria y c\'omputo de los que ofrecen los tel\'efonos de gama de entrada (2 a 4~GB de RAM) que usan las familias campesinas. El resultado son bloqueos, esperas largas y un consumo alto de bater\'ia.
+\item \textbf{Exigen tel\'efonos potentes.} Los modelos de aprendizaje profundo convencionales necesitan m\'as memoria y c\'omputo de los que ofrecen los tel\'efonos de gama de entrada que usan las familias campesinas. El resultado son bloqueos, esperas largas y un consumo alto de bater\'ia.
 \item \textbf{Fallan con fotograf\'ias de campo.} Se entrenaron sobre todo con im\'agenes de laboratorio, con fondo neutro y luz pareja. En la milpa aparecen suelo, sombras, maleza y contraluz, y el modelo se equivoca con frecuencia y con una confianza alta \cite{ahmad2023a}.
 \end{enumerate}
 
@@ -138,12 +138,12 @@ Desarrollar y evaluar un sistema de visi\'on artificial para el diagn\'ostico fi
 \subsection{Objetivos Espec\'ificos}
 
 \begin{enumerate}
-\item Reunir y depurar un conjunto de m\'as de 33~000 im\'agenes de la hoja de ma\'iz en nueve condiciones agron\'omicas, con controles verificables (hashes de archivo y de p\'ixeles) que descarten duplicados y eviten que una misma imagen aparezca en m\'as de una partici\'on.
+\item Reunir y depurar un corpus de im\'agenes de la hoja de ma\'iz en nueve condiciones agron\'omicas a partir de repositorios p\'ublicos, con controles verificables que descarten duplicados y eviten que una misma imagen aparezca en m\'as de una partici\'on.
 \item Ajustar arquitecturas convolucionales ligeras preentrenadas mediante b\'usqueda bayesiana de hiperpar\'ametros (Optuna) con poda temprana, y comprobar si mejoran el Macro $F_1$ de la configuraci\'on inicial sin un gasto excesivo de GPU.
 \item Evaluar un ensamble por votaci\'on suave (\textit{Soft Voting}) de modelos con arquitecturas distintas, para medir si aumenta la sensibilidad en las enfermedades m\'as graves y en las clases con menos im\'agenes.
-\item Evaluar el sistema con validaci\'on cruzada agrupada por procedencia (\textit{SourceGroupedKFold}), medir la diferencia de desempe\~no entre im\'agenes de laboratorio y de campo, y analizar en qu\'e regiones de la imagen se apoya el modelo mediante explicabilidad y ablaci\'on espacial.
-\item Cuantizar el modelo a enteros de 8 bits (Int8), integrarlo en una aplicaci\'on m\'ovil con marco gu\'ia de captura y detector de im\'agenes fuera de distribuci\'on, y medir su exactitud y su latencia en un tel\'efono f\'isico de gama media.
-\item Formular recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA para validar la herramienta en campo, ampliar el conjunto de datos con im\'agenes nacionales y definir las condiciones de su uso institucional.
+\item Evaluar el sistema con una validaci\'on que separe las fuentes de entrenamiento y de evaluaci\'on, medir la diferencia de desempe\~no entre im\'agenes de laboratorio y de campo, y analizar en qu\'e regiones de la imagen se apoya el modelo mediante explicabilidad y ablaci\'on espacial.
+\item Cuantizar el modelo a enteros de 8 bits (Int8), integrarlo en una aplicaci\'on m\'ovil con ayudas para la captura y un mecanismo de rechazo de im\'agenes no v\'alidas, y medir su exactitud y su latencia en tel\'efonos de gama baja o media.
+\item Formular recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA sobre las condiciones para incorporar la herramienta al acompa\~namiento t\'ecnico de los peque\~nos productores de ma\'iz.
 \end{enumerate}
 
 \section{Alcance y L\'imites del Proyecto}
@@ -177,10 +177,10 @@ El componente de inteligencia artificial abarca:
 El proyecto tiene los siguientes l\'imites:
 \begin{itemize}
 \item \textbf{Solo la hoja.} El sistema analiza s\'intomas visibles en la l\'amina de la hoja. No cubre enfermedades de la ra\'iz, da\~nos internos del tallo sin s\'intomas en la hoja ni plagas del suelo.
-\item \textbf{Solo Android.} La aplicaci\'on requiere Android 7.0 (API 24) o superior, procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 2~GB de RAM. Las pruebas en dispositivo se hicieron en Android 15. No hay versi\'on para iOS ni para tel\'efonos que no sean inteligentes.
+\item \textbf{Solo Android.} La aplicaci\'on requiere Android 7.0 (API 24) o superior, procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 4~GB de RAM. Las pruebas en dispositivo se hicieron en Android 15. No hay versi\'on para iOS ni para tel\'efonos que no sean inteligentes.
 \item \textbf{Sin dependencia de la nube.} El diagn\'ostico no usa servicios en la nube, y no hay sincronizaci\'on en tiempo real entre varios tel\'efonos.
 \item \textbf{Herramienta de orientaci\'on.} La aplicaci\'on orienta al productor, pero no reemplaza los an\'alisis de laboratorio, ni los dict\'amenes oficiales de cuarentena o certificaci\'on fitosanitaria del MAG.
-\item \textbf{Clases y evidencia de campo.} Las nueve clases son las que el corpus reunido permiti\'o cubrir; no incluyen la mancha de asfalto, la enfermedad foliar con la reducci\'on de rendimiento mejor documentada en El Salvador \cite{deras2015}. El corpus procede de 11 repositorios p\'ublicos internacionales y la evidencia de campo externa se limita a 97 fotograf\'ias (Secci\'on~\ref{sec:campo_externo}). El conjunto de datos nacional es, por ahora, el mecanismo de aportes voluntarios de la aplicaci\'on y no un corpus ya reunido.
+\item \textbf{Clases y evidencia de campo.} El corpus procede de 11 repositorios p\'ublicos internacionales. El conjunto de datos nacional es, por ahora, el mecanismo de aportes voluntarios de la aplicaci\'on y no un corpus ya reunido.
 \end{itemize}
 
 \section{Hip\'otesis}
@@ -210,6 +210,14 @@ Soluci\'on integral & Modelo Int8 de 20~MB o menos, preprocesado e inferencia de
 \end{tabularx}
 \end{singlespace}
 \end{table}
+
+Los umbrales de Macro $F_1$ ($\ge 0.85$), tama\~no del modelo (20~MB) y latencia (300~ms por imagen) se fijaron en el informe de la primera etapa del proyecto, en julio de 2026. El recall de MLN y el DIR se a\~nadieron en el primer borrador de esta tesina, en octubre de 2026, cuando la segunda etapa ya los hab\'ia medido. Ese borrador fijaba adem\'as criterios que despu\'es se modificaron:
+\begin{itemize}
+\item Un modelo Int8 menor de 5~MB con inferencia en menos de 100~ms, que se devolvi\'o a los valores de la primera etapa.
+\item Una reducci\'on de al menos 40\% de las horas de GPU frente a una b\'usqueda sin poda, que se sustituy\'o por el l\'imite de \'epocas porque esa b\'usqueda de comparaci\'on no se ejecut\'o (Cap\'itulo~3).
+\item El rechazo de las im\'agenes que no son hojas de ma\'iz, que se retir\'o de los criterios; el detector solo se evalu\'o con cinco im\'agenes sint\'eticas (Cap\'itulo~2).
+\end{itemize}
+El criterio de solapamiento cero entre particiones se a\~nadi\'o en esa misma revisi\'on.
 
 \section{Justificaci\'on}
 
