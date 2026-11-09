@@ -2,42 +2,44 @@
 
 \section{Situaci\'on Actual}
 
-\subsection{Antecedentes: El ma\'iz como sustento y la emergencia productiva}
+\subsection{Antecedentes}
 
 La agricultura representa el 5.6\% del Producto Interno Bruto (PIB) de El Salvador \cite{bcr2023} y sostiene de forma directa a m\'as de dos millones de personas en el sector rural. Para las familias campesinas salvadore\~nas, el ma\'iz (\textit{Zea mays L.}) constituye la base diaria de la alimentaci\'on familiar, con un consumo promedio reportado que supera los 115 kilogramos por persona al a\~no \cite{centa2022}. De acuerdo con registros oficiales del Ministerio de Agricultura y Ganader\'ia \cite{mag2023}, el 82.1\% de los productores nacionales trabajan peque\~nas parcelas familiares menores a dos manzanas (1.4 hect\'areas), bajo un r\'egimen de agricultura de subsistencia dependiente casi por completo del r\'egimen de lluvias estacionales.
 
-En los \'ultimos a\~nos, esta base productiva ha enfrentado una vulnerabilidad creciente frente a anomal\'ias clim\'aticas e incidencia fitosanitaria \cite{mag2023}. En una milpa sometida a estr\'es h\'idrico o t\'ermico, la aparici\'on de enfermedades foliares o plagas no es un fen\'omeno aislado: si una infecci\'on o ataque no se detecta y atiende de forma oportuna, compromete severamente el llenado de grano y la productividad de la cosecha \cite{centa2022}, amenazando de manera directa la seguridad alimentaria y la subsistencia del hogar campesino.
+En los \'ultimos a\~nos esta producci\'on ha quedado m\'as expuesta a anomal\'ias clim\'aticas y a problemas fitosanitarios \cite{mag2023}. En una milpa con estr\'es h\'idrico o t\'ermico tambi\'en aparecen enfermedades foliares y plagas, y si una infecci\'on o un ataque no se atiende a tiempo, reduce el llenado del grano y el rendimiento de la cosecha \cite{centa2022}. Para un hogar que vive de su parcela, esa p\'erdida afecta directamente su alimentaci\'on.
 
-Pese a esa importancia, el efecto de los problemas fitosanitarios sobre la producci\'on nacional sigue sin cuantificarse: la informaci\'on p\'ublica disponible no permite dimensionar cu\'anto ma\'iz pierde El Salvador por enfermedades foliares, plagas o deficiencias nutricionales. Las p\'erdidas recientes mejor documentadas son de origen clim\'atico: en el ciclo 2023-2024 se reportaron unos 1.46 millones de quintales perdidos, el 9.8\% de los 14.9 millones producidos, con m\'as de 24\% en cada departamento del oriente \cite{edh2024}, y en el ciclo 2024-2025 la cosecha fue de 10.9 millones de quintales frente a 18.8 millones requeridos \cite{elmundo2025}. En el frente fitosanitario solo se dispone de evidencias puntuales: en un ensayo de h\'ibridos del CENTA, los tres sitios con presi\'on de mancha de asfalto rindieron cerca de 51\% menos que los sitios sin la enfermedad \cite{deras2015}, y en un ensayo de 2017 en La Libertad el control optimizado de plagas y enfermedades elev\'o el rendimiento 15\% pero redujo la utilidad neta en US\$395 por hect\'area \cite{eash2019}. Son datos de pocos sitios y de un solo ciclo, que no permiten extrapolar una p\'erdida nacional. Esa ausencia de cifras es parte del problema que se aborda: sin un diagn\'ostico oportuno el productor decide a ciegas, y el ensayo de La Libertad indica que tratar sin certeza no siempre se paga.
+Pese a esa importancia, el efecto de los problemas fitosanitarios sobre la producci\'on nacional no est\'a cuantificado: la informaci\'on p\'ublica disponible no permite estimar cu\'anto ma\'iz pierde El Salvador por enfermedades foliares, plagas o deficiencias nutricionales. Las p\'erdidas recientes mejor documentadas son de origen clim\'atico: en el ciclo 2023-2024 se reportaron unos 1.46 millones de quintales perdidos, el 9.8\% de los 14.9 millones producidos, con m\'as de 24\% en cada departamento del oriente \cite{edh2024}, y en el ciclo 2024-2025 la cosecha fue de 10.9 millones de quintales frente a 18.8 millones requeridos \cite{elmundo2025}. En el frente fitosanitario solo se dispone de evidencias puntuales: en un ensayo de h\'ibridos del CENTA, los tres sitios con presi\'on de mancha de asfalto rindieron cerca de 51\% menos que los sitios sin la enfermedad \cite{deras2015}, y en un ensayo de 2017 en La Libertad el control optimizado de plagas y enfermedades elev\'o el rendimiento 15\% pero redujo la utilidad neta en US\$395 por hect\'area \cite{eash2019}.
 
-\subsection{Descripci\'on del problema: El diagn\'ostico a ciegas en el surco}
+Esa falta de cifras es parte del problema y tambi\'en afect\'o a este proyecto. Sin un registro de diagn\'osticos nadie puede decir qu\'e enfermedades predominan en cada zona ni cu\'anto cuestan, y el productor decide sin referencia; el ensayo de La Libertad muestra que tratar no siempre compensa el gasto. Con los datos para entrenar un modelo ocurre lo mismo. El corpus re\'une 33~429 im\'agenes de 11 repositorios internacionales y ninguna fotograf\'ia salvadore\~na etiquetada; la \'unica enfermedad con una p\'erdida local medida, la mancha de asfalto, qued\'o fuera de las nueve clases del modelo. La misma carencia impidi\'o estimar el ahorro econ\'omico que el diagn\'ostico podr\'ia producir. Por eso la aplicaci\'on incluye un m\'odulo de aportes voluntarios con el que podr\'ia formarse, con el tiempo, el registro que hoy falta.
 
-En las parcelas rurales salvadore\~nas no existen microscopios ni laboratorios cercanos. El diagn\'ostico fitosanitario diario descansa en los ojos del agricultor, que recorre el surco bajo el sol tratando de interpretar manchas y marchitamientos. Los casos m\'as dif\'iciles son el tiz\'on foliar, la mancha gris, la roya com\'un, el gusano cogollero, la necrosis letal del ma\'iz y las deficiencias de nitr\'ogeno, f\'osforo y potasio (Tabla~\ref{tab:taxonomia}), que a simple vista se confunden entre s\'i y con hongos o virus. La necrosis letal, descrita desde 2011 en \'Africa oriental y con p\'erdidas de hasta 90\% en Kenia en 2012 \cite{mahuku2015}, no tiene reportes publicados en El Salvador y se incluye como clase de vigilancia temprana.
+\subsection{Descripci\'on del problema}
 
-Esta dificultad se agrava ante la marcada limitaci\'on de cobertura en la asistencia t\'ecnica p\'ublica presencial. La relaci\'on entre el personal t\'ecnico extensionista disponible y el n\'umero global de productores agr\'icolas dispersos en la geograf\'ia rural salvadore\~na genera una brecha estructural de atenci\'on, donde una visita agron\'omica especializada suele demorar semanas o no llegar a materializarse durante la ventana cr\'itica de la infecci\'on \cite{centa2022}.
+En las parcelas rurales salvadore\~nas no hay laboratorios cercanos, y el diagn\'ostico se hace a simple vista: el agricultor observa las manchas o el marchitamiento de la hoja e intenta reconocer la causa. Los casos m\'as dif\'iciles son el tiz\'on foliar, la mancha gris, la roya com\'un, el gusano cogollero, la necrosis letal del ma\'iz y las deficiencias de nitr\'ogeno, f\'osforo y potasio (Tabla~\ref{tab:taxonomia}), cuyos s\'intomas se confunden entre s\'i y con los de otros hongos o virus.
 
-Ante la incertidumbre y el riesgo inminente de p\'erdida de la siembra, el agricultor acude frecuentemente a puntos comerciales de agroservicios. En estos espacios, la falta de diagn\'ostico instrumental propicia recomendaciones emp\'iricas basadas en agroqu\'imicos de amplio espectro para s\'intomas que corresponden a deficiencias nutricionales de suelo. Esta situaci\'on ocasiona p\'erdidas econ\'omicas significativas para el presupuesto familiar al incurrir en gastos fitosanitarios ineficaces, adem\'as de generar impactos ambientales negativos por sobreaplicaci\'on de qu\'imicos y retrasar la atenci\'on correctiva adecuada de pat\'ogenos severos \cite{centa2022}.
+La asistencia t\'ecnica p\'ublica no alcanza para cubrir esa necesidad. Hay pocos extensionistas para el n\'umero de productores dispersos en la zona rural, y una visita agron\'omica puede tardar semanas o no llegar mientras la infecci\'on avanza \cite{centa2022}.
+
+Ante el riesgo de perder la siembra, el agricultor suele acudir a un agroservicio. Sin un diagn\'ostico de por medio, la recomendaci\'on tiende a ser un agroqu\'imico de amplio espectro, aun cuando los s\'intomas se deben a una deficiencia nutricional del suelo. El productor paga por un producto que no resuelve el problema, se aplican qu\'imicos de m\'as y el tratamiento adecuado se retrasa \cite{centa2022}.
 
 \subsection{Planteamiento del problema}
 
-A partir de la situaci\'on descrita, se constata que los mecanismos tradicionales de extensi\'on agron\'omica resultan insuficientes para brindar cobertura a los peque\~nos productores de ma\'iz en El Salvador, mientras que las herramientas digitales contempor\'aneas han sido concebidas bajo premisas incompatibles con la realidad rural. Las soluciones de visi\'on artificial disponibles comercialmente suelen presentar tres limitaciones cr\'iticas:
+La extensi\'on agron\'omica no alcanza a cubrir a los peque\~nos productores de ma\'iz, y las herramientas digitales disponibles se dise\~naron para condiciones distintas a las del campo salvadore\~no. Las aplicaciones de diagn\'ostico por visi\'on artificial suelen tener estas limitaciones:
 
 \begin{enumerate}
-\item \textbf{Dependencia de conectividad de red:} La mayor parte de las aplicaciones disponibles requieren comunicaci\'on permanente con servidores en la nube para procesar las capturas. En el agro salvadore\~no, donde extensas zonas rurales presentan cobertura celular inestable o nula y los agricultores no disponen de planes continuos de transmisi\'on de datos, esta dependencia anula la utilidad pr\'actica de las herramientas en el propio surco.
-\item \textbf{Incompatibilidad con terminales b\'asicos:} Los modelos de aprendizaje profundo convencionales demandan una capacidad de c\'omputo y memoria que excede con creces los recursos de los tel\'efonos inteligentes accesibles para las familias campesinas (dispositivos de gama de entrada con 2 a 4~GB de RAM), provocando bloqueos, latencias intolerables y un r\'apido consumo de bater\'ia.
-\item \textbf{Vulnerabilidad ante la variabilidad del entorno real:} Al haber sido entrenados mayoritariamente sobre im\'agenes de laboratorio con fondos neutros e iluminaci\'on homog\'enea, los algoritmos colapsan al exponerse a la milpa, donde la presencia de suelos r\'usticos, sombras irregulares, malezas y contraluz induce clasificaciones err\'oneas emitidas con un alto grado de sobreconfianza (v\'ease \cite{ahmad2023a}).
+\item \textbf{Dependen de la conexi\'on.} La mayor\'ia env\'ia la fotograf\'ia a un servidor para procesarla. En muchas zonas rurales la cobertura celular es inestable o nula y los agricultores no tienen un plan de datos, de modo que la herramienta no funciona en la parcela.
+\item \textbf{Exigen tel\'efonos potentes.} Los modelos de aprendizaje profundo convencionales necesitan m\'as memoria y c\'omputo de los que ofrecen los tel\'efonos de gama de entrada (2 a 4~GB de RAM) que usan las familias campesinas. El resultado son bloqueos, esperas largas y un consumo alto de bater\'ia.
+\item \textbf{Fallan con fotograf\'ias de campo.} Se entrenaron sobre todo con im\'agenes de laboratorio, con fondo neutro y luz pareja. En la milpa aparecen suelo, sombras, maleza y contraluz, y el modelo se equivoca con frecuencia y con una confianza alta \cite{ahmad2023a}.
 \end{enumerate}
 
-Con base en lo anterior, se formula la problem\'atica central de la investigaci\'on:
+De ah\'i surge la pregunta de investigaci\'on:
 \begin{quote}
 \centering
 \itshape
-\textquestiondown En qu\'e medida es factible concebir, desarrollar y evaluar una aplicaci\'on m\'ovil de diagn\'ostico fitosanitario que opere de manera aut\'onoma en tel\'efonos inteligentes de gama baja o media, capaz de discernir patolog\'ias foliares en condiciones reales de campo, gestionar la incertidumbre de la captura y orientar oportunamente al agricultor salvadore\~no en el manejo integrado de su cultivo?
+\textquestiondown En qu\'e medida puede una aplicaci\'on m\'ovil que funciona sin conexi\'on, en tel\'efonos de gama baja o media, identificar problemas fitosanitarios en fotograf\'ias de hojas de ma\'iz tomadas en campo, abstenerse cuando la imagen no es confiable y orientar al agricultor salvadore\~no sobre el manejo de su cultivo?
 \end{quote}
 
 \subsubsection{Modelo conceptual de caja negra del sistema}
 
-Con el prop\'osito de delimitar anal\'iticamente este problema sin prejuzgar la arquitectura interna que deber\'a investigarse y validarse experimentalmente en los cap\'itulos posteriores, el sistema se conceptualiza mediante el modelo de caja negra (Figura~\ref{fig:caja_negra}). En la ingenier\'ia de sistemas, este enfoque formaliza la relaci\'on entre los est\'imulos y restricciones del entorno problem\'atico (entradas) y los resultados requeridos para mitigar la problem\'atica (salidas), definiendo el n\'ucleo del sistema como el proceso de transformaci\'on tecnol\'ogica que constituye el objeto de estudio de esta investigaci\'on:
+Para delimitar el problema sin fijar todav\'ia la arquitectura interna, que se define y se valida en los cap\'itulos siguientes, el sistema se representa como una caja negra (Figura~\ref{fig:caja_negra}). Las entradas son las condiciones y restricciones del entorno, las salidas son los resultados que el sistema debe producir, y el proceso intermedio es el objeto de estudio de esta investigaci\'on.
 
 \begin{figure}[H]
 \centering
@@ -73,50 +75,50 @@ Con el prop\'osito de delimitar anal\'iticamente este problema sin prejuzgar la 
 
 \node[header, fill=blue!75!black] (head_in) {Entradas};
 \node[card, fill=blue!3, below=0.15cm of head_in] (box_in) {
-  \textbf{Condiciones del Entorno Rural:}
+  \textbf{Condiciones del entorno:}
   \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Fotograf\'ias foliares capturadas por el agricultor en parcelas reales.
-    \item Iluminaci\'on solar directa no uniforme, sombras duras y fondos r\'usticos.
-    \item Sintomatolog\'ia foliar diversa y estados fenol\'ogicos heterog\'eneos.
+    \item Fotograf\'ias de hojas tomadas por el agricultor en su parcela.
+    \item Luz solar desigual, sombras marcadas y fondos con suelo o maleza.
+    \item S\'intomas variados y plantas en distintas etapas de desarrollo.
   \end{itemize}
   \vspace{0.12cm}
-  \textbf{Restricciones Operativas del Problema:}
+  \textbf{Restricciones:}
   \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Ausencia total de conectividad m\'ovil o internet en el surco.
-    \item Tel\'efonos inteligentes b\'asicos con recursos acotados de memoria y procesador.
+    \item Sin conexi\'on m\'ovil ni internet en la parcela.
+    \item Tel\'efonos con poca memoria y procesador limitado.
   \end{itemize}
 };
 
 \node[header, fill=gray!80!black, right=1.4cm of head_in] (head_proc) {Procesos};
 \node[card, fill=gray!4, below=0.15cm of head_proc] (box_proc) {
-  \textbf{Transformaci\'on Requerida:}
+  \textbf{Lo que debe hacer el sistema:}
   \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Procesamiento y an\'alisis visual local en el dispositivo m\'ovil.
-    \item Discriminaci\'on de afecciones foliares frente al ruido del entorno.
-    \item Evaluaci\'on de confiabilidad y validez de la captura realizada.
-    \item Vinculaci\'on de la evidencia \'optica con directrices agron\'omicas.
+    \item Analizar la imagen en el propio tel\'efono.
+    \item Distinguir los s\'intomas de la hoja del resto de la escena.
+    \item Evaluar si la captura es v\'alida y confiable.
+    \item Relacionar el resultado con recomendaciones agron\'omicas.
   \end{itemize}
   \vspace{0.12cm}
-  \textbf{Desaf\'io de Ingenier\'ia e Investigaci\'on:}
+  \textbf{Pregunta t\'ecnica:}
   \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item \textquestiondown C\'omo lograr sensibilidad diagn\'ostica y resiliencia ante entornos r\'usticos dentro de los l\'imites estrictos de un m\'ovil modesto?
+    \item \textquestiondown C\'omo lograr un diagn\'ostico sensible y estable con fotograf\'ias de campo y los recursos de un tel\'efono modesto?
   \end{itemize}
 };
 
 \node[header, fill=teal!70!black, right=1.4cm of head_proc] (head_out) {Salidas esperadas};
 \node[card, fill=teal!3, below=0.15cm of head_out] (box_out) {
-  \textbf{Diagn\'ostico y Bioseguridad:}
+  \textbf{Diagn\'ostico:}
   \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Detecci\'on temprana y diferenciada de la afecci\'on foliar evaluada.
-    \item Alta sensibilidad en patolog\'ias cr\'iticas para evitar p\'erdidas totales.
-    \item Distinci\'on confiable entre plagas, enfermedades y deficiencias nutricionales.
+    \item Identificaci\'on temprana del problema de la hoja.
+    \item Alta sensibilidad en las enfermedades m\'as graves.
+    \item Distinci\'on entre plagas, enfermedades y deficiencias nutricionales.
   \end{itemize}
   \vspace{0.12cm}
-  \textbf{Decisi\'on Fitosanitaria en Parcela:}
+  \textbf{Decisi\'on en la parcela:}
   \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Alerta preventiva y abstenci\'on ante im\'agenes dudosas («No reconocida»).
-    \item Orientaci\'on de severidad y bioinsumos en lenguaje claro y accesible.
-    \item Prevenci\'on del gasto infructuoso en agroqu\'imicos inapropiados.
+    \item Abstenci\'on ante im\'agenes dudosas («No reconocida»).
+    \item Gu\'ia de severidad y de bioinsumos en lenguaje sencillo.
+    \item Menos gasto en agroqu\'imicos que no corresponden.
   \end{itemize}
 };
 
@@ -128,8 +130,6 @@ Con el prop\'osito de delimitar anal\'iticamente este problema sin prejuzgar la 
 \caption{Modelo conceptual de caja negra para el diagn\'ostico fitosanitario m\'ovil.}
 \label{fig:caja_negra}
 \end{figure}
-
-Como sintetiza la Figura~\ref{fig:caja_negra}, el modelo de caja negra formaliza la l\'ogica de la investigaci\'on: establece c\'omo las restricciones de campo y los desaf\'ios visuales del cultivo ingresan a un proceso de transformaci\'on m\'ovil concebido para generar diagn\'osticos confiables y decisiones fitosanitarias oportunas para el campesino. A partir de esta delimitaci\'on del problema, se formulan a continuaci\'on los objetivos de la investigaci\'on.
 
 \section{Objetivos}
 
