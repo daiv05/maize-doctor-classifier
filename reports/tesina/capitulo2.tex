@@ -212,7 +212,6 @@ Para que EfficientNet-Lite0 funcione en tel\'efonos sin unidad de procesamiento 
 \begin{equation}
 S_c = \frac{\max_i \lvert W_{f,c,i} \rvert}{127}, \qquad q_{c,i} = \operatorname{clip}\!\left(\left\lfloor \frac{W_{f,c,i}}{S_c} \right\rceil,\; -127,\; 127\right)
 \end{equation}
-La capa lineal final usa, en cambio, una sola escala para todo el tensor, porque el kernel de TFLite para esa capa solo admite una; con escalas por canal, los logits de cada clase quedar\'ian mal escalados.
 
 \subsection{Detector de Anomal\'ias Fuera de Distribuci\'on (OOD)}
 Una red neuronal puede clasificar con alta confianza una imagen ajena a sus clases, como suelo o calzado, porque la probabilidad softmax solo reparte la decisi\'on entre las etiquetas conocidas \cite{lee2018}. Para detectar esos casos, la aplicaci\'on toma el vector de 1~280 dimensiones previo a la clasificaci\'on, lo normaliza \cite{mahalanobispp2025}, lo reduce con PCA a 182 componentes y calcula la distancia relativa de Mahalanobis (RMD) \cite{ren2021}:
@@ -232,9 +231,9 @@ La interfaz incorpora dos elementos que complementan al modelo:
 
 \section{Sincronizaci\'on y Aportes al Conjunto de Datos}
 
-La aplicaci\'on funciona sin servidor; la sincronizaci\'on es opcional y requiere una cuenta. La API (FastAPI y MySQL 8.4) recibe dos tipos de registro: correcciones de diagn\'ostico y aportes fotogr\'aficos, que incluyen la fotograf\'ia, la etiqueta elegida, una nota opcional y la fecha. Ninguno env\'ia datos personales ni las coordenadas GPS del historial. La API descarta registros duplicados, limita las solicitudes a 30 por minuto y valida las im\'agenes.
+La aplicaci\'on no necesita un servidor para diagnosticar. El servidor solo interviene cuando el productor decide compartir informaci\'on, y para eso debe crear una cuenta. Puede enviar una correcci\'on, si considera que el diagn\'ostico fue equivocado, o una fotograf\'ia con la etiqueta que \'el mismo le asigna, que pasa a formar parte del conjunto de datos colaborativo. Con la fotograf\'ia solo viajan la etiqueta, una nota opcional y la fecha, la ubicaci\'on que la aplicaci\'on guarda en el historial no se env\'ia.
 
-El guardado en el tel\'efono es inmediato, y la sincronizaci\'on se dispara al recuperar la red o a petici\'on del usuario (Figura~\ref{fig:secuencia_sync}). Si el token de acceso venci\'o, la aplicaci\'on lo renueva una vez y reintenta. Un registro solo se marca como sincronizado cuando el servidor confirma la recepci\'on; si el env\'io falla, queda pendiente.
+Como en la parcela puede no haber se\~nal, cada aporte se guarda primero en el tel\'efono y se env\'ia despu\'es, cuando vuelve la conexi\'on o cuando el usuario lo pide (Figura~\ref{fig:secuencia_sync}). El registro se marca como enviado solo cuando el servidor confirma que lo recibi\'o, y si algo falla se intenta de nuevo m\'as tarde. En el servidor, la API (FastAPI con MySQL 8.4) rechaza los env\'ios repetidos y acepta como m\'aximo 30 solicitudes por minuto.
 
 \begin{figure}[H]
 \centering
