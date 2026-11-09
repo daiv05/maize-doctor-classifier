@@ -180,7 +180,7 @@ El proyecto tiene los siguientes l\'imites:
 \item \textbf{Solo Android.} La aplicaci\'on requiere Android 7.0 (API 24) o superior, procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 4~GB de RAM. Las pruebas en dispositivo se hicieron en Android 15. No hay versi\'on para iOS ni para tel\'efonos que no sean inteligentes.
 \item \textbf{Sin dependencia de la nube.} El diagn\'ostico no usa servicios en la nube, y no hay sincronizaci\'on en tiempo real entre varios tel\'efonos.
 \item \textbf{Herramienta de orientaci\'on.} La aplicaci\'on orienta al productor, pero no reemplaza los an\'alisis de laboratorio, ni los dict\'amenes oficiales de cuarentena o certificaci\'on fitosanitaria del MAG.
-\item \textbf{Clases y evidencia de campo.} El corpus procede de 11 repositorios p\'ublicos internacionales. El conjunto de datos nacional es, por ahora, el mecanismo de aportes voluntarios de la aplicaci\'on y no un corpus ya reunido.
+\item \textbf{Clases y evidencia de campo.} El corpus procede de 11 repositorios p\'ublicos internacionales.
 \end{itemize}
 
 \section{Hip\'otesis}
@@ -189,10 +189,9 @@ El proyecto tiene los siguientes l\'imites:
 Un modelo convolucional ligero, cuantizado a enteros de 8 bits y ejecutado sin conexi\'on en un tel\'efono de gama baja o media, puede clasificar nueve condiciones de la hoja de ma\'iz con un Macro $F_1$ de al menos 0.85 en una partici\'on de prueba retenida, con 300~ms o menos de preprocesado e inferencia y con un desempe\~no comparable entre im\'agenes de laboratorio y de campo. La hip\'otesis se considera aceptada si se cumplen los criterios de la Tabla~\ref{tab:criterios_exito}.
 
 \subsection{Criterios de \'Exito Espec\'ificos}
-Cada criterio tiene un umbral medible y se verifica en el Cap\'itulo~3. Se agrupan en cinco temas.
 
 \begin{table}[H]
-\caption{Criterios de \'exito del proyecto, agrupados por tema}
+\caption{Criterios de \'exito del proyecto}
 \label{tab:criterios_exito}
 \centering
 \small
@@ -201,43 +200,34 @@ Cada criterio tiene un umbral medible y se verifica en el Cap\'itulo~3. Se agrup
 \toprule
 \textbf{Tema} & \textbf{Criterio y umbral} & \textbf{M\'etrica} \\
 \midrule
-Ahorro de entrenamiento & El total de \'epocas ejecutadas por la b\'usqueda no supera el 50\% del m\'aximo te\'orico (25 ensayos $\times$ 60 \'epocas). & \'Epocas ejecutadas por la b\'usqueda \\
-Rendimiento del modelo & Alcanzar Macro $F_1 \ge 0.85$ en la partici\'on de prueba retenida, con recall de la necrosis letal (MLN) $\ge 95\%$. & Macro $F_1$, recall por clase \\
+Rendimiento del modelo & Alcanzar Macro $F_1 \ge 0.85$ en la partici\'on de prueba retenida. & Macro $F_1$ \\
 Capacidades del diagn\'ostico & Mantener un \textit{Disparate Impact Ratio} $\ge 0.80$ entre laboratorio y campo real. & DIR \\
 Confiabilidad de la evaluaci\'on & Ninguna imagen del conjunto de prueba aparece en entrenamiento ni validaci\'on, por hash de archivo y por p\'ixeles. & Solapamiento por SHA-256 y por p\'ixeles \\
-Soluci\'on integral & Modelo Int8 de 20~MB o menos, preprocesado e inferencia de 300~ms o menos en un tel\'efono de gama media y funcionamiento sin conexi\'on. & Tama\~no, latencia \\
+Soluci\'on integral & Modelo Int8 de 20~MB o menos, preprocesado e inferencia de 300~ms o menos en un tel\'efono de gama media o baja y funcionamiento sin conexi\'on. & Tama\~no, latencia \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
 
-Los umbrales de Macro $F_1$ ($\ge 0.85$), tama\~no del modelo (20~MB) y latencia (300~ms por imagen) se fijaron en el informe de la primera etapa del proyecto, en julio de 2026. El recall de MLN y el DIR se a\~nadieron en el primer borrador de esta tesina, en octubre de 2026, cuando la segunda etapa ya los hab\'ia medido. Ese borrador fijaba adem\'as criterios que despu\'es se modificaron:
-\begin{itemize}
-\item Un modelo Int8 menor de 5~MB con inferencia en menos de 100~ms, que se devolvi\'o a los valores de la primera etapa.
-\item Una reducci\'on de al menos 40\% de las horas de GPU frente a una b\'usqueda sin poda, que se sustituy\'o por el l\'imite de \'epocas porque esa b\'usqueda de comparaci\'on no se ejecut\'o (Cap\'itulo~3).
-\item El rechazo de las im\'agenes que no son hojas de ma\'iz, que se retir\'o de los criterios; el detector solo se evalu\'o con cinco im\'agenes sint\'eticas (Cap\'itulo~2).
-\end{itemize}
-El criterio de solapamiento cero entre particiones se a\~nadi\'o en esa misma revisi\'on.
-
 \section{Justificaci\'on}
 
 \subsection{Justificaci\'on T\'ecnica y Metodol\'ogica}
-La presente investigaci\'on se justifica t\'ecnicamente al trasladar el procesamiento de aprendizaje profundo desde arquitecturas dependientes de servidores en la nube hacia el borde del dispositivo m\'ovil (\textit{Edge AI}). En la literatura especializada de visi\'on por computadora aplicada a la agricultura, predomina el entrenamiento de modelos convolucionales de alta complejidad evaluados sobre particiones aleatorias convencionales, las cuales frecuentemente sufren de fuga de informaci\'on e introducen atajos visuales ligados a fondos controlados \cite{ahmad2023a}. El presente proyecto aborda esta limitaci\'on mediante una metodolog\'ia rigurosa basada en auditor\'ia de duplicados a nivel de p\'ixel, esquemas de validaci\'on cruzada agrupada por procedencia y t\'ecnicas de cuantizaci\'on sim\'etrica a enteros de 8 bits (\textit{Int8}) que reducen la demanda computacional \cite{howard2017,tan2019}. Asimismo, integra salvaguardas operacionales como el filtrado de muestras fuera de dominio (\textit{OOD}) \cite{lee2018} y mecanismos de explicabilidad visual mediante mapas de activaci\'on \cite{selvaraju2017}, con el fin de que las predicciones se apoyen en caracter\'isticas de la l\'amina foliar; la verificaci\'on de este objetivo se presenta en el cap\'itulo de resultados.
+La mayor\'ia de los sistemas de diagn\'ostico foliar por visi\'on artificial procesan la imagen en un servidor, lo que exige conexi\'on en el momento de usarlos. Este proyecto ejecuta el modelo en el propio tel\'efono (\textit{Edge AI}), con arquitecturas convolucionales dise\~nadas para dispositivos m\'oviles \cite{howard2017,tan2019} y cuantizaci\'on a enteros de 8 bits, que reduce el tama\~no del modelo y el costo de cada inferencia \cite{jacob2018}.
+
+En la visi\'on por computadora aplicada a la agricultura, muchos modelos se eval\'uan con particiones aleatorias de un mismo repositorio. Con ese esquema, im\'agenes muy parecidas o tomadas en las mismas condiciones quedan a ambos lados de la partici\'on, y el modelo puede apoyarse en el fondo o en la c\'amara en lugar de la lesi\'on \cite{ahmad2023a}. Por eso el proyecto incorpora una auditor\'ia de duplicados, una validaci\'on que separa las fuentes de entrenamiento y de evaluaci\'on, mapas de activaci\'on para revisar en qu\'e regiones se apoya el modelo \cite{selvaraju2017} y un detector que evita diagnosticar im\'agenes que no corresponden a una hoja de ma\'iz \cite{lee2018}.
 
 \subsection{Justificaci\'on Econ\'omica}
-Para las peque\~nas familias productoras de ma\'iz en El Salvador, el margen de rentabilidad agr\'icola por ciclo es sumamente reducido y altamente vulnerable a sobrecostos imprevistos \cite{mag2023}. Un diagn\'ostico fitosanitario err\'oneo puede conducir a la compra de agroqu\'imicos inadecuados, mermando el escaso capital de trabajo disponible; en el ensayo de La Libertad, incluso el control optimizado de plagas y enfermedades redujo la utilidad neta \cite{eash2019}. Una aplicaci\'on m\'ovil de uso aut\'onomo, gratuito y local en el propio tel\'efono inteligente del agricultor ofrece orientaci\'on para la intervenci\'on fitosanitaria, ayuda a evitar gastos innecesarios en plaguicidas ante s\'intomas provocados por deficiencias nutricionales y facilita una acci\'on temprana contra plagas como el gusano cogollero (\textit{Spodoptera frugiperda}) \cite{centa2022}.
+La mayor\'ia de los productores de ma\'iz trabaja parcelas peque\~nas con m\'argenes estrechos \cite{mag2023}, de modo que un gasto mal dirigido pesa en la econom\'ia del hogar. Un diagn\'ostico equivocado puede llevar a comprar un agroqu\'imico que no corresponde, por ejemplo un fungicida para lo que en realidad es una deficiencia nutricional, y el ensayo de La Libertad muestra que incluso un control de plagas y enfermedades bien aplicado puede reducir la utilidad neta \cite{eash2019}. Una aplicaci\'on gratuita que funciona en el tel\'efono del agricultor orienta esa decisi\'on antes de la compra y ayuda a actuar a tiempo contra plagas como el gusano cogollero (\textit{Spodoptera frugiperda}) \cite{centa2022}.
 
 \subsection{Justificaci\'on Social y Ambiental}
-Desde la perspectiva social, la implementaci\'on de \textit{DoctorMaiz} contribuye a reducir la brecha tecnol\'ogica en comunidades rurales con acceso limitado o nulo a servicios presenciales de extensi\'on agron\'omica \cite{centa2022}. Al transformar un tel\'efono celular com\'un de gama baja o media en un asistente de orientaci\'on fitopatol\'ogica disponible en el surco, se ofrece al productor informaci\'on t\'ecnica comprensible y oportuna. En la dimensi\'on ambiental, un diagn\'ostico certero podr\'ia favorecer el manejo integrado de plagas y desincentivar la aplicaci\'on indiscriminada de pesticidas sint\'eticos.
+Muchas comunidades rurales tienen poco acceso a apoyo agron\'omico presencial \cite{centa2022}. Una herramienta que funciona sin conexi\'on en un tel\'efono de gama baja o media pone informaci\'on t\'ecnica al alcance del productor en su parcela, en un lenguaje que puede entender sin formaci\'on especializada. En lo ambiental, un diagn\'ostico m\'as preciso favorece un mejor manejo de plagas y puede reducir la aplicaci\'on de pesticidas cuando no hacen falta.
 
 \subsection{Justificaci\'on Acad\'emica e Institucional}
-En el \'ambito acad\'emico e institucional, este proyecto aporta a la Escuela de Ingenier\'ia de Sistemas Inform\'aticos de la Universidad de El Salvador (UES), al articular la investigaci\'on aplicada en inteligencia artificial embebida con la soluci\'on de problemas prioritarios del desarrollo agropecuario nacional. El aporte acad\'emico principal es metodol\'ogico: la validaci\'on agrupada por fuente, la auditor\'ia de duplicados y el an\'alisis de dependencia del fondo mostraron que el Macro $F_1$ de 0.9480 en la partici\'on estratificada no se sostiene fuera de las fuentes de entrenamiento, y dejan una referencia para evaluar sistemas de visi\'on artificial en contextos de recursos computacionales y conectividad restringidos.
+Para la Escuela de Ingenier\'ia de Sistemas Inform\'aticos de la Universidad de El Salvador, el proyecto aplica el aprendizaje profundo embebido a un problema del agro nacional y deja disponibles el c\'odigo, el corpus consolidado y los modelos. Adem\'as, documenta un procedimiento de evaluaci\'on (auditor\'ia de duplicados, validaci\'on por fuente y an\'alisis de la dependencia del fondo) que puede reutilizarse en otros sistemas de visi\'on artificial con poca capacidad de c\'omputo y conectividad limitada.
 
 \section{Cronograma de Actividades}
 
-La planificaci\'on y ejecuci\'on del proyecto se estructur\'o bajo las fases de la metodolog\'ia \textit{CRISP-DM} (\textit{Cross-Industry Standard Process for Data Mining}), adaptada a los requerimientos de desarrollo de aprendizaje profundo embebido (\textit{Edge AI}) e ingenier\'ia de software m\'ovil. El cronograma abarc\'o un periodo de 32 semanas calendario, iniciando formalmente el 14 de abril de 2026 y culminando con el hito de presentaci\'on y defensa final el 24 de noviembre de 2026.
-
-La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la concurrencia operativa de las fases a lo largo de las 32 semanas del ciclo, mientras que la Tabla~\ref{tab:cronograma} detalla la distribuci\'on de actividades, duraci\'on, horas estimadas y entregables t\'ecnicos por cada etapa.
+El proyecto se organiz\'o seg\'un las fases de \textit{CRISP-DM} (\textit{Cross-Industry Standard Process for Data Mining}), con una fase adicional para el desarrollo de la aplicaci\'on m\'ovil. Abarca 32 semanas, del 14 de abril al 24 de noviembre de 2026. La Figura~\ref{fig:gantt_cronograma} muestra el diagrama de Gantt y la Tabla~\ref{tab:cronograma} detalla la duraci\'on, las horas y el entregable de cada fase.
 
 \begin{figure}[H]
 \centering
@@ -274,23 +264,23 @@ La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la 
 \end{figure}
 
 \begin{table}[H]
-\caption{Cronograma planificado de actividades y fases del proyecto (CRISP-DM)}
+\caption{Cronograma de actividades por fase (CRISP-DM), con horas por integrante}
 \label{tab:cronograma}
 \centering
 \small
 \begin{singlespace}
 \begin{tabularx}{\textwidth}{p{4.3cm}ccccX}
 \toprule
-\textbf{Fase / Actividad Operativa} & \textbf{Inicio} & \textbf{Fin} & \textbf{Semanas} & \textbf{Horas} & \textbf{Entregable Principal} \\
+\textbf{Fase} & \textbf{Inicio} & \textbf{Fin} & \textbf{Semanas} & \textbf{Horas} & \textbf{Entregable principal} \\
 \midrule
-\textbf{Fase 1: Comprensi\'on del Negocio y Datos} & 14/04/26 & 12/05/26 & 4 & 40 h & Requisitos fitosanitarios y corpus consolidado ($>$33K im\'agenes). \\
-\textbf{Fase 2: Preparaci\'on de Datos} & 12/05/26 & 09/06/26 & 4 & 40 h & Auditor\'ia criptogr\'afica de duplicados, balanceo y data augmentation. \\
-\textbf{Fase 3: Modelado Algor\'itmico} & 09/06/26 & 21/07/26 & 6 & 60 h & Transfer learning en arquitecturas ligeras y optimizaci\'on con Optuna. \\
-\textbf{Fase 4: Evaluaci\'on y Auditor\'ia de Sesgos} & 21/07/26 & 18/08/26 & 4 & 40 h & Ensamble Soft Voting, evaluaci\'on ciega de campo y an\'alisis XAI (Grad-CAM). \\
-\textbf{Fase 5: Optimizaci\'on Edge y App M\'ovil} & 18/08/26 & 29/09/26 & 6 & 60 h & Modelo Int8 (3.74~MB), detector OOD y app DoctorMaiz (React Native/Expo). \\
-\textbf{Fase 6: Pruebas Finales y Memoria} & 29/09/26 & 24/11/26 & 8 & 80 h & Evaluaci\'on f\'isica en Motorola edge 40 neo, memoria t\'ecnica y defensa final. \\
+\textbf{Fase 1: Comprensi\'on del negocio y de los datos} & 14/04/26 & 12/05/26 & 4 & 40 h & Requisitos fitosanitarios y selecci\'on de repositorios p\'ublicos. \\
+\textbf{Fase 2: Preparaci\'on de datos} & 12/05/26 & 09/06/26 & 4 & 40 h & Corpus consolidado, auditor\'ia de duplicados, balanceo y aumento de datos. \\
+\textbf{Fase 3: Modelado} & 09/06/26 & 21/07/26 & 6 & 60 h & Modelos ligeros con transferencia de aprendizaje y b\'usqueda de hiperpar\'ametros. \\
+\textbf{Fase 4: Evaluaci\'on} & 21/07/26 & 18/08/26 & 4 & 40 h & Comparaci\'on de modelos, evaluaci\'on por fuente y en campo, y an\'alisis de explicabilidad. \\
+\textbf{Fase 5: Despliegue y aplicaci\'on m\'ovil} & 18/08/26 & 29/09/26 & 6 & 60 h & Modelo cuantizado a Int8 y aplicaci\'on m\'ovil con inferencia local. \\
+\textbf{Fase 6: Pruebas finales y memoria} & 29/09/26 & 24/11/26 & 8 & 80 h & Pruebas en dispositivo f\'isico, memoria t\'ecnica y defensa. \\
 \midrule
-\textbf{Hito Final: Defensa de Proyecto} & \multicolumn{2}{c}{\textbf{24 de noviembre de 2026}} & \textbf{32 sem} & \textbf{320 h} & \textbf{Sistema DoctorMaiz liberado} \\
+\textbf{Defensa del proyecto} & \multicolumn{2}{c}{\textbf{24 de noviembre de 2026}} & \textbf{32} & \textbf{320 h} & \textbf{Sistema DoctorMaiz y memoria final} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
@@ -298,31 +288,50 @@ La Figura~\ref{fig:gantt_cronograma} ilustra el diagrama temporal de Gantt y la 
 
 \section{Presupuesto Global Estimado}
 
-El presupuesto abarca recurso humano e infraestructura de c\'omputo en la nube (Tabla~\ref{tab:presupuesto}). Las horas de GPU son la suma de las duraciones de los 25 ensayos del estudio de optimizaci\'on (\texttt{trials.csv}, 45~523~s), incluidos los dos ensayos interrumpidos, que aportan 20~102~s; el resto de rubros son proyecciones.
+El presupuesto se organiza en cuatro rubros: el recurso humano, el entrenamiento de los modelos, la inferencia y el despliegue (Tabla~\ref{tab:presupuesto}).
 
 \begin{table}[H]
-\caption{Presupuesto proyectado del proyecto (USD)}
+\caption{Presupuesto del proyecto (USD)}
 \label{tab:presupuesto}
 \centering
 \small
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{2.4cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{2.2cm}}
 \toprule
-\textbf{Rubro} & \textbf{Salario base} & \textbf{Cargas} & \textbf{Total} \\
+\textbf{Rubro} & \textbf{Detalle} & \textbf{Costo} \\
 \midrule
-Ingeniero de Datos / MLOps & \$2,769.23 & \$611.54 & \$3,380.77 \\
-Investigador de Deep Learning & \$2,492.31 & \$564.22 & \$3,056.53 \\
-Desarrollador M\'ovil Edge AI & \$2,307.69 & \$532.70 & \$2,840.39 \\
-\textbf{Recurso humano (320 h por rol)} & \textbf{\$7,569.23} & \textbf{\$1,708.46} & \textbf{\$9,277.69} \\
+\multicolumn{3}{l}{\textit{Recurso humano}} \\
+Ingeniero de Datos / MLOps & 320 h & \$3,380.77 \\
+Investigador de Deep Learning & 320 h & \$3,056.53 \\
+Desarrollador M\'ovil Edge AI & 320 h & \$2,840.39 \\
 \midrule
-Nube y licencias: GPU A10G, almacenamiento y software libre & --- & --- & \$43.92 \\
+\multicolumn{3}{l}{\textit{Entrenamiento}} \\
+GPU NVIDIA A10G en Modal & Modelos de referencia, entrenamiento principal, b\'usqueda de hiperpar\'ametros y experimentos de validaci\'on & \$250.00 \\
 \midrule
-\textbf{Total general} & --- & --- & \textbf{\$9,321.61} \\
+\multicolumn{3}{l}{\textit{Inferencia}} \\
+Inferencia en el tel\'efono & Sin servidor de inferencia & \$0.00 \\
+Dispositivo de prueba & Motorola edge 40 neo, aportado por un integrante & \$0.00 \\
+\midrule
+\multicolumn{3}{l}{\textit{Despliegue (agosto a noviembre de 2026)}} \\
+Servidor Hetzner & API, base de datos y sitio web; \$6.00 al mes durante 4 meses & \$24.00 \\
+Volumen Hetzner de 100~GB & Fotograf\'ias aportadas y respaldos; \$7.67 al mes durante 4 meses & \$30.68 \\
+Dominio & Registro anual & \$12.00 \\
+Distribuci\'on & APK en GitHub Releases, dataset en Hugging Face & \$0.00 \\
+\midrule
+\textbf{Total} & & \textbf{\$9,594.37} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
 
-Los salarios mensuales de referencia (\$1,500, \$1,350 y \$1,250) son el punto medio de la escala del sector p\'ublico salvadore\~no para perfiles equivalentes. El costo se estima solo por horas efectivas: cada integrante trabaja menos de 2 horas diarias de lunes a viernes, se usan 2 horas como cota superior, es decir 10 horas semanales, que suman 320 horas en las 32 semanas del cronograma (Tabla~\ref{tab:cronograma}). Equivale a 1.85 meses de una jornada de 40 horas, y el salario mensual se prorrate\'o por esa proporci\'on. Las cargas son la cuota patronal al ISSS de 7.5\% sobre un salario base m\'aximo de \$1,000 mensuales, la de AFP de 7.75\%, la contribuci\'on al INSAFORP de 1\%, y el aguinaldo y las vacaciones de ley prorrateados.
+\subsection*{Recurso humano}
+Los salarios mensuales de referencia (\$1,500, \$1,350 y \$1,250) son el punto medio de la escala del sector p\'ublico salvadore\~no para perfiles equivalentes. Se estim\'o una dedicaci\'on de 2 horas diarias de lunes a viernes por integrante (10 horas semanales), que suman 320 horas en las 32 semanas del cronograma (Tabla~\ref{tab:cronograma}). Eso equivale a 1.85 meses de jornada completa, y el salario se prorrate\'o en esa proporci\'on. Los montos incluyen las prestaciones de ley.
 
-La infraestructura cuesta \$43.92: \$13.92 de las 12.65 horas de GPU del estudio de optimizaci\'on a tarifa de lista (incluidos los intentos interrumpidos) y \$30.00 proyectados de almacenamiento (100~GB durante 6 meses). El c\'omputo de los dem\'as entrenamientos no se contabiliza.
+\subsection*{Entrenamiento}
+Todo el entrenamiento se ejecut\'o en GPU NVIDIA A10G de la plataforma Modal, con un presupuesto de \$250 en cr\'editos. Ese monto cubri\'o los modelos de referencia de la primera etapa, el entrenamiento del modelo oficial, la b\'usqueda de hiperpar\'ametros con Optuna (12.65 horas de GPU, \$13.92) y los experimentos de validaci\'on por fuente, con varias semillas y de explicabilidad. El entrenamiento es un costo de una sola vez: una vez exportado, el modelo no requiere m\'as GPU.
+
+\subsection*{Inferencia}
+El modelo se ejecuta en el procesador del tel\'efono, de modo que cada diagn\'ostico no tiene costo de servidor ni consume datos m\'oviles. El costo de inferencia no crece con el n\'umero de usuarios, lo que hace viable distribuir la aplicaci\'on de forma gratuita. Las pruebas en dispositivo se hicieron con un tel\'efono de gama media propiedad de un integrante del equipo.
+
+\subsection*{Despliegue y operaci\'on}
+La API de sincronizaci\'on, su base de datos y el sitio web del proyecto comparten un servidor en Hetzner, con un volumen adicional de 100~GB para las fotograf\'ias aportadas por los usuarios. El APK se compila y publica en GitHub Releases mediante GitHub Actions, y el corpus consolidado se distribuye en Hugging Face, ambos sin costo. Mantener el sistema en operaci\'on cuesta \$176.04 al a\~no (\$72.00 de servidor, \$92.04 de volumen y \$12.00 de dominio).

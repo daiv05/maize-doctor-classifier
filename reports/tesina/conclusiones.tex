@@ -7,7 +7,7 @@ La presente investigaci\'on pasa de una prueba de concepto a un sistema de diagn
 
 \begin{itemize}
 \item \textbf{Corpus:} 33~429 im\'agenes de 11 fuentes, con cero solapamiento por hash y por p\'ixeles entre particiones.
-\item \textbf{Optimizaci\'on:} 25 ensayos de Optuna con el 30.2\% de las \'epocas m\'aximas. El ganador rindi\'o 0.49 pp menos en prueba y se conserv\'o la configuraci\'on inicial.
+\item \textbf{Optimizaci\'on:} 25 ensayos de Optuna con poda temprana (15 podados, 12.65 horas de GPU). El ganador rindi\'o 0.49 pp menos en prueba y se conserv\'o la configuraci\'on inicial.
 \item \textbf{Ensamble:} Macro $F_1$ de 0.9567 en la etapa 2 con votaci\'on suave.
 \item \textbf{Evaluaci\'on:} Macro $F_1$ de 0.6026 en validaci\'on agrupada por fuente frente a 0.9311 en la estratificada; la ablaci\'on dej\'o 79.46\% de exactitud al ocluir el centro y 42.25\% al ocluir la periferia.
 \item \textbf{Despliegue m\'ovil:} Modelo Int8 de 3.74~MB, con 98~ms de preprocesado y 23~ms de inferencia en un tel\'efono de gama media.
@@ -31,7 +31,7 @@ Las conclusiones se detallan a continuaci\'on.
 \item \textbf{Cobertura y evidencia de campo:} La taxonom\'ia no incluye la mancha de asfalto y no hay reportes locales de necrosis letal. Se desconocen el lugar, la fecha y el criterio de etiquetado de las 97 fotograf\'ias externas, y el sistema no se evalu\'o con productores.
 \item \textbf{Dispositivo:} Las mediciones en tel\'efono provienen de un solo dispositivo de gama media.
 \item \textbf{Alcance del diagn\'ostico:} El sistema indica la clase y no mide la severidad; la gu\'ia de tres niveles la compara el productor con su hoja.
-\item \textbf{B\'usqueda de hiperpar\'ametros:} Fue parcial (30.2\% de las \'epocas) y no se compar\'o con una b\'usqueda sin poda.
+\item \textbf{B\'usqueda de hiperpar\'ametros:} Se redujo a 25 ensayos y no se compar\'o con una b\'usqueda sin poda, de modo que el ahorro de la poda no se midi\'o.
 \item \textbf{Beneficio econ\'omico:} Al no existir una cuantificaci\'on nacional de p\'erdidas, el ahorro que el diagn\'ostico podr\'ia producir no se estim\'o.
 \item \textbf{Licencias:} Tres fuentes (31.1\% del corpus) tienen licencia CC BY-NC-SA 4.0, por lo que el uso comercial y la redistribuci\'on requieren una revisi\'on legal.
 \end{enumerate}

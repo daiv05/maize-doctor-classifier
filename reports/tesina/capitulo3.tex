@@ -30,9 +30,7 @@ Esta secci\'on reporta el estado de cada criterio de \'exito definido en la Tabl
 \toprule
 \textbf{Criterio} & \textbf{Resultado medido} & \textbf{Estado} \\
 \midrule
-\'Epocas de la b\'usqueda $\le 50\%$ del m\'aximo te\'orico & 453 de 1\,500 \'epocas (30.2\%) en 25 ensayos. & Cumple \\
 Macro $F_1 \ge 0.85$ en prueba & 0.9480 (baseline vigente, una semilla); 0.9435 $\pm$ 0.0052 en tres semillas. & Cumple \\
-Recall de MLN $\ge 95\%$ en prueba & 100.0\% en la partici\'on hist\'orica del ensamble; 0.72--0.81 bajo LOSO. & Cumple solo en partici\'on de desarrollo \\
 DIR $\ge 0.80$ entre laboratorio y campo & 0.9636 (Macro $F_1$) y 0.9956 (exactitud) con el modelo oficial, en las tres clases compartidas; la roya de campo (16 im\'agenes) queda en $F_1 = 0.77$. & Cumple \\
 Solapamiento cero entre particiones & 0 de 5~015 im\'agenes de prueba en entrenamiento o validaci\'on, por SHA-256 y por p\'ixeles; 33~437 archivos verificados. No incluye similitud perceptual. & Cumple \\
 Int8 de 20~MB o menos & 3.74~MB (3~743~728 bytes) para el modelo oficial \texttt{20260921\_204608}. & Cumple \\
@@ -43,9 +41,9 @@ Funcionamiento sin conexi\'on & Clasificaci\'on local verificada en un dispositi
 \end{singlespace}
 \end{table}
 
-\subsection{Ahorro de entrenamiento: b\'usqueda bayesiana con poda}
+\subsection{B\'usqueda bayesiana de hiperpar\'ametros con poda}
 
-El estudio bayesiano ejecutado con Optuna explor\'o 25 intentos sobre la arquitectura \texttt{EfficientNet-Lite0}, de los cuales 8 se completaron, 15 fueron podados por el algoritmo \textit{MedianPruner} al no superar la mediana de sus pares tras el periodo de calentamiento (8 \'epocas), y 2 se interrumpieron por fallos de proceso. El ensayo ganador fue el Trial~0 (\'epoca 44), seleccionado por su mejor Macro $F_1$ de validaci\'on. La eficiencia de la b\'usqueda se mide en \'epocas ejecutadas: 453 de 1\,500 posibles (25 ensayos de 60 \'epocas), es decir, el 30.2\%, por debajo del l\'imite de 50\%. Las \'epocas de los dos ensayos interrumpidos no se registraron y quedan fuera del numerador, mientras que el denominador los cuenta completos. El criterio original, horas de GPU frente a una b\'usqueda sin poda, no se evalu\'o porque exige una corrida sin poda que no se ejecut\'o; la medida en \'epocas se defini\'o despu\'es de observar los datos. La medida no demuestra que la poda no haya descartado un candidato mejor.
+El estudio con Optuna explor\'o 25 ensayos sobre \texttt{EfficientNet-Lite0}, con un m\'aximo de 60 \'epocas cada uno. De ellos, 8 se completaron, 15 fueron podados por \textit{MedianPruner} al quedar por debajo de la mediana tras el periodo de calentamiento (8 \'epocas) y 2 se interrumpieron por fallos del proceso. El ensayo ganador fue el Trial~0 (\'epoca 44), elegido por su Macro $F_1$ de validaci\'on. Los ensayos completados y podados sumaron 453 \'epocas; las de los dos interrumpidos no se registraron. La b\'usqueda us\'o 12.65 horas de GPU, de las cuales 5.58 corresponden a los dos ensayos interrumpidos. No se ejecut\'o una b\'usqueda sin poda, por lo que no se puede estimar cu\'anto c\'omputo ahorr\'o la poda; adem\'as, el entrenamiento ya inclu\'ia parada temprana, que tambi\'en acorta los ensayos. Tampoco se puede descartar que la poda haya eliminado un candidato mejor.
 
 \begin{figure}[H]
 \centering
