@@ -3,58 +3,44 @@
 
 \section*{Conclusiones}
 
-La presente investigaci\'on pasa de una prueba de concepto a un sistema de diagn\'ostico foliar de ma\'iz que se ejecuta sin conexi\'on en un tel\'efono. Por objetivo espec\'ifico del Cap\'itulo~1, se obtuvo lo siguiente:
+El proyecto permiti\'o construir una aplicaci\'on m\'ovil que diagnostica nueve condiciones de la hoja de ma\'iz sin conexi\'on y en un tel\'efono de gama media. El sistema funciona en el tel\'efono, se abstiene ante im\'agenes que no reconoce y orienta al productor con una gu\'ia de manejo, pero todav\'ia reconoce con dificultad los s\'intomas en fotograf\'ias de campo de otra procedencia.
 
-\begin{itemize}
-\item \textbf{Corpus:} 33~429 im\'agenes de 11 fuentes, con cero solapamiento por hash y por p\'ixeles entre particiones.
-\item \textbf{Optimizaci\'on:} 25 ensayos de Optuna con poda temprana (15 podados, 12.65 horas de GPU). El ganador rindi\'o 0.49 pp menos en prueba y se conserv\'o la configuraci\'on inicial.
-\item \textbf{Ensamble:} Macro $F_1$ de 0.9567 con votaci\'on suave.
-\item \textbf{Evaluaci\'on:} Macro $F_1$ de 0.6026 en validaci\'on agrupada por fuente frente a 0.9311 en la estratificada; la ablaci\'on dej\'o 79.46\% de exactitud al ocluir el centro y 42.25\% al ocluir la periferia.
-\item \textbf{Despliegue m\'ovil:} Modelo Int8 de 3.74~MB, con 98~ms de preprocesado y 23~ms de inferencia en un tel\'efono de gama media.
-\item \textbf{Propuesta institucional:} Cinco recomendaciones para el MAG y el CENTA, al final de este cap\'itulo.
-\end{itemize}
-
-Las conclusiones se detallan a continuaci\'on.
+El modelo obtuvo un Macro $F_1$ de 0.9480 en la partici\'on de prueba, con medianas de 98~ms de preprocesado y 23~ms de inferencia, y un desempe\~no comparable entre laboratorio y campo (DIR de 0.9636).
 
 \begin{enumerate}
-\item \textbf{Modelo oficial y su exportaci\'on m\'ovil:} El modelo oficial (EfficientNet-Lite0, run \texttt{20260921\_204608}) obtuvo un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\% sobre 5~015 im\'agenes de prueba, y 0.9435 $\pm$ 0.0052 con tres semillas. Su versi\'on Int8 pesa \textbf{3.74~MB} (72.9\% menos que el punto de control FP32) y obtuvo un Macro $F_1$ de 0.9489, con 99.74\% de acuerdo con PyTorch. En el Motorola edge 40 neo la mediana fue de 98~ms de preprocesado y 23~ms de inferencia, y el tel\'efono reproduce las predicciones del Int8 del servidor en 143 de 143 im\'agenes.
-\item \textbf{Generalizaci\'on entre fuentes, limitaci\'on principal:} En 97 fotograf\'ias de campo externas el modelo acert\'o 41 (42\%) y el detector OOD rechaz\'o 49. Una versi\'on anterior del modelo acert\'o 39, as\'i que la brecha no se explica por el cambio de modelo. Coincide con la validaci\'on agrupada por fuente, donde el Macro $F_1$ baja de 0.9311 $\pm$ 0.0099 a 0.6026 $\pm$ 0.1240, y con LOSO: 0.9933 $\pm$ 0.0006 sin \texttt{maize-diseases} y 0.9019 $\pm$ 0.0044 sin \texttt{multicrop-disease-maiz}, fuentes que contienen solo tres clases cada una.
-\item \textbf{Dependencia del fondo:} El \textit{Disparate Impact Ratio} entre laboratorio y campo, calculado sobre las tres clases presentes en ambos entornos, es 0.9636 con el modelo oficial y supera el umbral de 0.80, pero no refleja la roya de campo, que con 16 im\'agenes obtiene $F_1 = 0.77$ frente a 0.998 en laboratorio. La ablaci\'on espacial dej\'o 79.46\% de exactitud al ocluir el centro y 42.25\% al ocluir la periferia. Es compatible con sensibilidad a la regi\'on perif\'erica, pero las \'areas visibles difieren y el experimento no separa el fondo de la hoja.
-\item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia de captura y un detector OOD basado en distancia de Mahalanobis relativa, con umbral 106.37 (percentil 95 de validaci\'on). El detector rechaz\'o las 5 im\'agenes sint\'eticas de prueba y 3.8\% de 500 im\'agenes v\'alidas.
-\item \textbf{Ensamble:} El ensamble de EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de 0.9567 en una partici\'on que mezcla fuentes y con una sola semilla; no est\'a desplegado. Bajo LOSO el recall de MLN baja a 0.79--0.81 en el ensamble y a 0.72--0.74 en Lite0.
+\item El corpus re\'une 33~429 im\'agenes de 11 repositorios p\'ublicos, sin duplicados entre particiones seg\'un los hashes de archivo y de p\'ixeles. Su principal debilidad es la composici\'on, ya que varias fuentes aportan una sola clase y solo tres clases tienen im\'agenes de laboratorio, lo que facilita que el modelo asocie la fuente con la etiqueta.
+\item La b\'usqueda con Optuna evalu\'o 25 configuraciones. La mejor super\'o por poco a la inicial en validaci\'on, pero rindi\'o 0.49 puntos menos en prueba, as\'i que se conserv\'o la configuraci\'on inicial. Con este corpus, el ajuste de hiperpar\'ametros pes\'o mucho menos que la forma de partir los datos.
+\item El ensamble por votaci\'on suave alcanz\'o un Macro $F_1$ de 0.9567 y detect\'o todos los casos de necrosis letal de la partici\'on estratificada. Con fuentes no vistas, el recall de esa clase baj\'o a 0.79--0.81 en el ensamble y a 0.72--0.74 en EfficientNet-Lite0.
+\item La evaluaci\'on con fuentes separadas es el resultado m\'as importante del trabajo, el Macro $F_1$ cay\'o de 0.9311 a 0.6026 al evaluar sobre fuentes no vistas, y en 97 fotograf\'ias de campo externas el modelo acert\'o 41 (42\%). La ablaci\'on y el desglose por clase también muestran este comportamiento, el modelo conserva un 79.46\% de exactitud viendo solo el borde de la imagen, y la roya com\'un, casi toda de laboratorio, falla en 5 de 16 casos de campo.
+\item Cuantizado a Int8, el modelo pesa 3.74~MB y mantiene el desempe\~no del original (Macro $F_1$ de 0.9489). En el dispositivo móvil, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia, y las predicciones del tel\'efono coincidieron con las del modelo, por lo que no se observ\'o degradaci\'on por la cuantizaci\'on.
 \end{enumerate}
 
 \section*{Limitaciones}
 
 \begin{enumerate}
-\item \textbf{Generalizaci\'on:} Fuera de las fuentes de entrenamiento el desempe\~no cae, de modo que las cifras de la partici\'on estratificada no describen el uso en campo. Adem\'as, ciertas fuentes aportan una sola patolog\'ia y no se midi\'o la similitud perceptual entre particiones.
-\item \textbf{Cobertura y evidencia de campo:} La taxonom\'ia no incluye la mancha de asfalto y no hay reportes locales de necrosis letal. Se desconocen el lugar, la fecha y el criterio de etiquetado de las 97 fotograf\'ias externas, y el sistema no se evalu\'o con productores.
-\item \textbf{Dispositivo:} Las mediciones en tel\'efono provienen de un solo dispositivo de gama media.
-\item \textbf{Alcance del diagn\'ostico:} El sistema indica la clase y no mide la severidad; la gu\'ia de tres niveles la compara el productor con su hoja.
-\item \textbf{B\'usqueda de hiperpar\'ametros:} Se redujo a 25 ensayos y no se compar\'o con una b\'usqueda sin poda, de modo que el ahorro de la poda no se midi\'o.
-\item \textbf{Beneficio econ\'omico:} Al no existir una cuantificaci\'on nacional de p\'erdidas, el ahorro que el diagn\'ostico podr\'ia producir no se estim\'o.
-\item \textbf{Licencias:} Tres fuentes (31.1\% del corpus) tienen licencia CC BY-NC-SA 4.0, por lo que el uso comercial y la redistribuci\'on requieren una revisi\'on legal.
+\item \textbf{Generalizaci\'on.} El Macro $F_1$ de 0.9480 se calcul\'o con im\'agenes de las mismas fuentes usadas en el entrenamiento, por lo que no describe el uso en campo. Cuando el modelo se evalu\'o con fuentes que no hab\'ia visto, el Macro $F_1$ baj\'o a 0.6026, y con fotograf\'ias de campo externas acert\'o el 42\% de las veces. Mientras el corpus no incluya im\'agenes salvadore\~nas, es razonable esperar en una parcela del pa\'is un desempe\~no m\'as cercano a estas \'ultimas cifras.
+\item \textbf{Severidad.} El modelo indica qu\'e condici\'on presenta la hoja, pero no cu\'anto da\~no tiene. La gu\'ia de tres niveles ayuda al productor a estimarlo comparando su hoja con las descripciones, aunque esa valoraci\'on depende de su criterio y no se valid\'o en campo. Para medir el porcentaje de \'area afectada har\'ia falta un modelo que segmente las lesiones, algo que queda fuera del alcance de este trabajo.
+\item \textbf{Beneficio econ\'omico.} No se estim\'o cu\'anto podr\'ia ahorrar un productor al usar la aplicaci\'on, porque en El Salvador no existe una cuantificaci\'on nacional de las p\'erdidas por enfermedades foliares, plagas o deficiencias nutricionales. Los datos disponibles son ensayos puntuales, como los citados en el Cap\'itulo~1, que no permiten calcular un ahorro por hect\'area ni por ciclo.
 \end{enumerate}
 
 \section*{Trabajo futuro}
 
 \begin{itemize}
-\item Reunir y etiquetar fotograf\'ias salvadore\~nas con apoyo t\'ecnico del CENTA o del MAG, incluida la mancha de asfalto, documentando su procedencia, y reentrenar evaluando con fuentes completas retenidas.
-\item Medir cobertura y exactitud con distintos umbrales de rechazo y auditar la similitud perceptual entre particiones.
-\item Probar la aplicaci\'on con productores y asesores, y en tel\'efonos de gama baja.
+\item Reunir y etiquetar fotograf\'ias salvadore\~nas con apoyo del CENTA o del MAG, y reentrenar el modelo evalu\'andolo con fuentes completas fuera del entrenamiento.
+\item Probar la aplicaci\'on con productores y t\'ecnicos.
 \item Reducir el tiempo de preprocesado en el tel\'efono.
 \end{itemize}
 
 \section*{Recomendaciones}
 
-Con base en los resultados, se proponen cinco recomendaciones dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA), que responden a las limitaciones anteriores:
+Con base en los resultados, se proponen cinco recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA).
 
 \begin{enumerate}
-\item \textbf{Validaci\'on en campo antes de la adopci\'on institucional:} Evaluar la aplicaci\'on con promotores del CENTA sobre fotograf\'ias propias de cada zona productora, dado que la exactitud en fotograf\'ias de campo externas fue de 42\% (Secci\'on~\ref{sec:campo_externo}).
-\item \textbf{Banco nacional participativo de datos agr\'icolas:} Financiar brigadas fotogr\'aficas junto a la Universidad de El Salvador para capturar variedades y condiciones locales, con el fin de reducir la brecha de dominio detectada.
-\item \textbf{Red de alerta fitosanitaria temprana:} Evaluar el uso de los aportes voluntarios sincronizados para un tablero epidemiol\'ogico centralizado en el MAG, sujeto a una pol\'itica expl\'icita de tratamiento de metadatos y ubicaci\'on.
-\item \textbf{Capacitaci\'on comunitaria:} Ense\~nar a cooperativas y ADESCOs el uso del marco gu\'ia de captura, posicionando la herramienta como apoyo al criterio del productor.
-\item \textbf{Software abierto y protecci\'on de datos:} Conservar el software bajo licencias de c\'odigo abierto y definir las condiciones de uso de los datos aportados por los productores.
+\item \textbf{Validar en campo antes de adoptar la herramienta.} Evaluar la aplicaci\'on con promotores del CENTA usando fotograf\'ias de cada zona productora, ya que la exactitud con fotograf\'ias de campo externas fue de 42\% (Secci\'on~\ref{sec:campo_externo}).
+\item \textbf{Crear un banco nacional de im\'agenes.} Financiar, junto con la Universidad de El Salvador, la captura de fotograf\'ias de variedades y condiciones locales para reentrenar el modelo.
+\item \textbf{Aprovechar los aportes para la vigilancia fitosanitaria.} Evaluar el uso de las fotograf\'ias aportadas por los usuarios en un tablero de vigilancia del MAG, con reglas claras sobre el uso de los datos y de la ubicaci\'on.
+\item \textbf{Capacitar a las comunidades.} Ense\~nar a cooperativas y ADESCOs a usar el marco gu\'ia de captura y presentar la herramienta como un apoyo al criterio del productor.
+\item \textbf{Mantener el software abierto.} Conservar el c\'odigo bajo licencias abiertas y definir las condiciones de uso de los datos que aporten los productores.
 \end{enumerate}
 
 \newpage
@@ -139,6 +125,7 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 \begin{description}
 \item[Clever Hans Effect:] Fen\'omeno en el cual un modelo de aprendizaje autom\'atico alcanza una aparente alta precisi\'on apoy\'andose en correlaciones espurias o atajos del entorno (fondos, sensores, marcas de agua) en lugar de las caracter\'isticas intr\'insecas de la clase.
 \item[Disparate Impact Ratio (DIR):] M\'etrica de equidad que cuantifica el cociente entre el desempe\~no del grupo con peor resultado y el del mejor, aqu\'i medido con Macro $F_1$ o exactitud. Un valor inferior a 0.80 se toma como indicio de trato dispar.
+\item[Leave-One-Source-Out (LOSO):] Forma de validaci\'on en la que el modelo se entrena sin una fuente de datos completa y se eval\'ua solo con las im\'agenes de esa fuente. Sirve para medir c\'omo se comporta el modelo ante im\'agenes de una procedencia que no vio durante el entrenamiento.
 \item[Macro $F_1$-Score:] Media aritm\'etica no ponderada del valor $F_1$ calculado independientemente para cada clase. Asigna el mismo peso relativo a clases minoritarias y mayoritarias, siendo la m\'etrica est\'andar ante conjuntos desbalanceados.
 \item[Necrosis Letal del Ma\'iz (MLN):] Complejo viral provocado por la coinfecci\'on sin\'ergica del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus (como SCMV), con p\'erdidas de rendimiento de hasta 90\% documentadas en Kenia en 2012.
 \item[Out-of-Distribution (OOD):] Condici\'on que presentan aquellas muestras alimentadas a un clasificador cuyas caracter\'isticas estad\'isticas provienen de una distribuci\'on ajena a la utilizada durante el entrenamiento (ej. fotografiar una piedra o una mano frente a un modelo de hojas).
