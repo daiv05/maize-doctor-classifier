@@ -169,8 +169,8 @@ La partici\'on oficial reparte las 33~429 im\'agenes en 70/15/15, estratificada 
 \subsection{Familias Convolucionales Seleccionadas}
 Se compararon tres redes convolucionales ligeras, preentrenadas en ImageNet \cite{deng2009}, con dise\~nos distintos:
 \begin{enumerate}
-\item \textbf{EfficientNet-Lite0}, el modelo desplegado en la aplicaci\'on. Es la variante de EfficientNet para m\'oviles: sustituye la activaci\'on \textit{swish} por ReLU6 y elimina los bloques \textit{Squeeze-and-Excitation} (SE) \cite{hu2018}, lo que facilita la cuantizaci\'on a enteros. Tiene 3.38 millones de par\'ametros \cite{tan2019}.
-\item \textbf{EfficientNet-B0}, la versi\'on original, con escalado compuesto y bloques SE. Con 4.02 millones de par\'ametros, sirve de referencia de capacidad.
+\item \textbf{EfficientNet-Lite0}, es la variante de EfficientNet para m\'oviles: sustituye la activaci\'on \textit{swish} por ReLU6 y elimina los bloques \textit{Squeeze-and-Excitation} (SE) \cite{hu2018}, lo que facilita la cuantizaci\'on a enteros. Tiene 3.38 millones de par\'ametros \cite{tan2019}.
+\item \textbf{EfficientNet-B0}, la versi\'on original, con escalado compuesto y bloques SE. Con 4.02 millones de par\'ametros.
 \item \textbf{ShuffleNet-V2-x1.0}, que divide y baraja los canales (\textit{channel split} y \textit{channel shuffle}) para reducir los accesos a memoria. Es la m\'as peque\~na, con 1.26 millones de par\'ametros \cite{ma2018}.
 \end{enumerate}
 
@@ -208,30 +208,28 @@ donde $M=3$ es el n\'umero de redes y $c \in \{1, \dots, 9\}$. La clase predicha
 \section{Despliegue en Dispositivo M\'ovil}
 
 \subsection{Cuantizaci\'on a Enteros de 8 Bits (Int8)}
-Para que EfficientNet-Lite0 funcione en tel\'efonos sin unidad de procesamiento neuronal (NPU), se cuantiz\'o a enteros de 8 bits despu\'es del entrenamiento (\textit{Post-Training Quantization}, PTQ) \cite{jacob2018} y se export\'o a TensorFlow Lite con litert-torch. La cuantizaci\'on es sim\'etrica y din\'amica, por lo que no requiere un conjunto de calibraci\'on. Los pesos $W_{f,c,i}$ de cada canal de salida $c$ se escalan por separado:
+Para que EfficientNet-Lite0 funcione en tel\'efonos de forma eficiente, se cuantiz\'o a enteros de 8 bits despu\'es del entrenamiento (\textit{Post-Training Quantization}, PTQ) \cite{jacob2018} y se export\'o a TensorFlow Lite con litert-torch. Los pesos $W_{f,c,i}$ de cada canal de salida $c$ se escalan por separado:
 \begin{equation}
 S_c = \frac{\max_i \lvert W_{f,c,i} \rvert}{127}, \qquad q_{c,i} = \operatorname{clip}\!\left(\left\lfloor \frac{W_{f,c,i}}{S_c} \right\rceil,\; -127,\; 127\right)
 \end{equation}
 
 \subsection{Detector de Anomal\'ias Fuera de Distribuci\'on (OOD)}
-Una red neuronal puede clasificar con alta confianza una imagen ajena a sus clases, como suelo o calzado, porque la probabilidad softmax solo reparte la decisi\'on entre las etiquetas conocidas \cite{lee2018}. Para detectar esos casos, la aplicaci\'on toma el vector de 1~280 dimensiones previo a la clasificaci\'on, lo normaliza \cite{mahalanobispp2025}, lo reduce con PCA a 182 componentes y calcula la distancia relativa de Mahalanobis (RMD) \cite{ren2021}:
-\begin{equation}
-\text{RMD}(z) = D_M^2\!\left(z \,\middle|\, \mu_{c^*}, \Sigma\right) - D_M^2\!\left(z \,\middle|\, \mu_0, \Sigma_0\right)
-\end{equation}
-donde $\mu_{c^*}$ es el centroide de la clase m\'as cercana, $\Sigma$ la covarianza compartida entre clases, y $\mu_0$, $\Sigma_0$ describen todo el conjunto de entrenamiento. Restar este segundo t\'ermino evita penalizar rasgos comunes a cualquier fotograf\'ia.
+El modelo siempre responde con alguna de las clases que aprendi\'o, aunque la fotograf\'ia no tenga relaci\'on con el ma\'iz. Si se le muestra suelo o un zapato, elegir\'a de todos modos una enfermedad, a veces con mucha seguridad, porque solo puede repartir su confianza entre las etiquetas que conoce \cite{lee2018}. Por eso, antes de mostrar un diagn\'ostico, la aplicaci\'on comprueba si la imagen se parece a las que el modelo vio durante el entrenamiento.
 
-El umbral es el percentil 95 de la puntuaci\'on en el conjunto de validaci\'on. Si la puntuaci\'on lo supera, o si la clase m\'as probable no llega a 0.6 o supera a la segunda por menos de 0.15, la aplicaci\'on muestra \textbf{«Imagen no reconocida»} y no emite diagn\'ostico.
+Para hacerlo aprovecha la descripci\'on num\'erica que la red construye de cada imagen justo antes de clasificarla, una especie de huella de su contenido. Durante el entrenamiento se registra en qu\'e zona se agrupan las huellas de cada clase. Cuando llega una fotograf\'ia nueva, se mide qu\'e tan lejos queda su huella del grupo m\'as cercano con la distancia de Mahalanobis, que considera cu\'anto var\'ian normalmente las im\'agenes de ese grupo \cite{mahalanobispp2025}. A esa medida se le resta la distancia al conjunto completo de entrenamiento, para no castigar rasgos que comparte cualquier fotograf\'ia, como la iluminaci\'on o el encuadre \cite{ren2021}.
 
-\subsection{Mitigaci\'on en la Interfaz: Marco Gu\'ia y Severidad}
+El l\'imite de aceptaci\'on se fij\'o de modo que el 95\% de las im\'agenes del conjunto de validaci\'on quede por debajo de \'el. Adem\'as, el diagn\'ostico se descarta cuando el modelo duda: si la enfermedad m\'as probable no alcanza el 60\% de confianza o aventaja a la segunda por menos de 15 puntos. En cualquiera de estos casos la aplicaci\'on muestra \textbf{«Imagen no reconocida»} y no emite diagn\'ostico.
+
+\subsection{Mitigaci\'on en la Interfaz}
 La interfaz incorpora dos elementos que complementan al modelo:
 \begin{enumerate}
-\item \textbf{Marco gu\'ia.} La c\'amara muestra la silueta de una hoja (\textit{«Ac\'erquese a 20--30 cm y llene el marco»}) y la imagen se recorta a esa regi\'on, con un margen de 15\%, antes de pasar al modelo.
+\item \textbf{Marco gu\'ia.} La c\'amara muestra la silueta de una hoja (\textit{Ac\'erquese a 20--30 cm y llene el marco}) y la imagen se recorta a esa regi\'on, con un margen de 15\%, antes de pasar al modelo.
 \item \textbf{Gu\'ia de severidad.} Debajo del diagn\'ostico se muestra una escala de tres niveles (baja, moderada y cr\'itica), basada en escalas del CIMMYT y de Iowa State University Extension, que el productor compara con su hoja, junto con bioinsumos disponibles en el agroservicio.
 \end{enumerate}
 
 \section{Sincronizaci\'on y Aportes al Conjunto de Datos}
 
-La aplicaci\'on no necesita un servidor para diagnosticar. El servidor solo interviene cuando el productor decide compartir informaci\'on, y para eso debe crear una cuenta. Puede enviar una correcci\'on, si considera que el diagn\'ostico fue equivocado, o una fotograf\'ia con la etiqueta que \'el mismo le asigna, que pasa a formar parte del conjunto de datos colaborativo. Con la fotograf\'ia solo viajan la etiqueta, una nota opcional y la fecha, la ubicaci\'on que la aplicaci\'on guarda en el historial no se env\'ia.
+La aplicaci\'on no necesita un servidor para diagnosticar. El servidor solo interviene cuando el productor decide compartir informaci\'on, y para eso debe crear una cuenta. Puede enviar una correcci\'on, si considera que el diagn\'ostico fue equivocado, o una fotograf\'ia con la etiqueta que \'el mismo le asigna, que pasa a formar parte del conjunto de datos colaborativo. Con la fotograf\'ia solo viajan la etiqueta, una nota opcional y la fecha.
 
 Como en la parcela puede no haber se\~nal, cada aporte se guarda primero en el tel\'efono y se env\'ia despu\'es, cuando vuelve la conexi\'on o cuando el usuario lo pide (Figura~\ref{fig:secuencia_sync}). El registro se marca como enviado solo cuando el servidor confirma que lo recibi\'o, y si algo falla se intenta de nuevo m\'as tarde. En el servidor, la API (FastAPI con MySQL 8.4) rechaza los env\'ios repetidos y acepta como m\'aximo 30 solicitudes por minuto.
 
@@ -268,7 +266,7 @@ Como en la parcela puede no haber se\~nal, cada aporte se guarda primero en el t
 \draw[msg] (3.4,-7.7) -- (6.8,-7.7) node[midway, lab, above] {12. Marca el registro como sincronizado};
 \node[self, anchor=west] at (3.6,-8.4) {Si el env\'io falla, el registro queda pendiente};
 \end{tikzpicture}
-\caption{Flujo de sincronizaci\'on de un aporte, desde el guardado local hasta la confirmaci\'on del servidor.}
+\caption{Flujo de sincronizaci\'on de un aporte.}
 \label{fig:secuencia_sync}
 \end{figure}
 
@@ -294,7 +292,7 @@ API de sincronizaci\'on & Versi\'on de la app y aportes al dataset colaborativo 
 \end{singlespace}
 \end{table}
 
-La aplicaci\'on no depende del entorno de entrenamiento: solo empaqueta el modelo \texttt{.tflite}, las etiquetas y los par\'ametros del detector OOD, y se comunica con la API por HTTP. La Figura~\ref{fig:arquitectura_flujo} resume el flujo completo, desde los datos hasta la aplicaci\'on.
+La aplicaci\'on no tiene dependencia con el entorno de entrenamiento, solo empaqueta el modelo \texttt{.tflite}, las etiquetas y los par\'ametros del detector OOD, y se comunica con la API por HTTP. La Figura~\ref{fig:arquitectura_flujo} resume el flujo completo.
 
 \begin{figure}[H]
 \centering
@@ -329,10 +327,14 @@ La aplicaci\'on no depende del entorno de entrenamiento: solo empaqueta el model
 \node[stage, fill=green!6, draw=green!45!black, right=of app] (ood)
   {\textbf{Captura y OOD}\\[2pt]Marco gu\'ia y\\distancia RMD};
 \node[stage, fill=green!6, draw=green!45!black, right=of ood] (off)
-  {\textbf{Inferencia local}\\[2pt]CPU, sin conexi\'on\\(sincronizaci\'on opcional)};
+  {\textbf{Inferencia local}\\[2pt]CPU, sin conexi\'on};
 \draw[arrow] (quant) -- (app);
 \draw[arrow] (app) -- (ood);
 \draw[arrow] (ood) -- (off);
+
+\node[stage, fill=orange!6, draw=orange!60!black, below=1.1cm of app] (api)
+  {\textbf{API DoctorMaiz}\\[2pt]FastAPI y MySQL\\Cuentas,\\correcciones y aportes};
+\draw[arrow, dashed, {Latex[length=2.8mm]}-{Latex[length=2.8mm]}] (app.south) -- node[right, font=\scriptsize\itshape, text=gray!60!black] {sincronizaci\'on opcional} (api.north);
 
 \draw[arrow, dashed] (lite0.south) |- ++(0,-0.55) -| (quant.north);
 \end{tikzpicture}
