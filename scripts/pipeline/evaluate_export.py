@@ -23,7 +23,7 @@ from src.export.common import (
     resolve_export_inputs,
     validate_export_artifact,
 )
-from src.export.data import build_test_loader, resolve_test_csv
+from src.export.data import build_test_loader, default_num_workers, resolve_test_csv
 from src.export.evaluate import evaluate_exported_model, write_evaluation
 from src.models import list_models
 from src.training.common import resolve_run_dir, select_device
@@ -60,6 +60,13 @@ def _parse_args() -> argparse.Namespace:
         help="Directorio con test.csv (default: el 'splits_dir' de summary.json).",
     )
     parser.add_argument("--batch-size", type=int, default=32, dest="batch_size")
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=default_num_workers(),
+        dest="num_workers",
+        help="Workers del DataLoader (default: min(8, CPUs)).",
+    )
     parser.add_argument(
         "--no-torch-baseline",
         action="store_true",
@@ -109,6 +116,7 @@ def _evaluate_one(args: argparse.Namespace, model_name: str, output_dir: Path) -
         class_to_idx,
         image_size,
         args.batch_size,
+        num_workers=args.num_workers,
         preprocessing_contract=run_contract["preprocessing"],
     )
 

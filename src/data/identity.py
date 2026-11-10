@@ -28,9 +28,6 @@ def normalize_sample_path(path: str | os.PathLike[str]) -> str:
     if not raw.strip():
         raise ValueError("image_path no puede estar vacío")
 
-    # PurePosixPath no reconoce ``C:\\...`` como absoluto en Linux. Validar con
-    # ambas semánticas antes de unificar separadores evita identidades ligadas a
-    # la ubicación local de Windows o POSIX.
     windows_path = PureWindowsPath(raw)
     posix_text = raw.replace("\\", "/")
     posix_path = PurePosixPath(posix_text)

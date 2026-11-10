@@ -233,7 +233,6 @@ def main() -> None:
                 sys.exit(1)
             checkpoint_paths.append(found)
 
-    # 2. Validar todos los contratos y hashes antes de construir el primer modelo del ensemble.
     loaded_runs = [
         load_validated_run(
             checkpoint,

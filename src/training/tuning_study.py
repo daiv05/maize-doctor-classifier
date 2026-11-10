@@ -7,7 +7,6 @@ orquesta el presupuesto, la recuperación y la evaluación posterior a selecció
 from __future__ import annotations
 
 import base64
-import fcntl
 import json
 import pickle
 import traceback
@@ -24,6 +23,7 @@ from torch.utils.data import DataLoader
 from src.data.dataset import CornDataset
 from src.data.preparation import atomic_write_json, sha256_file, sha256_json
 from src.training.artifacts import write_extended_metrics, write_predictions_csv, write_test_outputs
+from src.training.filelock import acquire_exclusive, release
 from src.training.loop import run_epoch
 from src.training.losses import build_criterion
 from src.training.runs import load_validated_run
@@ -52,13 +52,13 @@ def exclusive_study(directory: Path):
     directory.mkdir(parents=True, exist_ok=True)
     with (directory / ".writer.lock").open("a") as handle:
         try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquire_exclusive(handle)
         except BlockingIOError as error:
             raise RuntimeError("Ya hay un escritor activo para este study.") from error
         try:
             yield
         finally:
-            fcntl.flock(handle, fcntl.LOCK_UN)
+            release(handle)
 
 
 def persist_sampler(study: optuna.Study, trial=None) -> None:
@@ -166,8 +166,6 @@ def run_to_budget(
         except Exception as error:
             trial.set_user_attr("error", "".join(traceback.format_exception(error))[-12000:])
             study.tell(trial, state=optuna.trial.TrialState.FAIL)
-            # Errores de datos/inicialización requieren diagnóstico; no gastar
-            # automáticamente los 60 intentos por la misma avería estructural.
             if isinstance(error, (SplitIntegrityError, FileNotFoundError)):
                 fatal = error
         else:
@@ -189,7 +187,7 @@ def evaluate_locked_winner(
 ) -> dict:
     """Única puerta al test: exige lock, hashes y ausencia de evaluación anterior."""
     lock_path = study_dir / "HPO_SELECTION_LOCK.json"
-    lock = json.loads(lock_path.read_text())  # Sin lock nunca llega a CornDataset.
+    lock = json.loads(lock_path.read_text())
     assert_split_snapshot_unchanged(splits_dir, snapshot)
     if lock["split_hashes"] != snapshot["sha256"]:
         raise SplitIntegrityError("Selection lock usa otros splits.")
@@ -222,7 +220,6 @@ def evaluate_locked_winner(
         config_path=str(config_path),
     )
     params = loaded.summary["hyperparameters"]
-    # La pérdida se construye exclusivamente con frecuencias TRAIN.
     train_labels = pd.read_csv(splits_dir / "train.csv", usecols=["label"])["label"].tolist()
     criterion = build_criterion(
         labels=train_labels,

@@ -1,0 +1,72 @@
+{
+  "model_name": "efficientnet_lite0",
+  "k_folds": 5,
+  "optuna_params_applied": false,
+  "hyperparameters_used": {
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "batch_size": 32,
+    "class_weights": "sqrt_inverse",
+    "label_smoothing": 0.1,
+    "clahe": false
+  },
+  "kfold_validation_statistics": {
+    "fold": {
+      "mean": 3.0,
+      "std": 1.5811,
+      "ci_95_lower": 1.0371,
+      "ci_95_upper": 1.0,
+      "min": 1.0,
+      "max": 5.0
+    },
+    "macro_f1": {
+      "mean": 0.9311,
+      "std": 0.008,
+      "ci_95_lower": 0.9213,
+      "ci_95_upper": 0.941,
+      "min": 0.9224,
+      "max": 0.9405
+    },
+    "accuracy": {
+      "mean": 0.9675,
+      "std": 0.0022,
+      "ci_95_lower": 0.9648,
+      "ci_95_upper": 0.9701,
+      "min": 0.9645,
+      "max": 0.9699
+    },
+    "macro_precision": {
+      "mean": 0.9483,
+      "std": 0.009,
+      "ci_95_lower": 0.9371,
+      "ci_95_upper": 0.9595,
+      "min": 0.9365,
+      "max": 0.9575
+    },
+    "macro_recall": {
+      "mean": 0.9174,
+      "std": 0.0078,
+      "ci_95_lower": 0.9077,
+      "ci_95_upper": 0.927,
+      "min": 0.9062,
+      "max": 0.9268
+    },
+    "best_epoch": {
+      "mean": 18.0,
+      "std": 2.0,
+      "ci_95_lower": 15.5171,
+      "ci_95_upper": 1.0,
+      "min": 16.0,
+      "max": 20.0
+    }
+  },
+  "hold_out_test_metrics": {
+    "test_macro_f1": 0.9452,
+    "test_accuracy": 0.9769,
+    "test_macro_precision": 0.9606,
+    "test_macro_recall": 0.9328,
+    "test_samples": 5015
+  },
+  "dev_dataset_size": 28418,
+  "test_dataset_size": 5015
+}

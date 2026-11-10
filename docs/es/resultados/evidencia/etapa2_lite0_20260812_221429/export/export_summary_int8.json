@@ -1,0 +1,36 @@
+{
+  "run_id": "20260812_221429",
+  "model": "efficientnet_lite0",
+  "exported_at": "2026-09-13T15:24:34.561957",
+  "quantize": "int8",
+  "library_versions": {
+    "torch": "2.12.1+cu126",
+    "litert_torch": "0.9.4",
+    "ai_edge_litert": "2.2.0"
+  },
+  "formats": [
+    {
+      "format": "tflite",
+      "output_path": "export/model_int8.tflite",
+      "succeeded": true,
+      "error": null,
+      "sha256": "0a77ad7937f73e24b795288c68741d14dd00226ffe546d5ddf5b99125fbef24d",
+      "parity": {
+        "n_samples": 30,
+        "torch_top1_accuracy": 1.0,
+        "exported_top1_accuracy": 1.0,
+        "agreement_rate": 1.0,
+        "max_abs_prob_diff": 0.061323657631874084,
+        "mean_abs_prob_diff": 0.005759593099355698,
+        "tolerance": 0.15,
+        "min_agreement_rate": 0.95,
+        "cross_runtime_agreement_rate": 1.0,
+        "cross_runtime_max_abs_prob_diff": 0.005051136016845703,
+        "cross_runtime_tolerance": 0.05,
+        "per_channel_fully_connected": 0,
+        "passed": true,
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "accuracy": 0.9806541683286797,
+  "artifact_hashes": {
+    "best.pth": "860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859",
+    "last.pth": "3c87702e3a43075c3d45a022a16393c4be2627cf636daa2f5191567e6702e39c",
+    "multiseed_metadata.json": "117be3136d3c89c443ef290727da291e35853fc6c95ffe9ea216e26a065fef7b",
+    "summary.json": "04db89ac5bc538e7588e4d365b834ccf2eb42f72cee300816184c64a7b85b47d",
+    "train_history.csv": "eda714494933ee2688fd532687739a2a7545d6257058899349af82acb8fa9545",
+    "training_state.json": "c058f2fc3a4dbde3acf367e8c58dbdbd81cabb3e8c625b069af462b056be8b8b",
+    "validation_diagnostics.json": "91adc646bc400c70aed7f0b4521b8bfc674d60d382dec5f3cfb2211da14fc8ef",
+    "validation_predictions.csv": "6c91fac5a5768bed2a91ed0b51065aa3c892cc1d606e9e0a6a82c42241aa04b5"
+  },
+  "best_epoch": 39,
+  "checkpoint_sha256": "860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859",
+  "configuration": "baseline",
+  "ece": 0.13984422997609045,
+  "experiment_id": "efficientnet_lite0_baseline_vs_hpo",
+  "finished_at": "2026-10-19T21:13:09.878024+00:00",
+  "macro_f1": 0.9560862657056215,
+  "nitrogen_f1": 0.8984375,
+  "phosphorus_f1": 0.9672727272727273,
+  "potassium_f1": 0.8571428571428571,
+  "protocol_sha256": "bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9",
+  "run_relative": "efficientnet_lite0/20261019_203033",
+  "seed": 42,
+  "status": "COMPLETE",
+  "test_used": false
+}

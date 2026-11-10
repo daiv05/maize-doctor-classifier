@@ -3,31 +3,53 @@
 
 \section*{Conclusiones}
 
-La presente investigaci\'on consolida la transici\'on desde una prueba de concepto preliminar hacia un sistema integral, cient\'ificamente riguroso y desplegado operativamente en dispositivos m\'oviles para el agro salvadore\~no. A partir de los resultados cuantitativos y cualitativos obtenidos, se concluye:
+El proyecto permiti\'o construir una aplicaci\'on m\'ovil que diagnostica nueve condiciones de la hoja de ma\'iz, sin necesidad de conexi\'on a internet. El sistema funciona en el tel\'efono, se abstiene ante im\'agenes que no reconoce y orienta al productor con una gu\'ia de manejo, pero todav\'ia reconoce con dificultad los s\'intomas en fotograf\'ias de campo de otra procedencia.
+
+El sistema cumpli\'o con lo que planteaba la hip\'otesis, seg\'un los criterios de la Tabla~\ref{tab:criterios_exito}. El modelo obtuvo un Macro $F_1$ de 0.9480 en la partici\'on de prueba, con medianas de 98~ms de preprocesado y 23~ms de inferencia, y un desempe\~no comparable entre laboratorio y campo (DIR de 0.9636). Pero es importante destacar que esta aceptaci\'on tiene un alcance limitado, ya que los criterios se midieron sobre una partici\'on en la que las mismas fuentes aparecen en entrenamiento y en prueba.
+
+En cuanto a la pregunta de investigaci\'on, la aplicaci\'on cumple solo una parte de lo que se esperaba. Funciona sin conexi\'on, avisa cuando la imagen no es confiable en lugar de arriesgar un diagn\'ostico y acompa\~na cada resultado con una gu\'ia de manejo. Lo que todav\'ia no logra es reconocer bien las fotograf\'ias tomadas fuera del corpus: de 97 fotos de campo externas acert\'o 41, el 42\%. Por eso, en su estado actual, la aplicaci\'on sirve para orientar al productor, pero su diagn\'ostico todav\'ia no es confiable en la parcela.
+
+Las conclusiones por objetivo son las siguientes:
 
 \begin{enumerate}
-\item \textbf{Rendimiento del modelo en partici\'on estratificada:} El ensamble heterog\'eneo por votaci\'on suave entre EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2 alcanz\'o un Macro $F_1$ de \textbf{0.9567}, una exactitud de \textbf{98.29\%} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba. Este resultado es hist\'orico, de una sola semilla y de una partici\'on que mezcla fuentes; no es el modelo desplegado ni una validaci\'on de generalizaci\'on. El modelo desplegado (EfficientNet-Lite0, run \texttt{20260812\_221429}) alcanz\'o un Macro $F_1$ de \textbf{0.9468}, tambi\'en hist\'orico. El baseline de desarrollo vigente (run \texttt{20260921\_204608}) obtuvo \textbf{0.9480} con una sola semilla.
-\item \textbf{Recall de necrosis letal (MLN):} En la partici\'on estratificada, el ensamble clasific\'o correctamente los 963 casos de MLN del conjunto de prueba. Bajo validaci\'on con fuente no vista (LOSO sobre \texttt{multicrop-disease-maiz}, tres semillas), el recall de MLN del ensamble baja a 0.79--0.81 y el del modelo EfficientNet-Lite0 a 0.72--0.74. La ausencia de falsos negativos no se generaliza y debe seguir monitoreada en campo.
-\item \textbf{Generalizaci\'on entre fuentes:} Con validaci\'on cruzada de cinco pliegues, el Macro $F_1$ pasa de 0.9311 (partici\'on estratificada) a 0.6026 $\pm$ 0.1240 (IC95, clases evaluables por pliegue) agrupando por procedencia; este es un resultado hist\'orico. Con LOSO en tres semillas, el modelo sin \texttt{multicrop-disease-maiz} obtiene 0.9933 $\pm$ 0.0006 en \texttt{maize-diseases} y 0.9019 $\pm$ 0.0044 en \texttt{multicrop-disease-maiz}. La diferencia no permite atribuirse a un factor \'unico. La eficiencia de la b\'usqueda se midi\'o en \'epocas (453 de 1\,500, 30.2\%); no se midieron horas de GPU frente a una b\'usqueda sin poda.
-\item \textbf{Capacidades del diagn\'ostico:} El \textit{Disparate Impact Ratio} entre laboratorio y campo real, comparando las tres clases compartidas, es \textbf{0.9604} sobre Macro $F_1$ y \textbf{0.9901} sobre exactitud, por encima del umbral de 0.80. La ablaci\'on espacial mostr\'o que, al ocluir el centro de la hoja, el modelo conserva un \textbf{79.46\%} de exactitud, y al ocluir la periferia cae a \textbf{42.25\%}. Esto indica sensibilidad al contexto de la escena. El nivel de riesgo global del an\'alisis de equidad se registra como \texttt{CRITICAL} en la evidencia, y se reporta as\'i para su revisi\'on.
-\item \textbf{Prototipo offline medido en un tel\'efono de gama media:} La cuantizaci\'on a 8 bits del modelo hist\'orico produjo un archivo de \textbf{3.56~MB}. En un smartphone f\'isico Motorola edge 40 neo, la mediana de inferencia fue de \textbf{60~milisegundos}, y la aplicaci\'on clasifica sin conexi\'on. La evaluaci\'on en dispositivo del checkpoint vigente est\'a pendiente, y la exactitud de la versi\'on cuantizada sobre el conjunto de prueba completo no fue medida.
-\item \textbf{Mitigaci\'on en la interfaz:} La aplicaci\'on incorpor\'o un marco gu\'ia para la captura y un detector OOD basado en distancia de Mahalanobis relativa, con umbral calibrado al percentil 95. Su efecto sobre el sesgo de procedencia no ha sido medido.
-\item \textbf{Segmentaci\'on de la hoja, como l\'inea experimental:} Un segmentador YOLO entrenado en un repositorio independiente obtuvo, en validaci\'on, un IoU medio de 0.98122 sobre 150 hojas enfermas, con una sola semilla. Un modelo entrenado sobre un corpus enmascarado alcanz\'o un Macro $F_1$ de 0.7191 en prueba, sin pareamiento con el conjunto original. La aplicaci\'on instalada no aplica segmentaci\'on; la comparaci\'on formal entre imagen completa y segmentada sigue pendiente.
+\item El corpus re\'une 33~429 im\'agenes de 11 repositorios p\'ublicos, sin duplicados entre particiones seg\'un los hashes de archivo y de p\'ixeles. Su principal debilidad es la composici\'on, ya que varias fuentes aportan una sola clase y solo tres clases tienen im\'agenes de laboratorio, lo que facilita que el modelo asocie la fuente con la etiqueta.
+\item La b\'usqueda con Optuna evalu\'o 25 configuraciones. La mejor super\'o por poco a la inicial en validaci\'on, pero rindi\'o 0.49 puntos menos en prueba, as\'i que se conserv\'o la configuraci\'on inicial. Con este corpus, el ajuste de hiperpar\'ametros pes\'o mucho menos que la forma de partir los datos.
+\item El ensamble por votaci\'on suave alcanz\'o un Macro $F_1$ de 0.9567 y detect\'o todos los casos de necrosis letal de la partici\'on estratificada. Con fuentes no vistas, el recall de esa clase baj\'o a 0.79--0.81 en el ensamble y a 0.72--0.74 en EfficientNet-Lite0.
+\item La evaluaci\'on con fuentes separadas es el resultado m\'as importante del trabajo, el Macro $F_1$ cay\'o de 0.9311 a 0.6026 al evaluar sobre fuentes no vistas, y en 97 fotograf\'ias de campo externas el modelo acert\'o 41 (42\%). La ablaci\'on y el desglose por clase también muestran este comportamiento, el modelo conserva un 79.46\% de exactitud viendo solo el borde de la imagen, y la roya com\'un, casi toda de laboratorio, falla en 5 de 16 casos de campo.
+\item Cuantizado a Int8, el modelo pesa 3.74~MB y mantiene el desempe\~no del original (Macro $F_1$ de 0.9489). En el dispositivo móvil, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia, y las predicciones del tel\'efono coincidieron con las del modelo, por lo que no se observ\'o degradaci\'on por la cuantizaci\'on.
+\item El m\'odulo de aportes qued\'o integrado en la aplicaci\'on. Guarda cada fotograf\'ia en el tel\'efono y la env\'ia al servidor cuando hay conexi\'on. Con \'el existe el medio para reunir un conjunto de datos nacional.
 \end{enumerate}
+
+\section*{Limitaciones}
+
+\begin{enumerate}
+\item \textbf{Generalizaci\'on.} El Macro $F_1$ de 0.9480 se calcul\'o con im\'agenes de las mismas fuentes usadas en el entrenamiento, por lo que no describe el uso en campo. Cuando el modelo se evalu\'o con fuentes que no hab\'ia visto, el Macro $F_1$ baj\'o a 0.6026, y con fotograf\'ias de campo externas acert\'o el 42\% de las veces. Mientras el corpus no incluya im\'agenes salvadore\~nas, es razonable esperar en una parcela del pa\'is un desempe\~no m\'as cercano a estas \'ultimas cifras.
+\item \textbf{Severidad.} El modelo indica qu\'e condici\'on presenta la hoja, pero no cu\'anto da\~no tiene. La gu\'ia de tres niveles ayuda al productor a estimarlo comparando su hoja con las descripciones, aunque esa valoraci\'on depende de su criterio y no se valid\'o en campo. Para medir el porcentaje de \'area afectada har\'ia falta un modelo que segmente las lesiones, algo que queda fuera del alcance de este trabajo.
+\item \textbf{Beneficio econ\'omico.} No se estim\'o cu\'anto podr\'ia ahorrar un productor al usar la aplicaci\'on, porque en El Salvador no existe una cuantificaci\'on nacional de las p\'erdidas por enfermedades foliares, plagas o deficiencias nutricionales. Los datos disponibles son ensayos puntuales, como los citados en el Cap\'itulo~1, que no permiten calcular un ahorro por hect\'area ni por ciclo.
+\end{enumerate}
+
+\section*{Trabajo futuro}
+
+\begin{itemize}
+\item Reunir y etiquetar fotograf\'ias salvadore\~nas con apoyo del CENTA o del MAG, y reentrenar el modelo evalu\'andolo con fuentes completas fuera del entrenamiento.
+\item Probar la aplicaci\'on con productores y t\'ecnicos.
+\item Reducir el tiempo de preprocesado en el tel\'efono.
+\end{itemize}
 
 \section*{Recomendaciones}
 
+Con base en los resultados, se proponen cinco recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA).
+
 \begin{enumerate}
-\item \textbf{Transici\'on a ensayos de validaci\'on en campo:} Desplegar un programa piloto de validaci\'on participativa con cooperativas agr\'icolas y ADESCOs en los departamentos de Caba\~nas, Moraz\'an y Ahuachap\'an para evaluar la adopci\'on del marco gu\'ia bajo luz solar intensa y condiciones reales de campo.
-\item \textbf{Consolidaci\'on del dataset colaborativo (propuesta):} Como meta propuesta, integrar de forma prioritaria las primeras 1~000 fotograf\'ias capturadas en milpas salvadore\~nas a trav\'es del m\'odulo de contribuci\'on, permitiendo un reentrenamiento focalizado para cerrar la brecha de dominio detectada en la evaluaci\'on fuera de fuente.
-\item \textbf{Anotaci\'on patom\'etrica para modelos ordinales de severidad:} Establecer un convenio t\'ecnico con fitopat\'ologos del CENTA para calificar un subconjunto de im\'agenes con escalas homologadas de severidad (Cobb modificada, Vieira, Brito), sentando las bases para cabezas de regresi\'on ordinal que predigan el grado de da\~no adem\'as de la clase.
-\item \textbf{Adopci\'on y custodia institucional en el Estado salvadore\~no:} Promover que el Ministerio de Agricultura y Ganader\'ia adopte formalmente el c\'odigo y pesos de DoctorMaiz bajo gobernanza de c\'odigo abierto, asegurando que el conocimiento generado pertenezca a la sociedad y no a intereses corporativos transnacionales.
+\item \textbf{Validar en campo antes de adoptar la herramienta.} Evaluar la aplicaci\'on con promotores del CENTA usando fotograf\'ias de cada zona productora, ya que la exactitud con fotograf\'ias de campo externas fue de 42\% (Secci\'on~\ref{sec:campo_externo}).
+\item \textbf{Crear un banco nacional de im\'agenes.} Financiar, junto con la Universidad de El Salvador, la captura de fotograf\'ias de variedades y condiciones locales para reentrenar el modelo.
+\item \textbf{Aprovechar los aportes para la vigilancia fitosanitaria.} Evaluar el uso de las fotograf\'ias aportadas por los usuarios en un tablero de vigilancia del MAG, con reglas claras sobre el uso de los datos y de la ubicaci\'on.
+\item \textbf{Capacitar a las comunidades.} Ense\~nar a cooperativas y ADESCOs a usar el marco gu\'ia de captura y presentar la herramienta como un apoyo al criterio del productor.
+\item \textbf{Mantener el software abierto.} Conservar el c\'odigo bajo licencias abiertas y definir las condiciones de uso de los datos que aporten los productores.
 \end{enumerate}
 
-% ----------------------------------------------------------------------
-% BIBLIOGRAFÍA
-% ----------------------------------------------------------------------
 \newpage
+\begin{singlespace}
 \begin{thebibliography}{99}
 \addcontentsline{toc}{chapter}{Bibliograf\'ia}
 
@@ -42,6 +64,18 @@ Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal ``Enrique \'Alvarez C\'o
 
 \bibitem{deng2009}
 Deng, J., Dong, W., Socher, R., Li, L.-J., Li, K., \& Fei-Fei, L. (2009). ImageNet: A large-scale hierarchical image database. En \textit{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)} (pp. 248--255).
+
+\bibitem{deras2015}
+Deras F., H. R., Flor de Serrano, R., Mej\'ia, C., \& Moreno, W. (2015). Evaluaci\'on de h\'ibridos tri-lineales de ma\'iz (\textit{Zea mays} L.), por su reacci\'on al Complejo Mancha de asfalto causada por los pat\'ogenos (\textit{Phyllachora maydis}, \textit{Monographella maydis} y \textit{Coniothyrium phyllacorae}). \textit{Producci\'on Agropecuaria y Desarrollo Sostenible}, 3, 77--88. \url{https://camjol.info/index.php/PAyDS/article/view/3973}
+
+\bibitem{elmundo2025}
+Diario El Mundo. (2025, 7 de febrero). El d\'eficit de granos b\'asicos supera los 9.9 millones de quintales en 2025. \url{https://diario.elmundo.sv/economia/el-deficit-de-granos-basicos-supera-los-9-9-millones-de-quintales-en-2025}
+
+\bibitem{eash2019}
+Eash, L., Fonte, S. J., Sonder, K., Honsdorf, N., Schmidt, A., Govaerts, B., \& Verhulst, N. (2019). Factors contributing to maize and bean yield gaps in Central America vary with site and agroecological conditions. \textit{The Journal of Agricultural Science}, 157(4). \url{https://doi.org/10.1017/S0021859619000571}
+
+\bibitem{edh2024}
+El Diario de Hoy. (2024, 4 de abril). Las altas temperaturas en El Salvador tendr\'an efecto en el ciclo agr\'icola 2024-2025. \url{https://www.elsalvador.com/?p=1134038}
 
 \bibitem{howard2017}
 Howard, A. G., et al. (2017). MobileNets: Efficient convolutional neural networks for mobile vision applications. \textit{arXiv preprint arXiv:1704.04861}.
@@ -61,6 +95,9 @@ Lundberg, S. M., \& Lee, S.-I. (2017). A unified approach to interpreting model 
 \bibitem{ma2018}
 Ma, N., Zhang, X., Zheng, H.-T., \& Sun, J. (2018). ShuffleNet V2: Practical guidelines for efficient CNN architecture design. En \textit{Proceedings of the European Conference on Computer Vision (ECCV)} (pp. 116--131).
 
+\bibitem{mahuku2015}
+Mahuku, G., Lockhart, B. E., Wanjala, B., Jones, M. W., Kimunye, J. N., Stewart, L. R., \ldots{} \& Redinbaugh, M. G. (2015). Maize lethal necrosis (MLN), an emerging threat to maize-based food security in sub-Saharan Africa. \textit{Phytopathology}, 105(7), 956--965. \url{https://doi.org/10.1094/PHYTO-12-14-0367-FI}
+
 \bibitem{mag2023}
 Ministerio de Agricultura y Ganader\'ia (MAG). (2023). \textit{Anuario de Estad\'isticas Agropecuarias y Seguridad Alimentaria en El Salvador 2022-2023}. San Salvador: MAG / Direcci\'on General de Econom\'ia Agropecuaria.
 
@@ -68,7 +105,7 @@ Ministerio de Agricultura y Ganader\'ia (MAG). (2023). \textit{Anuario de Estad\
 Akiba, T., Sano, S., Yanase, T., Ohta, T., \& Koyama, M. (2019). Optuna: A next-generation hyperparameter optimization framework. En \textit{ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)} (pp. 2623--2631).
 
 \bibitem{mahalanobispp2025}
-Ren, J., et al. (2025). Mahalanobis++: Improving OOD detection via feature normalization. \textit{arXiv preprint arXiv:2505.18032}.
+Mueller, M., \& Hein, M. (2025). Mahalanobis++: Improving OOD detection via feature normalization. \textit{arXiv preprint arXiv:2505.18032}.
 
 \bibitem{ren2021}
 Ren, J., Fort, S., Liu, J., Roy, A. G., Padhy, S., \& Lakshminarayanan, B. (2021). A simple fix to Mahalanobis distance for improving near-OOD detection. \textit{arXiv preprint arXiv:2106.09022}.
@@ -83,73 +120,72 @@ Selvaraju, R. R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., \& Batra, D. 
 Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. En \textit{International Conference on Machine Learning (ICML)} (pp. 6105--6114).
 
 \end{thebibliography}
+\end{singlespace}
 
-% ----------------------------------------------------------------------
-% GLOSARIO
-% ----------------------------------------------------------------------
 \newpage
 \chapter*{Glosario de T\'erminos}
 \addcontentsline{toc}{chapter}{Glosario de T\'erminos}
 
+\begin{singlespace}
 \begin{description}
-\item[Clever Hans Effect:] Fen\'omeno en el cual un modelo de aprendizaje autom\'atico alcanza una aparente alta precisi\'on apoy\'andose en correlaciones espurias o atajos del entorno (fondos, sensores, marcas de agua) en lugar de las caracter\'isticas intr\'insecas de la clase.
-\item[Cosine Annealing:] Esquema de planificaci\'on de tasa de aprendizaje que reduce gradualmente el paso de optimizaci\'on siguiendo la curva de un coseno hasta un m\'inimo establecido, facilitando que el optimizador escape de m\'inimos locales.
-\item[Disparate Impact Ratio (DIR):] M\'etrica de equidad algor\'itmica que cuantifica el cociente entre la tasa favorable del grupo minoritario y la del grupo mayoritario. Un valor inferior a 0.80 denota sesgo o trato dispar regulatorio.
-\item[Edge AI:] Paradigma de inteligencia artificial donde los modelos entrenados se ejecutan directamente en hardware local (dispositivos m\'oviles, microcontroladores) sin enviar datos a servidores en la nube.
-\item[Macro $F_1$-Score:] Media aritm\'etica no ponderada del valor $F_1$ calculado independientemente para cada clase. Asigna el mismo peso relativo a clases minoritarias y mayoritarias, siendo la m\'etrica est\'andar ante conjuntos desbalanceados.
-\item[MLOps (Machine Learning Operations):] Conjunto de pr\'acticas de ingenier\'ia de software destinadas a automatizar, versionar y garantizar la reproducibilidad y monitoreo de pipelines de aprendizaje autom\'atico en producci\'on.
-\item[Necrosis Letal del Ma\'iz (MLN):] Complejo viral devastador provocado por la coinfecci\'on sin\'ergica del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus (como SCMV), capaz de destruir el 100\% de una plantaci\'on.
-\item[Out-of-Distribution (OOD):] Condici\'on que presentan aquellas muestras alimentadas a un clasificador cuyas caracter\'isticas estad\'isticas provienen de una distribuci\'on ajena a la utilizada durante el entrenamiento (ej. fotografiar una piedra o una mano frente a un modelo de hojas).
-\item[Post-Training Quantization (PTQ):] T\'ecnica de optimizaci\'on que convierte los pesos y activaciones de una red neuronal entrenada en coma flotante (FP32) a enteros de precisi\'on reducida (Int8), disminuyendo el tama\~no del modelo y la latencia en CPU.
-\item[Soft Voting:] Mecanismo de ensamble multimodelo que promedia las probabilidades continuas asignadas por cada red individual mediante la funci\'on Softmax, seleccionando la clase con el m\'aximo consenso medio.
+\item[Ablaci\'on espacial:] Prueba en la que se oculta una parte de la imagen, el centro o la periferia, y se mide cu\'anto cambia la exactitud del modelo. Sirve para saber en qu\'e zona de la imagen se apoya.
+\item[ADESCO:] Asociaci\'on de Desarrollo Comunal. Organizaci\'on de vecinos con reconocimiento legal que gestiona proyectos en su comunidad.
+\item[Bioinsumo:] Producto de origen biol\'ogico, como microorganismos, extractos vegetales o abonos org\'anicos, que se usa para nutrir el cultivo o para controlar plagas y enfermedades.
+\item[Cuantizaci\'on a enteros de 8 bits (Int8):] Conversi\'on de los pesos del modelo, guardados originalmente en coma flotante de 32 bits, a enteros de 8 bits. Reduce el tama\~no del modelo y el costo de cada inferencia.
+\item[Disparate Impact Ratio (DIR):] Cociente entre el desempe\~no del grupo con peor resultado y el del mejor. Aqu\'i se mide con Macro $F_1$ o exactitud entre im\'agenes de laboratorio y de campo. Un valor inferior a 0.80 se toma como indicio de trato dispar.
+\item[Edge AI:] Ejecuci\'on de un modelo de inteligencia artificial en el propio dispositivo del usuario, en este caso el tel\'efono, sin enviar los datos a un servidor.
+\item[Efecto Clever Hans:] Ocurre cuando un modelo acierta apoy\'andose en pistas ajenas a lo que debe reconocer, como el fondo, la c\'amara o una marca de agua, y no en las caracter\'isticas de la clase.
+\item[Grad-CAM:] T\'ecnica que genera un mapa de calor sobre la imagen para mostrar qu\'e regiones influyeron m\'as en la predicci\'on de una red convolucional.
+\item[Leave-One-Source-Out (LOSO):] Forma de validaci\'on en la que el modelo se entrena sin una fuente de datos completa y se eval\'ua solo con las im\'agenes de esa fuente. Sirve para medir c\'omo se comporta el modelo ante im\'agenes de una procedencia que no vio durante el entrenamiento.
+\item[LIME y SHAP:] T\'ecnicas de explicabilidad que estiman cu\'anto aporta cada regi\'on de la imagen a la predicci\'on del modelo.
+\item[Macro $F_1$:] Promedio simple del $F_1$ de cada clase. Da el mismo peso a las clases con pocas im\'agenes que a las que tienen muchas, por lo que se usa en conjuntos desbalanceados.
+\item[Necrosis Letal del Ma\'iz (MLN):] Enfermedad causada por la infecci\'on simult\'anea del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus, como el SCMV. En Kenia se documentaron en 2012 p\'erdidas de rendimiento de hasta 90\%.
+\item[Out-of-Distribution (OOD):] Imagen distinta a las que el modelo vio durante el entrenamiento, por ejemplo una piedra o una mano ante un modelo entrenado con hojas.
+\item[Recall (sensibilidad):] Proporci\'on de los casos reales de una clase que el modelo detecta. Un recall bajo significa muchos falsos negativos.
+\item[Votaci\'on suave (\textit{Soft Voting}):] Forma de combinar varios modelos promediando las probabilidades que cada uno asigna a cada clase.
 \end{description}
+\end{singlespace}
 
-% ----------------------------------------------------------------------
-% ANEXOS
-% ----------------------------------------------------------------------
 \newpage
 \chapter*{Anexos}
 \addcontentsline{toc}{chapter}{Anexos}
 
-\section*{Anexo A: Registro de Enlaces y Repositorios Abiertos del Proyecto}
+\section*{Anexo A: Repositorios y Enlaces del Proyecto}
 
-El c\'odigo fuente \'integro, los pesos exportados, los pipelines de entrenamiento y los artefactos de evaluaci\'on de \textbf{DoctorMaiz} se encuentran p\'ublicamente accesibles bajo licencias de c\'odigo abierto:
+Los repositorios y recursos de \textbf{DoctorMaiz} son los siguientes:
 
 \begin{itemize}
 \item \textbf{Clasificador (\textit{pipeline} de entrenamiento, evaluaci\'on y exportaci\'on):}\par
 \url{https://github.com/daiv05/maize-doctor-classifier}
 \item \textbf{Aplicaci\'on m\'ovil \textbf{DoctorMaiz} (React Native, inferencia \textit{offline}):}\par
 \url{https://github.com/Edenilson-Molina/maize-doctor-app}
-\item \textbf{Segmentador foliar (detecci\'on y segmentaci\'on de instancias de hoja):}\par
-\url{https://github.com/abner-rivas/maize-doctor-segmenter-leaf}
 \item \textbf{API (cuenta de usuario, sincronizaci\'on opcional y avisos de actualizaci\'on):}\par
 \url{https://github.com/daiv05/maize-doctor-api}
 \item \textbf{Sitio web y documentaci\'on t\'ecnica:}\par
 \url{https://doctor-maiz.deras.dev/es}
 \item \textbf{Dataset consolidado en Hugging Face:}\par
-\url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}
+\url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}\par
+Cada fuente conserva su licencia original (Tabla~\ref{tab:fuentes_dataset}).
 \item \textbf{Artefactos de evaluaci\'on y modelos exportados:}\par
 \url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
 \end{itemize}
 
-\section*{Anexo B: Inventario Criptogr\'afico de Checkpoints Respaldados}
+\section*{Anexo B: Hashes de los Modelos Respaldados}
 
-La Tabla~\ref{tab:anexo_checkpoints} detalla los hashes SHA-256 de los principales checkpoints f\'isicos que sustentan la reproducibilidad de la tesina.
+La tabla siguiente lista los hashes SHA-256 de los modelos, para comprobar que un archivo descargado es el mismo que se evalu\'o en este trabajo.
 
 \begin{table}[H]
-\caption{Hashes SHA-256 de los pesos f\'isicos de los modelos respaldados}
-\label{tab:anexo_checkpoints}
+\caption*{Hashes SHA-256 de los modelos respaldados}
 \centering
 \small
 \begin{singlespace}
 \begin{tabularx}{\textwidth}{p{4.0cm}cp{7.5cm}}
 \toprule
-\textbf{Modelo / Protocolo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del Checkpoint (\texttt{best.pth})} \\
+\textbf{Modelo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del Checkpoint (\texttt{best.pth})} \\
 \midrule
-EfficientNet-Lite0 Base (42, oficial) & 12.92 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
-EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.56 MB & \path{0a77ad7937f73e24b795288c68741d14dd00226ffe546d5ddf5b99125fbef24d} \\
-EfficientNet-B0 Referencia & 16.36 MB & Pendiente de verificaci\'on \\
-ShuffleNet-V2-x1.0 Referencia & 5.2 MB & Pendiente de verificaci\'on \\
+EfficientNet-Lite0 Base (42, oficial) & 13.79 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
+EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.74 MB & \path{bb31467a58c11cd474159bd5739a7a57b1f1edfda6b5dbfae8fa91337f3c56b1} \\
+EfficientNet-B0 Referencia & 16.36 MB & \path{0e367a5318c068c9bcc90a6bec0d17a0b029251ca5f98400034bd09de7524fdb} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}

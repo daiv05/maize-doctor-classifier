@@ -81,7 +81,7 @@ Super_Image_Dataset_of_Maize_Beans_and_Tomatoes_v2/
 - Los tamaños de las imágenes varían, desde 256x256 píxeles hasta 4000x4000 píxeles.
 
 ::: warning Maize Rust Disease - aporte marginal a Roya común
-**"Maize Rust Disease" tiene solo 99 imágenes**, siendo la clase más pequeña de maíz en este dataset y la única fuente africana de Roya de campo real para el proyecto. Representa aproximadamente el **25% del total de imágenes de campo real de Roya común** (~399 en todo el proyecto). No es suficiente por sí sola para equilibrar esta clase; debe combinarse con data augmentation sobre estas y las ~300 del dataset de Sudáfrica.
+**"Maize Rust Disease" tiene solo 99 imágenes**, la clase más pequeña de maíz en este dataset. No forma parte del corpus vigente: de esta fuente se integraron `fall_armyworm` (2 419), `healthy` (2 310), `lethal_necrosis` (3 184) y `northern_corn_leaf_blight` (4 223).
 :::
 
 ## Tamaño y distribución
@@ -103,8 +103,7 @@ El dataset tiene un total de 68.519 imágenes. Para el caso del maíz, las clase
 | Maize Streak Virus Disease       | 1275 + 5103 --- 6378 | 1275 + 5103 --- 6378 |
 | Maize Stripe Virus Disease       | 438 + 1752 --- 2190  | 438 + 1752 --- 2190  |
 
-Basicamente no hay diferencias entre la version 1 y la version 2 del dataset, por lo que se pueden usar indistintamente.
-En total hay 23,286 imágenes de maíz, distribuidas en 12 clases. La clase con más imágenes es Maize Streak Virus Disease, con 6378 imágenes, y la clase con menos imágenes es Maize Rust Disease, con 99 imágenes.
+Basicamente no hay diferencias entre la version 1 y la version 2 del dataset, por lo que se pueden usar indistintamente. En total hay 23,286 imágenes de maíz, distribuidas en 12 clases. La clase con más imágenes es Maize Streak Virus Disease, con 6378 imágenes, y la clase con menos imágenes es Maize Rust Disease, con 99 imágenes.
 
 
 ## Formato

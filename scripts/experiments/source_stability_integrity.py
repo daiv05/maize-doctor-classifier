@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.config import PROJECT_ROOT
+from src.config import PROJECT_ROOT, get_output_root
 from src.data.preparation import sha256_file
 
-FROZEN = PROJECT_ROOT / "outputs/multiseed-inputs/frozen/seed_42"
-LOSO = PROJECT_ROOT / "outputs/loso/efficientnet_lite0_baseline"
+FROZEN = get_output_root() / "multiseed-inputs/frozen/seed_42"
+LOSO = get_output_root() / "loso/efficientnet_lite0_baseline"
 INVENTORY = (
     PROJECT_ROOT
     / "docs/es/reproducibilidad/evidencia"

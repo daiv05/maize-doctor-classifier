@@ -140,7 +140,6 @@ def trial_setup(tmp_path, tmp_splits_dir, fake_image_root, monkeypatch):
     import src.training.tuning as tuning
 
     monkeypatch.setattr(config, "DATASET_ROOT", fake_image_root)
-    # Materialización sintética contractual; los tests de splits cubren su generación.
     frame = pd.read_csv(tmp_splits_dir / "train.csv")
     frame.to_csv(tmp_splits_dir / "master_manifest.csv", index=False)
     atomic_write_json(
@@ -221,7 +220,9 @@ def test_objective_best_validation_not_last_and_test_never_constructed(trial_set
     assert [t.value for t in study.trials] == [0.9, 0.9]
     assert seed.call_args_list == [((42,),), ((42,),)]
     for number in range(2):
-        contract = json.loads((directory / f"trials/trial_{number:03d}/summary.json").read_text())
+        contract = json.loads(
+            (directory / f"trials/trial_{number:03d}/summary.json").read_text(encoding="utf-8")
+        )
         assert contract["best_epoch"] == 2
         assert "test" not in contract["metrics"]
         assert contract["metrics"]["best_validation"]["macro_f1"] == 0.9
@@ -240,7 +241,10 @@ def test_lock_requires_budget_and_final_test_only_once(trial_setup, monkeypatch,
     study.set_user_attr("protocol", {"n_trials": budget})
     with pytest.raises(RuntimeError, match=str(budget)):
         write_selection_lock(
-            study=study, study_dir=directory, split_snapshot=snapshot, search_space=objective.space,
+            study=study,
+            study_dir=directory,
+            split_snapshot=snapshot,
+            search_space=objective.space,
             requested_trials=budget,
         )
     first = study.trials[0]
@@ -254,14 +258,20 @@ def test_lock_requires_budget_and_final_test_only_once(trial_setup, monkeypatch,
         study, directory, "efficientnet_lite0", 0.8, epochs=3, requested_trials=budget
     )
     lock = write_selection_lock(
-        study=study, study_dir=directory, split_snapshot=snapshot, search_space=objective.space,
+        study=study,
+        study_dir=directory,
+        split_snapshot=snapshot,
+        search_space=objective.space,
         requested_trials=budget,
     )
     assert load_best_params(directory / "best_hyperparameters.json")["epochs"] == 3
     assert lock["best_trial"] == 0
     assert (
         write_selection_lock(
-            study=study, study_dir=directory, split_snapshot=snapshot, search_space=objective.space,
+            study=study,
+            study_dir=directory,
+            split_snapshot=snapshot,
+            search_space=objective.space,
             requested_trials=budget,
         )
         == lock

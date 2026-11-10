@@ -1,0 +1,200 @@
+[
+  {
+    "arm": "original",
+    "seed": 0,
+    "val_macro_f1": 0.8593986861259214,
+    "test_macro_f1": 0.8458694688594065,
+    "test_accuracy": 0.9142572283150548,
+    "per_class": {
+      "common_rust": 0.9642857142857143,
+      "fall_armyworm": 0.8991198375084631,
+      "gray_leaf_spot": 0.8640776699029126,
+      "healthy": 0.945226917057903,
+      "lethal_necrosis": 0.9804123711340206,
+      "nitrogen_deficiency": 0.7328767123287672,
+      "northern_corn_leaf_blight": 0.9040683073832245,
+      "phosphorus_deficiency": 0.7260726072607261,
+      "potassium_deficiency": 0.5966850828729282
+    },
+    "by_environment": {
+      "lab": 0.3900466504848481,
+      "real": 0.7599769765315187
+    }
+  },
+  {
+    "arm": "original",
+    "seed": 1,
+    "val_macro_f1": 0.8331222021630191,
+    "test_macro_f1": 0.8295899857621284,
+    "test_accuracy": 0.903888334995015,
+    "per_class": {
+      "common_rust": 0.9701492537313433,
+      "fall_armyworm": 0.9017735334242838,
+      "gray_leaf_spot": 0.8147013782542113,
+      "healthy": 0.9402236791361358,
+      "lethal_necrosis": 0.9782608695652174,
+      "nitrogen_deficiency": 0.704225352112676,
+      "northern_corn_leaf_blight": 0.8849185496584341,
+      "phosphorus_deficiency": 0.7393939393939394,
+      "potassium_deficiency": 0.5326633165829145
+    },
+    "by_environment": {
+      "lab": 0.3627910180465629,
+      "real": 0.7633562037100358
+    }
+  },
+  {
+    "arm": "original",
+    "seed": 2,
+    "val_macro_f1": 0.8585710730057204,
+    "test_macro_f1": 0.847801413332196,
+    "test_accuracy": 0.9164506480558325,
+    "per_class": {
+      "common_rust": 0.9700598802395209,
+      "fall_armyworm": 0.9153225806451613,
+      "gray_leaf_spot": 0.834108527131783,
+      "healthy": 0.9550518632347291,
+      "lethal_necrosis": 0.9796980739198334,
+      "nitrogen_deficiency": 0.7089552238805971,
+      "northern_corn_leaf_blight": 0.8950617283950617,
+      "phosphorus_deficiency": 0.7516339869281046,
+      "potassium_deficiency": 0.6203208556149733
+    },
+    "by_environment": {
+      "lab": 0.43258348782437844,
+      "real": 0.7746996484531526
+    }
+  },
+  {
+    "arm": "border_ring",
+    "seed": 0,
+    "val_macro_f1": 0.7355432271501128,
+    "test_macro_f1": 0.7121493812719415,
+    "test_accuracy": 0.7886340977068793,
+    "per_class": {
+      "common_rust": 0.938953488372093,
+      "fall_armyworm": 0.7632508833922261,
+      "gray_leaf_spot": 0.7390029325513197,
+      "healthy": 0.804642166344294,
+      "lethal_necrosis": 0.9558974358974359,
+      "nitrogen_deficiency": 0.569620253164557,
+      "northern_corn_leaf_blight": 0.6989657049537289,
+      "phosphorus_deficiency": 0.6056782334384858,
+      "potassium_deficiency": 0.3333333333333333
+    },
+    "by_environment": {
+      "lab": 0.30203381716193434,
+      "real": 0.615198779323158
+    }
+  },
+  {
+    "arm": "border_ring",
+    "seed": 1,
+    "val_macro_f1": 0.7277632615792771,
+    "test_macro_f1": 0.6977429064776847,
+    "test_accuracy": 0.7692921236291127,
+    "per_class": {
+      "common_rust": 0.948301329394387,
+      "fall_armyworm": 0.7503467406380028,
+      "gray_leaf_spot": 0.6974664679582713,
+      "healthy": 0.7588450589670598,
+      "lethal_necrosis": 0.9468798349664775,
+      "nitrogen_deficiency": 0.53125,
+      "northern_corn_leaf_blight": 0.6958270487682252,
+      "phosphorus_deficiency": 0.6325878594249201,
+      "potassium_deficiency": 0.3181818181818182
+    },
+    "by_environment": {
+      "lab": 0.3012844803341074,
+      "real": 0.5999552260471595
+    }
+  },
+  {
+    "arm": "border_ring",
+    "seed": 2,
+    "val_macro_f1": 0.7404259427560519,
+    "test_macro_f1": 0.7121276805418765,
+    "test_accuracy": 0.7906281156530409,
+    "per_class": {
+      "common_rust": 0.9584569732937686,
+      "fall_armyworm": 0.7671781187458305,
+      "gray_leaf_spot": 0.7261724659606656,
+      "healthy": 0.7974583002382843,
+      "lethal_necrosis": 0.9639917695473251,
+      "nitrogen_deficiency": 0.5555555555555556,
+      "northern_corn_leaf_blight": 0.7082002129925452,
+      "phosphorus_deficiency": 0.5988023952095808,
+      "potassium_deficiency": 0.3333333333333333
+    },
+    "by_environment": {
+      "lab": 0.27120563784838553,
+      "real": 0.6224344387853668
+    }
+  },
+  {
+    "arm": "center_only",
+    "seed": 0,
+    "val_macro_f1": 0.8491969798426109,
+    "test_macro_f1": 0.8493410534844062,
+    "test_accuracy": 0.9106679960119641,
+    "per_class": {
+      "common_rust": 0.9584569732937686,
+      "fall_armyworm": 0.9077238550922762,
+      "gray_leaf_spot": 0.8438003220611916,
+      "healthy": 0.9445082280903176,
+      "lethal_necrosis": 0.9687018984094408,
+      "nitrogen_deficiency": 0.7561837455830389,
+      "northern_corn_leaf_blight": 0.889694458829622,
+      "phosphorus_deficiency": 0.75,
+      "potassium_deficiency": 0.625
+    },
+    "by_environment": {
+      "lab": 0.39109228597099216,
+      "real": 0.7616075815510235
+    }
+  },
+  {
+    "arm": "center_only",
+    "seed": 1,
+    "val_macro_f1": 0.8456679400400113,
+    "test_macro_f1": 0.8211658379180716,
+    "test_accuracy": 0.8997008973080758,
+    "per_class": {
+      "common_rust": 0.9673590504451038,
+      "fall_armyworm": 0.8963165075034106,
+      "gray_leaf_spot": 0.8399366085578447,
+      "healthy": 0.9408602150537635,
+      "lethal_necrosis": 0.9705426356589147,
+      "nitrogen_deficiency": 0.6468646864686468,
+      "northern_corn_leaf_blight": 0.8784850078905839,
+      "phosphorus_deficiency": 0.7524752475247525,
+      "potassium_deficiency": 0.49765258215962443
+    },
+    "by_environment": {
+      "lab": 0.4373674663064608,
+      "real": 0.7577333743932697
+    }
+  },
+  {
+    "arm": "center_only",
+    "seed": 2,
+    "val_macro_f1": 0.8345560302627201,
+    "test_macro_f1": 0.8313918615330608,
+    "test_accuracy": 0.9082751744765702,
+    "per_class": {
+      "common_rust": 0.9732142857142857,
+      "fall_armyworm": 0.9105581708137189,
+      "gray_leaf_spot": 0.8188736681887366,
+      "healthy": 0.9475698430922311,
+      "lethal_necrosis": 0.9724388975559022,
+      "nitrogen_deficiency": 0.7293233082706767,
+      "northern_corn_leaf_blight": 0.8913270637408568,
+      "phosphorus_deficiency": 0.7086092715231788,
+      "potassium_deficiency": 0.5306122448979592
+    },
+    "by_environment": {
+      "lab": 0.3275051147362827,
+      "real": 0.7757018686925703
+    }
+  }
+]

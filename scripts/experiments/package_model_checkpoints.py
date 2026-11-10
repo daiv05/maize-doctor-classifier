@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import shutil
 from pathlib import Path
 
+from src.config import get_output_root
+from src.data.preparation import sha256_file
+
 ROOT = Path(__file__).resolve().parents[2]
-STAGE = ROOT / "outputs/doctor_maiz_models"
+STAGE = get_output_root() / "doctor_maiz_models"
 EVIDENCE = ROOT / "docs/es/reproducibilidad/evidencia"
 ENSEMBLE = EVIDENCE / "ensemble_loso"
 STABILITY = EVIDENCE / "multiseed_source_stability"
@@ -69,19 +71,10 @@ def read_rows(path: Path) -> list[dict]:
         return list(csv.DictReader(stream))
 
 
-def digest(path: Path) -> str:
-    value = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            value.update(chunk)
-    return value.hexdigest()
-
-
 def put_bytes(path: Path, content: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         if path.read_bytes() != content:
-            # Solo archivos derivados de este script; nunca modifica los checkpoints fuente.
             path.write_bytes(content)
         return
     with path.open("xb") as stream:
@@ -106,18 +99,18 @@ def put_csv(path: Path, fields: tuple[str, ...], rows: list[dict]) -> None:
 def copy_checked(source: Path, destination: Path, expected: str | None = None) -> str:
     if not source.is_file():
         raise FileNotFoundError(source)
-    source_sha = digest(source)
+    source_sha = sha256_file(source)
     if expected and source_sha != expected:
         raise ValueError(
             f"Hash de origen distinto: {source}; esperado={expected}; real={source_sha}"
         )
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
-        if digest(destination) != source_sha:
+        if sha256_file(destination) != source_sha:
             raise FileExistsError(f"Destino previo diferente; no se sobrescribe: {destination}")
     else:
         shutil.copy2(source, destination)
-    if digest(destination) != source_sha:
+    if sha256_file(destination) != source_sha:
         raise ValueError(f"Copia no coincide: {destination}")
     return source_sha
 
@@ -227,7 +220,7 @@ def add_model(
             "status": "VERIFIED",
             "checkpoint_sha256": expected_sha,
             "source_evidence": str(source_evidence.relative_to(ROOT)),
-            "source_evidence_sha256": digest(source_evidence),
+            "source_evidence_sha256": sha256_file(source_evidence),
             "source_local_path": str(checkpoint),
             "original_modal_path": original_modal_path,
             "package_path": str((destination / "best.pth").relative_to(STAGE)),
@@ -340,8 +333,8 @@ def main() -> None:
             note="Seed 42 histórica: sin lock pre-test documentado" if seed == 42 else "",
         )
 
-    trial = ROOT / "outputs/hpo-backups/amended-budget25/trials/trial_000"
-    if digest(trial / "summary.json") != hpo_lock["winner_summary_sha256"]:
+    trial = get_output_root() / "hpo-backups/amended-budget25/trials/trial_000"
+    if sha256_file(trial / "summary.json") != hpo_lock["winner_summary_sha256"]:
         raise ValueError("Summary HPO distinto del selection lock")
     hpo_final = read_json(HPO / "FINAL_TEST_COMPLETE.json")
     hpo_cal = read_json(HPO / "final_test/test_calibration.json")
@@ -413,7 +406,7 @@ def main() -> None:
 
     for member in ensemble_refs["members"]:
         if member["model"] == "efficientnet_lite0":
-            continue  # Ya se respaldó como LOSO Lite0 multicrop.
+            continue
         seed = member["seed"]
         model = member["model"]
         name = "b0" if model == "efficientnet_b0" else "shufflenet"
@@ -424,9 +417,11 @@ def main() -> None:
             raise ValueError(f"Resultado del componente ambiguo: {model}/{seed}")
         row = matches[0]
         run = ROOT / member["local_run_dir"]
-        if digest(run / "summary.json") != member["summary_sha256"]:
+        if sha256_file(run / "summary.json") != member["summary_sha256"]:
             raise ValueError(f"Summary LOSO distinto: {run}")
-        evaluation = ROOT / f"outputs/ensemble_loso/multicrop-disease-maiz/seed_{seed}/evaluation"
+        evaluation = (
+            get_output_root() / f"ensemble_loso/multicrop-disease-maiz/seed_{seed}/evaluation"
+        )
         selected_classes = [
             item
             for item in ensemble_classes
@@ -455,8 +450,8 @@ def main() -> None:
                 (evaluation / f"{model}_metrics.json", "final_metrics.json"),
                 (evaluation / f"{model}_class_metrics.csv", "final_class_metrics.csv"),
                 (
-                    ROOT
-                    / "outputs/ensemble_loso/multicrop-disease-maiz"
+                    get_output_root()
+                    / "ensemble_loso/multicrop-disease-maiz"
                     / f"seed_{seed}/ensemble.selection.lock.json",
                     "ensemble.selection.lock.json",
                 ),
@@ -464,7 +459,7 @@ def main() -> None:
             note="Miembro del ensamble LOSO; fusión uniforme, sin tuning de pesos",
         )
 
-    historical = ROOT / "outputs/outputs-11092026/main"
+    historical = get_output_root() / "outputs-11092026/main"
     for model, name, key in (
         ("efficientnet_b0", "b0", "historical_b0_checkpoint_sha256"),
         ("shufflenet_v2_x1_0", "shufflenet", "historical_shuffle_checkpoint_sha256"),
@@ -572,7 +567,7 @@ def main() -> None:
             "schema_version": 1,
             "checkpoint_count": len(records),
             "evidence": {
-                str(path.relative_to(ROOT)): digest(path)
+                str(path.relative_to(ROOT)): sha256_file(path)
                 for path in (
                     baseline_refs_path,
                     ensemble_refs_path,
@@ -623,9 +618,8 @@ def main() -> None:
         },
     )
     for source, target in (
-        (ROOT / "docs/es/tesis/MODEL_PACKAGE_README.md", STAGE / "README.md"),
-        (ROOT / "docs/es/tesis/EXPERIMENTAL_RESULTS_SUMMARY.md", STAGE / "RESULTS_SUMMARY.md"),
-        (ROOT / "scripts/experiments/create_model_rars.sh", STAGE / "CREATE_RARS.sh"),
+        (EVIDENCE.parent / "paquete-de-modelos.md", STAGE / "README.md"),
+        (EVIDENCE.parent / "resultados-por-protocolo.md", STAGE / "RESULTS_SUMMARY.md"),
         (ROOT / "scripts/experiments/create_model_tars.sh", STAGE / "CREATE_TARS.sh"),
     ):
         copy_checked(source, target)

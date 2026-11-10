@@ -72,18 +72,7 @@ Distribución por clase (instancias en etiquetas e imágenes que contienen la cl
 
 ## Citación
 
-@misc{ maize-2-qag1o-76kth_dataset,
-  title = { Maize 2 Dataset },
-  type = { Open Source Dataset },
-  author = { David Deras },
-  howpublished = { \url{ https://universe.roboflow.com/david-deras/maize-2-qag1o-76kth } },
-  url = { https://universe.roboflow.com/david-deras/maize-2-qag1o-76kth },
-  journal = { Roboflow Universe },
-  publisher = { Roboflow },
-  year = { 2026 },
-  month = { aug },
-  note = { visited on 2026-08-11 },
-}
+@misc{ maize-2-qag1o-76kth_dataset, title = { Maize 2 Dataset }, type = { Open Source Dataset }, author = { David Deras }, howpublished = { \url{ https://universe.roboflow.com/david-deras/maize-2-qag1o-76kth } }, url = { https://universe.roboflow.com/david-deras/maize-2-qag1o-76kth }, journal = { Roboflow Universe }, publisher = { Roboflow }, year = { 2026 }, month = { aug }, note = { visited on 2026-08-11 }, }
 
 ## Licencia
 

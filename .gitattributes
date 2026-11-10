@@ -1,0 +1,21 @@
+* text=auto
+*.json text eol=lf
+*.csv text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.txt text eol=lf
+*.tex text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.toml text eol=lf
+Makefile text eol=lf
+*.ipynb text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.pth binary
+*.onnx binary
+*.tflite binary
+docs/es/reproducibilidad/evidencia/pixel_duplicate_audit/*.csv -text

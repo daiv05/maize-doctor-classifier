@@ -26,7 +26,7 @@ make_tar DoctorMaiz_LOSO_Multicrop_ShuffleNet loso_multicrop/shufflenet
 make_tar DoctorMaiz_Historicos_B0_ShuffleNet historical_standard
 make_tar DoctorMaiz_Modelos_Metadata_Resultados \
   README.md RESULTS_SUMMARY.md MODEL_INDEX.csv MODEL_COMPARISON_RESULTS.csv \
-  MODEL_CHECKSUMS.sha256 CREATE_RARS.sh CREATE_TARS.sh metadata
+  MODEL_CHECKSUMS.sha256 CREATE_TARS.sh metadata
 
 (
   cd "$archive_dir"

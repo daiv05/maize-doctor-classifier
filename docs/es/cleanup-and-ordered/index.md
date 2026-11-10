@@ -1,6 +1,6 @@
 # Limpieza y ordenado de datasets
 
-Aquí se resume el proceso y hallazgos encontrados al limpiar, clasificar y estandarizar las imágenes antes de incorporarlas al dataset final. La prioridad es preservar la trazabilidad (origen del dataset) y evitar modificar el material crudo (raw).
+Proceso de limpieza, clasificación y estandarización de las imágenes antes de incorporarlas al dataset final. La prioridad es preservar la trazabilidad (origen del dataset) y evitar modificar el material crudo (raw).
 
 ## Objetivo
 
@@ -44,7 +44,7 @@ Ampliación de agosto 2026 (cuatro datasets Roboflow adicionales):
 
 `corn-leaf-diseases-classification-roboflow        ---> corn_leaf_diseases_classification_roboflow`
 
-## Clases consideradas (junio 2026)
+## Clases consideradas
 
 ### Enfermedades foliares
 
@@ -88,57 +88,12 @@ Ampliación de agosto 2026 (cuatro datasets Roboflow adicionales):
         - healthy
     - Agregar el identificador del dataset (ver sección de [Por procesar](./#por-procesar))
     - Incluir el ambiente: `real` o `lab`.
-    - Terminar con número random de 8 dígitos.
-    - Ejemplo final: `common_rust_maize_africa_lab_1`.
+    - Terminar con un número de identificación; en la ingesta de agosto de 2026, los 8 primeros caracteres del SHA-256 del archivo.
+    - Ejemplo final: `fall_armyworm_maize_africa_real_56642353`.
 
-    Este orden garantiza trazabilidad y evita colisiones entre datasets.
+    Este orden conserva la fuente en el nombre del archivo, de donde `src/data/provenance.py` deriva `source_id`.
 
 4. Revisar y eliminar outliers: imágenes que no correspondan a la enfermedad, que posean carteles o marcas, tomas aéreas o detalles inconsistentes.
-
-## Documentación
-
-- Para cada dataset se registran decisiones y hallazgos (dataset descartado, criterios, problemas de calidad), además de anotar cualquier ajuste al proceso para mantener la trazabilidad del dataset final.
-
-## Resultados obtenidos
-
-> **Instantánea histórica.** Esta sección documenta la ampliación de agosto (33 438). La preparación contractual vigente descubre 33 437 archivos y, tras ocho exclusiones cross-label, utiliza 33 429 muestras. No se reescriben las cifras siguientes porque explican la evolución del corpus.
-
-Tras aplicar las rutinas automatizadas de deduplicación y filtros de exclusión por calidad, el volumen neto de imágenes útiles integradas en `data/clean/` por clase es el siguiente:
-
-| Clase                        | Lab    | Real   | Total  |
-|------------------------------|-------:|-------:|-------:|
-| `common_rust`                |  2 150 |    106 |  2 256 |
-| `fall_armyworm`              |      0 |  4 858 |  4 858 |
-| `gray_leaf_spot`             |    513 |  1 417 |  1 930 |
-| `healthy`                    |      0 |  8 744 |  8 744 |
-| `lethal_necrosis`            |      0 |  6 415 |  6 415 |
-| `nitrogen_deficiency`        |      0 |    846 |    846 |
-| `northern_corn_leaf_blight`  |    888 |  5 942 |  6 830 |
-| `phosphorus_deficiency`      |      0 |    938 |    938 |
-| `potassium_deficiency`       |      0 |    621 |    621 |
-| **TOTAL**                    |  **3 551** | **29 887** | **33 438** |
-
-> Cifras finales tras la ampliación de agosto 2026, **ya deduplicadas**. El total previo (primera etapa) era de 31 623 imágenes.
-
-### Efecto de la ampliación de agosto 2026
-
-| Clase | Antes | Integradas | Duplicados | Después | Factor |
-|---|---:|---:|---:|---:|---:|
-| `gray_leaf_spot` | 1 119 | +836 | -25 | 1 930 | x1.72 |
-| `nitrogen_deficiency` | 523 | +345 | -22 | 846 | x1.62 |
-| `phosphorus_deficiency` | 612 | +327 | -1 | 938 | x1.53 |
-| `potassium_deficiency` | 266 | +368 | -13 | 621 | x2.33 |
-| **TOTAL** | **31 623** | **+1 876** | **-61** | **33 438** | |
-
-El desbalance máximo frente a `healthy` bajó de **32.9x** (potasio, 266 img) a **14.1x** (potasio, 621 img), sin que ninguna otra clase se moviera.
-
-## Observaciones
-
-> Junio 2026 - Las clases con menor representación son las deficiencias nutricionales (nitrógeno 523, fósforo 612, potasio 266). Se evalúa la posibilidad de incluir datasets adicionales para estas clases. Está pendiente definir un techo de imágenes por clase para evitar sesgos o aplicar técnicas avanzadas para balancear el dataset (oversampling, SMOTE, etc.).
-
-> Agosto 2026 - Se atendió la observación anterior incorporando cuatro datasets Roboflow dirigidos a esas clases. Las deficiencias siguen siendo las clases minoritarias (potasio 621, nitrógeno 846, fósforo 938) pero el desbalance se redujo a menos de la mitad. Las cuatro clases reforzadas **siguen superando** el umbral `max_count/count > 4.0` que activa el pipeline extendido de augmentación y el `WeightedRandomSampler`, así que la composición de clases minoritarias no cambia: potasio 14.08x, nitrógeno 10.34x, fósforo 9.32x y GLS 4.53x. GLS es la que quedó más cerca del límite - si se refuerza un poco más, saldría del grupo minoritario y **cambiaría el comportamiento del entrenamiento**. `common_rust` sigue fuera con 3.88x.
-
-> Agosto 2026 (fuentes) - La ampliación resolvió además el sesgo de **fuente única** que arrastraban las deficiencias: cada una pasó de depender solo de `maize_nutrient` a combinar cuatro fuentes, y `gray_leaf_spot` pasó de una a tres en su porción de campo. Ver el detalle en [EDA - distribución por fuente](/es/exploratory-data-analysis/#distribucion-por-fuente-de-origen).
 
 ## corn-leaf-diseases
 
@@ -171,22 +126,22 @@ El dataset original usa formato YOLO (bounding boxes + polígonos de segmentaci�
 
 ### Resultados de extracción
 
-Imágenes integradas:
+Imágenes de esta fuente en el corpus vigente:
 
-| Clase | Imágenes copiadas |
+| Clase | Imágenes |
 |---|---|
-| `fall_armyworm` | 503 |
-| `healthy` | 619 |
-| `gray_leaf_spot` | 3 946 |
-| `nitrogen_deficiency` | 55 |
-| `northern_corn_leaf_blight` | 292 |
-| `phosphorus_deficiency` | 46 |
-| `potassium_deficiency` | 52 |
+| `fall_armyworm` | 807 |
+| `healthy` | 456 |
+| `gray_leaf_spot` | 0 |
+| `nitrogen_deficiency` | 424 |
+| `northern_corn_leaf_blight` | 523 |
+| `phosphorus_deficiency` | 499 |
+| `potassium_deficiency` | 210 |
 
-### Decisiones y hallazgos
+### Decisiones y observaciones
 
 - Las imágenes ya vienen redimensionadas a **640 x 640 px**, lo que puede introducir distorsión (stretch) respecto a las proporciones originales.
-- La clase `nitrogen_deficiency` (~55 instancias en etiquetas) y `phosphorus_deficiency` (~46) tienen muy baja representación.
+- En el corpus vigente `potassium_deficiency` es la clase con menos imágenes de esta fuente (210, frente a 424 de nitrógeno y 499 de fósforo).
 
 ## cropdg-unified-multidomain
 
@@ -206,7 +161,7 @@ Se recopiló un total de **888 imágenes** en un entorno de laboratorio (`lab`)
 
 ### Healthy | Sana
 
-Muestras complementarias evaluadas bajo el mismo estándar de entorno controlado.
+El corpus vigente contiene 1 161 imágenes `healthy` de esta fuente, almacenadas como `real`.
 
 ## maize-beans-tomatoes-africa
 
@@ -264,12 +219,11 @@ No se incluyeron imágenes de esta enfermedad en este bloque debido a que el alg
 
 ### Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
 
-Se reunieron alrededor de 1056 imagenes en un entorno de campo abierto. El lugar donde fueron rescatadas es en /maize-diseases/v1.1.
-Adicionalmente, se detectaron imágenes duplicadas con una suma de 4223 imágenes, por lo que se decidió depurar.
+Se reunieron alrededor de 1056 imagenes en un entorno de campo abierto. El lugar donde fueron rescatadas es en /maize-diseases/v1.1. Adicionalmente, se detectaron imágenes duplicadas con una suma de 4223 imágenes, por lo que se decidió depurar.
 
 ### Healthy | Sana
 
-Muestras originales validadas e integradas en el repositorio consolidado. -5,326 imágenes netas post-deduplicación.
+El corpus vigente contiene 4 741 imágenes `healthy` de esta fuente.
 
 ## maize-in-field-dataset
 
@@ -328,7 +282,7 @@ Todas las imágenes presentes fueron tomadas en entornos reales. Se movieron al 
 
 ### Gray Leaf Spot (GLS) | Cercospora zeae-maydis
 
-Las imagenes con esta enfermedad fueron tomadas 607 en entornos reales. Se movieron al dataset limpio. De 629 imágenes, se encontraron 22 duplicados que fueron eliminados.
+Las imágenes con esta enfermedad fueron tomadas en entornos reales y se movieron al dataset limpio, tras eliminar 22 duplicados. El corpus vigente conserva 606.
 
 ### Northern Corn Leaf Blight (NCLB) | Exserohilum turcicum
 
@@ -336,7 +290,7 @@ Se recopilaron alrededor de 140 imágenes con esta enfermedad. Todas fueron toma
 
 ### Healthy | Sana
 
-Las 232 imágenes de la carpeta `NoFoliarSymptoms` fueron validadas y enviadas al dataset limpio bajo la clase `healthy`. No se encontraron imágenes duplicadas.
+La carpeta `NoFoliarSymptoms` contiene 232 imágenes. El corpus vigente no contiene imágenes `healthy` con el identificador `maize_field`.
 
 ## maize-nutrient-deficiency
 
@@ -344,7 +298,7 @@ Las 232 imágenes de la carpeta `NoFoliarSymptoms` fueron validadas y enviadas a
 
 `maize_nutrient`
 
-### Hallazgos
+### Observaciones
 
 No se presentan duplicados ni necesidad de limpieza específica para este dataset.
 
@@ -393,7 +347,7 @@ A diferencia de las otras clases de este dataset, las imágenes de Lethal Necros
 
 Cuatro datasets nuevos incorporados para reforzar exclusivamente las clases más escasas del corpus: las tres deficiencias nutricionales y GLS. Aportaron **1 815 imágenes netas** de campo real (1 876 integradas menos 61 duplicados), llevando el corpus de **31 623** a **33 438**.
 
-> Esta etapa es **posterior a la primera entrega** del proyecto. El material de esa entrega (paper y notebook de EDA) se conserva congelado en `reports/firts-phase/` y **no refleja estas cifras** a propósito.
+> Esta etapa es posterior a la primera entrega. El material de esa entrega (paper y notebook de EDA) está en `reports/firts-phase/` y no refleja estas cifras.
 
 ## Metodología común
 
@@ -480,7 +434,7 @@ Imágenes descartadas por dataset:
 | `Nutrient_Sufficiency` (2) | - | No (descartada) |
 | `P_Deficiency` (3) | `phosphorus_deficiency/real/maize_2_roboflow/` | Sí |
 
-### Decisiones y hallazgos
+### Decisiones y observaciones
 
 - **Es el mayor aporte de la ampliación**: 882 de las 1 876 imágenes (47 %), y la fuente principal para las tres deficiencias.
 - **`Nutrient_Sufficiency` se descartó deliberadamente** (433 imágenes). Aunque es tentador mapearla a `healthy`, denota *ausencia de deficiencia nutricional*, no *ausencia de enfermedad*: una hoja nutricionalmente suficiente puede presentar roya o tizón. Integrarla habría contaminado `healthy` con posibles hojas enfermas. Además `healthy` ya es la clase mayoritaria (8 744) y no requiere refuerzo.
@@ -501,7 +455,7 @@ Imágenes descartadas por dataset:
 | `nlb` (1) | - | No tomada en esta incorporación |
 | `nls` (2) | - | No (Northern Leaf Spot no es clase objetivo) |
 
-### Decisiones y hallazgos
+### Decisiones y observaciones
 
 - **La tasa de ambigüedad más alta de los cuatro**: 38 imágenes descartadas (3.5 %), de las cuales 32 combinan `gls` + `nlb`. Es un hallazgo esperable y clínicamente coherente - GLS, NLS y NCLB son confundibles entre sí y pueden coexistir en la misma planta -, pero confirma que la regla de clase única era necesaria aquí.
 - **Ojo con `nls` vs `nlb`.** `nls` es *Northern Leaf Spot* (*Bipolaris zeicola*), que **no** es clase objetivo, y no debe confundirse con `nlb` (*Northern Leaf Blight* / NCLB), que sí lo es. La similitud de los identificadores es una fuente de error real al mapear.
@@ -525,7 +479,7 @@ Imágenes descartadas por dataset:
 | `Phosphorus-deficient` (2) | `phosphorus_deficiency/real/maize_deficiency_scanner_roboflow/` | Sí |
 | `Potassium-deficient` (3) | `potassium_deficiency/real/maize_deficiency_scanner_roboflow/` | Sí |
 
-### Decisiones y hallazgos
+### Decisiones y observaciones
 
 - **Cero imágenes ambiguas**: el único de los cuatro sin ninguna co-ocurrencia de clases. La anotación es hoja a hoja (una hoja segmentada por imagen), no lesión a lesión.
 - **Anotación por polígono exclusivamente** (312 líneas, 0 bbox), con contornos muy densos - algunos superan los 200 pares de coordenadas. Irrelevante para clasificación, pero confirma que el parser debe leer el `class_id` como primer token sin asumir 5 campos por línea.
@@ -549,9 +503,9 @@ Imágenes descartadas por dataset:
 | `leaf` (1) | - | No - contenedor genérico, se ignora |
 | `northern_leaf_blight` (2) | - | No tomada en esta incorporación |
 
-### Decisiones y hallazgos
+### Decisiones y observaciones
 
-::: warning Hallazgo principal: la clase `leaf` es un contenedor, no un diagnóstico
+::: warning La clase `leaf` es un contenedor, no un diagnóstico
 `leaf` aparece en **1 001 de las 1 003 imágenes (99.8 %)**: marca el contorno de la hoja, no una condición patológica. Aplicando la regla de clase única sin excepciones, *toda* imagen del dataset tendría 2 clases y sería descartada por ambigua - **el dataset entero se habría perdido**. Por eso la regla incluye el paso explícito de ignorar `leaf` antes de contar clases distintas. Es el hallazgo que más impacto tuvo en el resultado de la ampliación: rescató las 500 imágenes de GLS, el 27 % del total incorporado.
 :::
 
@@ -572,7 +526,7 @@ La trazabilidad no se pierde: el identificador del dataset de origen ya va **en 
 
 ## Deduplicación
 
-Ejecutada con `find_duplicates.py` (PHash, `threshold = 0`) sobre las cuatro clases afectadas. Los CSV quedaron registrados en `src/cleanup/results/` con fecha 2026-08-11.
+Ejecutada con `find_duplicates.py` (PHash, `threshold = 0`) sobre las cuatro clases afectadas, con fecha 2026-08-11. El script escribe sus CSV en `outputs/cleanup/duplicates/`; los de esta ejecución ya no están versionados en el repositorio.
 
 | Clase | Analizadas | Grupos | Eliminadas |
 |---|---:|---:|---:|
@@ -584,9 +538,9 @@ Ejecutada con `find_duplicates.py` (PHash, `threshold = 0`) sobre las cuatro cla
 
 **61 imágenes eliminadas de 1 876 incorporadas (3.3 %).**
 
-### Hallazgo: cero contaminación contra el material preexistente
+### Contaminación contra el material preexistente
 
-**Todos los grupos de duplicados quedaron contenidos dentro de los datasets nuevos.** No se detectó ni un solo duplicado contra las imágenes que ya estaban en `clean/`, lo que descarta uno de los dos riesgos anticipados: las 606 imágenes de GLS previas no se solapan con las fuentes nuevas.
+Todos los grupos de duplicados están dentro de los datasets nuevos. No hay duplicados contra las imágenes que ya estaban en `clean/`: las 606 imágenes de GLS previas no se solapan con las fuentes nuevas.
 
 | Tipo de grupo | Grupos | Detalle |
 |---|---:|---|
@@ -594,11 +548,11 @@ Ejecutada con `find_duplicates.py` (PHash, `threshold = 0`) sobre las cuatro cla
 | Interno de `corn_leaf_diseases_classification_roboflow` | 20 | Duplicados dentro del propio dataset |
 | Cruzado entre las dos fuentes de GLS | 5 | `maize_leaf_roboflow` ↔ `corn_leaf_diseases_classification_roboflow` |
 
-Sobre los otros dos hallazgos:
+Además:
 
 - **`maize_2_roboflow` y `maize_deficiency_scanner_roboflow` no se solapan entre sí**, pese a cubrir las mismas tres deficiencias. El riesgo anticipado no se materializó.
 - **Los 5 grupos cruzados de GLS son byte a byte idénticos** (mismo SHA-256): los dos datasets de Roboflow redistribuyen material común.
 
 ::: tip Por qué hizo falta PHash y no bastaba el SHA-256
-Solo esos **5** grupos son copias exactas; los **56** restantes son *near-duplicates* - mismo contenido visual pero bytes distintos (reencodings, recortes, recompresión). `create_splits.py` deduplica por SHA-256 al generar los splits, así que habría atrapado los 5 exactos pero **no** los 56 restantes, que habrían provocado *data leakage* entre train y validación.
+Solo esos **5** grupos son copias exactas; los **56** restantes son *near-duplicates* - mismo contenido visual pero bytes distintos (reencodings, recortes, recompresión). `create_splits.py` deduplica por SHA-256 al generar los splits, así que habría atrapado los 5 exactos pero **no** los 56 restantes, que habrían quedado en el corpus y podido cruzar entre train y validación.
 :::

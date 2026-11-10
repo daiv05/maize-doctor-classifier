@@ -8,7 +8,6 @@ No carga imágenes, no entrena ni modifica los splits.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 
@@ -18,6 +17,7 @@ import yaml
 from scipy.stats import chi2_contingency
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
+from src.data.preparation import sha256_file
 from src.training.evaluation import expected_calibration_error
 
 NUTRITION_CLASSES = (
@@ -33,14 +33,6 @@ EXPECTED_HASHES = {
     "val.csv": "6f37710ebd797e470bc918fec6bf9502f0635e8220542336e88fe5c13b5ae6a5",
     "test.csv": "08c81aeec5a57e04416edf2c94f997c422bfcada357c6a3434e73aa9f771f724",
 }
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def _unique_ids(frame: pd.DataFrame, name: str) -> None:

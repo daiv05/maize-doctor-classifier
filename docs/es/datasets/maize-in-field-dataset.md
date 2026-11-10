@@ -16,8 +16,7 @@ Contiene una representación realista de las condiciones de campo. Hay imágenes
 
 ## Estructura
 
-Los datos del dataset original se encuentran en leaf_images/\*.
-Son imágenes originales de alta resolución.
+Los datos del dataset original se encuentran en leaf_images/\*. Son imágenes originales de alta resolución.
 
 Junto con estos archivos de imagen, se incluye un archivo CSV titulado "Database.csv" que contiene las etiquetas de clase para el conjunto de datos.
 
@@ -46,16 +45,11 @@ Para este proyecto no se tomarán en cuenta las clases "Otros" y "Síntoma de en
 - Las imágenes tienen una resolución muy alta (3600 x 2700 px, aprox +1.6 MB por imagen), lo que puede requerir un preprocesamiento para reducir su tamaño antes de ser utilizadas.
 
 ::: warning Roya común - clase crítica de campo real
-Este dataset aporta solo **300 imágenes de campo real de Roya común**. Sumando las ~99 del dataset de África, el **total de campo real para esta clase en todo el proyecto es ~399 imágenes**, frente a ~5 775 de NCLB y ~5 437 de GLS. Roya común es la candidata prioritaria a data augmentation sobre imágenes de campo antes del entrenamiento.
+El repositorio tiene **300 imágenes de campo real de Roya común**, de las que el corpus vigente conserva **106**: son las únicas imágenes de roya de campo del corpus, frente a 2 150 de laboratorio. De esta fuente el corpus integra además 606 de `gray_leaf_spot` y 140 de `northern_corn_leaf_blight`.
 :::
 
 <ImageCarousel :images="[
-	{ src: '/maize-in-field-dataset/117_CIMG3853_1-121-2.JPG', alt: 'Mancha gris de la hoja, a luz clara y con dedos presentes en la parte inferior izquierda' },
-	{ src: '/maize-in-field-dataset/128_CIMG3864_1-7-2.JPG', alt: 'Mancha gris de la hoja, fondo negro con tarjeta verde y manos presentes' },
-	{ src: '/maize-in-field-dataset/157_CIMG3893_1-29-1.JPG', alt: 'Luz y brillo altos, con  tarjeta verde en el fondo' },
-	{ src: '/maize-in-field-dataset/173_CIMG3909_1-220-2.JPG', alt: 'Fondo negro con tarjeta verde y manos presentes' },
-	{ src: '/maize-in-field-dataset/175_CIMG3911_1-190-1.JPG', alt: 'Fondo negro con tarjeta verde y manos presentes' }
-]" />
+	{ src: '/maize-in-field-dataset/117_cimg3853_1-121-2.jpg', alt: 'Mancha gris de la hoja, a luz clara y con dedos presentes en la parte inferior izquierda' }, { src: '/maize-in-field-dataset/128_cimg3864_1-7-2.jpg', alt: 'Mancha gris de la hoja, fondo negro con tarjeta verde y manos presentes' }, { src: '/maize-in-field-dataset/157_cimg3893_1-29-1.jpg', alt: 'Luz y brillo altos, con  tarjeta verde en el fondo' }, { src: '/maize-in-field-dataset/173_cimg3909_1-220-2.jpg', alt: 'Fondo negro con tarjeta verde y manos presentes' }, { src: '/maize-in-field-dataset/175_cimg3911_1-190-1.jpg', alt: 'Fondo negro con tarjeta verde y manos presentes' } ]" />
 
 ## Tamaño y distribución
 

@@ -94,8 +94,6 @@ def load_run_metadata(
     canónico `dataset.classes` que usa CornDataset) produce etiquetas permutadas - ese fue
     el bug de rótulos de los reportes LIME.
     """
-    # Los argumentos fallback se conservan en la firma por compatibilidad de API, pero un
-    # run legacy ya no puede cargarse silenciosamente: debe migrarse explícitamente.
     del fallback_classes, fallback_target_size
     summary = read_run_contract(run_dir)
     recorded_splits = Path(summary["splits_dir"])

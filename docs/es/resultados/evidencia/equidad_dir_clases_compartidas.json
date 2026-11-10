@@ -1,0 +1,118 @@
+{
+  "oficial_20260921_204608": {
+    "fuente": "docs/es/reproducibilidad/evidencia/source_analysis/baseline_test_predictions.csv",
+    "sha256_fuente": "2658802ca96b8e50dc7565775b56c9dcc645945574b4a563144f997c3730c176",
+    "clases_compartidas": [
+      "common_rust",
+      "gray_leaf_spot",
+      "northern_corn_leaf_blight"
+    ],
+    "por_entorno": {
+      "lab": {
+        "muestras": 533,
+        "macro_f1": 0.9382734306943776,
+        "accuracy": 0.9662288930581614
+      },
+      "real": {
+        "muestras": 1120,
+        "macro_f1": 0.9041170169453646,
+        "accuracy": 0.9705357142857143
+      }
+    },
+    "dir": {
+      "macro_f1": 0.9635965246039896,
+      "accuracy": 0.9955624289099732
+    },
+    "umbral_cuatro_quintos": 0.8,
+    "f1_por_clase": {
+      "common_rust": {
+        "lab": {
+          "muestras": 323,
+          "f1": 0.9984496124031008
+        },
+        "real": {
+          "muestras": 16,
+          "f1": 0.7741935483870968
+        }
+      },
+      "gray_leaf_spot": {
+        "lab": {
+          "muestras": 77,
+          "f1": 0.8811188811188811
+        },
+        "real": {
+          "muestras": 212,
+          "f1": 0.9505882352941176
+        }
+      },
+      "northern_corn_leaf_blight": {
+        "lab": {
+          "muestras": 133,
+          "f1": 0.935251798561151
+        },
+        "real": {
+          "muestras": 892,
+          "f1": 0.9831081081081081
+        }
+      }
+    }
+  },
+  "etapa2_20260812_221429": {
+    "fuente": "docs/es/resultados/evidencia/etapa2_lite0_20260812_221429/predictions.csv",
+    "sha256_fuente": "1fe736982c49bbdd509ae7aa121eb772ed88579e707da1f62d71044a51b70e5b",
+    "clases_compartidas": [
+      "common_rust",
+      "gray_leaf_spot",
+      "northern_corn_leaf_blight"
+    ],
+    "por_entorno": {
+      "lab": {
+        "muestras": 532,
+        "macro_f1": 0.9423458557108614,
+        "accuracy": 0.9680451127819549
+      },
+      "real": {
+        "muestras": 1121,
+        "macro_f1": 0.9050127268633369,
+        "accuracy": 0.9776984834968778
+      }
+    },
+    "dir": {
+      "macro_f1": 0.9603827738815043,
+      "accuracy": 0.9901264337851929
+    },
+    "umbral_cuatro_quintos": 0.8,
+    "f1_por_clase": {
+      "common_rust": {
+        "lab": {
+          "muestras": 322,
+          "f1": 0.9984447900466563
+        },
+        "real": {
+          "muestras": 16,
+          "f1": 0.7333333333333333
+        }
+      },
+      "gray_leaf_spot": {
+        "lab": {
+          "muestras": 77,
+          "f1": 0.8904109589041096
+        },
+        "real": {
+          "muestras": 213,
+          "f1": 0.964200477326969
+        }
+      },
+      "northern_corn_leaf_blight": {
+        "lab": {
+          "muestras": 133,
+          "f1": 0.9381818181818182
+        },
+        "real": {
+          "muestras": 892,
+          "f1": 0.9860413176996091
+        }
+      }
+    }
+  }
+}

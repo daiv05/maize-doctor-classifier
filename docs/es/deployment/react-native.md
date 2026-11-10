@@ -1,54 +1,42 @@
-# Aplicación Móvil con React Native y Expo
+# Aplicación móvil con React Native y Expo
 
-Un modelo de visión por computadora entrenado en PyTorch dentro de un servidor con GPU no sirve de mucho por sí solo si el agricultor tiene que usarlo en una parcela remota sin cobertura telefónica. La verdadera prueba de fuego del proyecto está en lograr que ese modelo corra en el procesador de un teléfono celular común, de forma completamente autónoma y en una fracción de segundo.
+DoctorMaiz es una aplicación en React Native con Expo que ejecuta el modelo en el teléfono, sin necesidad de conexión. Esta página describe los artefactos que se exportan desde PyTorch y cómo la app los usa.
 
-Para construir esta experiencia desarrollamos **DoctorMaiz**, una aplicación móvil en React Native con Expo orientada a la facilidad de uso en campo.
+## Artefactos exportados
 
----
+El pipeline principal convierte los checkpoints (`best.pth`) a TensorFlow Lite (TFLite) y ONNX. Además del modelo en FP32, genera versiones cuantizadas a enteros de 8 bits (int8), que ocupan cerca de una cuarta parte del espacio del TFLite FP32:
 
-## De PyTorch al teléfono: los artefactos exportados
-
-El pipeline principal toma los checkpoints entrenados (`best.pth`) y los convierte a formatos optimizados para inferencia en el borde (*Edge AI*), principalmente **TensorFlow Lite (TFLite)** y **ONNX**.
-
-Además del modelo estándar en precisión flotante (FP32), generamos versiones cuantizadas a enteros de 8 bits (**Int8**). La cuantización reduce drásticamente el espacio que ocupa el modelo en el almacenamiento del teléfono sin apenas sacrificar capacidad diagnóstica:
-
-| Arquitectura | Tamaño FP32 | Tamaño cuantizado (Int8) | Reducción de espacio |
+| Arquitectura | Tamaño FP32 | Tamaño int8 | Reducción |
 |---|:---:|:---:|:---:|
-| **`shufflenet_v2_x1_0`** | 4.93 MB | **1.42 MB** | 71 % más ligero |
-| **`efficientnet_lite0`** (desplegada) | 12.92 MB | **3.56 MB** | 72 % más ligero |
-| **`efficientnet_b0`** | 15.48 MB | **4.44 MB** | 71 % más ligero |
+| `shufflenet_v2_x1_0` | 5.17 MB | 1.49 MB | 71 % |
+| `efficientnet_lite0` (oficial) | 13.56 MB | 3.74 MB | 72 % |
+| `efficientnet_b0` | 16.24 MB | 4.66 MB | 71 % |
 
-El modelo elegido para la versión final es **`efficientnet_lite0` cuantizado a Int8** (alrededor de 3.5 MB). Su arquitectura prescinde de activaciones complejas para facilitar la aceleración por hardware en CPUs móviles modestas.
+Tamaños de los TFLite FP32 e int8, en MB decimales.
 
-Junto al archivo `.tflite`, el pipeline exporta dos acompañantes fundamentales:
-1. **`labels.json`**: El mapa oficial con el orden exacto de las 9 clases. La aplicación lo lee dinámicamente al iniciar, asegurando que nunca haya desincronizaciones entre el índice de salida y el nombre de la patología.
-2. **`ood_stats.json`**: Las medias, covarianzas y el umbral calibrado del detector de imágenes fuera de dominio (OOD).
+La app despliega `efficientnet_lite0` en int8 (3.74 MB), la corrida oficial `20260921_204608`. Junto al `.tflite` se exportan dos archivos:
 
----
+1. `labels.json`: el orden de las 9 clases. La app lo lee al iniciar, de modo que el índice de salida siempre corresponde al nombre de la clase.
+2. `ood_stats.json`: PCA, centroides de clase, covarianzas, gaussiana de fondo y umbral del detector de imágenes fuera de dominio (OOD).
 
-## El contrato de preprocesamiento
+## Preprocesado
 
-Un error frecuente al llevar modelos a dispositivos móviles es suponer que el archivo del modelo es el clasificador completo. En realidad, el modelo es solo el núcleo matemático. Si la aplicación móvil prepara los píxeles de una manera ligeramente distinta a como los vio el modelo durante el entrenamiento, las predicciones empezarán a fallar de forma silenciosa.
+El modelo espera los píxeles preparados igual que en el entrenamiento; si la app los prepara distinto, las predicciones se degradan sin error visible. La secuencia es:
 
-Para garantizar paridad total con el servidor, la app implementa estrictamente esta secuencia:
-
-1. **Corrección de orientación EXIF:** Los teléfonos suelen guardar la rotación de la cámara en los metadatos de la foto en lugar de girar los píxeles reales. Corregir esto primero evita que el modelo reciba hojas volteadas 90 grados.
-2. **Escalado a 224 × 224 píxeles:** Redimensionamos directamente la imagen al tamaño cuadrado de entrada mediante un filtrado cuidadoso con antialiasing para evitar artefactos visuales.
-3. **Conversión y normalización:** Los píxeles en formato RGB se escalan al rango $[0, 1]$ dividiendo entre 255 y luego se normalizan con los promedios y desviaciones estándar de ImageNet:
+1. Corrección de orientación EXIF, porque los teléfonos guardan la rotación en los metadatos y no en los píxeles.
+2. Escalado directo a 224 × 224 con remuestreo bilineal con antialias equivalente al de Pillow, sin conservar la proporción de la imagen (igual que el entrenamiento).
+3. Conversión a RGB, escala a $[0, 1]$ y normalización con las medias y desviaciones de ImageNet:
    $$\text{canal} = \frac{(\text{pixel} / 255) - \mu}{\sigma}$$
-   donde $\mu = [0.485, 0.456, 0.406]$ y $\sigma = [0.229, 0.224, 0.225]$.
-4. **Organización del tensor (NCHW):** Los motores gráficos de los teléfonos entregan los píxeles entrelazados por canal (alto, ancho, canales). El modelo de PyTorch espera los canales agrupados por separado (canal, alto, ancho), por lo que reorganizamos el buffer en memoria antes de la inferencia.
+   con $\mu = [0.485, 0.456, 0.406]$ y $\sigma = [0.229, 0.224, 0.225]$.
+4. Reorganización del buffer de canales entrelazados (alto, ancho, canal) a canales separados (canal, alto, ancho), que es el formato NCHW de PyTorch.
 
----
+## Inferencia local
 
-## Inferencia local y arquitectura desacoplada
+La app usa `react-native-fast-tflite`, que ejecuta el modelo en C++ sobre el procesador del teléfono. Al requerir código nativo, el desarrollo usa Expo Development Builds (EAS Build o prebuild local) y no Expo Go.
 
-La aplicación utiliza un motor nativo de alto rendimiento (`react-native-fast-tflite`) que ejecuta el modelo directamente sobre el procesador del dispositivo móvil mediante C++. Dado que las bibliotecas nativas de inferencia requieren compilar código C++/Java, el desarrollo se realiza mediante *Expo Development Builds* (EAS Build o prebuild local) en lugar del cliente genérico Expo Go.
+La inferencia está detrás de la interfaz `InferenceEngine` (`src/ml/InferenceEngine.ts`), con una implementación TFLite y una simulada para desarrollo. El modelo devuelve dos salidas:
 
-Para mantener el código limpio y flexible, la lógica de inferencia se aísla detrás de una interfaz genérica (`InferenceBackend`). El resto de la interfaz gráfica y la base de datos local no necesitan saber si el motor que corre por debajo es TFLite u ONNX; solo solicitan una predicción entregando el tensor procesado.
+- Los logits de las 9 clases, que con softmax dan el diagnóstico y su confianza.
+- El vector de características de la penúltima capa (1280 dimensiones), que el módulo OOD normaliza, proyecta con PCA y usa para calcular la distancia de Mahalanobis relativa.
 
-El modelo devuelve dos salidas simultáneas:
-- **Logits de clasificación:** 9 valores numéricos que, pasados por softmax, entregan el diagnóstico más probable y su nivel de confianza.
-- **Vector de características (embeddings):** Un vector de la penúltima capa que el módulo OOD utiliza para calcular la distancia de Mahalanobis.
-
-Si la distancia de Mahalanobis supera el umbral de seguridad, la app marca el resultado como "No reconocida", protegiendo al agricultor de diagnósticos inventados y sugiriéndole repetir la toma con un mejor encuadre.
+Si esa distancia supera el umbral (106.37), si la confianza de la clase más probable es menor que 0.6 o si el margen con la segunda clase es menor que 0.15, la app marca el resultado como "No reconocida" y sugiere repetir la toma con un mejor encuadre. Las mediciones en el teléfono están en [Prototipo en dispositivo](./prototipo.md).

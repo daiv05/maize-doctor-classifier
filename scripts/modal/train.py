@@ -320,9 +320,7 @@ def tune_main(
     epochs: int = 15,
     timeout: int = 0,
     pruner: str = "median",
-    # 0.9468 es el macro-F1 medido de efficientnet_lite0 sobre splits/seed_42.
-    # El 0.9146 que habia aqui no corresponde a ninguna corrida archivada.
-    baseline_macro_f1: float = 0.9468,
+    baseline_macro_f1: float = 0.0,
     splits_dir: str = "",
     num_workers: int = 32,
     study_name_prefix: str = "tune",
@@ -336,13 +334,13 @@ def tune_main(
 
     Soporta uno o múltiples modelos separados por espacio
     (ej. 'efficientnet_b0 shufflenet_v2_x1_0'). Persiste best_params.json, trials.csv y
-    gráficos en el Volume corn-outputs (/outputs/tuning/<model>/).
+    gráficos en el Volume corn-outputs (/outputs/tuning/<model>/). Con `baseline_macro_f1`
+    en 0 se usa el baseline de validación del modelo oficial definido en `tuning_study`.
     """
     dataset_vol.reload()
     outputs_vol.reload()
     if formal_hpo:
         models, n_trials, epochs = "efficientnet_lite0", 25, 60
-        baseline_macro_f1 = 0.9560862657056215
         if pruner != "median":
             raise ValueError("HPO formal requiere MedianPruner.")
     command = [
@@ -356,13 +354,13 @@ def tune_main(
         str(epochs),
         "--pruner",
         pruner,
-        "--baseline-f1",
-        str(baseline_macro_f1),
         "--num-workers",
         str(num_workers),
         "--study-name-prefix",
         study_name_prefix,
     ]
+    if baseline_macro_f1 > 0:
+        command += ["--baseline-f1", str(baseline_macro_f1)]
     if timeout:
         command += ["--timeout", str(timeout)]
     if splits_dir:
@@ -377,7 +375,6 @@ def tune_main(
     try:
         run_with_periodic_commit(command, cwd=REPO_ANCHOR, volume=outputs_vol)
     finally:
-        # También conserva FAIL y trazas cuando el subproceso aborta.
         outputs_vol.commit()
     if formal_hpo and continue_study and not preflight_only and not smoke:
         import json

@@ -32,15 +32,9 @@ Al tratarse de una herramienta técnica de investigación y despliegue agronómi
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_login.png" 
-    caption="Pantalla de Acceso" 
-    subtitle="Ingreso con cuenta o modo invitado" 
-  />
+    src="/app/pixel4_login.png" caption="Pantalla de Acceso" subtitle="Ingreso con cuenta o modo invitado" />
   <PhoneMockup 
-    src="/app/pixel4_register.png" 
-    caption="Registro de Productor" 
-    subtitle="Asociación de finca y cooperativa" 
-  />
+    src="/app/pixel4_register.png" caption="Registro de Productor" subtitle="Asociación de finca y cooperativa" />
 </PhoneGallery>
 
 ### 1. Descarga del Paquete APK

@@ -12,12 +12,7 @@ Cada vez que capturas una hoja, la aplicación asocia silenciosamente la coorden
 ---
 
 <PhoneMockup 
-  src="/app/map_screen.png" 
-  caption="Cartografía Satelital del Campo" 
-  subtitle="Pines interactivos codificados por severidad sanitaria" 
-  maxWidth="300px"
-  center
-/>
+  src="/app/map_screen.png" caption="Cartografía Satelital del Campo" subtitle="Pines interactivos codificados por severidad sanitaria" maxWidth="300px" center />
 
 ---
 

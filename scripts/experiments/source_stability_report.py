@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, precision_recall_fscore_support
 
-from src.config import PROJECT_ROOT
+from src.config import PROJECT_ROOT, get_output_root
 from src.data.preparation import sha256_file
 from src.training.evaluation import expected_calibration_error
 
@@ -26,16 +26,28 @@ SCENARIOS = ("baseline", "maize-diseases", "multicrop-disease-maiz")
 EVIDENCE = PROJECT_ROOT / "docs/es/reproducibilidad/evidencia"
 OUTPUT = EVIDENCE / "multiseed_source_stability"
 BASELINE_42 = (
-    PROJECT_ROOT
-    / "outputs/archives"
+    get_output_root()
+    / "archives"
     / "DoctorMaiz_efficientnet_lite0_20260921_204608"
     / "efficientnet_lite0/20260921_204608"
 )
-LOSO = PROJECT_ROOT / "outputs/loso/efficientnet_lite0_baseline"
+LOSO = get_output_root() / "loso/efficientnet_lite0_baseline"
 HISTORICAL_REFERENCE = {
     "maize-diseases": 0.9978925393906257,
     "multicrop-disease-maiz": 0.9972173913043477,
 }
+
+
+def run_path_label(run: Path) -> str:
+    """Devuelve la ruta del run relativa a la raíz del proyecto cuando es posible.
+
+    @param run Directorio del run.
+    @returns Ruta relativa al proyecto o ruta absoluta si el run vive fuera de él.
+    """
+    try:
+        return str(run.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(run)
 
 
 def _read(path: Path) -> dict:
@@ -63,10 +75,10 @@ def paths(scenario: str, seed: int) -> tuple[Path, Path, Path]:
     if scenario not in SCENARIOS or seed not in SEEDS:
         raise ValueError("Escenario/seed no pre-registrado")
     if scenario == "baseline":
-        splits = PROJECT_ROOT / "outputs/multiseed-inputs/frozen/seed_42"
+        splits = get_output_root() / "multiseed-inputs/frozen/seed_42"
         if seed == 42:
             return BASELINE_42, splits, BASELINE_42
-        root = PROJECT_ROOT / f"outputs/multiseed/source_stability/baseline/seed_{seed}"
+        root = get_output_root() / f"multiseed/source_stability/baseline/seed_{seed}"
     else:
         splits = LOSO / scenario / "seed_42/splits"
         root = LOSO / scenario / f"seed_{seed}"
@@ -234,7 +246,7 @@ def collect() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
                 )
                 evaluation_started_at = recorded.get("holdout_started_at_utc")
                 evaluation_finished_at = recorded.get("holdout_finished_at_utc")
-                evaluation_count = None  # No one-shot marker for historical seed 42.
+                evaluation_count = None
             split_lock = _read(splits / "manifest.lock.json")
             dataset_fingerprint = (
                 split_lock.get("master_manifest_sha256")
@@ -291,7 +303,7 @@ def collect() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
                 "train_size": len(pd.read_csv(splits / "train.csv")),
                 "validation_size": len(val),
                 "final_size": len(final),
-                "run_path": str(run.relative_to(PROJECT_ROOT)),
+                "run_path": run_path_label(run),
             }
             if scenario != "baseline":
                 row["historical_reference_f1"] = HISTORICAL_REFERENCE[scenario]

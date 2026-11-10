@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -70,6 +71,14 @@ def resolve_split_csv(run_dir: Path, splits_dir: str | None, split_name: str) ->
 def resolve_test_csv(run_dir: Path, splits_dir: str | None) -> Path:
     """Resuelve la ruta de test.csv. Ver `resolve_split_csv`."""
     return resolve_split_csv(run_dir, splits_dir, "test")
+
+
+def default_num_workers() -> int:
+    """Workers de DataLoader por defecto para la inferencia de export.
+
+    @returns {int} min(8, CPUs disponibles).
+    """
+    return min(8, os.cpu_count() or 1)
 
 
 def build_test_loader(

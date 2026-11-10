@@ -1,6 +1,6 @@
-# Baseline principal de desarrollo — EfficientNet-Lite0 `20260921_204608`
+# Modelo oficial — EfficientNet-Lite0 `20260921_204608`
 
-Esta corrida es el primer reentrenamiento completo de `EfficientNet-Lite0` sobre la materialización corregida de `seed_42`. Es el **baseline vigente de desarrollo**, pero **no sustituye todavía al modelo TFLite desplegado**.
+Entrenamiento de EfficientNet-Lite0 sobre la materialización vigente de `seed_42`. Es el modelo oficial y el que despliega la app, en su exportación TFLite int8.
 
 ## Identidad y reproducibilidad
 
@@ -23,8 +23,8 @@ La configuración usó lote 32, `learning_rate=1e-4`, `weight_decay=1e-4`, *warm
 
 | Métrica | Valor |
 |---|---:|
-| Accuracy | **0.978066** |
-| Macro F1 | **0.948002** |
+| Accuracy | 0.978066 |
+| Macro F1 | 0.948002 |
 | Loss | 0.761194 |
 | Macro F1 con deficiencias agrupadas | 0.978385 |
 | Accuracy con deficiencias agrupadas | 0.984048 |
@@ -56,20 +56,16 @@ Los macro F1 por entorno no son directamente comparables porque no tienen el mis
 
 La calibración del test reporta ECE de 0.1397 y Brier binario de acierto de 0.0380. La confianza media fue 0.8444 en los 4 905 aciertos y 0.6872 en los 110 errores; 15 errores tuvieron confianza igual o superior a 0.90.
 
-## Interpretación
+## Comparación con la etapa 2
 
-Frente al `EfficientNet-Lite0` históricamente desplegado (Macro-F1 0.9468), el baseline actual difiere aproximadamente +0.0012 en el test estratificado. Las corridas proceden de materializaciones distintas, por lo que esa resta es descriptiva y no demuestra una mejora. Potasio presenta el F1 más bajo del run (0.8242), y las confusiones N/P/K justifican una revisión cualitativa. La calibración aconseja revisar método y umbrales antes de presentar la confianza como certeza diagnóstica.
+Frente al Lite0 de la etapa 2 (Macro-F1 0.9468), el oficial difiere en +0.0012 en el test estratificado. Las corridas proceden de materializaciones distintas y solo comparten 2 539 imágenes de test; sobre ellas McNemar da 23 frente a 22 discordancias (p = 1.00), sin diferencia medible. El ECE de 0.1397 indica que la confianza no debe leerse como probabilidad calibrada: la confianza media (0.841) queda por debajo de la accuracy (0.978).
 
-## Limitaciones y decisión de promoción
+## Limitaciones
 
-`seed_42` mezcla las fuentes conocidas entre train, validación y test; es adecuado para desarrollo *in-distribution*, pero no demuestra generalización a una cámara, parcela o repositorio nuevo. Además, esta materialización garantiza separación por identificador, SHA-256 y grupo efectivo, pero se generó con `deduplicate_perceptual=false`: la posible fuga por imágenes casi duplicadas no fue medida.
+- `seed_42` reparte las fuentes conocidas entre train, validación y test: mide desempeño dentro de fuentes conocidas, no en una cámara, parcela o repositorio nuevo. La evaluación por fuente retenida está en [Generalización entre fuentes](./generalizacion.md).
+- La materialización garantiza separación por identificador, SHA-256 y grupo efectivo, pero se generó con `deduplicate_perceptual=false`: los casi duplicados no están medidos.
+- La paridad de muestra del int8 (30 imágenes) no se aprobó por una imagen límite (máx. |Δprob| 0.198 frente al umbral 0.15). En el test completo el int8 da Macro-F1 0.9489 y coincide con PyTorch en el 99.74 %.
 
-Antes de promover el checkpoint se debe:
+La exportación móvil está en [`export_movil_20260921_204608/`](../reproducibilidad/evidencia/export_movil_20260921_204608/export_summary_int8.json).
 
-1. ejecutar la evaluación agrupada por fuente o *leave-one-source-out*;
-2. auditar solapamiento perceptual entre particiones;
-3. revisar los 110 errores, especialmente las deficiencias y las tres fuentes más débiles;
-4. exportar a TFLite Int8 y comprobar paridad y macro F1 sobre el test completo;
-5. validar latencia, OOD y calibración en el dispositivo objetivo.
-
-Los parámetros y métricas exactos se conservan en [`run_20260921_lite0_summary.json`](./evidencia/run_20260921_lite0_summary.json), [`classification_report.csv`](./evidencia/run_20260921_204608_test_classification_report.csv), [`confusion_matrix.csv`](./evidencia/run_20260921_204608_test_confusion_matrix.csv), [`calibration.json`](./evidencia/run_20260921_204608_test_calibration.json), desgloses por [ambiente](./evidencia/run_20260921_204608_test_by_environment.csv) y [fuente](./evidencia/run_20260921_204608_test_by_source.csv), y la corrida está en el [manifiesto de auditoría](./evidencia/manifiesto_corridas.csv).
+Los parámetros y métricas exactos se conservan en [`hpo_baseline_summary.json`](../reproducibilidad/evidencia/hpo_baseline_summary.json), [`classification_report.csv`](./evidencia/run_20260921_204608_test_classification_report.csv), [`confusion_matrix.csv`](./evidencia/run_20260921_204608_test_confusion_matrix.csv), [`calibration.json`](./evidencia/run_20260921_204608_test_calibration.json), desgloses por [ambiente](./evidencia/run_20260921_204608_test_by_environment.csv) y [fuente](./evidencia/run_20260921_204608_test_by_source.csv), y la corrida está en el [manifiesto de auditoría](./evidencia/manifiesto_corridas.csv).

@@ -1,7 +1,7 @@
-"""Módulo de optimización de hiperparámetros con Optuna (Criterio 1 - Rúbrica Etapa 2).
+"""Módulo de optimización de hiperparámetros con Optuna.
 
 Proporciona la clase `TuningObjective` para búsqueda bayesiana estructurada (TPE),
-poda temprana con MedianPruner y exportación de artefactos de análisis comparativo.
+poda temprana (MedianPruner por defecto) y exportación de artefactos de análisis comparativo.
 """
 
 from __future__ import annotations
@@ -89,7 +89,6 @@ def split_hash_snapshot(splits_dir: str | Path) -> dict[str, Any]:
         raise SplitIntegrityError(f"manifest.lock.json no coincide con sus CSV: {mismatches}")
     counts = {}
     for name in ("train", "val", "test"):
-        # Solo inventario de filas; no construye un Dataset ni carga imágenes de test.
         with (directory / f"{name}.csv").open(newline="", encoding="utf-8") as handle:
             counts[name] = sum(1 for _ in csv.reader(handle)) - 1
     return {
@@ -504,7 +503,6 @@ class TuningObjective:
 
     def _run_trial(self, trial: optuna.Trial) -> float:
         """Ejecuta un trial completo con poda temprana y early stopping."""
-        # La semilla de entrenamiento es fija; el sampler de Optuna es quien explora.
         set_global_seed(self.seed)
         self._verify_splits_unchanged()
         params = self.sample_parameters(trial)
@@ -952,7 +950,7 @@ def export_tuning_artifacts(
     model_name: str,
     baseline_macro_f1: float,
     *,
-    requested_trials: int = 60,
+    requested_trials: int = 25,
     seed: int = 42,
     split_snapshot: dict[str, Any] | None = None,
     search_space: HyperparameterSpace | None = None,
@@ -1014,7 +1012,6 @@ def export_tuning_artifacts(
         "best_params": effective_best_params,
     }
     atomic_write_json(output_dir / "best_hyperparameters.json", best_params_payload)
-    # Alias histórico: no rompe consumidores previos y contiene el mismo esquema estricto.
     atomic_write_json(output_dir / "best_params.json", best_params_payload)
     load_best_params(output_dir / "best_hyperparameters.json")
 
@@ -1179,7 +1176,7 @@ def write_selection_lock(
     study_dir: Path,
     split_snapshot: dict[str, Any],
     search_space: HyperparameterSpace,
-    requested_trials: int = 60,
+    requested_trials: int = 25,
 ) -> dict[str, Any]:
     """Congela al ganador antes de construir o cargar el test dataset."""
     protocol_budget = study.user_attrs.get("protocol", {}).get("n_trials", requested_trials)

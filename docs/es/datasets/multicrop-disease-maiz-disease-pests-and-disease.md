@@ -56,6 +56,4 @@ Este trabajo fue parcialmente financiado por la Universidad de los Emiratos Ára
 
 - [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
-> **Nota:** Se descubrió que Lethal Necrosis proviene del dataset:
-> Maize Imagery Dataset - Tanzania (sana, Maize Lethal Necrosis (MLN) y Maize Streak Virus (MSV))
-> Enlace: https://data.mendeley.com/datasets/fkw49mz3xs/1
+> **Nota:** Se descubrió que Lethal Necrosis proviene del dataset: Maize Imagery Dataset - Tanzania (sana, Maize Lethal Necrosis (MLN) y Maize Streak Virus (MSV)) Enlace: https://data.mendeley.com/datasets/fkw49mz3xs/1

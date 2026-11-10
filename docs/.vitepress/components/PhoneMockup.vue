@@ -1,20 +1,16 @@
 <template>
   <div class="phone-mockup-wrapper" :class="{ 'align-center': center }">
     <div class="phone-device" :style="{ maxWidth: maxWidth || '300px' }">
-      <!-- Phone Bezel -->
       <div class="phone-bezel">
-        <!-- Top Speaker / Dynamic Island bar -->
         <div class="phone-island">
           <div class="island-camera"></div>
           <div class="island-speaker"></div>
         </div>
-        <!-- Screen Content -->
         <div class="phone-screen">
           <img :src="src" :alt="alt || caption || 'Captura de pantalla'" loading="lazy" />
         </div>
       </div>
     </div>
-    <!-- Caption -->
     <div v-if="caption" class="phone-caption">
       <span class="caption-title">{{ caption }}</span>
       <span v-if="subtitle" class="caption-sub">{{ subtitle }}</span>

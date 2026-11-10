@@ -119,6 +119,7 @@ def export_main(
 @app.function(
     volumes=_VOLUMES,
     secrets=[modal.Secret.from_name("hf")],
+    cpu=8.0,
     timeout=7200,
 )
 def evaluate_export_main(
@@ -131,6 +132,7 @@ def evaluate_export_main(
     no_torch_baseline: bool = False,
     max_macro_f1_drop: float = 0.0,
     segmented: bool = False,
+    num_workers: int = 8,
 ) -> None:
     """
     Evalua modelos exportados sobre el split de test completo. Espeja `make eval-export-main`.
@@ -143,6 +145,7 @@ def evaluate_export_main(
     @param {int} batch_size Tamano de batch; 0 usa el default del script.
     @param {bool} no_torch_baseline Omite la referencia PyTorch (sin deltas).
     @param {float} max_macro_f1_drop Caida maxima de macro-F1; 0.0 usa el default.
+    @param {int} num_workers Workers del DataLoader de evaluacion.
     @param {bool} segmented El run fue entrenado sobre corn-clean-segmented: usa DATASET_ROOT=
         /data_segmented para evaluar sobre las mismas imagenes que vio el checkpoint.
     """
@@ -172,6 +175,7 @@ def evaluate_export_main(
         args.append("--no-torch-baseline")
     if max_macro_f1_drop:
         args += ["--max-macro-f1-drop", str(max_macro_f1_drop)]
+    args += ["--num-workers", str(num_workers)]
     try:
         subprocess.run(args, check=True, cwd=REPO_ANCHOR, env=_segmented_env(segmented))
     finally:
@@ -182,7 +186,8 @@ def evaluate_export_main(
     gpu="A10",
     volumes=_VOLUMES,
     secrets=[modal.Secret.from_name("hf")],
-    timeout=3600,
+    cpu=8.0,
+    timeout=7200,
 )
 def compute_ood_stats(
     models: str = DEFAULT_MODELS,
@@ -192,6 +197,7 @@ def compute_ood_stats(
     batch_size: int = 0,
     percentile: float = 0.0,
     segmented: bool = False,
+    num_workers: int = 8,
 ) -> None:
     """
     Calcula ood_stats.json (centroides + covarianza + umbral Mahalanobis) por modelo,
@@ -203,6 +209,7 @@ def compute_ood_stats(
     @param {str} splits_dir Directorio con train.csv/val.csv; vacio usa el de summary.json.
     @param {int} batch_size 0 usa el default del script.
     @param {float} percentile 0.0 usa el default del script (95).
+    @param {int} num_workers Workers del DataLoader de extraccion de features.
     @param {bool} segmented El run fue entrenado sobre corn-clean-segmented: usa DATASET_ROOT=
         /data_segmented para extraer features sobre las mismas imagenes que vio el checkpoint.
     """
@@ -226,6 +233,7 @@ def compute_ood_stats(
         args += ["--batch-size", str(batch_size)]
     if percentile:
         args += ["--percentile", str(percentile)]
+    args += ["--num-workers", str(num_workers)]
     try:
         subprocess.run(args, check=True, cwd=REPO_ANCHOR, env=_segmented_env(segmented))
     finally:

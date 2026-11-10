@@ -12,26 +12,18 @@ La tabla compara las tres métricas de test junto con el tamaño del checkpoint:
 | `shufflenet_v2_x1_0` | 0.9508 | 0.9030 | **0.169** | **5.0 MB** |
 | `efficientnet_lite0` | 0.9474 | 0.8951 | 0.218 | 13.1 MB |
 
-Los tres modelos **superan la meta de macro-F1 ≥ 0.85** con holgura. `efficientnet_b0` lidera el
-macro-F1 y es el umbral de referencia actual, pero la lectura no es tan simple como "gana b0":
+Los tres modelos **superan la meta de macro-F1 ≥ 0.85** con holgura. `efficientnet_b0` lidera el macro-F1 y es el umbral de referencia actual, pero la lectura no es tan simple como "gana b0":
 
-- **La diferencia entre los tres es de apenas 2 puntos de macro-F1** (0.9146 vs. 0.9030 vs.
-  0.8951). Para el margen de error de un test de 1 503 imágenes, los tres son esencialmente
-  equivalentes en calidad de clasificación.
-- **`shufflenet_v2_x1_0` obtiene la menor loss de test** (0.169) y el **checkpoint más pequeño con
-  diferencia** (5 MB, ~3x más liviano que b0).
+- **La diferencia entre los tres es de apenas 2 puntos de macro-F1** (0.9146 vs. 0.9030 vs. 0.8951). Para el margen de error de un test de 1 503 imágenes, los tres son esencialmente equivalentes en calidad de clasificación.
+- **`shufflenet_v2_x1_0` obtiene la menor loss de test** (0.169) y el **checkpoint más pequeño con diferencia** (5 MB, ~3x más liviano que b0).
 
 ## F1 por clase
 
-La cifra agregada esconde que el rendimiento **no es parejo entre clases**. La figura desglosa el
-F1 por clase y por modelo, ordenado de mayor a menor, y deja ver de inmediato dónde se concentra
-el problema.
+La cifra agregada esconde que el rendimiento **no es parejo entre clases**. La figura desglosa el F1 por clase y por modelo, ordenado de mayor a menor, y deja ver de inmediato dónde se concentra el problema.
 
 ![F1 por clase para los tres baselines](/baselines/baseline_f1_por_clase.png)
 
-El patrón es idéntico en los tres modelos: un bloque de clases "fáciles" que rozan o superan 0.95,
-un escalón intermedio en las lesiones foliares y las deficiencias de N y P, y una única clase que
-se desploma por debajo de la meta, **`potassium_deficiency`**.
+El patrón es idéntico en los tres modelos: un bloque de clases "fáciles" que rozan o superan 0.95, un escalón intermedio en las lesiones foliares y las deficiencias de N y P, y una única clase que se desploma por debajo de la meta, **`potassium_deficiency`**.
 
 | Clase | b0 | shufflenet | lite0 | Soporte (test) |
 |---|---:|---:|---:|---:|
@@ -47,8 +39,7 @@ se desploma por debajo de la meta, **`potassium_deficiency`**.
 
 ## El costo real de una sola clase
 
-Vale la pena cuantificar cuánto pesa `potassium_deficiency` sobre la métrica global. Si se recalcula
-el macro-F1 **excluyendo esa única clase**, los tres modelos saltan a un rango estrecho y alto:
+Vale la pena cuantificar cuánto pesa `potassium_deficiency` sobre la métrica global. Si se recalcula el macro-F1 **excluyendo esa única clase**, los tres modelos saltan a un rango estrecho y alto:
 
 | Modelo | macro-F1 (9 clases) | macro-F1 (sin potasio) | Δ |
 |---|---:|---:|---:|
@@ -56,22 +47,17 @@ el macro-F1 **excluyendo esa única clase**, los tres modelos saltan a un rango 
 | `shufflenet_v2_x1_0` | 0.9030 | 0.9490 | +0.046 |
 | `efficientnet_lite0` | 0.8951 | 0.9455 | +0.050 |
 
-Es decir: **una sola clase minoritaria arrastra el macro-F1 global entre 3.7 y 5.0 puntos.** El
-resto del clasificador ya opera a un nivel de ~0.95 macro-F1. Esto reencuadra el problema: el
-baseline no necesita "más capacidad de modelo", necesita resolver un cuello de botella de datos muy
-localizado.
+Es decir: **una sola clase minoritaria arrastra el macro-F1 global entre 3.7 y 5.0 puntos.** El resto del clasificador ya opera a un nivel de ~0.95 macro-F1. Esto reencuadra el problema: el baseline no necesita "más capacidad de modelo", necesita resolver un cuello de botella de datos muy localizado.
 
 ## Matriz de confusión
 
-La matriz de confusión de `efficientnet_b0` (normalizada por fila, es decir mostrando el recall de
-cada clase real) hace visible que los errores **no son ruido aleatorio**.
+La matriz de confusión de `efficientnet_b0` (normalizada por fila, es decir mostrando el recall de cada clase real) hace visible que los errores **no son ruido aleatorio**.
 
 ![Matriz de confusión de efficientnet_b0](/baselines/baseline_confusion_b0.png)
 
 **Clúster 1 - deficiencias nutricionales (N/P/K).** El bloque inferior-derecho concentra casi todo el error del modelo. De las 40 imágenes de potasio, solo 21 se clasifican bien; **13 se confunden con nitrógeno y 5 con fósforo**. La observación clave es que este error es *dirigido*: si se toman todas las predicciones de las tres deficiencias juntas, el **97 % permanece dentro del propio clúster N/P/K** (solo 6 de 211 se escapan a una clase no nutricional). El modelo *sabe* que está viendo una deficiencia; lo que no logra es discriminar **cuál** de las tres, porque comparten el mismo síntoma base de clorosis y potasio es la clase con menos ejemplos de todo el dataset (266 imágenes totales en el corpus con el que se entrenó este baseline; 621 tras la ampliación de agosto 2026, que aún no se ha reentrenado).
 
-**Clúster 2 - lesiones foliares (GLS ↔ NCLB).** `gray_leaf_spot` y `northern_corn_leaf_blight` se
-confunden mutuamente (4–5 imágenes en cada sentido para b0) porque sus lesiones alargadas grisáceas/marrones son visualmente muy parecidas. Es un error de menor magnitud pero también consistente entre los tres modelos.
+**Clúster 2 - lesiones foliares (GLS ↔ NCLB).** `gray_leaf_spot` y `northern_corn_leaf_blight` se confunden mutuamente (4–5 imágenes en cada sentido para b0) porque sus lesiones alargadas grisáceas/marrones son visualmente muy parecidas. Es un error de menor magnitud pero también consistente entre los tres modelos.
 
 Fuera de esos dos clústeres, la matriz es prácticamente diagonal: `common_rust`, `lethal_necrosis` y `healthy` se clasifican con recall ≥ 0.99.
 

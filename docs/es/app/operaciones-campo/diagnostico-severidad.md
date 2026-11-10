@@ -13,15 +13,9 @@ Una vez que el motor TFLite procesa la fotografía, la pantalla de resultados en
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_detail_scan.png" 
-    caption="Resultado Principal" 
-    subtitle="Confianza, condición y clima asociado" 
-  />
+    src="/app/pixel4_detail_scan.png" caption="Resultado Principal" subtitle="Confianza, condición y clima asociado" />
   <PhoneMockup 
-    src="/app/pixel4_detail_accordion.png" 
-    caption="Acordeón de Severidad" 
-    subtitle="Recomendaciones por umbral de daño" 
-  />
+    src="/app/pixel4_detail_accordion.png" caption="Acordeón de Severidad" subtitle="Recomendaciones por umbral de daño" />
 </PhoneGallery>
 
 ### 1. Indicador Principal y Nivel de Confianza

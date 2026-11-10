@@ -4,7 +4,6 @@ Uso: python scripts/pipeline/report_hpo.py --study-dir outputs/hpo/... --update-
 Acepta el presupuesto formal archivado (60 original / 25 enmendado), lock y test único.
 """
 
-# Las tablas y saltos Markdown del template preservan líneas largas y dos espacios.
 # ruff: noqa: E501, W291
 
 from __future__ import annotations
@@ -19,10 +18,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-
-def digest(path: Path) -> str:
-    with path.open("rb") as handle:
-        return hashlib.file_digest(handle, "sha256").hexdigest()
+from src.data.preparation import sha256_file
 
 
 def read_json(path: Path):
@@ -71,7 +67,7 @@ def validate_evidence(directory: Path):
         if amendment["test_used"] or datetime.fromisoformat(amendment["timestamp"]) > datetime.fromisoformat(lock["selection_timestamp"]):
             raise ValueError("La enmienda debe preceder selección/test.")
         for name, expected in amendment["prior_evidence_sha256"].items():
-            if digest(directory / "budget_revisions/60-to-25" / name) != expected:
+            if sha256_file(directory / "budget_revisions/60-to-25" / name) != expected:
                 raise ValueError(f"Evidencia previa alterada: {name}")
     if sorted(int(row["trial_number"]) for row in trials) != list(range(target)):
         raise ValueError("Identidades de trials incompletas o duplicadas.")
@@ -88,7 +84,7 @@ def validate_evidence(directory: Path):
         <= datetime.fromisoformat(final["finished_at"])
     ):
         raise ValueError("Test no es posterior al bloqueo de selección.")
-    if final["selection_lock_sha256"] != digest(directory / "HPO_SELECTION_LOCK.json"):
+    if final["selection_lock_sha256"] != sha256_file(directory / "HPO_SELECTION_LOCK.json"):
         raise ValueError("Selection lock difiere del usado en test.")
     winner = max(
         (row for row in trials if row["state"] == "COMPLETE"),
@@ -114,7 +110,7 @@ def validate_evidence(directory: Path):
         **{f"final_test/{name}": value for name, value in final["artifact_hashes"].items()},
     }
     for name, expected in checks.items():
-        if digest(directory / name) != expected:
+        if sha256_file(directory / name) != expected:
             raise ValueError(f"Hash inconsistente: {name}")
     before = read_json(directory / "preflight.json")["protocol"]["split_snapshot"]["sha256"]
     after = read_json(directory / "split_hashes_after.json")["sha256"]
@@ -122,7 +118,7 @@ def validate_evidence(directory: Path):
         raise ValueError("Los hashes de splits cambiaron.")
     source = read_json(directory / "preflight.json")["source"]
     archive = read_json(directory / "source_archive.json")
-    if digest(directory / "source_code.zip") != archive["archive_sha256"]:
+    if sha256_file(directory / "source_code.zip") != archive["archive_sha256"]:
         raise ValueError("Archivo de código alterado.")
     with zipfile.ZipFile(directory / "source_code.zip") as bundle:
         for name, expected in source["files"].items():
@@ -168,9 +164,14 @@ def build_report(directory: Path) -> str:
     for key in ("learning_rate", "weight_decay", "label_smoothing", "batch_size"):
         values = [float(row[key]) for row in top if row.get(key)]
         top_regions.append({"parameter": key, "top10_min": min(values), "top10_max": max(values)})
+    top_note = (
+        f"Solo hay {summary['n_complete']} trials COMPLETE; por eso se muestran {len(top)} candidatos elegibles, sin completar la tabla con trials PRUNED o FAIL.\n\n"
+        if len(top) < 10
+        else ""
+    )
     hashes = [{"artefacto": k, "SHA256": v} for k, v in lock["split_hashes"].items()]
     hashes += [
-        {"artefacto": key, "SHA256": digest(directory / key)}
+        {"artefacto": key, "SHA256": sha256_file(directory / key)}
         for key in (
             lock["winner_checkpoint"],
             "best_hyperparameters.json",
@@ -213,7 +214,7 @@ Son los mejores hiperparámetros encontrados dentro del espacio y presupuesto ev
 
 ## Top 10
 
-{table(top, ["rank", "trial", "val_macro_f1", "learning_rate", "weight_decay", "label_smoothing", "batch_size", "class_weights", "warmup_epochs", "best_epoch", "duration_seconds"])}
+{top_note}{table(top, ["rank", "trial", "val_macro_f1", "learning_rate", "weight_decay", "label_smoothing", "batch_size", "class_weights", "warmup_epochs", "best_epoch", "duration_seconds"])}
 
 ### Diagnósticos de validation
 
@@ -234,13 +235,13 @@ estabilidad entre semillas; esa validación corresponde a una fase posterior.
 {table([{"corte": k, "best_validation": v} for k, v in summary["convergence"].items()], ["corte", "best_validation"])}
 
 Última mejora: trial {lock["best_trial"]} (índice 0-based).
-No se ejecuta trial 61 aunque siga existiendo potencial de mejora.
+No se ejecuta un intento {summary["n_trials_requested"] + 1}: los IDs 0–{summary["n_trials_requested"] - 1} agotan el presupuesto.
 
 ## Hyperparameter importance
 
 {table(importance, ["parameter", "importance"]) if importance else "No estimable; consultar logs y número de COMPLETE."}
 
-Importancia descriptiva del estudio; no causal. fANOVA usa seed 42.
+Importancia descriptiva del estudio; no causal. fANOVA (seed 42) se calcula solo con los {summary["n_complete"]} trials COMPLETE.
 
 ## Evaluación final del ganador sobre test
 
@@ -274,8 +275,8 @@ Incluye `study.db`, `trials.csv`, `study_summary.json`, `best_hyperparameters.js
 ¿Optuna superó el baseline en Validation Macro-F1? {"Sí" if delta > 0 else "No"}  
 ¿Test fue utilizado durante selección? No  
 ¿Se completó el presupuesto de {summary["n_trials_requested"]} trials? Sí  
-¿Study puede reanudarse? Sí; presupuesto agotado, no admite más trials en esta fase.  
-¿Existe evidencia suficiente para reproducir la búsqueda? Sí, con el corpus congelado y entorno registrado.
+¿Study admite más trials? No: presupuesto agotado y selección bloqueada.  
+¿Se archivan código, hashes de splits y entorno de la búsqueda? Sí.
 
 El resultado es un HPO winner. No acredita producción ni entrenamiento formal,
 multi-seed, CV, LOSO, ensemble o temperature scaling.
@@ -283,8 +284,8 @@ multi-seed, CV, LOSO, ensemble o temperature scaling.
 
 
 def update_docs(directory: Path, root: Path, report: str):
-    """Añade evidencia; no sustituye tablas ni texto histórico."""
-    summary, lock, final, _ = validate_evidence(directory)
+    """Copia la evidencia verificada del estudio, su informe y las figuras al repositorio."""
+    lock = validate_evidence(directory)[1]
     docs = root / "docs/es"
     evidence = docs / "reproducibilidad/evidencia/hpo_lite0_seed42"
     evidence.mkdir(parents=True, exist_ok=True)
@@ -304,9 +305,9 @@ def update_docs(directory: Path, root: Path, report: str):
         "comparison_vs_baseline.csv",
     ]
     for name in names:
-        shutil.copy2(directory / name, evidence / name)
+        shutil.copy2(directory / name, evidence / name.lower())
     if (directory / "BUDGET_AMENDMENT.json").exists():
-        shutil.copy2(directory / "BUDGET_AMENDMENT.json", evidence / "BUDGET_AMENDMENT.json")
+        shutil.copy2(directory / "BUDGET_AMENDMENT.json", evidence / "budget_amendment.json")
         previous = evidence / "budget_revisions/60-to-25"
         previous.mkdir(parents=True, exist_ok=True)
         for name in ("preflight.json", "source_archive.json", "study_summary.json", "trials.csv"):
@@ -315,93 +316,9 @@ def update_docs(directory: Path, root: Path, report: str):
     (evidence / winner_summary).parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(directory / winner_summary, evidence / winner_summary)
     shutil.copytree(directory / "final_test", evidence / "final_test", dirs_exist_ok=True)
-    relative = "../reproducibilidad/evidencia/hpo_lite0_seed42/HPO_REPORT.md"
-    (evidence / "HPO_REPORT.md").write_text(report, encoding="utf-8")
-    marker = "<!-- hpo-lite0-seed42-completed -->"
-    date = final["finished_at"][:10]
-    target = summary["n_trials_requested"]
-    winner_line = (
-        f"Study `{summary['study_name']}`: {target} intentos, ganador trial {lock['best_trial']}, "
-        f"validation Macro-F1 {summary['best_value']:.9f}; "
-        f"baseline {summary['baseline_value']:.9f}; "
-        f"delta {(summary['best_value'] - summary['baseline_value']) * 100:+.6f} pp."
-    )
-    additions = {
-        "experimentos/hpo.md": f"## Resultados completados — {date}\n\n{winner_line}\n\n"
-        f"Test único posterior al lock. [Entrega completa, Top 10 y hashes]({relative}).",
-        "tesis/PROJECT_EVOLUTION.md": f"## {date} — HPO formal EfficientNet-Lite0\n\n"
-        f"Se completó Optuna con {target} intentos para optimizar sistemáticamente el baseline. {winner_line}\n\n"
-        f"Se exploraron LR, WD, smoothing, batch, pesos de clase y warmup; test permaneció cerrado "
-        f"hasta congelar ganador/checkpoint. [Parámetros, test final y evidencia]({relative}).",
-        "tesis/DECISION_LOG.md": f"## DEC-012 — Cierre experimental ({date})\n\n{winner_line}\n\n"
-        f"[Configuración seleccionada y resultados]({relative}).",
-        "tesis/EVIDENCE_REGISTRY.md": f"## HPO formal Lite0 — {date}\n\n{winner_line}\n\n"
-        f"[Registro con storage, trials, parámetros, lock, checkpoint, figuras y test final]({relative}). "
-        "Base y pesos completos en `corn-outputs:/hpo/efficientnet_lite0/efficientnet_lite0_seed42_hpo_v1/`.",
-        "tesis/MILESTONES.md": f"## M16 — cierre verificado ({date})\n\n"
-        f"**COMPLETADO: HPO Optuna {target} trials.** {winner_line}\n\n[Evidencia]({relative}).",
-        "reproducibilidad/figuras.md": f"## HPO Lite0 seed42 — {date}\n\n"
-        "Study `efficientnet_lite0_seed42_hpo_v1`; generador "
-        "`src/training/tuning.py::save_optimization_plots`; fuente `study.db`/`trials.csv`. "
-        "Código exacto en `source_code.zip`.\n\n"
-        + table(
-            [
-                {"figure": p.name, "SHA256": digest(p)}
-                for p in (directory / "figures").glob("*.png")
-            ],
-            ["figure", "SHA256"],
-        ),
-    }
-    for relative_path, addition in additions.items():
-        path = docs / relative_path
-        original = path.read_text(encoding="utf-8")
-        if marker not in original:
-            if relative_path == "experimentos/hpo.md":
-                original = original.replace(
-                    "**Estado al 2026-09-23: EN EJECUCIÓN; los 60 trials formales aún no se declaran completados.**",
-                    f"**Estado al {date}: COMPLETADO; {target} intentos y test único del ganador verificados.**",
-                ).replace(
-                    "**Estado al 2026-09-23: EN EJECUCIÓN; presupuesto revisado a 25 intentos totales.**",
-                    f"**Estado al {date}: COMPLETADO; {target} intentos y test único del ganador verificados.**",
-                ).replace(
-                    "Los resultados siguen pendientes de completar 60 intentos y el test final. No hay ganador ni mejora\n"
-                    "formal declarados en este corte.",
-                    "El corte inicial del 2026-09-23 todavía no tenía ganador ni mejora formal declarados. "
-                    "El resultado definitivo se documenta en «Resultados completados», al final de esta página.",
-                ).replace(
-                    "El cierre sigue pendiente de completar 25 intentos y el test final; los resultados\n"
-                    "actuales son provisionales.",
-                    "El presupuesto revisado de 25 intentos y el test único ya están verificados; "
-                    "véase «Resultados completados» al final de esta página.",
-                )
-            if relative_path == "tesis/MILESTONES.md":
-                original = original.replace(
-                    "| M16 | pendiente | Optuna 60 trials | plan HPO | PENDIENTE |",
-                    f"| M16 | {date} | Optuna {target} trials | HPO_REPORT.md | COMPLETADO |",
-                )
-            path.write_text(original.rstrip() + f"\n\n{marker}\n\n{addition}\n", encoding="utf-8")
+    (evidence / "hpo_report.md").write_text(report, encoding="utf-8")
     figures = root / "public/resultados/hpo_lite0_seed42"
     shutil.copytree(directory / "figures", figures, dirs_exist_ok=True)
-    # Tabla nueva: no altera plantillas/tablas históricas.
-    table_path = docs / "tesis/HPO_BASELINE_COMPARISON.md"
-    table_path.write_text(
-        "# Baseline vs HPO winner\n\n"
-        + table(
-            [
-                {
-                    "model": "Baseline 20260921_204608",
-                    "validation_macro_f1": summary["baseline_value"],
-                },
-                {
-                    "model": f"HPO trial {lock['best_trial']}",
-                    "validation_macro_f1": summary["best_value"],
-                },
-            ],
-            ["model", "validation_macro_f1"],
-        )
-        + f"\n\n[Evidencia]({relative}).\n",
-        encoding="utf-8",
-    )
 
 
 def main():

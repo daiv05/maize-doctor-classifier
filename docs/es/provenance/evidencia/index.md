@@ -1,14 +1,10 @@
-# Evidencia bruta
+# Evidencia de la campaña de procedencia
 
-Artefactos sin procesar de los experimentos de procedencia y fuga. Se versionan para que
-las cifras de los documentos sean auditables sin volver a ejecutar nada.
+Artefactos sin procesar de los experimentos de procedencia y fuga de la etapa 2. Respaldan las cifras de [Generalización entre fuentes](/es/resultados/generalizacion).
 
-Los artefactos vivos se generan en `outputs/experiments/`, que está en `.gitignore`. Lo que
-hay aquí es la copia congelada de cada ejecución que respalda un documento.
+Los artefactos vivos se generan en `outputs/experiments/`, que está en `.gitignore`. Lo que hay aquí es la copia congelada de cada ejecución que respalda un documento.
 
-## Fase 0 — Auditoría de procedencia
-
-Documento: [Fase 0](/es/provenance/fase-0-auditoria)
+## Auditoría de procedencia
 
 Generado con:
 
@@ -25,9 +21,7 @@ Ejecutado en local (Windows, RTX 5060) el 2026-09-09. No requiere GPU.
 | `source_by_split.csv` | Tabla fuente × partición, muestra que ninguna fuente queda retenida |
 | `manifest_with_source.csv.gz` | Manifiesto completo: 33 437 filas con clase, entorno, fuente y partición |
 
-## Fase 1 — Validación dejando una fuente fuera
-
-Documento: [Fase 1](/es/provenance/fase-1-particion-honesta)
+## Validación dejando una fuente fuera
 
 Generado con:
 
@@ -46,18 +40,15 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-09.
 | `loso_per_class.csv` | F1 por clase, comparando partición aleatoria y fuera de fuente |
 | `leave_one_source_out_border_ring.json` | Igual que el anterior, con el brazo que solo ve el marco exterior |
 | `leave_one_source_out_border_ring.run.txt` | Traza de esa ejecución |
-| `loso_gate.csv` | Compuerta 1 con ambas condiciones bajo el mismo protocolo, semilla 0 |
-| `loso_gate_3seeds.csv` | Compuerta 1 consolidada: media y desviación sobre tres semillas |
+| `loso_gate.csv` | Resultado con ambas condiciones bajo el mismo protocolo, semilla 0 |
+| `loso_gate_3seeds.csv` | Resultado consolidado: media y desviación sobre tres semillas |
 | `*_seed1.json`, `*_seed2.json` | Semillas adicionales de ambos brazos, con sus trazas `.run.txt` |
 
-## Nota sobre `PYTHONIOENCODING`
+## Codificación de la consola
 
-El CLI de Modal falla en esta máquina con `'charmap' codec can't encode '✓'` si la consola
-usa cp1252. Todas las invocaciones se hicieron con `PYTHONIOENCODING=utf-8`.
+En Windows el CLI de Modal requiere `PYTHONIOENCODING=utf-8`; con cp1252 falla al imprimir caracteres no ASCII.
 
-## Fase 2 — Intervenciones
-
-Documento: [Fase 2](/es/provenance/fase-2-intervenciones)
+## Intervenciones
 
 Generado con:
 
@@ -74,25 +65,21 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-10, cuatro corridas en paralelo.
 |---|---|
 | `leave_one_source_out_balanced*.json` | Balanceo de grupos, ambos brazos, con sus trazas `.run.txt` |
 | `leave_one_source_out_backmix0.5*.json` | BackMix 0,5, ambos brazos, con sus trazas |
-| `fase2_gate.csv` | Compuerta 2 aplicada: F1 y recuperación del marco por clase e intervención |
-| `augmentation_none.json`, `augmentation_hardened.json` | Fase 2b, diseño B: un entrenamiento evaluado con imagen completa y con sólo el marco, con sus trazas |
-| `augmentation_crop.json`, `augmentation_codec.json`, `augmentation_colour.json` | Fase 2c, ablación por componentes |
+| `fase2_gate.csv` | Resultado de las intervenciones: F1 y recuperación del marco por clase e intervención |
+| `augmentation_none.json`, `augmentation_hardened.json` | Diseño B: un entrenamiento evaluado con imagen completa y con sólo el marco, con sus trazas |
+| `augmentation_crop.json`, `augmentation_codec.json`, `augmentation_colour.json` | Ablación por componentes |
 | `augmentation_crop_colour.json` | Combinación de las dos palancas |
 | `ablacion_augmentation.csv`, `ablacion_augmentation_por_clase.csv` | Tablas resumen de la ablación |
 
-## Nota sobre los targets del Makefile
+## Targets del Makefile en Git Bash
 
-`MODAL` y `PYTHON` usan rutas con barra invertida de Windows, así que los targets funcionan
-desde PowerShell pero no desde Git Bash, donde la barra se pierde. Las corridas de este
-directorio se lanzaron invocando Modal directamente:
+`MODAL` y `PYTHON` usan rutas con barra invertida de Windows: los targets funcionan desde PowerShell pero no desde Git Bash. Desde Git Bash se invoca Modal directamente:
 
 ```bash
 PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -m modal run --detach     scripts/modal/leave_one_source_out.py --balance-groups --arm border_ring
 ```
 
 ## Corridas alineadas al pipeline principal
-
-Documento: [Consolidación](/es/provenance/consolidacion)
 
 Generado con:
 
@@ -112,5 +99,4 @@ Ejecutado en Modal sobre GPU A10 el 2026-09-11, con tope de 1 500 imágenes por 
 | `aligned_resumen.csv` | Las tres corridas: macro-F1, marco y dependencia |
 | `aligned_por_fuente.csv` | Exactitud por fuente retenida, con y sin marco |
 
-Las corridas de `colour_strong` usan la definición de brazo con confound descrita en el
-documento: sirven para comparar particiones, no para juzgar el efecto del color.
+En las corridas de `colour_strong` el brazo y el color están confundidos: sirven para comparar particiones, no para medir el efecto del color.

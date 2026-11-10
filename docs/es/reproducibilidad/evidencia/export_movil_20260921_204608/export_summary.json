@@ -1,0 +1,110 @@
+{
+  "checkpoint_sha256": "860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859",
+  "class_to_idx": {
+    "common_rust": 0,
+    "fall_armyworm": 1,
+    "gray_leaf_spot": 2,
+    "healthy": 3,
+    "lethal_necrosis": 4,
+    "nitrogen_deficiency": 5,
+    "northern_corn_leaf_blight": 6,
+    "phosphorus_deficiency": 7,
+    "potassium_deficiency": 8
+  },
+  "exported_at": "2026-11-01T00:01:29.592859",
+  "formats": [
+    {
+      "error": null,
+      "format": "onnx",
+      "output_path": "export/model.onnx",
+      "parity": {
+        "agreement_rate": 1.0,
+        "cross_runtime_agreement_rate": null,
+        "cross_runtime_max_abs_prob_diff": null,
+        "cross_runtime_tolerance": null,
+        "exported_top1_accuracy": 0.9666666666666667,
+        "max_abs_prob_diff": 3.337860107421875e-06,
+        "mean_abs_prob_diff": 3.948980165091598e-08,
+        "min_agreement_rate": 1.0,
+        "n_samples": 30,
+        "passed": true,
+        "per_channel_fully_connected": null,
+        "tolerance": 0.001,
+        "torch_top1_accuracy": 0.9666666666666667,
+        "warnings": []
+      },
+      "sha256": "1cc22db0d07986c10bd2cce61cb8740ecf2ec9be091bfed8cfa105d1cea3f564",
+      "succeeded": true
+    },
+    {
+      "error": null,
+      "format": "tflite",
+      "output_path": "export/model.tflite",
+      "parity": {
+        "agreement_rate": 1.0,
+        "cross_runtime_agreement_rate": 1.0,
+        "cross_runtime_max_abs_prob_diff": 2.980232238769531e-07,
+        "cross_runtime_tolerance": 0.05,
+        "exported_top1_accuracy": 0.9666666666666667,
+        "max_abs_prob_diff": 3.8743019104003906e-07,
+        "mean_abs_prob_diff": 2.0130364930537326e-08,
+        "min_agreement_rate": 1.0,
+        "n_samples": 30,
+        "passed": true,
+        "per_channel_fully_connected": 0,
+        "tolerance": 0.001,
+        "torch_top1_accuracy": 0.9666666666666667,
+        "warnings": []
+      },
+      "sha256": "435ccc3eb565f21a7b6c0821ba83e8a3f35bef65f346db4f068a551180af308f",
+      "succeeded": true
+    }
+  ],
+  "library_versions": {
+    "ai_edge_litert": "2.2.0",
+    "litert_torch": "0.9.4",
+    "onnx": "1.21.0",
+    "onnxruntime": "1.28.0",
+    "torch": "2.12.1+cu126"
+  },
+  "model": "efficientnet_lite0",
+  "preprocessing": {
+    "clahe": {
+      "clip_limit": 2.0,
+      "enabled": false,
+      "tile_grid": 8
+    },
+    "loader": {
+      "color_mode": "RGB",
+      "exif_transpose": true
+    },
+    "normalization": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "operation": "zscore",
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    },
+    "purpose": "inference",
+    "resize": {
+      "antialias": true,
+      "aspect_ratio": "stretch",
+      "interpolation": "bilinear",
+      "operation": "resize",
+      "target_size": [
+        224,
+        224
+      ]
+    },
+    "schema_version": 1
+  },
+  "quantize": null,
+  "run_id": "20260921_204608",
+  "schema_version": 1
+}

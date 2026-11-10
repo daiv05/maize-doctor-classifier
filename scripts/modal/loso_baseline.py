@@ -5,7 +5,6 @@ Upload the derived splits first. One invocation starts at most one training run.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import sys
 from pathlib import Path
@@ -19,14 +18,11 @@ from scripts.modal._common import (
     outputs_vol,
     run_with_periodic_commit,
 )
+from src.data.preparation import sha256_file
 
 app = modal.App("doctor-maiz-loso-baseline", image=image)
 BASE = Path("/outputs/loso/efficientnet_lite0_baseline")
 SOURCES = ("maize-diseases", "multicrop-disease-maiz")
-
-
-def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 @app.function(
@@ -48,18 +44,18 @@ def train_one(source: str, lock_sha256: str) -> None:
     root = BASE / source / "seed_42"
     splits = root / "splits"
     lock_path = splits / "manifest.lock.json"
-    if digest(lock_path) != lock_sha256:
+    if sha256_file(lock_path) != lock_sha256:
         raise ValueError("El lock remoto no coincide con el lock preflight local")
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     if lock["held_out_source"] != source or lock["protocol"] != "loso_baseline_seed42_v1":
         raise ValueError("Protocolo LOSO remoto diferente")
     for name in ("train.csv", "val.csv", "holdout.csv"):
-        if digest(splits / name) != lock["derived_sha256"][name]:
+        if sha256_file(splits / name) != lock["derived_sha256"][name]:
             raise ValueError(f"Hash LOSO remoto diferente: {name}")
     frozen = Path("/outputs/splits/seed_42")
     for name in ("master_manifest.csv", "train.csv", "val.csv", "test.csv",
                  "manifest.lock.json"):
-        if digest(frozen / name) != lock["frozen_sha256"][name]:
+        if sha256_file(frozen / name) != lock["frozen_sha256"][name]:
             raise ValueError(f"Hash seed_42 remoto diferente: {name}")
     if not (Path("/data") / "clean").exists():
         raise FileNotFoundError("No existe /data/clean")

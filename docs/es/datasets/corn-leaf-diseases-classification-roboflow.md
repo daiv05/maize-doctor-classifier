@@ -70,18 +70,7 @@ Todas las anotaciones son polígonos de segmentación (14 416 líneas, 0 bbox).
 
 ## Citación
 
-@misc{ corn-leaf-diseases-classifcation-nwmtk_dataset,
-  title = { corn leaf diseases classifcation Dataset },
-  type = { Open Source Dataset },
-  author = { David Deras },
-  howpublished = { \url{ https://universe.roboflow.com/david-deras/corn-leaf-diseases-classifcation-nwmtk } },
-  url = { https://universe.roboflow.com/david-deras/corn-leaf-diseases-classifcation-nwmtk },
-  journal = { Roboflow Universe },
-  publisher = { Roboflow },
-  year = { 2026 },
-  month = { aug },
-  note = { visited on 2026-08-11 },
-}
+@misc{ corn-leaf-diseases-classifcation-nwmtk_dataset, title = { corn leaf diseases classifcation Dataset }, type = { Open Source Dataset }, author = { David Deras }, howpublished = { \url{ https://universe.roboflow.com/david-deras/corn-leaf-diseases-classifcation-nwmtk } }, url = { https://universe.roboflow.com/david-deras/corn-leaf-diseases-classifcation-nwmtk }, journal = { Roboflow Universe }, publisher = { Roboflow }, year = { 2026 }, month = { aug }, note = { visited on 2026-08-11 }, }
 
 ## Licencia
 

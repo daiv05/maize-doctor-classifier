@@ -164,7 +164,7 @@ def test_audit_no_test_parse_and_hash_guard(synthetic_splits, monkeypatch):
         "sha256_overlap_count": 0,
         "group_overlap_count": 0,
     }
-    (path / "train.csv").write_text("modified")
+    (path / "train.csv").write_text("modified", encoding="utf-8")
     with pytest.raises(ValueError, match="hashes"):
         ms.audit_splits(path, hashes)
 
@@ -225,7 +225,7 @@ def mocked_execution(tmp_path, monkeypatch):
         (run / "best.pth").write_bytes(b"SYNTHETIC; NEVER LOAD")
         split_dir = tmp_path / "splits"
         split_dir.mkdir(exist_ok=True)
-        (split_dir / "manifest.lock.json").write_text("{}")
+        (split_dir / "manifest.lock.json").write_text("{}", encoding="utf-8")
         monkeypatch.setattr(
             "src.training.runs.split_manifest_fingerprint",
             lambda *a: (protocol["split_hashes"]["manifest.lock.json"], "manifest.lock.json"),
@@ -253,8 +253,8 @@ def mocked_execution(tmp_path, monkeypatch):
                 },
             },
         )
-        (run / "train_history.csv").write_text("epoch,val_macro_f1\n1,0.9\n")
-        (run / "validation_predictions.csv").write_text("sample_id\nsynthetic\n")
+        (run / "train_history.csv").write_text("epoch,val_macro_f1\n1,0.9\n", encoding="utf-8")
+        (run / "validation_predictions.csv").write_text("sample_id\nsynthetic\n", encoding="utf-8")
 
     monkeypatch.setattr(ms.subprocess, "run", fake_run)
     return tmp_path / "experiment", protocol, calls
@@ -271,7 +271,7 @@ def test_ten_slots_resume_without_duplicates_and_report(mocked_execution):
     assert len(summary["figures"]) == 5
     assert len(pd.read_csv(directory / "MULTISEED_RESULTS.csv")) == 10
     receipt = next(directory.glob("*/seed_*/COMPLETE.json"))
-    data = json.loads(receipt.read_text())
+    data = json.loads(receipt.read_text(encoding="utf-8"))
     checkpoint = receipt.parent / data["run_relative"] / "best.pth"
     checkpoint.write_bytes(b"tampered")
     with pytest.raises(CheckpointIntegrityError):

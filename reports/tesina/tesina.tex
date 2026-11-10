@@ -1,13 +1,11 @@
 \documentclass[12pt,letterpaper]{report}
 
-% --- Paquetes de Formato y Geometría ---
 \usepackage[margin=1in]{geometry}
 \usepackage{times}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[spanish,es-tabla]{babel}
 
-% --- Paquetes Matemáticos y Gráficos ---
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -18,6 +16,7 @@
 \usepackage{colortbl}
 \usepackage{xcolor}
 \usepackage{float}
+\usepackage{placeins}
 \usepackage{caption}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric,arrows.meta,positioning,calc,fit}
@@ -33,17 +32,12 @@
 
 \sloppy
 
-% --- Rutas de Gráficos ---
-\graphicspath{{images/}{../second-phase/images/}}
-
-% --- Configuración de Encabezados y Pies de Página ---
 \setlength{\headheight}{15pt}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[R]{\thepage}
 \renewcommand{\headrulewidth}{0pt}
 
-% --- Redefinición de Títulos en Español ---
 \renewcommand{\tablename}{Tabla}
 \renewcommand{\figurename}{Figura}
 \renewcommand{\contentsname}{\'Indice General}
@@ -51,7 +45,6 @@
 \renewcommand{\listfigurename}{\'Indice de Figuras}
 \renewcommand{\bibname}{Bibliograf\'ia}
 
-% Personalización del formato de capítulos para estilo tesina UES
 \usepackage{titlesec}
 \titleformat{\chapter}[display]
   {\normalfont\Large\bfseries\centering}
@@ -62,11 +55,7 @@
 
 \begin{document}
 
-% ----------------------------------------------------------------------
-% PÁGINAS PRELIMINARES PROTOCOLARIAS (ESTÁNDAR FIA-UES)
-% ----------------------------------------------------------------------
 
-% 1. Portada Oficial del Curso de Especialización
 \begin{titlepage}
 \centering
 {\normalsize\bfseries UNIVERSIDAD DE EL SALVADOR\par}
@@ -93,10 +82,9 @@
 \vspace{0.2cm}
 {\normalsize\bfseries INGENIERO(A) DE SISTEMAS INFORM\'ATICOS\par}
 \vfill
-{\small CIUDAD UNIVERSITARIA, OCTUBRE DE 2026\par}
+{\small CIUDAD UNIVERSITARIA, 24 DE NOVIEMBRE DE 2026\par}
 \end{titlepage}
 
-% 2. Hoja de Autoridades Universitarias
 \newpage
 \thispagestyle{empty}
 \begin{center}
@@ -112,7 +100,7 @@
 
 \noindent \small SECRETARIO GENERAL:
 \begin{center}
-{\normalsize\bfseries LCDO. PEDRO ROSARIO ESCOBAR CASTANEDA\par}
+{\normalsize\bfseries LCDO. PEDRO ROSALIO ESCOBAR CASTANEDA\par}
 \end{center}
 \vspace{1.0cm}
 
@@ -143,7 +131,6 @@
 {\normalsize\bfseries MSC. CESAR AUGUSTO GONZ\'ALEZ RODR\'IGUEZ\par}
 \end{center}
 
-% 3. Portada Interior
 \newpage
 \thispagestyle{empty}
 \begin{center}
@@ -177,16 +164,19 @@
 
 \noindent \small Trabajo de Graduaci\'on Aprobado por:\par
 \vspace{0.25cm}
-\noindent \small \hspace*{0.6cm} Docente Asesor(a):
+\noindent \small \hspace*{0.6cm} Docentes Asesores:
 \begin{center}
 {\normalsize\bfseries ING. BLADIMIR DIAZ CAMPOS\par}
+\vspace{0.15cm}
+{\normalsize\bfseries ING. KAREN ELVIRA PE\~NATE AVILES\par}
+\vspace{0.15cm}
+{\normalsize\bfseries ING. RODRIGO ERNESTO VASQUEZ ESCALANTE\par}
 \end{center}
 \vfill
 \begin{center}
-{\small SAN SALVADOR, OCTUBRE DE 2026\par}
+{\small SAN SALVADOR, 24 DE NOVIEMBRE DE 2026\par}
 \end{center}
 
-% 4. Hoja de Aprobación del Asesor
 \newpage
 \thispagestyle{empty}
 \begin{center}
@@ -195,16 +185,20 @@
 \end{center}
 \vspace{2.5cm}
 
-\noindent \small Docente Asesor:
+\noindent \small Docentes Asesores:
 \begin{center}
 {\normalsize\bfseries ING. BLADIMIR DIAZ CAMPOS\par}
+\vspace{0.4cm}
+{\normalsize\bfseries ING. KAREN ELVIRA PE\~NATE AVILES\par}
+\vspace{0.4cm}
+{\normalsize\bfseries ING. RODRIGO ERNESTO VASQUEZ ESCALANTE\par}
 \end{center}
 
-% 5. Agradecimientos
 \newpage
 \pagenumbering{roman}
 \setcounter{page}{1}
 
+\onehalfspacing
 \begin{center}
 {\large\bfseries Agradecimientos\par}
 \end{center}
@@ -212,9 +206,9 @@
 
 \noindent A Dios todopoderoso, por haberme concedido la perseverancia, la sabidur\'ia y la fortaleza necesaria para afrontar cada desaf\'io acad\'emico y culminar con \'exito esta etapa de mi formaci\'on profesional.
 
-\noindent A mi familia, cuyo respaldo incondicional, sacrificios silenciosos y constante motivaci\'on fueron el cimiento sobre el cual pude edificar cada meta. Gracias por creer en m\'i en todo instante.
+\noindent A mi familia, por su apoyo incondicional, sus sacrificios y su constante motivaci\'on. Gracias por creer en m\'i en todo momento.
 
-\noindent A mis compa\~neros de tesis y amigos entra\~nables, David y Elmer, por las incontables jornadas de discusi\'on t\'ecnica, investigaci\'on y programaci\'on. Su compromiso y esfuerzo conjunto hicieron posible que esta investigaci\'on trascendiera el aula para convertirse en un aporte tangible al agro salvadore\~no.
+\noindent A mis compa\~neros de tesis y amigos, David y Elmer, por las muchas jornadas de discusi\'on t\'ecnica, investigaci\'on y programaci\'on. Su compromiso y su esfuerzo hicieron posible este trabajo.
 
 \noindent A la Universidad de El Salvador y a cada docente de la Escuela de Ingenier\'ia de Sistemas Inform\'aticos, por transmitirme con rigor y vocaci\'on los principios cient\'ificos que hoy me capacitan como profesional al servicio de la sociedad.
 
@@ -228,13 +222,13 @@
 \end{center}
 \vspace{0.5cm}
 
-\noindent A Dios, por guiar mis pasos, iluminar mi entendimiento y brindarme salud y perseverancia en cada tramo de este largo camino universitario.
+\noindent A Dios, por darme salud, fortaleza y la oportunidad de llegar hasta este momento.
 
-\noindent A mis padres y hermanos, por su amor inquebrantable, su fe en mis capacidades y por ense\~narme que ning\'un obst\'aculo es insuperable cuando se trabaja con disciplina y honestidad. Cada p\'agina de este esfuerzo tambi\'en les pertenece.
+\noindent A mis padres y hermanos, por su apoyo, paciencia y confianza durante todo este proceso. Gracias por acompa\~narme y motivarme a seguir adelante, incluso en los momentos dif\'iciles.
 
-\noindent A mis compa\~neros de equipo, Josias y Elmer, por compartir la misma pasi\'on por la excelencia tecnol\'ogica y el rigor cient\'ifico. Las largas noches resolviendo problemas de modelos y arquitecturas forjaron no solo un gran proyecto, sino una amistad inquebrantable.
+\noindent A mis compa\~neros de equipo, Josias y Elmer, por el esfuerzo, la dedicaci\'on y el compromiso que compartimos durante el desarrollo de este proyecto. Gracias por el trabajo en equipo, las experiencias y todo lo aprendido en el camino.
 
-\noindent A todos los profesores y asesores que nos exigieron dar lo mejor de nosotros y nos ense\~naron a buscar siempre el impacto social de la inform\'atica.
+\noindent A nuestros profesores y asesores, por compartir sus conocimientos, orientarnos y brindarnos su apoyo durante nuestra formaci\'on acad\'emica y el desarrollo de este trabajo.
 
 \begin{flushright}
 \textit{David Alejandro Deras Cerros}
@@ -246,19 +240,18 @@
 \end{center}
 \vspace{0.5cm}
 
-\noindent A Dios, principio y fin de todas las cosas, por derramar sobre mi vida bendiciones inmerecidas, paciencia ante la adversidad y la capacidad de culminar mi carrera profesional.
+\noindent Agradezco profundamente al Todopoderoso, por su gracia inmerecida, sabidur\'ia que me concedi\'o y fortaleza para superar cada desaf\'io a lo largo de este proceso de formaci\'on. A \'el atribuyo la gloria de haber culminado con \'exito esta etapa de mi vida acad\'emica y profesional.
 
-\noindent A mi amada familia, por su apoyo moral y material constante, por sus oraciones y por ser el refugio que siempre me impuls\'o a seguir adelante sin desfallecer.
+\noindent Adem\'as, expreso mi sincero agradecimiento a mis padres, por el apoyo incondicional que me han demostrado en peque\~nos y grandes detalles. Su motivaci\'on constante y su confianza en mis capacidades fueron actos de amor que me ayudaron a vencer el cansancio y me hicieron recordar mis objetivos.
 
-\noindent A mis colegas y compa\~neros de graduaci\'on, Josias y David, por la lealtad, el trabajo en equipo y el entusiasmo inagotable con el que enfrentamos este reto. Su talento y dedicaci\'on hicieron que cada desaf\'io fuera una oportunidad de aprendizaje mutuo.
+\noindent A mis compa\~neros de graduaci\'on, Josias y David, por su amistad. El trabajo en equipo se volvi\'o una experiencia enriquecedora, y el entusiasmo inagotable con el que enfrentamos este reto nos dej\'o un gran aprendizaje. Reconozco el talento y dedicaci\'on que mostraron, que hicieron de cada desaf\'io una oportunidad de crecimiento. 
 
-\noindent A la gloriosa Universidad de El Salvador, alma mater de generaciones, por abrirme sus puertas y formarme con sentido cr\'itico y compromiso hacia los sectores m\'as desprotegidos de nuestra patria.
+\noindent A la gloriosa Universidad de El Salvador, alma mater de generaciones, por abrirme sus puertas y formarme con sentido cr\'itico y compromiso social. A todo el cuerpo docente, por su dedicaci\'on y entrega en la formaci\'on de profesionales competentes y comprometidos con la sociedad.
 
 \begin{flushright}
 \textit{Elmer Edenilson Rosales Molina}
 \end{flushright}
 
-% 6. Resumen Ejecutivo
 \newpage
 \begin{center}
 {\Large\bfseries Resumen Ejecutivo\par}
@@ -266,23 +259,16 @@
 \vspace{0.3cm}
 
 \onehalfspacing
-El cultivo del ma\'iz constituye un componente fundamental de la seguridad alimentaria y de los medios de vida de numerosos productores en El Salvador, especialmente de aquellos que trabajan en peque\~nas parcelas y disponen de acceso limitado a asistencia t\'ecnica especializada. En este contexto, las enfermedades foliares, las plagas y las deficiencias nutricionales pueden comprometer el rendimiento de los cultivos y dificultar la identificaci\'on oportuna de problemas agron\'omicos. Las soluciones de diagn\'ostico basadas en visi\'on artificial ofrecen una alternativa tecnol\'ogica, aunque su aplicaci\'on en entornos rurales plantea desaf\'ios relacionados con la conectividad, los recursos computacionales de los dispositivos m\'oviles y la capacidad de generalizaci\'on ante im\'agenes capturadas en condiciones distintas de aquellas utilizadas durante el entrenamiento.
+El ma\'iz es la base de la alimentaci\'on de las familias campesinas de El Salvador, y la mayor\'ia de los productores trabaja parcelas peque\~nas con poca asistencia t\'ecnica. Las enfermedades foliares, las plagas y las deficiencias nutricionales reducen el rendimiento si no se detectan a tiempo. Las herramientas de diagn\'ostico por visi\'on artificial suelen exigir conexi\'on a internet o tel\'efonos potentes, o fallan con fotograf\'ias distintas a las del entrenamiento.
 
-Esta investigaci\'on aborda dichos desaf\'ios mediante el an\'alisis, dise\~no, desarrollo y evaluaci\'on de \textbf{Doctor Ma\'iz}, un sistema m\'ovil de visi\'on artificial basado en redes neuronales convolucionales (CNN) y t\'ecnicas de inteligencia artificial en el borde (\textit{Edge AI}). La soluci\'on est\'a orientada a la clasificaci\'on de nueve condiciones agron\'omicas foliares, que comprenden enfermedades, plagas y deficiencias nutricionales, mediante inferencia local en dispositivos m\'oviles. Asimismo, incorpora mecanismos de captura y contribuci\'on voluntaria de im\'agenes georreferenciadas, cuya sincronizaci\'on permite sentar las bases para la conformaci\'on de un conjunto de datos nacional sobre condiciones fitosanitarias del ma\'iz.
+Esta investigaci\'on presenta DoctorMaiz, una aplicaci\'on m\'ovil que clasifica nueve condiciones de la hoja de ma\'iz (enfermedades, una plaga y deficiencias nutricionales) con una red convolucional que se ejecuta en el propio tel\'efono y sin conexi\'on. Incluye un marco gu\'ia para la captura, un detector de im\'agenes fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD) y un m\'odulo opcional para aportar fotograf\'ias a un conjunto de datos nacional.
 
-Para el desarrollo experimental se recopil\'o y depur\'o un corpus de \textbf{33~429 im\'agenes} procedentes de 11 repositorios internacionales. Se implement\'o un flujo de procesamiento reproducible que incluy\'o controles de integridad, revisi\'on de duplicados y verificaci\'on de la procedencia de las im\'agenes. La optimizaci\'on de hiperpar\'ametros se realiz\'o mediante optimizaci\'on bayesiana con Optuna y poda temprana mediante MedianPruner, explorando seis dimensiones de configuraci\'on y registrando los tiempos de c\'omputo en GPU de cada ensayo.
+Se reuni\'o un corpus de 33~429 im\'agenes de 11 repositorios internacionales, con control de integridad, revisi\'on de duplicados y registro de la procedencia. El modelo oficial es un modelo EfficientNet-Lite0, que obtuvo un Macro $F_1$ de 0.9480 y una exactitud de 97.81\% en 5~015 im\'agenes de prueba ($0.9435 \pm 0.0052$ con tres semillas). La b\'usqueda de hiperpar\'ametros con Optuna qued\'o como experimento complementario al no superar ese resultado en prueba, y se realizó también un ensamble de tres redes, dando como resultado un Macro $F_1$ de 0.9567.
 
-Se evalu\'o un ensamble heterog\'eneo de arquitecturas convolucionales compuesto por EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2, utilizando votaci\'on suave (\textit{Soft Voting}). En un conjunto de prueba retenida de 5~015 im\'agenes, el ensamble obtuvo una exactitud del \textbf{98.29\%}, un Macro $F_1$ de \textbf{0.9567} y un Macro Recall del \textbf{95.06\%}. Para la clase de necrosis letal del ma\'iz se registr\'o un \textbf{Recall del 100\% (963 de 963 im\'agenes clasificadas correctamente)}, mientras que la deficiencia de potasio alcanz\'o un $F_1$ de \textbf{0.8475}. Estos resultados corresponden al protocolo experimental empleado y no constituyen, por s\'i solos, una garant\'ia del rendimiento del sistema en condiciones reales de campo.
+La principal limitaci\'on es la generalizaci\'on, en fotograf\'ias de campo ajenas al corpus el modelo acert\'o 41 (42\%) y el detector rechaz\'o 49. La validaci\'on agrupada por fuente dio un Macro $F_1$ de $0.6026 \pm 0.1240$, frente a $0.9311 \pm 0.0099$ en la partici\'on estratificada. La ablaci\'on espacial indica que el modelo se apoya en la periferia de la imagen: la exactitud fue de 79.46\% al ocluir el centro y de 42.25\% al ocluir la periferia.
 
-La evaluaci\'on de generalizaci\'on mediante validaci\'on cruzada agrupada por fuente (\textit{SourceGroupedKFold}) produjo un Macro $F_1$ de $0.6026 \pm 0.1240$ sobre las clases evaluables en cada pliegue, lo que evidenci\'o limitaciones para transferir los resultados entre fuentes de im\'agenes. Adicionalmente, un experimento de ablaci\'on espacial mostr\'o que, al ocluir la regi\'on central de la hoja, el modelo conserv\'o un \textbf{79.46\% de exactitud}, resultado que motiv\'o el an\'alisis de posibles atajos visuales y la influencia del fondo en las predicciones. Como medidas de mitigaci\'on, se incorporaron un marco gu\'ia para la captura de im\'agenes y un mecanismo de detecci\'on de entradas fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD), basado en la distancia de Mahalanobis y calibrado al percentil 95. Estas medidas buscan reducir los errores asociados a entradas inadecuadas y requieren evaluaciones espec\'ificas para cuantificar su efectividad.
+El modelo se cuantiz\'o a enteros de 8 bits (Int8) y pesa 3.74~MB, 72.9\% menos que en coma flotante, con un Macro $F_1$ de 0.9489 en la prueba completa. En un teléfono de gama media, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia. Con esto resultados se proponen cinco recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA: validaci\'on en campo, un banco nacional de datos, una red de alerta fitosanitaria, capacitaci\'on comunitaria y software abierto.
 
-Para el despliegue m\'ovil, el modelo \texttt{EfficientNet-Lite0} se cuantiz\'o a enteros de 8 bits (\textbf{Int8}), reduciendo su tama\~no un 72\%, hasta \textbf{3.56~MB}. En pruebas realizadas en un dispositivo f\'isico Motorola edge 40 neo con Android 15, se registr\'o una latencia de inferencia de aproximadamente \textbf{60~milisegundos} para una ejecuci\'on de referencia. La inferencia local permite realizar clasificaciones sin conexi\'on a internet, mientras que las funciones de sincronizaci\'on de im\'agenes requieren conectividad.
-
-En conjunto, Doctor Ma\'iz integra clasificaci\'on mediante aprendizaje profundo, ejecuci\'on en dispositivos m\'oviles y mecanismos de recopilaci\'on colaborativa de im\'agenes. Los resultados demuestran la viabilidad t\'ecnica de la implementaci\'on y, al mismo tiempo, ponen de manifiesto la necesidad de fortalecer la generalizaci\'on entre fuentes y validar el comportamiento del sistema con im\'agenes representativas de condiciones reales de cultivo. Finalmente, se proponen cinco recomendaciones dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al Centro Nacional de Tecnolog\'ia Agropecuaria y Forestal (CENTA), orientadas a la validaci\'on en campo, la transferencia tecnol\'ogica y el desarrollo progresivo de un conjunto de datos nacional de acceso abierto.
-
-% ----------------------------------------------------------------------
-% ÍNDICES
-% ----------------------------------------------------------------------
 \newpage
 \tableofcontents
 \newpage
@@ -290,15 +276,11 @@ En conjunto, Doctor Ma\'iz integra clasificaci\'on mediante aprendizaje profundo
 \newpage
 \listoffigures
 
-% ----------------------------------------------------------------------
-% CUERPO PRINCIPAL DEL DOCUMENTO
-% ----------------------------------------------------------------------
 \newpage
-\doublespacing
+\onehalfspacing
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-% Inclusión de Capítulos Modulares
 \include{capitulo1}
 \include{capitulo2}
 \include{capitulo3}

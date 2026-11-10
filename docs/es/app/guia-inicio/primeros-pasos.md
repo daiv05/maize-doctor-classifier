@@ -15,15 +15,9 @@ Al iniciar la app, encontrarás el botón **"Continuar como Invitado"**.
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_profile_guest.png" 
-    caption="Perfil de Invitado" 
-    subtitle="Uso local sin registro" 
-  />
+    src="/app/pixel4_profile_guest.png" caption="Perfil de Invitado" subtitle="Uso local sin registro" />
   <PhoneMockup 
-    src="/app/pixel4_profile.png" 
-    caption="Perfil Registrado" 
-    subtitle="Impacto colectivo y rangos" 
-  />
+    src="/app/pixel4_profile.png" caption="Perfil Registrado" subtitle="Impacto colectivo y rangos" />
 </PhoneGallery>
 
 ### ¿Qué permite el Modo Invitado?

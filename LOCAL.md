@@ -48,6 +48,7 @@ Variables relevantes:
 | Variable | Descripción |
 |---|---|
 | `DATASET_ROOT` | Ruta local donde vivirá el dataset fuente (debe contener `raw/`, `clean/`). Elige cualquier carpeta de tu máquina, p.ej. `C:/Users/tu_usuario/datasets/corn-leaf-diseases` en Windows o `/Users/tu_usuario/datasets/corn-leaf-diseases` en macOS/Linux. Los artefactos generados (`splits/`, resultados de entrenamiento, reports) viven aparte, en `outputs/` dentro del propio repo - ver `get_output_root()` en `src/config.py`. |
+| `OUTPUT_ROOT` | Raíz de los artefactos generados. Si la ruta no existe, `get_output_root()` usa `outputs/` dentro del repo; en Windows, un valor como `/outputs` se resuelve contra la raíz del repo si esa carpeta existe. |
 | `HF_DATASET_REPO` | Repo de tipo *dataset* en Hugging Face Hub que contiene `clean/` (fuente primaria de descarga). |
 | `HF_TOKEN` | Solo necesario si el repo de HF es privado o no hiciste `huggingface-cli login`. |
 | `GDRIVE_DATASET_ID` | ID de carpeta pública de Google Drive, usada como respaldo si falla la descarga desde HF. |
@@ -70,19 +71,14 @@ ln -s /ruta/a/tu/dataset data
 make install
 ```
 
-Esto corre `pip install -e ".[dev,analysis,xai,cloud]"` dentro del venv (instala el paquete `src/` en modo editable + todos los extras necesarios para el flujo local, incluida la descarga del dataset). Extras disponibles en `pyproject.toml`:
+Esto corre `pip install -e ".[dev,analysis,xai,cloud,tuning]"` dentro del venv (instala el paquete `src/` en modo editable + todos los extras necesarios para el flujo local, incluida la descarga del dataset). Extras disponibles en `pyproject.toml`:
 
-- `dev`: ipykernel, jupyterlab, matplotlib, seaborn, ruff, pyright
-- `analysis`: imagededup, fiftyone, imageio, mongoengine, motor (necesario para deduplicación y
-  exploración visual)
+- `dev`: ipykernel, jupyterlab, matplotlib, seaborn, ruff, pyright, pytest, optuna
+- `analysis`: imagededup (necesario para la deduplicación perceptual de `src/cleanup/find_duplicates.py`)
+- `tuning`: optuna, optuna-dashboard (necesario para `make tune-dashboard`)
 - `xai`: lime, shap, scikit-image, matplotlib (necesario para `make explain-visual`/`fidelity`/`errors`/`compare`/`global`)
-- `cloud`: huggingface_hub, gdown (necesario para descargar/subir el dataset)
-- `export`: onnx, onnxruntime (necesario para `make export-main`/`train --export`; no incluido
-  en `make install` por defecto - instalar con `pip install -e ".[export]"`). TFLite requiere
-  ademas `litert-torch` (renombrado desde `ai-edge-torch`, deprecado) y `ai-edge-litert`, que
-  solo soportan Linux - ya declarados como dependencia condicional (`sys_platform == 'linux'`)
-  dentro del extra `export`, asi que `pip install -e ".[export]"` en un entorno Linux (WSL
-  incluido) los instala automaticamente; no hace falta instalarlos aparte.
+- `cloud`: huggingface_hub, gdown, modal (necesario para descargar/subir el dataset y para los targets `modal-*`)
+- `export`: onnx, onnxruntime, onnxscript (necesario para `make export-main`/`train --export`; no incluido en `make install` por defecto - instalar con `pip install -e ".[export]"`). TFLite requiere ademas `litert-torch` (renombrado desde `ai-edge-torch`, deprecado) y `ai-edge-litert`, que solo soportan Linux - ya declarados como dependencia condicional (`sys_platform == 'linux'`) dentro del extra `export`, asi que `pip install -e ".[export]"` en un entorno Linux (WSL incluido) los instala automaticamente; no hace falta instalarlos aparte.
 
 Si solo necesitas descargar el dataset sin las herramientas de desarrollo/análisis:
 
@@ -99,12 +95,9 @@ Con `DATASET_ROOT` ya configurado en `.env` (las dependencias de `cloud` ya vien
 make download-dataset
 ```
 
-Esto ejecuta `scripts/dataset/download_dataset.py`, que descarga `clean/` hacia
-`$DATASET_ROOT/clean/`, intentando primero Hugging Face Hub (`HF_DATASET_REPO`) y usando Google Drive (`GDRIVE_DATASET_ID`) como respaldo si falla. Si `$DATASET_ROOT/clean/` ya tiene contenido, el script no vuelve a descargar (usa `--force` para forzarlo).
+Esto ejecuta `scripts/dataset/download_dataset.py`, que descarga `clean/` hacia `$DATASET_ROOT/clean/`, intentando primero Hugging Face Hub (`HF_DATASET_REPO`) y usando Google Drive (`GDRIVE_DATASET_ID`) como respaldo si falla. Si `$DATASET_ROOT/clean/` ya tiene contenido, el script no vuelve a descargar (usa `--force` para forzarlo).
 
-Desde HF el dataset llega en shards `clean-<NNNNN>.tar` (~800 MB cada uno, ~19 GB en total); el script
-los extrae y elimina automáticamente, dejando el árbol `clean/<clase>/{lab,real}/`. Un `.tar` sin extraer
-se considera descarga incompleta y dispara el reintento.
+Desde HF el dataset llega en shards `clean-<NNNNN>.tar` (~800 MB cada uno, ~19 GB en total); el script los extrae y elimina automáticamente, dejando el árbol `clean/<clase>/{lab,real}/`. Un `.tar` sin extraer se considera descarga incompleta y dispara el reintento.
 
 Para **publicar** una versión nueva del dataset (empaqueta los shards y los sube):
 
@@ -113,8 +106,7 @@ make upload-dataset STAGE_DIR=/ruta/con/espacio DRY_RUN=1   # plan de shards, si
 make upload-dataset STAGE_DIR=/ruta/con/espacio             # empaqueta y sube
 ```
 
-`STAGE_DIR` es obligatorio y necesita ~19 GB libres: ahí se materializan los `.tar` antes de subirlos
-(se borra al terminar, salvo con `KEEP_STAGE=1`). Requiere `HF_TOKEN` con permiso de escritura.
+`STAGE_DIR` es obligatorio y necesita ~19 GB libres: ahí se materializan los `.tar` antes de subirlos (se borra al terminar, salvo con `KEEP_STAGE=1`). Requiere `HF_TOKEN` con permiso de escritura.
 
 **Nunca coloques ni modifiques nada manualmente en `raw/`** - esa carpeta es inmutable y no forma parte de este flujo de descarga; `clean/` es la única fuente de verdad para el pipeline.
 
@@ -133,8 +125,9 @@ No edites los CSV de `outputs/splits/` a mano - son derivados reproducibles.
 
 ```bash
 make summary   # Conteo de imágenes por clase/entorno (valida que clean/ esté bien poblado)
-make lint      # ruff check
-make fmt       # ruff format
+make lint      # ruff check sobre src/ y scripts/
+make check     # pyright sobre src/ y scripts/
+make test      # pytest -q tests
 ```
 
 ## 8. Entrenar
@@ -156,7 +149,7 @@ make explain-errors-main MAIN_MODELS=efficientnet_lite0        # Análisis post-
 ```bash
 make help          # targets y variables vigentes
 make test-loader   # carga un batch (image, label, sample_id)
-make check         # verificaciones configuradas por el proyecto
+make check         # pyright sobre src/ y scripts/
 ```
 
 La especificación de identidad, manifests y splits está en [`docs/es/metodologia/pipeline-datos.md`](docs/es/metodologia/pipeline-datos.md). No regeneres `make splits` si solo quieres reutilizar una materialización contractual existente.

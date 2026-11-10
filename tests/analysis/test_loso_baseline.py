@@ -11,12 +11,14 @@ from scripts.experiments.prepare_loso_baseline import (
     derive,
     load_frozen,
     materialize,
-    sha256,
 )
+from src.data.preparation import sha256_file
 
 
 @pytest.fixture(scope="module")
 def frozen_data():
+    if not (FROZEN / "manifest.lock.json").is_file():
+        pytest.skip(f"Requiere los manifests congelados no versionados en {FROZEN}")
     frames, _, inventory = load_frozen(FROZEN, INVENTORY)
     return frames, inventory
 
@@ -43,11 +45,11 @@ def test_reproducible_hashes_and_immutable_lock(source, frozen_data, tmp_path):
     first = materialize(source, FROZEN, INVENTORY, tmp_path)
     second = materialize(source, FROZEN, INVENTORY, tmp_path)
     assert first == second
-    assert sha256(FROZEN / "manifest.lock.json") == first["frozen_sha256"][
+    assert sha256_file(FROZEN / "manifest.lock.json") == first["frozen_sha256"][
         "manifest.lock.json"
     ]
     lock_path = tmp_path / source / "seed_42" / "splits" / "manifest.lock.json"
-    assert sha256(lock_path) == first["lock_sha256"]
+    assert sha256_file(lock_path) == first["lock_sha256"]
     assert json.loads(lock_path.read_text())["held_out_source"] == source
     with (lock_path.parent / "holdout.csv").open("a", encoding="utf-8") as stream:
         stream.write("tamper\n")

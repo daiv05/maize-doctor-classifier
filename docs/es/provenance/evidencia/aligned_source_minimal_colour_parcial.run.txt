@@ -1,12 +1,11 @@
 Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
 ✓ Initialized. View run at 
-https://modal.com/apps/daiv05/main/ap-xH1v4MCD5vyFq34DpLJp0T
 ✓ Created objects.
 ├── 🔨 Created mount 
-│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\pipeline_align
+│   scripts\modal\pipeline_align
 │   ed_loso.py
 ├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
-├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+├── 🔨 Created mount config
 ├── 🔨 Created function build_image_cache.
 └── 🔨 Created function run_aligned_loso.
 [*] casi-duplicados eliminados: 165 de 33433
@@ -185,42 +184,42 @@ Traceback (most recent call last):
 KeyboardInterrupt
 Runner terminated.
 ┌───────────────────── Traceback (most recent call last) ─────────────────────┐
-│ C:\Users\david\Desktop\maize-doctor-classifier\scripts/modal/pipeline_align │
+│ scripts/modal/pipeline_align │
 │ ed_loso.py:134 in main                                                      │
 │                                                                             │
 │   133 │   │   build_image_cache.remote()                                    │
 │ > 134 │   run_aligned_loso.remote(                                          │
 │   135 │   │   arm=arm, split_mode=split_mode, model=model, epochs=epochs,   │
 │                                                                             │
-│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ venv\Lib\site-packages\modal │
 │ \_object.py:46 in wrapped                                                   │
 │                                                                             │
 │    45 │   │   await self.hydrate()                                          │
 │ >  46 │   │   return await method(self, *args, **kwargs)                    │
 │    47                                                                       │
 │                                                                             │
-│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ venv\Lib\site-packages\modal │
 │ \_functions.py:1841 in remote                                               │
 │                                                                             │
 │   1840 │   │                                                                │
 │ > 1841 │   │   return await self._call_function(args, kwargs)               │
 │   1842                                                                      │
 │                                                                             │
-│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ venv\Lib\site-packages\modal │
 │ \_functions.py:1778 in _call_function                                       │
 │                                                                             │
 │   1777 │   │                                                                │
 │ > 1778 │   │   return await invocation.run_function()                       │
 │   1779                                                                      │
 │                                                                             │
-│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ venv\Lib\site-packages\modal │
 │ \_functions.py:483 in run_function                                          │
 │                                                                             │
 │    482 │   │   │   if await_response.output.result.status in TERMINAL_STATU │
 │ >  483 │   │   │   │   return await _process_result(                        │
 │    484 │   │   │   │   │   await_response.output.result, await_response.out │
 │                                                                             │
-│ C:\Users\david\Desktop\maize-doctor-classifier\venv\Lib\site-packages\modal │
+│ venv\Lib\site-packages\modal │
 │ \_utils\function_utils.py:574 in _process_result                            │
 │                                                                             │
 │   573 │   │                                                                 │

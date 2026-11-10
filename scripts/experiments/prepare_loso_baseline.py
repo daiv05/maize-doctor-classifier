@@ -7,30 +7,22 @@ trains a model, or evaluates the held-out source.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 
 import pandas as pd
 
-from src.config import PROJECT_ROOT
+from src.config import PROJECT_ROOT, get_output_root
+from src.data.preparation import sha256_file
 
 SOURCES = ("maize-diseases", "multicrop-disease-maiz")
-FROZEN = PROJECT_ROOT / "outputs/multiseed-inputs/frozen/seed_42"
+FROZEN = get_output_root() / "multiseed-inputs/frozen/seed_42"
 INVENTORY = (
     PROJECT_ROOT
     / "docs/es/reproducibilidad/evidencia/pixel_duplicate_audit/pixel_hash_inventory.csv"
 )
-OUTPUT = PROJECT_ROOT / "outputs/loso/efficientnet_lite0_baseline"
+OUTPUT = get_output_root() / "loso/efficientnet_lite0_baseline"
 SPLITS = ("train", "val", "test")
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _ids(frame: pd.DataFrame) -> set[str]:
@@ -42,12 +34,12 @@ def _ids(frame: pd.DataFrame) -> set[str]:
 def load_frozen(frozen: Path, inventory_path: Path) -> tuple[dict, dict, pd.DataFrame]:
     lock_path = frozen / "manifest.lock.json"
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
-    hashes = {"manifest.lock.json": sha256(lock_path)}
+    hashes = {"manifest.lock.json": sha256_file(lock_path)}
     for name, key in (("master_manifest.csv", "master_manifest_sha256"),
                       ("train.csv", "train_sha256"),
                       ("val.csv", "val_sha256"),
                       ("test.csv", "test_sha256")):
-        actual = sha256(frozen / name)
+        actual = sha256_file(frozen / name)
         if actual != lock[key]:
             raise ValueError(f"Hash congelado diferente para {name}: {actual}")
         hashes[name] = actual
@@ -163,8 +155,8 @@ def materialize(source: str, frozen: Path, inventory_path: Path, output: Path) -
         "historical_split_policy": "train/val filtered; non-holdout test unused",
         "holdout_policy": "all eligible source rows from historical train/val/test",
         "frozen_sha256": frozen_hashes,
-        "pixel_inventory_sha256": sha256(inventory_path),
-        "derived_sha256": {f"{name}.csv": sha256(target / f"{name}.csv")
+        "pixel_inventory_sha256": sha256_file(inventory_path),
+        "derived_sha256": {f"{name}.csv": sha256_file(target / f"{name}.csv")
                            for name in derived},
         "preflight": report,
     }
@@ -173,7 +165,7 @@ def materialize(source: str, frozen: Path, inventory_path: Path, output: Path) -
     if lock_path.exists() and lock_path.read_text(encoding="utf-8") != lock_text:
         raise ValueError(f"Lock derivado existente distinto: {lock_path}")
     lock_path.write_text(lock_text, encoding="utf-8")
-    return {"lock_path": str(lock_path), "lock_sha256": sha256(lock_path), **lock}
+    return {"lock_path": str(lock_path), "lock_sha256": sha256_file(lock_path), **lock}
 
 
 def main() -> None:

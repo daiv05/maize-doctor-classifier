@@ -188,6 +188,4 @@ def write_summary(run_dir: Path, payload: dict) -> None:
 
         write_run_contract(run_dir, payload)
     else:
-        # Compatibilidad para utilidades/tests que escriben JSON auxiliares; los nuevos
-        # runs pasan siempre por write_run_contract y su esquema estricto.
         atomic_write_json(run_dir / "summary.json", payload)

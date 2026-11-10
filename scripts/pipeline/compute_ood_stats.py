@@ -3,7 +3,7 @@ Distance (RMD) sobre un espacio de features reducido por PCA.
 
 Para cada modelo, extrae el vector de features pooled (penultima capa, via
 `FeatureExposedModel`) sobre el split de train, normaliza cada vector a norma L2
-unitaria (Mahalanobis++, Ren et al. 2025: arXiv:2505.18032), y proyecta a las
+unitaria (Mahalanobis++, Mueller y Hein 2025: arXiv:2505.18032), y proyecta a las
 componentes principales que explican el 99% de la varianza (`_fit_pca`). Sobre ese
 espacio reducido calcula el centroide por clase mas una covarianza pooled compartida,
 mas una gaussiana de fondo (sin condicionar por clase) sobre todo el split de train. El
@@ -40,7 +40,7 @@ import torch
 from src.config import PROJECT_ROOT, get_output_root
 from src.data.identity import unpack_batch
 from src.export.common import load_checkpoint_for_export, resolve_export_inputs
-from src.export.data import build_test_loader, resolve_split_csv
+from src.export.data import build_test_loader, default_num_workers, resolve_split_csv
 from src.models import list_models
 from src.models.feature_exposed import FeatureExposedModel
 from src.training.common import resolve_run_dir, select_device
@@ -76,6 +76,13 @@ def _parse_args() -> argparse.Namespace:
         help="Directorio con train.csv/val.csv (default: el 'splits_dir' de summary.json).",
     )
     parser.add_argument("--batch-size", type=int, default=32, dest="batch_size")
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=default_num_workers(),
+        dest="num_workers",
+        help="Workers del DataLoader (default: min(8, CPUs)).",
+    )
     parser.add_argument(
         "--explained-variance",
         type=float,
@@ -313,6 +320,7 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
         class_to_idx,
         image_size,
         args.batch_size,
+        num_workers=args.num_workers,
         preprocessing_contract=run_contract["preprocessing"],
     )
     train_features, train_labels = _extract_features(model, train_loader, device)
@@ -352,6 +360,7 @@ def _compute_one(args: argparse.Namespace, model_name: str, output_dir: Path) ->
         class_to_idx,
         image_size,
         args.batch_size,
+        num_workers=args.num_workers,
         preprocessing_contract=run_contract["preprocessing"],
     )
     val_features, val_labels = _extract_features(model, val_loader, device)

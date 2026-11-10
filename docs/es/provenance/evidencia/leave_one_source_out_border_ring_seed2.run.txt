@@ -1,11 +1,10 @@
 ✓ Initialized. View run at 
-https://modal.com/apps/daiv05/main/ap-X3tLSddMkc4zxZs0yUYdaX
 ✓ Created objects.
 ├── 🔨 Created mount 
-│   C:\Users\david\Desktop\maize-doctor-classifier\scripts\modal\leave_one_sour
+│   scripts\modal\leave_one_sour
 │   ce_out.py
 ├── 🔨 Created mount PythonPackage:src, PythonPackage:scripts
-├── 🔨 Created mount C:\Users\david\Desktop\maize-doctor-classifier\config
+├── 🔨 Created mount config
 └── 🔨 Created function run_leave_one_source_out.
 [*] casi-duplicados eliminados: 165 de 33433
 [*] grupos de procedencia: 11 | pliegues: 11
@@ -202,4 +201,3 @@ https://modal.com/apps/daiv05/main/ap-X3tLSddMkc4zxZs0yUYdaX
 Stopping app - local entrypoint completed.
 Runner terminated.
 ✓ App completed. View run at 
-https://modal.com/apps/daiv05/main/ap-X3tLSddMkc4zxZs0yUYdaX

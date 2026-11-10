@@ -22,10 +22,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import yaml
 from PIL import Image, ImageOps
 from PIL import __version__ as pillow_version
 
 from src.config import PROJECT_ROOT, get_dataset_root, get_output_root
+from src.data.preparation import sha256_file, sha256_json
 
 DEFAULT_OUTPUT = PROJECT_ROOT / "docs/es/reproducibilidad/evidencia/pixel_duplicate_audit"
 SPLITS = ("train", "val", "test")
@@ -58,14 +60,6 @@ PREFLIGHT_COLUMNS = (
     "status",
     "error",
 )
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def pixel_signature(path: str | Path) -> dict[str, Any]:
@@ -274,7 +268,7 @@ def _scan_pixel_row(row: dict[str, Any], dataset_root: str) -> dict[str, Any]:
     path = Path(dataset_root) / str(row["relative_path"])
     try:
         return {**row, **pixel_signature(path), "error": ""}
-    except Exception as exc:  # una imagen ilegible queda trazada, no se omite
+    except Exception as exc:
         return {
             **row,
             "pixel_sha256": "",
@@ -331,7 +325,6 @@ def _collect_pixel_rows(
                 _scan_pixel_row, batch, [str(dataset_root)] * len(batch), chunksize=8
             ):
                 done[(str(result["sample_id"]), str(result["file_sha256"]))] = result
-            # El checkpoint atómico permite reanudar sin recalcular hashes ya completos.
             all_rows = [
                 done[(str(row["sample_id"]), str(row["file_sha256"]))]
                 for row in tasks
@@ -428,6 +421,9 @@ def _summary_stats(
 def _fingerprint(splits_dir: Path) -> dict[str, Any]:
     lock_path = splits_dir / "manifest.lock.json"
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    parameters = lock["split_parameters"]
+    config = yaml.safe_load((PROJECT_ROOT / "config/dataset.yaml").read_text(encoding="utf-8"))
+    current = config["dataset"]
     return {
         "manifest_lock_sha256": sha256_file(lock_path),
         "master_manifest_sha256": lock["master_manifest_sha256"],
@@ -436,10 +432,11 @@ def _fingerprint(splits_dir: Path) -> dict[str, Any]:
         "test_sha256": lock["test_sha256"],
         "config_sha256_in_lock": lock["config_sha256"],
         "exclusions_sha256_in_lock": lock["exclusions_sha256"],
-        "current_config_sha256": sha256_file(PROJECT_ROOT / "config/dataset.yaml"),
+        "split_parameters_sha256": sha256_json(parameters),
         "current_exclusions_sha256": sha256_file(PROJECT_ROOT / "config/dataset_exclusions.csv"),
-        "configuration_matches_lock": lock["config_sha256"]
-        == sha256_file(PROJECT_ROOT / "config/dataset.yaml"),
+        "configuration_matches_lock": lock["config_sha256"] == sha256_json(parameters)
+        and parameters["seed"] == current["seed"]
+        and parameters["classes"] == current["classes"],
         "exclusions_match_lock": lock["exclusions_sha256"]
         == sha256_file(PROJECT_ROOT / "config/dataset_exclusions.csv"),
     }
@@ -661,11 +658,11 @@ def run_audit(
             "pixel_cross_split_duplicates.csv",
             "pixel_label_conflicts.csv",
             "pixel_audit_summary.json",
-            "PIXEL_DUPLICATE_AUDIT.md",
+            "pixel_duplicate_audit.md",
         ],
     }
     _write_json(output_dir / "pixel_audit_summary.json", summary)
-    _write_report(output_dir / "PIXEL_DUPLICATE_AUDIT.md", summary, conflicts)
+    _write_report(output_dir / "pixel_duplicate_audit.md", summary, conflicts)
     checkpoint = output_dir / ".pixel_hash_checkpoint.csv"
     if checkpoint.exists():
         checkpoint.unlink()
@@ -692,8 +689,7 @@ def _write_report(
         f"- Estado: {summary['status']}; fecha UTC: {summary['timestamp_utc']}.",
         f"- Commit: {summary['git_commit']} (dirty={summary['git_dirty']}).",
         f"- Fuente canónica: {summary['source']}.",
-        "- No se utilizó el ZIP local filtrado de aproximadamente 28 360 imágenes.",
-        f"- Master manifest SHA-256: {fingerprint['master_manifest_sha256']}.",
+        f"- Master manifest SHA-256 (según el lock): {fingerprint['master_manifest_sha256']}.",
         f"- manifest.lock.json SHA-256: {fingerprint['manifest_lock_sha256']}.",
         (
             f"- {summary['samples_hashed']:,} muestras elegibles y "
@@ -715,7 +711,8 @@ def _write_report(
         ),
         (
             f"| Elegibles | pixel_sha256 | {pixel['duplicate_group_count']} | "
-            f"{pixel['cross_split_group_count']} | 0 |"
+            f"{pixel['cross_split_group_count']} | "
+            f"{summary['pixel_label_conflict_groups'] - excluded_conflicts} |"
         ),
         (
             "| Ocho exclusiones | file_sha256 | "
@@ -770,8 +767,10 @@ def _write_report(
         "## Hallazgo histórico y alcance",
         "",
         "La observación histórica de aproximadamente 15 grupos y 0.68 % del test",
-        "con gemelos no se reproduce en esta materialización canónica: 0 grupos",
-        "elegibles y 0/5,015 imágenes de test afectadas. Puede corresponder a otra",
+        "con gemelos no se reproduce en esta materialización canónica: "
+        f"{pixel['duplicate_group_count']} grupos elegibles y "
+        f"{pixel['test_samples_in_cross_split_groups']}/{summary['split_sizes']['test']:,} "
+        "imágenes de test afectadas. Puede corresponder a otra",
         "versión del corpus, otra materialización o un procedimiento distinto.",
         "Esta auditoría no demuestra que el hallazgo nunca existió.",
         "",
@@ -782,23 +781,19 @@ def _write_report(
         "",
         "## Configuración y artefactos",
         "",
-        f"- SHA-256 de dataset.yaml en lock: {fingerprint['config_sha256_in_lock']}.",
-        f"- SHA-256 actual: {fingerprint['current_config_sha256']}.",
+        f"- `config_sha256` del lock: {fingerprint['config_sha256_in_lock']}. Es el SHA-256 de"
+        " los parámetros efectivos del split (`split_parameters`), no del archivo dataset.yaml.",
+        "- `config_sha256` igual al SHA-256 de `split_parameters` del lock, y semilla y "
+        "clases del lock iguales a las de dataset.yaml: "
+        f"{'sí' if fingerprint['configuration_matches_lock'] else 'no'}.",
         "",
-        "El drift se analiza en [dataset_yaml_drift_report.md](dataset_yaml_drift_report.md).",
-        "Los hashes de los CSV",
-        "canónicos coinciden con el lock; la diferencia del YAML no cambia sus bytes.",
+        "Los hashes de master_manifest.csv, train.csv, val.csv y test.csv se copian del lock; "
+        "esta auditoría no los recalcula.",
         "",
         "- pixel_hash_inventory.csv: una fila por muestra elegible.",
         "- pixel_excluded_images.csv: ocho exclusiones auditadas por separado.",
-        "- pixel_duplicate_groups.csv y pixel_cross_split_duplicates.csv: grupos elegibles.",
         "- pixel_label_conflicts.csv: los cuatro conflictos ya excluidos.",
-        "- corpus_preflight.csv/json: correspondencia de rutas y SHA de archivo.",
-        "",
-        "La copia de trabajo en /tmp/doctormaiz_pixel_audit_20260929/ contiene los",
-        "manifiestos y una descarga local temporal del corpus. La fuente canónica",
-        "sigue siendo corn-clean:/clean. La copia puede eliminarse con autorización",
-        "posterior del usuario y no debe incluirse en Git.",
+        "- corpus_preflight.json: resumen de la correspondencia de rutas y SHA de archivo.",
         "",
     ]
     path.write_text("\n".join(rows), encoding="utf-8")

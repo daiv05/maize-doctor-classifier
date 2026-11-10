@@ -30,24 +30,30 @@ def amendment_input(tmp_path):
         path.write_text(content)
     source = source_snapshot(root)
     protocol = {
-        "study_name": FORMAL_STUDY, "n_trials": 60,
+        "study_name": FORMAL_STUDY,
+        "n_trials": 60,
         "config_sha256": sha256_file(root / "config/dataset.yaml"),
         "source_sha256": source["sha256"],
     }
     directory = tmp_path / "original"
     study = open_study(directory, FORMAL_STUDY, protocol, optuna.pruners.NopPruner())
     study.optimize(lambda t: t.suggest_float("x", 0, 1), n_trials=2)
-    study.ask()  # Intento interrumpido, conservado hasta recuperación normal.
+    study.ask()
     atomic_write_json(directory / "preflight.json", {"protocol": protocol, "source": source})
     with zipfile.ZipFile(directory / "source_code.zip", "w") as bundle:
         for name in files:
             bundle.write(root / name, name)
-    atomic_write_json(directory / "source_archive.json", {
-        "archive_sha256": sha256_file(directory / "source_code.zip"),
-    })
+    atomic_write_json(
+        directory / "source_archive.json",
+        {
+            "archive_sha256": sha256_file(directory / "source_code.zip"),
+        },
+    )
     atomic_write_json(directory / "study_summary.json", {"n_trials_requested": 60})
-    (directory / "trials.csv").write_text("trial_number,state\n0,COMPLETE\n1,COMPLETE\n")
-    (root / "scripts/pipeline/tune.py").write_text("BUDGET = 25\n")
+    (directory / "trials.csv").write_text(
+        "trial_number,state\n0,COMPLETE\n1,COMPLETE\n", encoding="utf-8"
+    )
+    (root / "scripts/pipeline/tune.py").write_text("BUDGET = 25\n", encoding="utf-8")
     return directory, tmp_path / "amended", root
 
 
@@ -61,9 +67,11 @@ def test_amendment_preserves_database_trials_sampler_and_original(amendment_inpu
     assert sha256_file(destination / "budget_revisions/60-to-25/study.db") == original_hash
     with sqlite3.connect(destination / "study.db") as connection:
         assert trial_fingerprint(connection) == record["trial_tables_sha256"]
-        protocol = json.loads(connection.execute(
-            "SELECT value_json FROM study_user_attributes WHERE key='protocol'"
-        ).fetchone()[0])
+        protocol = json.loads(
+            connection.execute(
+                "SELECT value_json FROM study_user_attributes WHERE key='protocol'"
+            ).fetchone()[0]
+        )
     assert protocol["n_trials"] == 25
     reopened = open_study(destination, FORMAL_STUDY, protocol, optuna.pruners.NopPruner())
     assert len(reopened.trials) == 3
@@ -75,11 +83,13 @@ def test_amendment_preserves_database_trials_sampler_and_original(amendment_inpu
 def test_amendment_rejects_unrelated_changes(amendment_input, change):
     original, destination, root = amendment_input
     if change == "objective":
-        (root / "src/training/tuning.py").write_text("class TuningObjective:\n    changed = True\n")
+        (root / "src/training/tuning.py").write_text(
+            "class TuningObjective:\n    changed = True\n", encoding="utf-8"
+        )
     elif change == "config":
-        (root / "config/dataset.yaml").write_text("seed: 43\n")
+        (root / "config/dataset.yaml").write_text("seed: 43\n", encoding="utf-8")
     elif change == "other_file":
-        (root / "scripts/modal/_common.py").write_text("# new environment\n")
+        (root / "scripts/modal/_common.py").write_text("# new environment\n", encoding="utf-8")
     else:
         atomic_write_json(original / "FINAL_TEST_STARTED.json", {})
     with pytest.raises(ValueError):

@@ -1,10 +1,6 @@
 # Interpretabilidad
 
-Se combina LIME (regiones de superpíxeles que sostienen el diagnóstico) y Grad-CAM (mapa de activación de la
-clase predicha). **SHAP no aplica a los baselines:** los subcomandos `compare` y `global` de `scripts/pipeline/explain.py`
-son exclusivos del pipeline principal (`outputs/main`, ver [interpretabilidad del pipeline principal](../pipeline/interpretabilidad.md)).
-Los baselines existen para comparar arquitecturas rápido y barato, y LIME + Grad-CAM ya cubre ese propósito sin el costo
-extra de correr KernelSHAP sobre cada arquitectura candidata.
+Se combina LIME (regiones de superpíxeles que sostienen el diagnóstico) y Grad-CAM (mapa de activación de la clase predicha). **SHAP no aplica a los baselines:** los subcomandos `compare` y `global` de `scripts/pipeline/explain.py` son exclusivos del pipeline principal (`outputs/main`, ver [interpretabilidad del pipeline principal](../pipeline/interpretabilidad.md)). Los baselines existen para comparar arquitecturas rápido y barato, y LIME + Grad-CAM ya cubre ese propósito sin el costo extra de correr KernelSHAP sobre cada arquitectura candidata.
 
 ## Subcomandos
 

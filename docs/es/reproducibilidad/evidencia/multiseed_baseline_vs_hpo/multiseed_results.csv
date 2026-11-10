@@ -1,0 +1,11 @@
+configuration,seed,status,macro_f1,accuracy,nitrogen_f1,phosphorus_f1,potassium_f1,ece,best_epoch,checkpoint_sha256,experiment_id,finished_at,protocol_sha256,run_relative,test_used
+baseline,42,COMPLETE,0.9560862657056215,0.9806541683286797,0.8984375,0.9672727272727273,0.8571428571428571,0.13984422997609045,39.0,860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859,efficientnet_lite0_baseline_vs_hpo,2026-10-19T21:13:09.878024+00:00,bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9,efficientnet_lite0/20261019_203033,False
+hpo_trial_0,42,COMPLETE,0.9572922254288656,0.9800558436378142,0.904,0.967032967032967,0.8585858585858586,0.05792522954665005,44.0,00ff9aa5670dec814096ff3755fdd9c5e81ef29587297ad5acf4a94d7a715aa0,efficientnet_lite0_baseline_vs_hpo,2026-10-19T21:59:53.687919+00:00,bb7a509bd1418056614519ecdd45d9646278ba0881ee3fcea85ae64c01cdd7a9,efficientnet_lite0/20261019_211317,False
+baseline,123,PENDING,,,,,,,,,,,,,
+hpo_trial_0,123,PENDING,,,,,,,,,,,,,
+baseline,2026,PENDING,,,,,,,,,,,,,
+hpo_trial_0,2026,PENDING,,,,,,,,,,,,,
+baseline,3407,PENDING,,,,,,,,,,,,,
+hpo_trial_0,3407,PENDING,,,,,,,,,,,,,
+baseline,7777,PENDING,,,,,,,,,,,,,
+hpo_trial_0,7777,PENDING,,,,,,,,,,,,,

@@ -6,7 +6,7 @@
 
 ## Descripción
 
-DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que opera completamente offline.
+DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que clasifica sin conexión.
 
 Este repositorio contiene el pipeline de datos, entrenamiento, evaluación, interpretabilidad y exportación. La aplicación móvil vive en [`maize-doctor-app`](https://github.com/Edenilson-Molina/maize-doctor-app), el backend opcional en [`maize-doctor-api`](https://github.com/daiv05/maize-doctor-api) y el segmentador de hoja en [`maize-doctor-segmenter-leaf`](https://github.com/abner-rivas/maize-doctor-segmenter-leaf).
 
@@ -31,18 +31,21 @@ Las cifras siguientes pertenecen a protocolos y momentos distintos; el estado se
 
 | Configuración evaluada | Macro F1 | Accuracy | Entorno de aplicación |
 |---|:---:|:---:|---|
-| **`EfficientNet-Lite0` `20260921_204608`** | **0.9480** | **97.81 %** | Baseline vigente de desarrollo; `seed_42` estratificado |
-| `EfficientNet-Lite0` `20260812_221429` | 0.9468 | 97.91 % | HISTÓRICO: artefacto desplegado en móvil |
+| **`EfficientNet-Lite0` `20260921_204608`** | **0.9480** | **97.81 %** | Modelo oficial (FP32); `seed_42` estratificado |
+| `EfficientNet-Lite0` `20260921_204608`, TFLite int8 | 0.9489 | 97.87 % | Desplegado en la app (3.74 MB); mismo test completo, acuerdo con PyTorch 99.74 % |
+| `EfficientNet-Lite0` `20260812_221429` | 0.9468 | 97.91 % | HISTÓRICO: artefacto desplegado en móvil hasta el 2026-11-01 |
 | Ensamble Soft Voting (3 modelos) | 0.9567 | 98.29 % | HISTÓRICO: test estratificado, inferencia en servidor |
-| CV agrupada por fuente, configuración base | 0.6026 ± 0.1240 | 79.69 % ± 11.95 pp | HISTÓRICO: cinco pliegues, 5–8 clases evaluables |
+| CV agrupada por fuente, configuración base | 0.6026 ± 0.1240 | 79.69 % ± 11.95 pp | HISTÓRICO: cinco pliegues, 5–8 clases presentes por pliegue; ± es semiancho del IC95 y el Macro F1 promedia solo las clases presentes (sobre las 9 clases: 0.4359) |
 
 La distancia entre el protocolo estratificado y la CV agrupada muestra una brecha de dominio histórica. No es una comparación pareada del baseline actual ni un resultado LOSO: cambian particiones, soporte de clases y unidad aislada.
 
-**Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430 con σ = 0.0049. Este estudio no sustituye el multi-seed pendiente de la configuración que resulte del HPO nuevo.
+**Estabilidad histórica entre semillas.** La configuración entonces desplegada produjo 0.9468 (s=42), 0.9448 (s=1) y 0.9375 (s=2): media 0.9430, SD muestral 0.0049. No sustituye al multiseed baseline contra HPO, que está incompleto (2 de 10 entrenamientos, solo validación) y cuya diferencia no es interpretable.
 
-**Equidad.** Macro F1 de 0.9298 en campo real frente a 0.8865 en laboratorio sobre clases con soporte, con un *disparate impact ratio* de 0.9534, por encima de la regla del 80 %. Detalle completo en [FAIRNESS_REPORT.md](FAIRNESS_REPORT.md).
+**Equidad.** Sobre el checkpoint de agosto, macro F1 de 0.9215 en campo real y 0.9423 en laboratorio; la prueba de atajos marca `shortcut_detected=true` (la accuracy cae de 0.9791 a 0.4225 al ocultar la periferia de la imagen). Detalle y limitaciones en [docs/es/resultados/generalizacion.md](docs/es/resultados/generalizacion.md).
 
-**Alcance: clase, no severidad.** El clasificador dice qué tiene la hoja, pero no cuánto. Nunca se entrenó para medir el grado de daño y la razón es que las imágenes de `data/clean/` vienen etiquetadas por clase, sin ninguna anotación de severidad. Ponérsela no sería limpiar datos, sino sentar a un fitopatólogo a calificar imagen por imagen con la escala que corresponda a cada patógeno; y aun así, repartir en tres grados unas clases que apenas rondan las 300 imágenes dejaría celdas demasiado pequeñas para entrenar sobre ellas. La app cubre el hueco de otra manera, mostrando los niveles del catálogo de severidad reescritos en lenguaje llano para que el agricultor compare su hoja y decida, sin que el sistema afirme un nivel que no midió.
+**Fotos de campo externas.** En 97 fotos propias ajenas al corpus (`Imagenes/`, no versionadas) el modelo oficial acierta 41 (42 %) y el detector fuera de dominio rechaza 49. Es la limitación principal: la generalización fuera de las fuentes de entrenamiento es mucho menor que la del test estratificado (ver [validación agrupada por fuente](docs/es/resultados/generalizacion.md#benchmark-source-grouped)).
+
+**Alcance: clase, no severidad.** El clasificador dice qué tiene la hoja, pero no cuánto. Nunca se entrenó para medir el grado de daño y la razón es que las imágenes de `data/clean/` vienen etiquetadas por clase, sin ninguna anotación de severidad. Ponérsela no sería limpiar datos, sino sentar a un fitopatólogo a calificar imagen por imagen con la escala que corresponda a cada patógeno; y aun así, repartir en tres grados las clases más pequeñas (621 a 938 imágenes en las deficiencias nutricionales, 106 de campo en la roya común) dejaría celdas con pocos cientos de imágenes o menos. La app cubre el hueco de otra manera, mostrando los niveles del catálogo de severidad reescritos en lenguaje llano para que el agricultor compare su hoja y decida, sin que el sistema afirme un nivel que no midió.
 
 ---
 
@@ -79,38 +82,19 @@ Los conteos de la tabla corresponden a la materialización vigente: **33 437 arc
 
 | Métrica | Meta | Resultado |
 |---|---|---|
-| Macro F1 Score | ≥ 0.85 | 0.9468 en el modelo desplegado; 0.9567 en ensamble |
-| Tamaño del modelo (post Int8) | ≤ 20 MB | 3.56 MB (`efficientnet_lite0`) |
-| Latencia de inferencia | ≤ 300 ms/imagen | ~60 ms en Dimensity 7030 |
-| Dispositivo objetivo | Android ≥ 4 GB RAM, Snapdragon 6xx | Validado en Motorola edge 40 neo |
-| Arquitectura desplegada | - | `efficientnet_lite0` Int8, dos salidas (logits + features) |
+| Macro F1 Score | ≥ 0.85 | 0.9489 en el modelo desplegado (int8, test completo); 0.9567 en el ensamble histórico |
+| Tamaño del modelo (post Int8) | ≤ 20 MB | 3.74 MB (`efficientnet_lite0`) |
+| Latencia (preprocesado + inferencia) | ≤ 300 ms/imagen | Medianas de 98 ms de preprocesado (p95 279 ms) y 23 ms de inferencia en Dimensity 7030 |
+| Dispositivo objetivo | Android ≥ 4 GB RAM, Snapdragon 6xx | Probado en un Motorola edge 40 neo (Dimensity 7030) |
+| Arquitectura desplegada | - | `efficientnet_lite0` `20260921_204608` Int8, dos salidas (logits + features); umbral OOD 106.37 |
 
 ---
 
 ## Datasets
 
-El catálogo inicial documentó **8 repositorios públicos principales**; el `master_manifest.csv` vigente resuelve **11 valores de `source_id`** después de la consolidación y ampliaciones. Catálogo histórico principal:
+El corpus vigente reúne 33 429 imágenes de 11 fuentes públicas (`source_id` en `master_manifest.csv`), con imágenes de laboratorio y de campo. La tabla de fuentes con licencia, conteo, clases, entorno y cita está en [Fuentes de datos](docs/es/datasets/index.md).
 
-| Dataset | Dominio | Imágenes (maíz) | Licencia |
-|---|---|---|---|
-| [Maize in Field](docs/es/datasets/maize-in-field-dataset.md) | Campo real (Sudáfrica) | ~2 223 | CC BY-NC-SA 4.0 |
-| [Maize Diseases](docs/es/datasets/maize-diseases.md) | Lab + campo (PlantVillage v1.0/v1.1) | ~16 162 | CC BY-NC-SA 4.0 |
-| [Corn Leaf Diseases](docs/es/datasets/corn-leaf-diseases.md) | Lab augmentado (x17) | 52 360 | MIT |
-| [CropDG Unified Multidomain](docs/es/datasets/cropdg-unified-multidomain.md) | Multi-dominio | ~13 275 | CC BY-NC-SA 4.0 |
-| [Maize, Beans & Tomatoes Africa](docs/es/datasets/maize-beans-tomatoes-africa.md) | Campo real (África) | 23 286 | Apache 2.0 + CC |
-| [Multicrop Disease - Maize Pests and Disease](docs/es/datasets/multicrop-disease-maiz-disease-pests-and-disease.md) | Mixto | - | Desconocida |
-| [Maize Nutrient Deficiency](docs/es/datasets/maize-nutrient-deficiency.md) | Campo real (India) | 463 | CC BY 4.0 |
-| [Corn Leaf - Roboflow](docs/es/datasets/corn-leaf-roboflow.md) | Campo real | 3 943 | CC BY 4.0 |
-
-### Estrategia de Augmentation
-
-El dataset *Corn Leaf Diseases* aplica 17 técnicas de augmentation documentadas:
-
-`brightness_adjusted` · `contrast_adjusted` · `cropped` · `flipped_horizontal` · `flipped_vertical` · `gaussian_noise` · `high_pass` · `hist_equalized` · `jittered` · `laplacian` · `poisson_noise` · `rotated` · `salt_pepper_noise` · `saturation_adjusted` · `sobel` · `translated` · `unsharp_mask`
-
-### Procedencia y fuga entre fuentes
-
-Una partición estratificada clásica deja que imágenes del mismo repositorio caigan a ambos lados del split, lo que infla las métricas. La línea de trabajo en [docs/es/provenance](docs/es/provenance/index.md) audita ese efecto, construye una partición agrupada por fuente y mide la generalización con *leave-one-source-out*. De ahí sale la tercera cifra de la tabla de resultados.
+Una partición estratificada deja imágenes del mismo repositorio a ambos lados del split e infla las métricas. [Generalización entre fuentes](docs/es/resultados/generalizacion.md) mide ese efecto con particiones agrupadas por fuente y *leave-one-source-out*.
 
 ---
 
@@ -138,12 +122,19 @@ Guía de instalación local (venv, `.env`, dataset) en [LOCAL.md](LOCAL.md).
 
 ### Del checkpoint al teléfono
 
-`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes. El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula los centroides, la covarianza y el umbral de Mahalanobis que la app usa para rechazar imágenes que no son hojas de maíz. `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` + `ood_stats.json` a la app verificando el hash.
+`export.py` convierte el `best.pth` a ONNX y TFLite, validando paridad numérica entre runtimes. El modelo se envuelve en `FeatureExposedModel` para exponer **dos salidas**: los logits y las features pooled que alimentan el detector fuera de dominio. `compute_ood_stats.py` calcula, sobre las features normalizadas a norma L2 y proyectadas con PCA (182 componentes, 99.01 % de varianza), los centroides, la covarianza y el umbral de la distancia de Mahalanobis relativa que la app usa para rechazar imágenes fuera de dominio. Para el modelo oficial el umbral es 106.37 (percentil 95 de validación, 5 de 5 imágenes sintéticas rechazadas, 3.8 % de falsos rechazos sobre 500 de test). `sync_mobile_model.py` copia el trío `.tflite` + `labels.json` + `ood_stats.json` a la app y verifica el SHA-256 de la copia del modelo contra el registrado en `export_summary`.
 
-| Arquitectura | FP32 | Int8 | Reducción |
+| Arquitectura | TFLite FP32 | TFLite int8 | Reducción |
 |---|:---:|:---:|:---:|
+| `shufflenet_v2_x1_0` | 5.17 MB | 1.49 MB | 71 % |
+| `efficientnet_lite0` (oficial, desplegada) | 13.56 MB | 3.74 MB | 72 % |
+| `efficientnet_b0` | 16.24 MB | 4.66 MB | 71 % |
+
+Tamaños en MB decimales de los exports de los runs de la etapa 2 (`shufflenet_v2_x1_0` `20260812_185239`, `efficientnet_b0` `20260811_211306`) y del oficial. El `best.pth` de Lite0 pesa 13.79 MB.
+
+---|:---:|:---:|:---:|
 | `shufflenet_v2_x1_0` | 4.93 MB | 1.42 MB | 71 % |
-| `efficientnet_lite0` (desplegada) | 12.92 MB | 3.56 MB | 72 % |
+| `efficientnet_lite0` (oficial, desplegada) | 13.79 MB | 3.74 MB | 73 % |
 | `efficientnet_b0` | 15.48 MB | 4.44 MB | 71 % |
 
 ---
@@ -157,7 +148,7 @@ Variables comunes: `MODELS` / `MAIN_MODELS` (nombre o "all"), `EPOCHS` / `MAIN_E
 ### Locales: setup y datos
 
 ```bash
-make install                         # pip install -e ".[dev,analysis,xai,cloud]"
+make install                         # pip install -e ".[dev,analysis,xai,cloud,tuning]"
 make download-dataset                # clean/ (HF Hub, fallback Google Drive)
 make upload-dataset STAGE_DIR=<dir>  # empaqueta clean/ en shards .tar y publica en HF
 
@@ -165,7 +156,8 @@ make splits                          # splits completos (9 clases) -> outputs/sp
 make splits-baseline [NO_CAP=1 | MAX_PER_CLASS=<n>]   # perfil baseline -> outputs/splits/seed_42_baseline/
 
 make clean-outputs                   # borra outputs/ (splits, runs, reportes - todo regenerable)
-make summary / make test-loader / make lint / make fmt / make check
+make summary / make test-loader / make test / make lint / make fmt / make check
+make compile-tesina                  # 3 pasadas de pdflatex en reports/tesina
 ```
 
 ### Locales: baselines (`outputs/baselines/`)
@@ -183,18 +175,19 @@ make explain-errors-baselines [MODELS=<nombre> RUN=<id> NUM_SAMPLES=<n>]
 ```bash
 make train-main [MAIN_MODELS=<nombre> MAIN_EPOCHS=<n> CLAHE=1 CLASS_WEIGHTS=<estrategia>]
                 [EXPORT_FORMATS=onnx,tflite]          # alias: make train
-make tune-main N_TRIALS=60 MAIN_EPOCHS=30 PRUNER=median MAIN_MODELS=efficientnet_lite0  # fase HPO planificada
-make tune-dashboard                                          # optuna-dashboard en el puerto 8080
+make tune-main N_TRIALS=20 MAIN_EPOCHS=30 PRUNER=median     # HPO exploratorio; el baseline sale de tuning_study salvo BASELINE_F1
+make hpo-main                                                # protocolo HPO formal Lite0 seed 42 (25 intentos)
+make tune-dashboard                                          # optuna-dashboard en el puerto 8080 (extra tuning)
 make evaluate-ensemble [MODELS=<lista>]                      # voto suave sobre test.csv; alias: make ensemble
 make cross-validate [MODEL=<nombre> K_FOLDS=<n>]             # alias: make kfold
 make fairness-report [MODEL=<nombre> CHECKPOINT=<ruta>]      # equidad + Grad-CAM + test de atajos
 
 make export-main [EXPORT_FORMATS=onnx,tflite QUANTIZE=int8]
-make compute-ood-stats [MAIN_MODELS=<nombre> RUN=<id> PERCENTILE=<p>]
+make compute-ood-stats [MAIN_MODELS=<nombre> RUN=<id> PERCENTILE=<p> NUM_WORKERS=<n>]
 make eval-export-main [EXPORT_FORMATS=tflite QUANTIZE=int8]  # mide el exportado sobre test completo
 make sync-mobile-model RUN_DIR=<dir> DEST=<dir de la app>
 
-make predict IMAGE=<ruta> [MODEL=ensemble TOP_K=4]           # predicción rápida (default: ensemble)
+make predict IMAGE=<ruta> [MODEL=ensemble TOP_K=4]           # predicción rápida (MODEL por defecto: efficientnet_b0; ensemble = voto suave)
 make inference MODEL=<nombre> IMAGE=<ruta> [STABILITY_RUNS=<n>]   # reporte de inferencia
 
 make explain-visual-main [MAIN_MODELS=<nombre> RUN=<id>]
@@ -242,11 +235,9 @@ make modal-provenance-leak / modal-loso / modal-aligned-loso / modal-pull-proven
 
 - [Pipeline de datos, identidad y manifests](docs/es/metodologia/pipeline-datos.md)
 - [Protocolos experimentales](docs/es/metodologia/protocolos-experimentales.md)
-- [Registro y estado de experimentos](docs/es/experimentos/index.md)
+- [Resultados](docs/es/resultados/index.md)
 - [Baseline actual `20260921_204608`](docs/es/resultados/run-20260921-efficientnet-lite0.md)
-- [Evolución histórica](docs/es/tesis/PROJECT_EVOLUTION.md) y [resumen ejecutivo](docs/es/tesis/PROJECT_HISTORY_SUMMARY.md)
-- [Registro de evidencias para tesis](docs/es/tesis/EVIDENCE_REGISTRY.md)
-- [Auditoría documental](docs/es/reproducibilidad/auditoria-documental-2026-09-22.md)
+- [Registro de evidencias](docs/es/reproducibilidad/evidencias.md)
 
 Los informes y páginas históricas se preservan con su contexto; no sustituyen estas fuentes vigentes.
 
@@ -268,25 +259,30 @@ Los informes y páginas históricas se preservan con su contexto; no sustituyen 
 maize-doctor-classifier/
 ├── config/
 │   ├── dataset.yaml           # Clases, tamaño de imagen, seed, perfil "baseline", LIME/SHAP
-│   └── dataset.segmented.yaml # Variante sobre el corpus segmentado
-├── docs/es/                   # Documentación (VitePress): datasets, EDA, pipeline, resultados, provenance
+│   ├── dataset.segmented.yaml # Variante sobre el corpus segmentado
+│   └── dataset_exclusions.csv # Exclusiones explícitas por contenido idéntico con etiquetas distintas
+├── docs/es/                   # Documentación (VitePress): datos, EDA, pipeline, resultados
+├── experiments/               # Experimento de CLAHE
 ├── notebooks/                 # Análisis exploratorio
 ├── reports/                   # Informes LaTeX/HTML de cada entrega
 ├── scripts/
-│   ├── checks/                # Verificaciones puntuales (estabilidad de LIME, etc.)
+│   ├── checks/                # Verificaciones puntuales (estabilidad de LIME, detector OOD, smoke del loader)
+│   ├── cleanup/               # Scripts de limpieza por clase
 │   ├── dataset/               # Subida/descarga de clean/ (Hugging Face Hub, Google Drive)
-│   ├── experiments/           # Validación cruzada de procedencia y fuga
+│   ├── experiments/           # Evidencia reproducible: auditoría de píxeles, análisis por fuente, LOSO, estabilidad entre semillas, ensamble LOSO, procedencia y fuga, empaquetado de checkpoints
 │   ├── modal/                 # Entrenamiento, exportación y explicabilidad en GPU de Modal
 │   └── pipeline/              # splits, train, tune, ensemble, fairness, export, ood, explain
 ├── src/
 │   ├── analysis/              # Resumen de dataset, equidad, análisis de predicciones
+│   ├── cleanup/               # Búsqueda de duplicados perceptuales
 │   ├── data/                  # CornDataset, loader, splitter, transforms, dedupe, procedencia
 │   ├── explainability/        # LIME + Grad-CAM + SHAP, acuerdo, perfil global, máscara foliar
 │   ├── export/                # ONNX/TFLite, paridad entre runtimes, evaluación del exportado
 │   ├── models/                # Registro de modelos, ensamble, FeatureExposedModel
 │   ├── segmentation/          # Consumo del segmentador de hoja
 │   └── training/              # Loop de entrenamiento, balanceo, versionado de runs
-├── FAIRNESS_REPORT.md
+├── tests/                     # Pruebas pytest por área (analysis, data, experiments, export, explainability, models, pipeline, training)
+├── .gitattributes             # Finales de línea LF para los artefactos con hash fijado
 ├── Makefile
 └── pyproject.toml
 ```
@@ -309,10 +305,10 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 - [x] Ensamble por voto suave de tres arquitecturas
 - [x] Validación cruzada K-Fold y experimento 2x2 de particiones
 - [x] Auditoría de procedencia, fuga entre fuentes y leave-one-source-out
-- [x] Análisis de sesgos, equidad y ética ([FAIRNESS_REPORT.md](FAIRNESS_REPORT.md))
+- [x] Análisis de sesgos, equidad y ética ([docs/es/resultados/generalizacion.md](docs/es/resultados/generalizacion.md))
 - [x] Exportación a ONNX/TFLite Int8 con validación de paridad entre runtimes
 - [x] Detector fuera de dominio (Mahalanobis relativo) y sincronización con la app
-- [x] Aplicación Android con TensorFlow Lite, validada en dispositivo físico
+- [x] Aplicación Android con TensorFlow Lite que despliega el modelo oficial `20260921_204608`, validada en dispositivo físico
 - [x] Guía de severidad en lenguaje llano dentro de la app, para suplir la falta de etiquetas de nivel de daño
 
 ---

@@ -11,15 +11,9 @@ Esta sección reúne las consultas y dificultades más comunes reportadas por pr
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
-    src="/app/pixel4_history.png" 
-    caption="Historial y Filtros" 
-    subtitle="Revisión de escaneos guardados" 
-  />
+    src="/app/pixel4_history.png" caption="Historial y Filtros" subtitle="Revisión de escaneos guardados" />
   <PhoneMockup 
-    src="/app/pixel4_forgot_password.png" 
-    caption="Recuperación de Cuenta" 
-    subtitle="Autogestión de credenciales" 
-  />
+    src="/app/pixel4_forgot_password.png" caption="Recuperación de Cuenta" subtitle="Autogestión de credenciales" />
 </PhoneGallery>
 
 ---
@@ -27,32 +21,29 @@ Esta sección reúne las consultas y dificultades más comunes reportadas por pr
 ## Preguntas Frecuentes (FAQ)
 
 ### ¿DoctorMaiz requiere conexión a internet para dar un diagnóstico?
-**No.** La red neuronal de visión artificial (`efficientnet_lite0`) corre de forma autónoma dentro del procesador del teléfono mediante TensorFlow Lite. Puedes estar en la montaña más aislada sin señal de celular y obtendrás el diagnóstico en aproximadamente **60 milisegundos**. Solo se requiere conexión para consultar el clima en vivo, sincronizar con la nube o aportar fotos al dataset.
+**No.** La red neuronal de visión artificial (`efficientnet_lite0`) corre de forma autónoma dentro del procesador del teléfono mediante TensorFlow Lite. Puedes estar en la montaña más aislada sin señal de celular y obtendrás el diagnóstico. En el teléfono de pruebas la inferencia toma 23 ms y el preprocesado de la foto 98 ms (medianas). Solo se requiere conexión para consultar el clima en vivo, cargar los mosaicos del mapa, sincronizar con la nube o aportar fotos al dataset.
 
 ### ¿Por qué la aplicación me muestra el mensaje "No Reconocida"?
-El mensaje *"No Reconocida"* no es un error de la app: es una **salvaguarda de seguridad fitosanitaria** activada por el detector OOD (*Out-Of-Distribution*). Significa que la foto no cumple con los patrones visuales de una hoja de maíz analizable. Ocurre comúnmente si:
-- La foto está desenfocada o movida.
-- La hoja está demasiado lejos y la foto contiene más suelo que hoja.
-- Hay un destello de luz solar directa muy fuerte sobre la superficie foliar.
-- Se enfocó una maleza o cultivo diferente al maíz.
+El mensaje *"No Reconocida"* no es un error de la app: es el resultado de tres controles que se aplican a cada foto. La imagen se rechaza si la clase más probable tiene menos de 60 % de probabilidad, si las dos clases más probables quedan a menos de 15 puntos porcentuales entre sí, o si el detector OOD (*Out-Of-Distribution*) mide que la foto está lejos de las imágenes de entrenamiento. En las 95 fotos de campo externas al corpus que se probaron en el teléfono, el detector OOD marcó el 52.6 %, frente al 8.3 % de las 48 imágenes del corpus. Una imagen no reconocida no se guarda en el historial.
 
-**Solución:** Acércate a 20–30 cm, haz que la hoja llene el marco verde central, haz sombra con tu cuerpo si el sol es muy intenso y vuelve a presionar el disparador.
+**Solución:** Acércate a 20–30 cm, haz que la hoja llene el marco central, evita suelo y sombras fuertes en el encuadre y vuelve a presionar el disparador.
 
 ### ¿Cómo distingo rápidamente en campo entre Roya y Mancha Gris?
 - **Roya Común:** Son pústulas redondeadas de 1 a 2 mm que rompen la cutícula foliar. Al frotar la lesión con el dedo, este se manchará con un polvo fino color canela o marrón.
 - **Mancha Gris:** Son lesiones rectangulares de 1 a 6 cm, delimitadas por las nervaduras. No producen polvo al frotarlas.
 
 ### ¿Mis fotografías y coordenadas son públicas o privadas?
-- **En Modo Invitado:** Todos los registros, fotos y coordenadas permanecen estrictamente dentro de la memoria interna de tu teléfono celular. Nada se envía a servidores externos.
-- **En Modo Registrado:** Tus escaneos se respaldan en tu cuenta privada.
-- **Al Contribuir al Dataset Nacional:** Solo se envían las fotos que tú decidas postular voluntariamente, junto con la etiqueta que elegiste y tu nota opcional. El envío no incluye tu nombre, teléfono, correo ni coordenadas GPS. El envío requiere una cuenta registrada y conexión a internet.
+- **Escaneos y fotos:** el historial, las fotos y las coordenadas de tus escaneos se guardan en el teléfono y no se suben al servidor, tengas o no una cuenta.
+- **Datos que sí salen del teléfono sin cuenta:** tus coordenadas GPS se envían a Open-Meteo para obtener el clima, y el mapa de cobertura descarga mosaicos de ArcGIS y OpenStreetMap, que reciben las coordenadas de los mosaicos que se visualizan. Si la app está configurada con un servidor propio, también consulta si hay una versión nueva.
+- **Cuenta registrada:** la cuenta solo sirve para sincronizar tus correcciones y tus aportes al dataset; los escaneos no se respaldan.
+- **Al Contribuir al Dataset Nacional:** Solo se envían las fotos que tú decidas aportar voluntariamente, junto con la etiqueta que elegiste, tu nota opcional y la fecha del aporte. El envío no incluye tu nombre, teléfono, correo ni coordenadas GPS. El aporte se guarda primero en el teléfono y se sube cuando hay una sesión iniciada y conexión a internet.
 
 ### ¿Por qué algunos escaneos no aparecen sobre el mapa de cobertura?
-Si un escaneo aparece en la lista de historial pero no se ve sobre el mapa, se debe a que el teléfono no tenía señal de satélites GPS en el momento exacto del disparo.  
+Si un escaneo aparece en la lista de historial pero no se ve sobre el mapa, el escaneo no tiene coordenadas guardadas: el teléfono no obtuvo ubicación al momento del disparo.  
 **Solución:** Antes de iniciar el recorrido en la milpa, asegúrate de tener encendida la opción de **Ubicación** en la barra de ajustes rápidos de Android y dale 30 segundos al teléfono a cielo abierto para fijar satélites.
 
 ### ¿DoctorMaiz puede sustituir el criterio de un agrónomo?
-**No.** DoctorMaiz es una herramienta de asistencia diagnóstica rápida. Las recomendaciones del acordeón de severidad sugieren ingredientes activos homologados (como *Azoxistrobina*, *Tebuconazol* o *Bacillus subtilis*), pero la dosis comercial exacta y la decisión final de compra deben ajustarse según la edad fenológica del cultivo y las recomendaciones del técnico de tu cooperativa o centro de extensión agrícola (como CENTA o MAG).
+**No.** DoctorMaiz es una herramienta de asistencia diagnóstica rápida. Las recomendaciones de la app mencionan grupos de productos (por ejemplo triazoles, estrobilurinas o *Bacillus*), pero la dosis comercial exacta y la decisión final de compra deben ajustarse según la edad fenológica del cultivo y las recomendaciones del técnico de tu cooperativa o centro de extensión agrícola (como CENTA o MAG).
 
 ---
 
@@ -61,6 +52,5 @@ Si un escaneo aparece en la lista de historial pero no se ve sobre el mapa, se d
 | Síntoma en la App | Causa Probable | Solución Inmediata |
 |---|---|---|
 | **Pantalla de cámara en negro** | Permiso de cámara revocado en Android | Ve a *Ajustes del Teléfono > Aplicaciones > DoctorMaiz > Permisos* y activa "Cámara". |
-| **El mapa satelital aparece en gris** | Falta de conexión a internet para descargar mosaicos | Cambia la capa a "Mapa Normal" o conéctate brevemente a Wi-Fi antes de salir al campo para precargar el cuadrante del lote. |
+| **El mapa aparece en gris** | Falta de conexión a internet: las capas Satelital y Estándar descargan sus mosaicos en línea | Conéctate a internet para ver el mapa. |
 | **El escaneo tarda más de 2 segundos** | Teléfono con modo de ahorro extremo de batería activo | Desactiva el modo de ahorro de batería de Android para permitir que la CPU ejecute el modelo TFLite a su frecuencia nominal. |
-| **Alerta "Memoria insuficiente"** | Historial de fotos locales saturó el almacenamiento | Dirígete a *Perfil*, realiza una copia de seguridad o sincroniza tus datos y limpia las fotos antiguas del almacenamiento temporal. |

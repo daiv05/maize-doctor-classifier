@@ -71,7 +71,7 @@ def test_orientacion_exif_se_aplica_antes_del_hash(tmp_path: Path) -> None:
     raw.putpixel((0, 0), (255, 0, 0))
     raw.putpixel((1, 0), (0, 255, 0))
     exif = Image.Exif()
-    exif[274] = 6  # orientar 90° en sentido horario
+    exif[274] = 6
     oriented_file = tmp_path / "exif.jpg"
     raw.save(oriented_file, format="PNG", exif=exif)
 
