@@ -1,17 +1,11 @@
 \chapter{An\'alisis y Dise\~no de la Soluci\'on}
 
-\section{Trazabilidad de los Datos}
-
-Cada imagen del corpus tiene un registro con un identificador \'unico, la huella SHA-256 del archivo, la fuente de la que proviene y el entorno de captura (laboratorio o campo). El identificador se calcula a partir de la ruta de la imagen, de modo que una misma imagen conserva su identidad en cualquier ejecuci\'on. La huella permite detectar si un archivo cambi\'o entre versiones del corpus, y la fuente y el entorno permiten formar las particiones agrupadas del Cap\'itulo~3.
-
-Las listas de entrenamiento, validaci\'on y prueba se guardaron con su propia huella, de modo que cada experimento puede comprobar que usa exactamente la misma partici\'on. La ausencia de solapamientos entre particiones se verific\'o en la auditor\'ia descrita m\'as abajo.
-
 \section{Condiciones Agron\'omicas Objetivo}
 
 El sistema clasifica la hoja de ma\'iz en nueve categor\'ias mutuamente excluyentes (Tabla~\ref{tab:taxonomia}): tres enfermedades causadas por hongos, un complejo viral, una plaga, tres deficiencias nutricionales y la hoja sana.
 
 \begin{table}[H]
-\caption{Taxonom\'ia agron\'omica de las nueve clases integradas en DoctorMaiz}
+\caption{Taxonom\'ia agron\'omica de las nueve clases}
 \label{tab:taxonomia}
 \centering
 \small
@@ -119,7 +113,7 @@ El corpus final re\'une 33~429 im\'agenes de 11 fuentes p\'ublicas (Tabla~\ref{t
 \texttt{corn-leaf-diseases-}\allowbreak\texttt{classification-roboflow} & CC BY 4.0 & 480 & Mixto & 1 clase. \\
 \texttt{maize-nutrient-deficiency} & CC BY 4.0 & 340 & Campo real & 4 clases. \\
 \texttt{maize-leaf-roboflow} & CC BY 4.0 & 331 & Campo real & 1 clase. \\
-\texttt{maize-deficiency-}\allowbreak\texttt{scanner-roboflow} & CC BY 4.0 & 158 & Campo real & 3 clases de deficiencia. \\
+\texttt{maize-deficiency-}\allowbreak\texttt{scanner-roboflow} & CC BY 4.0 & 158 & Campo real & 3 clases. \\
 \midrule
 \textbf{Total} & --- & \textbf{33~429} & --- & \textbf{9 clases agron\'omicas} \\
 \bottomrule
@@ -130,7 +124,7 @@ El corpus final re\'une 33~429 im\'agenes de 11 fuentes p\'ublicas (Tabla~\ref{t
 La licencia es la declarada por cada repositorio de origen.
 
 \subsection{An\'alisis Exploratorio}
-El corpus est\'a desbalanceado. La clase sana tiene cerca de 8~700 im\'agenes y el tiz\'on foliar cerca de 6~800, mientras que la deficiencia de potasio tiene 621, una relaci\'on de 14.1:1 que antes de ampliar el corpus era de 32.9:1 (Figura~\ref{fig:eda_distribuciones}). Las resoluciones tambi\'en var\'ian mucho y se agrupan en tres rangos: alrededor de 256 p\'ixeles en las im\'agenes de laboratorio, alrededor de 640 en las de Roboflow y las deficiencias nutricionales, y entre 3~000 y 5~000 en varias fuentes de campo. Todas se reducen a $224\times224$ antes de entrar al modelo, de modo que las fotograf\'ias grandes pierden parte del detalle fino de las lesiones.
+El corpus est\'a fuertemente desbalanceado. La clase sana tiene cerca de 8~700 im\'agenes y el tiz\'on foliar cerca de 6~800, mientras que la deficiencia de potasio tiene 621, una relaci\'on de 14.1:1 (Figura~\ref{fig:eda_distribuciones}). Las resoluciones tambi\'en var\'ian mucho y se agrupan en tres rangos: alrededor de 256 p\'ixeles en las im\'agenes de laboratorio, alrededor de 640 en las de Roboflow y las deficiencias nutricionales, y entre 3~000 y 5~000 en varias fuentes de campo. Todas se reducen a $224\times224$ antes de entrar al modelo, de modo que las fotograf\'ias grandes pierden parte del detalle fino de las lesiones.
 
 Solo tres clases tienen im\'agenes de laboratorio, tomadas sobre un fondo controlado: la roya com\'un (95\% de sus im\'agenes, 2~150 de 2~256), la mancha gris (27\%) y el tiz\'on foliar (13\%). Las otras seis clases son por completo de campo. En conjunto, el laboratorio aporta 3~551 im\'agenes, el 10.6\% del corpus. Esta composici\'on condiciona la evaluaci\'on del Cap\'itulo~3: la comparaci\'on entre laboratorio y campo solo puede hacerse en esas tres clases, y la roya, con apenas 106 im\'agenes de campo, es la clase con m\'as riesgo de fallar en campo.
 
@@ -151,7 +145,7 @@ Solo tres clases tienen im\'agenes de laboratorio, tomadas sobre un fondo contro
 \label{fig:eda_distribuciones}
 \end{figure}
 
-Adem\'as, la procedencia y la etiqueta est\'an asociadas: varias fuentes aportan una sola clase, y una sola fuente, \texttt{maize-beans-tomatoes-africa}, aporta 12~136 im\'agenes, el 36.3\% del corpus (Figura~\ref{fig:eda_fuentes}). Con esa asociaci\'on, un modelo puede aprender rasgos propios de cada fuente, como el fondo o la c\'amara, adem\'as de la lesi\'on.
+Adem\'as, la procedencia (la fuente de donde proviene la imagen) y la etiqueta (a que clase pertenece) est\'an asociadas: varias fuentes aportan una sola clase, y una sola fuente, \texttt{maize-beans-tomatoes-africa}, aporta 12~136 im\'agenes, el 36.3\% del corpus (Figura~\ref{fig:eda_fuentes}). Con esa asociaci\'on, un modelo puede aprender rasgos propios de cada fuente, como el fondo o la c\'amara, adem\'as de la lesi\'on.
 
 \begin{figure}[H]
 \centering
@@ -161,9 +155,20 @@ Adem\'as, la procedencia y la etiqueta est\'an asociadas: varias fuentes aportan
 \end{figure}
 
 \subsection{Auditor\'ia de Duplicados y Partici\'on}
-Cada imagen se compar\'o con el resto mediante dos hashes SHA-256, uno del archivo y otro de los p\'ixeles decodificados. No se encontraron duplicados, salvo cuatro pares de im\'agenes con etiquetas contradictorias que se excluyeron del corpus.
+Los repositorios p\'ublicos redistribuyen con frecuencia el mismo material, as\'i que la primera depuraci\'on se hizo al reunir el corpus. Cada clase se revis\'o con un hash perceptual (PHash), que agrupa las im\'agenes visualmente id\'enticas, y se conserv\'o una sola copia de cada grupo. En las primeras etapas se detectaron m\'as de 8~000 im\'agenes repetidas, cerca de la mitad de tiz\'on foliar, en una ampliaci\'on posterior del corpus se eliminaron otras 61 de las 1~876 im\'agenes incorporadas.
 
-La partici\'on oficial reparte las 33~429 im\'agenes en 70/15/15, estratificada por clase y entorno: 23~400 de entrenamiento, 5~014 de validaci\'on y 5~015 de prueba. Como las mismas fuentes aparecen en los tres conjuntos, el Cap\'itulo~3 la complementa con una validaci\'on agrupada por fuente.
+Sobre el corpus ya depurado se hizo una auditor\'ia final, en la que cada imagen se compar\'o con el resto mediante dos hashes SHA-256, uno del archivo y otro de los p\'ixeles decodificados. No qued\'o ning\'un duplicado, salvo cuatro pares de im\'agenes id\'enticas con etiquetas contradictorias, que se excluyeron luego del corpus.
+
+La partici\'on oficial reparte las 33~429 im\'agenes en 70/15/15, estratificada por clase y entorno: 23~400 de entrenamiento, 5~014 de validaci\'on y 5~015 de prueba.
+
+\subsection{Trazabilidad de los Datos}
+
+Cada imagen del corpus tiene un registro con un identificador \'unico, la huella SHA-256 del archivo, la fuente de la que proviene y el entorno de captura (laboratorio o campo). El identificador se calcula a partir de la ruta de la imagen, de modo que una misma imagen conserva su identidad en cualquier ejecuci\'on. La huella permite detectar si un archivo cambi\'o entre versiones del corpus, y la fuente y el entorno permiten formar las particiones agrupadas del Cap\'itulo~3.
+
+Las listas de entrenamiento, validaci\'on y prueba se guardaron con su propia huella, de modo que cada experimento puede comprobar que usa exactamente la misma partici\'on.
+
+Lo que se busca es que las ejecuciones puedan tener trazabilidad y ofrecer mayor fiabilidad en los resultados, de modo que puedan ser reproducidos y auditados.
+
 \section{Arquitecturas y B\'usqueda de Hiperpar\'ametros}
 
 \subsection{Familias Convolucionales Seleccionadas}
@@ -208,13 +213,13 @@ donde $M=3$ es el n\'umero de redes y $c \in \{1, \dots, 9\}$. La clase predicha
 \section{Despliegue en Dispositivo M\'ovil}
 
 \subsection{Cuantizaci\'on a Enteros de 8 Bits (Int8)}
-Para que EfficientNet-Lite0 funcione en tel\'efonos de forma eficiente, se cuantiz\'o a enteros de 8 bits despu\'es del entrenamiento (\textit{Post-Training Quantization}, PTQ) \cite{jacob2018} y se export\'o a TensorFlow Lite con litert-torch. Los pesos $W_{f,c,i}$ de cada canal de salida $c$ se escalan por separado:
+Para que el modelo funcione en tel\'efonos de forma eficiente, se decidió realizar una cuantizaci\'on a enteros de 8 bits despu\'es del entrenamiento (\textit{Post-Training Quantization}, PTQ) \cite{jacob2018} y se export\'o a TensorFlow Lite con litert-torch. Los pesos $W_{f,c,i}$ de cada canal de salida $c$ se escalan por separado:
 \begin{equation}
 S_c = \frac{\max_i \lvert W_{f,c,i} \rvert}{127}, \qquad q_{c,i} = \operatorname{clip}\!\left(\left\lfloor \frac{W_{f,c,i}}{S_c} \right\rceil,\; -127,\; 127\right)
 \end{equation}
 
 \subsection{Detector de Anomal\'ias Fuera de Distribuci\'on (OOD)}
-El modelo siempre responde con alguna de las clases que aprendi\'o, aunque la fotograf\'ia no tenga relaci\'on con el ma\'iz. Si se le muestra suelo o un zapato, elegir\'a de todos modos una enfermedad, a veces con mucha seguridad, porque solo puede repartir su confianza entre las etiquetas que conoce \cite{lee2018}. Por eso, antes de mostrar un diagn\'ostico, la aplicaci\'on comprueba si la imagen se parece a las que el modelo vio durante el entrenamiento.
+El modelo siempre responde con alguna de las clases que aprendi\'o, aunque la fotograf\'ia no tenga relaci\'on con el ma\'iz. Si se le muestra suelo o un zapato, elegir\'a de todos modos una enfermedad, a veces incluso con mucha seguridad, porque solo puede repartir su confianza entre las etiquetas que conoce \cite{lee2018}. Por eso, antes de mostrar un diagn\'ostico, la aplicaci\'on comprueba si la imagen se parece a las que el modelo vio durante el entrenamiento.
 
 Para hacerlo aprovecha la descripci\'on num\'erica que la red construye de cada imagen justo antes de clasificarla, una especie de huella de su contenido. Durante el entrenamiento se registra en qu\'e zona se agrupan las huellas de cada clase. Cuando llega una fotograf\'ia nueva, se mide qu\'e tan lejos queda su huella del grupo m\'as cercano con la distancia de Mahalanobis, que considera cu\'anto var\'ian normalmente las im\'agenes de ese grupo \cite{mahalanobispp2025}. A esa medida se le resta la distancia al conjunto completo de entrenamiento, para no castigar rasgos que comparte cualquier fotograf\'ia, como la iluminaci\'on o el encuadre \cite{ren2021}.
 
@@ -229,9 +234,9 @@ La interfaz incorpora dos elementos que complementan al modelo:
 
 \section{Sincronizaci\'on y Aportes al Conjunto de Datos}
 
-La aplicaci\'on no necesita un servidor para diagnosticar. El servidor solo interviene cuando el productor decide compartir informaci\'on, y para eso debe crear una cuenta. Puede enviar una correcci\'on, si considera que el diagn\'ostico fue equivocado, o una fotograf\'ia con la etiqueta que \'el mismo le asigna, que pasa a formar parte del conjunto de datos colaborativo. Con la fotograf\'ia solo viajan la etiqueta, una nota opcional y la fecha.
+La aplicaci\'on no necesita un servidor para diagnosticar, por eso el servidor en la nube solo interviene cuando el productor decide compartir informaci\'on, y para eso debe crear una cuenta. Puede enviar una correcci\'on, si considera que el diagn\'ostico fue equivocado, o una fotograf\'ia con la etiqueta que \'el mismo le asigna, que pasa a formar parte del conjunto de datos colaborativo. Con la fotograf\'ia solo viajan la etiqueta, una nota opcional y la fecha.
 
-Como en la parcela puede no haber se\~nal, cada aporte se guarda primero en el tel\'efono y se env\'ia despu\'es, cuando vuelve la conexi\'on o cuando el usuario lo pide (Figura~\ref{fig:secuencia_sync}). El registro se marca como enviado solo cuando el servidor confirma que lo recibi\'o, y si algo falla se intenta de nuevo m\'as tarde. En el servidor, la API (FastAPI con MySQL 8.4) rechaza los env\'ios repetidos y acepta como m\'aximo 30 solicitudes por minuto.
+Como en la parcela puede no haber se\~nal, cada aporte se guarda primero en el tel\'efono y se env\'ia despu\'es, cuando vuelve la conexi\'on o cuando el usuario lo pide (Figura~\ref{fig:secuencia_sync}). En el servidor, la API (FastAPI con MySQL 8.4) rechaza los env\'ios repetidos y acepta como m\'aximo 30 solicitudes por minuto, para evitar abusos y proteger la base de datos.
 
 \begin{figure}[H]
 \centering
