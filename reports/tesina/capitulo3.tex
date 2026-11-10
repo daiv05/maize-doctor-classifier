@@ -5,7 +5,7 @@
 \subsection{Infraestructura de C\'omputo y Entrenamiento en la Nube}
 El entrenamiento se realiz\'o en la plataforma Modal, sobre GPU NVIDIA A10G de 24~GB de VRAM, con CUDA 12.6 y PyTorch 2.12.1.
 
-En todos los entrenamientos se utiliz\'o un calendario de tasa de aprendizaje de tipo coseno, precedido por tres \'epocas de calentamiento lineal. Este calentamiento evita que los primeros pasos de optimizaci\'on alteren en exceso los pesos preentrenados en ImageNet \cite{deng2009} mientras la red se adapta a las nuevas clases. El entrenamiento se deten\'ia cuando el Macro $F_1$ de validaci\'on no mejoraba durante 8 \'epocas consecutivas. Como muestra la Figura~\ref{fig:convergencia_entrenamiento}, las tres arquitecturas alcanzan un Macro $F_1$ cercano a 0.90 en torno a la d\'ecima \'epoca, y a partir de ese punto las mejoras son graduales.
+En todos los entrenamientos se utiliz\'o un calendario de tasa de aprendizaje de tipo coseno, precedido por tres \'epocas de calentamiento lineal. Este calentamiento evita que los primeros pasos de optimizaci\'on alteren en exceso los pesos preentrenados en ImageNet \cite{deng2009} mientras la red se adapta a las nuevas clases. El entrenamiento se detiene cuando el Macro $F_1$ de validaci\'on no mejora durante 8 \'epocas consecutivas. Como muestra la Figura~\ref{fig:convergencia_entrenamiento}, las tres arquitecturas alcanzan un Macro $F_1$ cercano a 0.90 en torno a la d\'ecima \'epoca, y a partir de ese punto las mejoras son graduales.
 
 \begin{figure}[H]
 \centering
@@ -18,7 +18,7 @@ En todos los entrenamientos se utiliz\'o un calendario de tasa de aprendizaje de
 
 El sistema cumple los seis criterios de \'exito (Tabla~\ref{tab:estado_criterios_c3}). Estos criterios se midieron sobre una partici\'on que mezcla las fuentes, as\'i que el desempe\~no en campo se analiza aparte, con la validaci\'on por fuente y las fotograf\'ias externas (Secciones~\ref{sec:generalizacion} y~\ref{sec:campo_externo}).
 
-El modelo oficial elegido es EfficientNet-Lite0 y es el que se usa en la aplicaci\'on.
+El modelo oficial elegido es EfficientNet-Lite0 y es el que se usa en la aplicaci\'on, esto gracias a que en pruebas realizadas con cada modelo, es el que mejor equilibra exactitud y velocidad de inferencia, además de no verse afectado por la cuantizaci\'on a Int8.
 
 \begin{table}[H]
 \caption{Estado de los criterios de \'exito}
@@ -87,11 +87,11 @@ Suavizado de etiquetas & 0.10 & 0.075 & --- \\
 \end{singlespace}
 \end{table}
 
-La configuraci\'on encontrada por Optuna mejor\'o en 0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, pero en el conjunto de prueba obtuvo 0.49 puntos menos que la configuraci\'on inicial. Una mejora tan peque\~na, que adem\'as no se traslada a la prueba, es compatible con un ajuste a las particularidades del conjunto de validaci\'on. Por ese motivo se conserv\'o la configuraci\'on inicial (tasa de aprendizaje de $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.1), con la que el modelo oficial alcanz\'o en prueba un Macro $F_1$ de 0.9480 y una exactitud de 97.81\%.
+La configuraci\'on encontrada por Optuna mejor\'o en 0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, pero en el conjunto de prueba obtuvo 0.49 puntos menos que la configuraci\'on inicial. Una mejora tan peque\~na, que adem\'as no se traslada a la prueba, es casi insignificante, no representando un cambio real en el desempe\~no del modelo. Por ese motivo se conserv\'o la configuraci\'on inicial (tasa de aprendizaje de $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.1), con la que el modelo oficial alcanz\'o en prueba un Macro $F_1$ de 0.9480 y una exactitud de 97.81\%.
 
 \subsection{Generalizaci\'on entre Fuentes}\label{sec:generalizacion}
 
-Con el fin de medir cu\'anto depende el desempe\~no de las fuentes vistas durante el entrenamiento, se repiti\'o la validaci\'on cruzada de 5 pliegues con dos esquemas de partici\'on. El primero es la partici\'on estratificada que se usa normalmente. El segundo agrupa las im\'agenes por fuente, de modo que ning\'un repositorio aparece a la vez en entrenamiento y en evaluaci\'on. Cada esquema se prob\'o con la configuraci\'on inicial y con una configuraci\'on ajustada (Tabla~\ref{tab:kfold_2x2_c3} y Figura~\ref{fig:kfold_sigmas}).
+Con el fin de medir cu\'anto depende el desempe\~no de las fuentes vistas durante el entrenamiento, se realiz\'o una validaci\'on cruzada de 5 pliegues con dos esquemas de partici\'on. El primero es la partici\'on estratificada que se usa normalmente y el segundo agrupa las im\'agenes por fuente, de modo que ning\'un repositorio aparece a la vez en entrenamiento y en evaluaci\'on. Cada esquema se prob\'o con la configuraci\'on inicial y con una configuraci\'on ajustada (Optuna) (Tabla~\ref{tab:kfold_2x2_c3} y Figura~\ref{fig:kfold_sigmas}).
 
 \begin{table}[H]
 \caption{Validaci\'on cruzada de 5 pliegues con partici\'on estratificada y agrupada por fuente}
@@ -122,9 +122,9 @@ Hiperpar\'ametros ajustados & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.29
 \label{fig:kfold_sigmas}
 \end{figure}
 
-La forma de partir los datos pes\'o mucho m\'as que los hiperpar\'ametros. Con la partici\'on estratificada el Macro $F_1$ fue de 0.9311, y al evaluar con fuentes que el modelo no vio durante el entrenamiento baj\'o a 0.6026 (0.4359 sobre las nueve clases). Ajustar los hiperpar\'ametros apenas lo movi\'o, de 0.9311 a 0.9463. El intervalo de confianza tambi\'en creci\'o, de $\pm 0.0099$ a $\pm 0.1240$, porque el resultado cambia bastante seg\'un qu\'e fuente quede fuera.
+La forma de partir los datos pesa mucho m\'as que los hiperpar\'ametros. Con la partici\'on estratificada el Macro $F_1$ fue de 0.9311, y al evaluar con fuentes que el modelo no vio durante el entrenamiento baj\'o a 0.6026. Ajustar los hiperpar\'ametros apenas lo movi\'o, de 0.9311 a 0.9463. El intervalo de confianza tambi\'en creci\'o, de $\pm 0.0099$ a $\pm 0.1240$, porque el resultado cambia bastante seg\'un qu\'e fuente quede fuera.
 
-Una ca\'ida de 0.33 no se explica por el azar del entrenamiento, entre tres semillas, el Macro $F_1$ vari\'o con una desviaci\'on est\'andar de 0.0052, y entre pliegues estratificados, de 0.0080 (Figura~\ref{fig:kfold_sigmas}). Lo m\'as probable es que el modelo, adem\'as de los s\'intomas, haya aprendido rasgos de cada repositorio, como el fondo, la luz o la c\'amara, algo que ya se ha observado en otros trabajos con im\'agenes de cultivos \cite{ahmad2023a}.
+Una ca\'ida de 0.33 no se explica por el azar del entrenamiento, entre tres semillas, el Macro $F_1$ vari\'o con una desviaci\'on est\'andar de 0.0052, y entre pliegues estratificados, de 0.0080 (Figura~\ref{fig:kfold_sigmas}). La conclusión es que el modelo, adem\'as de los s\'intomas y a pesar del preprocesado y aumento de datos, haya aprendido rasgos de cada repositorio, como el fondo, la luz o la c\'amara, algo que ya se ha observado en otros trabajos con im\'agenes de cultivos \cite{ahmad2023a}.
 
 En la evaluaci\'on LOSO (\textit{leave-one-source-out}), el modelo se entren\'o sin una fuente completa y se prob\'o solo con las im\'agenes de esa fuente, con tres semillas (Tabla~\ref{tab:loso_c3}). Sin \texttt{maize-diseases}, el Macro $F_1$ qued\'o en 0.9933, casi igual que si esa fuente se hubiera visto. Con \texttt{multicrop-disease-maiz} el resultado fue otro, y la exactitud baj\'o a 80.38\%.
 
@@ -145,7 +145,7 @@ En la evaluaci\'on LOSO (\textit{leave-one-source-out}), el modelo se entren\'o 
 \end{singlespace}
 \end{table}
 
-Los resultados casi no cambian entre las tres semillas, as\'i que la ca\'ida al retirar \texttt{multicrop-disease-maiz} no es solo casualidad, la caída depende de qu\'e fuente se deja fuera.
+Los resultados casi no cambian entre las tres semillas, as\'i que la ca\'ida al retirar \texttt{multicrop-disease-maiz} no es solo casualidad, la caída depende de qu\'e fuente se deja fuera, y es consistente con la validaci\'on cruzada por fuente.
 
 \FloatBarrier
 \subsection{Fotograf\'ias de Campo Externas}
@@ -217,7 +217,7 @@ Tiz\'on foliar & 3.01\% & 133 & 1.01\% & 892 \\
 \FloatBarrier
 \subsection{Dependencia del Fondo}\label{sec:dependencia_fondo}
 
-Para determinar en qu\'e medida el modelo se apoya en la hoja o en el entorno, se ocultaron distintas regiones de las 5~015 im\'agenes de prueba y se midi\'o la exactitud con lo que quedaba visible (Tabla~\ref{tab:ablacion_c3} y Figura~\ref{fig:ablacion_grafico}). Como referencia se us\'o un predictor nulo, que no mira la imagen y lo que hace es responder siempre con la clase m\'as frecuente de la prueba, la hoja sana. Ese predictor acierta el 26.14\% de las veces, as\'i que cualquier exactitud por encima de ese valor indica que la regi\'on visible todav\'ia contiene informaci\'on sobre la clase. La columna «Sobre el nulo» de la tabla muestra esa diferencia.
+Para determinar en qu\'e medida el modelo se apoya en la hoja o en el entorno, se ocultaron distintas regiones de las 5~015 im\'agenes de prueba y se midi\'o la exactitud con lo que quedaba visible (Tabla~\ref{tab:ablacion_c3} y Figura~\ref{fig:ablacion_grafico}). Como referencia se us\'o un predictor nulo, que no mira la imagen y lo que hace es responder siempre con la clase m\'as frecuente de la prueba, la hoja sana. Ese predictor acierta el 26.14\% de las veces, as\'i que cualquier exactitud por encima de ese valor indica que la regi\'on visible todav\'ia contiene informaci\'on sobre la clase.
 
 \begin{table}[H]
 \caption{Exactitud al ocultar regiones de la imagen.}
@@ -245,9 +245,9 @@ Predictor nulo & Ninguna & 0.0\% & 26.14\% & 0.0 pp & --- \\
 \label{fig:ablacion_grafico}
 \end{figure}
 
-Cuando se oculta el centro de la imagen, el modelo conserva un 79.46\% de exactitud a partir del borde, mientras que al ocultar la periferia la exactitud desciende a 42.25\%. Las dos condiciones no dejan visible la misma superficie (63.7\% y 36.3\%), pero la diferencia es lo bastante amplia para sugerir que el fondo aporta informaci\'on sobre la clase. Este resultado motiv\'o que la aplicaci\'on recorte la captura al marco gu\'ia antes de clasificarla.
+Cuando se oculta el centro de la imagen, el modelo conserva un 79.46\% de exactitud a partir del borde, mientras que al ocultar la periferia la exactitud desciende a 42.25\%. Las dos condiciones no dejan visible la misma superficie (63.7\% y 36.3\%), pero la diferencia es lo bastante amplia para sugerir que el fondo aporta informaci\'on sobre la clase. Este resultado motiv\'o que la aplicaci\'on recorte la captura al marco gu\'ia antes de clasificarla, para que la hoja ocupe la mayor parte posible de la regi\'on visible.
 
-Los mapas de Grad-CAM \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017} coinciden, en los ejemplos analizados, con las lesiones visibles (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}), pero, al cuantificar cu\'anta atribuci\'on recae sobre la hoja m\'as all\'a de lo esperado por su \'area, el exceso medio en seis clases (270 im\'agenes con m\'ascara de la hoja) fue de apenas +0.037, con tres clases por encima de lo esperado y tres por debajo. Una explicaci\'on posible es que la se\~nal del fondo est\'e repartida en muchos p\'ixeles y, por ello, no destaque en los mapas locales.
+En los ejemplos analizados, los mapas de Grad-CAM \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017} coinciden con las lesiones visibles (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}). Para comprobarlo con n\'umeros se tomaron 270 im\'agenes de prueba, 30 por clase, y en cada una se midi\'o qu\'e parte de la atribuci\'on de SHAP cae sobre la hoja y qu\'e parte de la imagen ocupa la hoja. Si el modelo se fijara sobre todo en la hoja, la primera cifra ser\'ia claramente mayor que la segunda. En las seis clases donde la hoja pudo delimitarse bien, la diferencia media fue de apenas +0.037, con tres clases por encima y tres por debajo. El modelo, entonces, casi no atiende a la hoja m\'as de lo que cabr\'ia esperar por su tama\~no. Una explicaci\'on posible de que los mapas no lo muestren es que solo resaltan las zonas de mayor peso, como la lesi\'on. El fondo pesa poco en cada punto, pero ocupa tanta superficie que en conjunto influye casi lo mismo que la hoja.
 
 \begin{figure}[H]
 \centering
@@ -415,8 +415,10 @@ Deficiencia de potasio & 93 & 0.8290 & 0.8208 & 0.7674 & \textbf{0.8475} \\
 
 \subsection{S\'intesis de los Resultados}
 
-Los resultados dejan dos lecturas. En la partici\'on de prueba el modelo cumple lo que se propuso: obtiene un Macro $F_1$ de 0.9480, la cuantizaci\'on no le resta desempe\~no y en el tel\'efono responde por debajo de la meta de 300~ms. La b\'usqueda de hiperpar\'ametros y el ensamble aportaron poco frente a eso. La configuraci\'on de Optuna no mejor\'o el resultado en prueba, y el ensamble gan\'o menos de un punto de Macro $F_1$ pero exigir\'ia ejecutar tres redes en el tel\'efono.
+Los resultados dejan dos conclusiones: 
 
-Fuera de esa partici\'on el panorama cambia. Con fuentes que el modelo no vio, el Macro $F_1$ baj\'o a 0.6026, y en las fotograf\'ias de campo externas acert\'o 41 de 97. La ablaci\'on apunta en la misma direcci\'on, porque el modelo sigue acertando la mayor\'ia de las veces cuando solo ve el borde de la imagen. Las tres pruebas indican que parte de lo que aprendi\'o es propio de los repositorios de origen y no de la enfermedad.
+En la partici\'on de prueba el modelo cumple lo que se propuso: obtiene un Macro $F_1$ de 0.9480, la cuantizaci\'on no le resta desempe\~no y en el tel\'efono responde por debajo de la meta de 300~ms. La b\'usqueda de hiperpar\'ametros y el ensamble aportaron poco frente a eso. La configuraci\'on de Optuna no mejor\'o el resultado en prueba, y el ensamble gan\'o menos de un punto de Macro $F_1$ pero exigir\'ia ejecutar tres redes en el tel\'efono.
+
+Fuera de esa partici\'on la lectura es bastante distinta, con fuentes que el modelo no vio, el Macro $F_1$ baj\'o a 0.6026, y en las fotograf\'ias de campo externas acert\'o 41 de 97. La ablaci\'on apunta en la misma direcci\'on, porque el modelo sigue acertando la mayor\'ia de las veces cuando solo ve el borde de la imagen. Las tres pruebas indican que parte de lo que aprendi\'o es propio de los repositorios de origen y no de la enfermedad.
 
 Por eso el sistema queda, por ahora, como una herramienta de orientaci\'on. Es poco probable que otra arquitectura o m\'as ajuste de hiperpar\'ametros cambien ese resultado. Lo que falta son fotograf\'ias tomadas en parcelas salvadore\~nas, y a eso responden el m\'odulo de aportes y las recomendaciones del cierre.
