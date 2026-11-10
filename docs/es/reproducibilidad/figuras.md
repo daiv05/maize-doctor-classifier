@@ -23,6 +23,8 @@ Generadas por `notebooks/01_eda.ipynb` sobre el corpus ampliado de agosto de 202
 | Figura | Generador | Artefacto fuente |
 |---|---|---|
 | `ensemble/confusion_matrix_ensemble.png` | `scripts/pipeline/evaluate_ensemble.py` | `ensamble_predicciones.csv` y `ensamble_resumen.json` |
+| `tuning/hpo_ensayos.png` (solo en la tesina) | `scripts/experiments/figura_hpo_ensayos.py` | `trials.csv` y `comparison_vs_baseline.csv` de `evidencia/hpo_lite0_seed42` |
+| `training/training_convergence.png` | `scripts/experiments/figura_convergencia.py` | `train_history.csv` de las corridas `20260812_221429`, `20260811_211306` y `20260812_185239` |
 | `resultados/ablacion_control_nulo.png` | `scripts/experiments/figura_ablacion.py` | `equidad_metricas.json` (`shortcut_learning_audit` y `control_nulo_clase_mayoritaria`) |
 | `fairness/disaggregated_confusion_matrices.png` | `scripts/pipeline/evaluate_fairness.py` | predicciones de equidad |
 | `xai/class_profile.png`, `xai/mask_audit.png` | `src/explainability/global_report.py` | `xai_global_summary.csv` y `xai_global_per_image.csv` |

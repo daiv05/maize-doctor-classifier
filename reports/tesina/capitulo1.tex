@@ -10,7 +10,7 @@ En los \'ultimos a\~nos esta producci\'on ha quedado m\'as expuesta a anomal\'ia
 
 Pese a esa importancia, el efecto de los problemas fitosanitarios sobre la producci\'on nacional no est\'a cuantificado, la informaci\'on p\'ublica disponible no permite estimar cu\'anto ma\'iz pierde El Salvador por enfermedades foliares, plagas o deficiencias nutricionales. Las p\'erdidas recientes mejor documentadas son de origen clim\'atico: en el ciclo 2023-2024 se reportaron unos 1.46 millones de quintales perdidos, el 9.8\% de los 14.9 millones producidos, con m\'as de 24\% en cada departamento del oriente \cite{edh2024}, y en el ciclo 2024-2025 la cosecha fue de 10.9 millones de quintales frente a 18.8 millones requeridos \cite{elmundo2025}. En el frente fitosanitario solo se dispone de evidencias puntuales: en un ensayo de h\'ibridos del CENTA, los tres sitios con presi\'on de mancha de asfalto rindieron cerca de 51\% menos que los sitios sin la enfermedad \cite{deras2015}, y en un ensayo de 2017 en La Libertad el control optimizado de plagas y enfermedades elev\'o el rendimiento 15\% pero redujo la utilidad neta en US\$395 por hect\'area \cite{eash2019}.
 
-Esa falta de cifras es parte del problema y tambi\'en afect\'o a este proyecto, porque sin un registro de diagn\'osticos nadie puede decir qu\'e enfermedades predominan en cada zona ni cu\'anto cuestan, y el productor decide sin referencia; el ensayo de La Libertad muestra que tratar no siempre compensa el gasto. Con los datos para entrenar un modelo ocurre lo mismo. El corpus re\'une 33~429 im\'agenes de 11 repositorios internacionales y ninguna fotograf\'ia salvadore\~na etiquetada. La misma carencia impidi\'o estimar el ahorro econ\'omico que el diagn\'ostico podr\'ia producir. Por eso la aplicaci\'on incluye un m\'odulo de aportes voluntarios con el que podr\'ia formarse, con el tiempo, el registro que hoy falta.
+Esa falta de cifras es parte del problema y tambi\'en afect\'o a este proyecto, porque sin un registro de diagn\'osticos nadie puede decir qu\'e enfermedades predominan en cada zona ni cu\'anto cuestan, y el productor decide sin referencia. El ensayo de La Libertad muestra que tratar no siempre compensa el gasto. Con los datos para entrenar un modelo ocurre lo mismo. El corpus re\'une 33~429 im\'agenes de 11 repositorios internacionales y ninguna fotograf\'ia salvadore\~na etiquetada. La misma carencia impidi\'o estimar el ahorro econ\'omico que el diagn\'ostico podr\'ia producir. Por eso la aplicaci\'on incluye un m\'odulo de aportes voluntarios con el que podr\'ia formarse, con el tiempo, el registro que hoy falta.
 
 \subsection{Descripci\'on del problema}
 
@@ -313,8 +313,8 @@ Inferencia en el tel\'efono & Sin servidor de inferencia & \$0.00 \\
 Dispositivo de prueba & Motorola edge 40 neo, aportado por un integrante & \$0.00 \\
 \midrule
 \multicolumn{3}{l}{\textit{Despliegue (agosto a noviembre de 2026)}} \\
-Servidor Hetzner & API, base de datos y sitio web; \$6.00 al mes durante 4 meses & \$24.00 \\
-Volumen Hetzner de 100~GB & Fotograf\'ias aportadas y respaldos; \$7.67 al mes durante 4 meses & \$30.68 \\
+Servidor Hetzner & API, base de datos y sitio web (\$6.00 al mes durante 4 meses) & \$24.00 \\
+Volumen Hetzner de 100~GB & Fotograf\'ias aportadas y respaldos (\$7.67 al mes durante 4 meses) & \$30.68 \\
 Dominio & Registro anual & \$12.00 \\
 Distribuci\'on & APK en GitHub Releases, dataset en Hugging Face & \$0.00 \\
 \midrule
@@ -328,7 +328,7 @@ Distribuci\'on & APK en GitHub Releases, dataset en Hugging Face & \$0.00 \\
 Los salarios mensuales de referencia (\$1,500, \$1,350 y \$1,250) son el punto medio de la escala del sector p\'ublico salvadore\~no para perfiles equivalentes. Se estim\'o una dedicaci\'on de 2 horas diarias de lunes a viernes por integrante (10 horas semanales), que suman 320 horas en las 32 semanas del cronograma (Tabla~\ref{tab:cronograma}). Eso equivale a 1.85 meses de jornada completa, y el salario se prorrate\'o en esa proporci\'on. Los montos incluyen las prestaciones de ley.
 
 \subsection*{Entrenamiento}
-Todo el entrenamiento se ejecut\'o en GPU NVIDIA A10G de la plataforma Modal, con un presupuesto de \$250 en cr\'editos. Ese monto cubri\'o los modelos de referencia de la primera etapa, el entrenamiento del modelo oficial, la b\'usqueda de hiperpar\'ametros con Optuna (12.65 horas de GPU, \$13.92) y los experimentos de validaci\'on por fuente, con varias semillas y de explicabilidad. El entrenamiento es un costo de una sola vez: una vez exportado, el modelo no requiere m\'as GPU.
+Todo el entrenamiento se ejecut\'o en GPU NVIDIA A10G de la plataforma Modal, con un presupuesto de \$250 en cr\'editos. Ese monto cubri\'o los modelos de referencia iniciales, el entrenamiento del modelo oficial, la b\'usqueda de hiperpar\'ametros con Optuna (12.65 horas de GPU, \$13.92) y los experimentos de validaci\'on por fuente, con varias semillas y de explicabilidad. El entrenamiento es un costo de una sola vez: una vez exportado, el modelo no requiere m\'as GPU.
 
 \subsection*{Inferencia}
 El modelo se ejecuta en el procesador del tel\'efono, de modo que cada diagn\'ostico no tiene costo de servidor ni consume datos m\'oviles. El costo de inferencia no crece con el n\'umero de usuarios, lo que hace viable distribuir la aplicaci\'on de forma gratuita. Las pruebas en dispositivo se hicieron con un tel\'efono de gama media propiedad de un integrante del equipo.
