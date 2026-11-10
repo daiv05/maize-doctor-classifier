@@ -206,9 +206,9 @@
 
 \noindent A Dios todopoderoso, por haberme concedido la perseverancia, la sabidur\'ia y la fortaleza necesaria para afrontar cada desaf\'io acad\'emico y culminar con \'exito esta etapa de mi formaci\'on profesional.
 
-\noindent A mi familia, cuyo respaldo incondicional, sacrificios silenciosos y constante motivaci\'on fueron el cimiento sobre el cual pude edificar cada meta. Gracias por creer en m\'i en todo instante.
+\noindent A mi familia, por su apoyo incondicional, sus sacrificios y su constante motivaci\'on. Gracias por creer en m\'i en todo momento.
 
-\noindent A mis compa\~neros de tesis y amigos entra\~nables, David y Elmer, por las incontables jornadas de discusi\'on t\'ecnica, investigaci\'on y programaci\'on. Su compromiso y esfuerzo conjunto hicieron posible que esta investigaci\'on trascendiera el aula para convertirse en un aporte tangible al agro salvadore\~no.
+\noindent A mis compa\~neros de tesis y amigos, David y Elmer, por las muchas jornadas de discusi\'on t\'ecnica, investigaci\'on y programaci\'on. Su compromiso y su esfuerzo hicieron posible este trabajo.
 
 \noindent A la Universidad de El Salvador y a cada docente de la Escuela de Ingenier\'ia de Sistemas Inform\'aticos, por transmitirme con rigor y vocaci\'on los principios cient\'ificos que hoy me capacitan como profesional al servicio de la sociedad.
 
@@ -242,7 +242,7 @@
 
 \noindent Agradezco profundamente al Todopoderoso, por su gracia inmerecida, sabidur\'ia que me concedi\'o y fortaleza para superar cada desaf\'io a lo largo de este proceso de formaci\'on. A \'el atribuyo la gloria de haber culminado con \'exito esta etapa de mi vida acad\'emica y profesional.
 
-\noindent Adem\'as, expreso mi sincero agradecimiento a mis padres, por el apoyo incondicional que me han demostrado en peque\~nos y grandes detalles. Su motivaci\'on constante y su confianza en mis capacidades fueron actos de amor que me ayudaron a vencer el cansancio y me hicier\'on recordar mis objetivos.
+\noindent Adem\'as, expreso mi sincero agradecimiento a mis padres, por el apoyo incondicional que me han demostrado en peque\~nos y grandes detalles. Su motivaci\'on constante y su confianza en mis capacidades fueron actos de amor que me ayudaron a vencer el cansancio y me hicieron recordar mis objetivos.
 
 \noindent A mis compa\~neros de graduaci\'on, Josias y David, por su amistad. El trabajo en equipo se volvi\'o una experiencia enriquecedora, y el entusiasmo inagotable con el que enfrentamos este reto nos dej\'o un gran aprendizaje. Reconozco el talento y dedicaci\'on que mostraron, que hicieron de cada desaf\'io una oportunidad de crecimiento. 
 
@@ -261,13 +261,13 @@
 \onehalfspacing
 El ma\'iz es la base de la alimentaci\'on de las familias campesinas de El Salvador, y la mayor\'ia de los productores trabaja parcelas peque\~nas con poca asistencia t\'ecnica. Las enfermedades foliares, las plagas y las deficiencias nutricionales reducen el rendimiento si no se detectan a tiempo. Las herramientas de diagn\'ostico por visi\'on artificial suelen exigir conexi\'on a internet o tel\'efonos potentes, o fallan con fotograf\'ias distintas a las del entrenamiento.
 
-Esta investigaci\'on presenta \textbf{Doctor Ma\'iz}, una aplicaci\'on m\'ovil que clasifica nueve condiciones de la hoja de ma\'iz (enfermedades, una plaga y deficiencias nutricionales) con una red convolucional que se ejecuta en el propio tel\'efono, sin conexi\'on. Incluye un marco gu\'ia para la captura, un detector de im\'agenes fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD) y un m\'odulo opcional para aportar fotograf\'ias a un conjunto de datos nacional.
+Esta investigaci\'on presenta DoctorMaiz, una aplicaci\'on m\'ovil que clasifica nueve condiciones de la hoja de ma\'iz (enfermedades, una plaga y deficiencias nutricionales) con una red convolucional que se ejecuta en el propio tel\'efono y sin conexi\'on. Incluye un marco gu\'ia para la captura, un detector de im\'agenes fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD) y un m\'odulo opcional para aportar fotograf\'ias a un conjunto de datos nacional.
 
-Se reuni\'o un corpus de \textbf{33~429 im\'agenes} de 11 repositorios internacionales, con control de integridad, revisi\'on de duplicados y registro de la procedencia. El modelo oficial es un modelo EfficientNet-Lite0, que obtuvo un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\% en 5~015 im\'agenes de prueba ($0.9435 \pm 0.0052$ con tres semillas). La b\'usqueda de hiperpar\'ametros con Optuna qued\'o como experimento complementario al no superar ese resultado en prueba, y un ensamble de tres redes (0.9567) se conserv\'o como referencia.
+Se reuni\'o un corpus de 33~429 im\'agenes de 11 repositorios internacionales, con control de integridad, revisi\'on de duplicados y registro de la procedencia. El modelo oficial es un modelo EfficientNet-Lite0, que obtuvo un Macro $F_1$ de 0.9480 y una exactitud de 97.81\% en 5~015 im\'agenes de prueba ($0.9435 \pm 0.0052$ con tres semillas). La b\'usqueda de hiperpar\'ametros con Optuna qued\'o como experimento complementario al no superar ese resultado en prueba, y se realizó también un ensamble de tres redes, dando como resultado un Macro $F_1$ de 0.9567.
 
-La principal limitaci\'on es la generalizaci\'on. En fotograf\'ias de campo ajenas al corpus el modelo acert\'o 41 (42\%) y el detector rechaz\'o 49. La validaci\'on agrupada por fuente dio un Macro $F_1$ de $0.6026 \pm 0.1240$, frente a $0.9311 \pm 0.0099$ en la partici\'on estratificada. La ablaci\'on espacial indica que el modelo se apoya en la periferia de la imagen: la exactitud fue de 79.46\% al ocluir el centro y de 42.25\% al ocluir la periferia.
+La principal limitaci\'on es la generalizaci\'on, en fotograf\'ias de campo ajenas al corpus el modelo acert\'o 41 (42\%) y el detector rechaz\'o 49. La validaci\'on agrupada por fuente dio un Macro $F_1$ de $0.6026 \pm 0.1240$, frente a $0.9311 \pm 0.0099$ en la partici\'on estratificada. La ablaci\'on espacial indica que el modelo se apoya en la periferia de la imagen: la exactitud fue de 79.46\% al ocluir el centro y de 42.25\% al ocluir la periferia.
 
-El modelo se cuantiz\'o a enteros de 8 bits (Int8) y pesa \textbf{3.74~MB}, 72.9\% menos que en coma flotante, con un Macro $F_1$ de 0.9489 en la prueba completa. En un Motorola edge 40 neo con Android 15, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia. Solo la sincronizaci\'on de aportes requiere conexi\'on. Se proponen cinco recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA: validaci\'on en campo, un banco nacional de datos, una red de alerta fitosanitaria, capacitaci\'on comunitaria y software abierto.
+El modelo se cuantiz\'o a enteros de 8 bits (Int8) y pesa 3.74~MB, 72.9\% menos que en coma flotante, con un Macro $F_1$ de 0.9489 en la prueba completa. En un teléfono de gama media, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia. Con esto resultados se proponen cinco recomendaciones al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA: validaci\'on en campo, un banco nacional de datos, una red de alerta fitosanitaria, capacitaci\'on comunitaria y software abierto.
 
 \newpage
 \tableofcontents

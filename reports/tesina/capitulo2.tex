@@ -97,7 +97,7 @@ El sistema clasifica la hoja de ma\'iz en nueve categor\'ias mutuamente excluyen
 
 \section{Recopilaci\'on, Depuraci\'on y Auditor\'ia de Datos}
 
-El corpus final re\'une \textbf{33~429 im\'agenes} de 11 fuentes p\'ublicas (Tabla~\ref{tab:fuentes_dataset}).
+El corpus final re\'une 33~429 im\'agenes de 11 fuentes p\'ublicas (Tabla~\ref{tab:fuentes_dataset}).
 
 \begin{table}[H]
 \caption{Fuentes de datos recopiladas, licencia declarada y distribuci\'on de muestras}
@@ -218,7 +218,7 @@ El modelo siempre responde con alguna de las clases que aprendi\'o, aunque la fo
 
 Para hacerlo aprovecha la descripci\'on num\'erica que la red construye de cada imagen justo antes de clasificarla, una especie de huella de su contenido. Durante el entrenamiento se registra en qu\'e zona se agrupan las huellas de cada clase. Cuando llega una fotograf\'ia nueva, se mide qu\'e tan lejos queda su huella del grupo m\'as cercano con la distancia de Mahalanobis, que considera cu\'anto var\'ian normalmente las im\'agenes de ese grupo \cite{mahalanobispp2025}. A esa medida se le resta la distancia al conjunto completo de entrenamiento, para no castigar rasgos que comparte cualquier fotograf\'ia, como la iluminaci\'on o el encuadre \cite{ren2021}.
 
-El l\'imite de aceptaci\'on se fij\'o de modo que el 95\% de las im\'agenes del conjunto de validaci\'on quede por debajo de \'el. Adem\'as, el diagn\'ostico se descarta cuando el modelo duda: si la enfermedad m\'as probable no alcanza el 60\% de confianza o aventaja a la segunda por menos de 15 puntos. En cualquiera de estos casos la aplicaci\'on muestra \textbf{«Imagen no reconocida»} y no emite diagn\'ostico.
+El l\'imite de aceptaci\'on se fij\'o de modo que el 95\% de las im\'agenes del conjunto de validaci\'on quede por debajo de \'el. Adem\'as, el diagn\'ostico se descarta cuando el modelo duda: si la enfermedad m\'as probable no alcanza el 60\% de confianza o aventaja a la segunda por menos de 15 puntos. En cualquiera de estos casos la aplicaci\'on muestra «Imagen no reconocida» y no emite diagn\'ostico.
 
 \subsection{Mitigaci\'on en la Interfaz}
 La interfaz incorpora dos elementos que complementan al modelo:
@@ -310,7 +310,7 @@ La aplicaci\'on no tiene dependencia con el entorno de entrenamiento, solo empaq
 \node[stage, fill=blue!6, draw=blue!55!black, below=0.35cm of lbl1, xshift=-3.3cm] (datos)
   {\textbf{Fuentes p\'ublicas}\\[2pt]33~429 im\'agenes\\11 fuentes};
 \node[stage, fill=blue!6, draw=blue!55!black, right=of datos] (pipe)
-  {\textbf{Pipeline MLOps}\\[2pt]Deduplicaci\'on\\y contratos};
+  {\textbf{Preparaci\'on de datos}\\[2pt]Depuraci\'on\\y particiones};
 \node[stage, fill=blue!6, draw=blue!55!black, right=of pipe] (optuna)
   {\textbf{Entrenamiento}\\[2pt]GPU A10G en Modal\\Comparaci\'on y Optuna};
 \node[stage, fill=blue!6, draw=blue!55!black, right=of optuna] (lite0)

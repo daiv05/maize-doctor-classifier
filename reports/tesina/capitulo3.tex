@@ -87,7 +87,7 @@ Suavizado de etiquetas & 0.10 & 0.075 & --- \\
 \end{singlespace}
 \end{table}
 
-La configuraci\'on encontrada por Optuna mejor\'o en 0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, pero en el conjunto de prueba obtuvo 0.49 puntos menos que la configuraci\'on inicial. Una mejora tan peque\~na, que adem\'as no se traslada a la prueba, es compatible con un ajuste a las particularidades del conjunto de validaci\'on. Por ese motivo se conserv\'o la configuraci\'on inicial (tasa de aprendizaje de $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.1), con la que el modelo oficial alcanz\'o en prueba un Macro $F_1$ de \textbf{0.9480} y una exactitud de 97.81\%.
+La configuraci\'on encontrada por Optuna mejor\'o en 0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, pero en el conjunto de prueba obtuvo 0.49 puntos menos que la configuraci\'on inicial. Una mejora tan peque\~na, que adem\'as no se traslada a la prueba, es compatible con un ajuste a las particularidades del conjunto de validaci\'on. Por ese motivo se conserv\'o la configuraci\'on inicial (tasa de aprendizaje de $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.1), con la que el modelo oficial alcanz\'o en prueba un Macro $F_1$ de 0.9480 y una exactitud de 97.81\%.
 
 \subsection{Generalizaci\'on entre Fuentes}\label{sec:generalizacion}
 
@@ -245,7 +245,7 @@ Predictor nulo & Ninguna & 0.0\% & 26.14\% & 0.0 pp & --- \\
 \label{fig:ablacion_grafico}
 \end{figure}
 
-Cuando se oculta el centro de la imagen, el modelo conserva un \textbf{79.46\% de exactitud} a partir del borde, mientras que al ocultar la periferia la exactitud desciende a 42.25\%. Las dos condiciones no dejan visible la misma superficie (63.7\% y 36.3\%), pero la diferencia es lo bastante amplia para sugerir que el fondo aporta informaci\'on sobre la clase. Este resultado motiv\'o que la aplicaci\'on recorte la captura al marco gu\'ia antes de clasificarla.
+Cuando se oculta el centro de la imagen, el modelo conserva un 79.46\% de exactitud a partir del borde, mientras que al ocultar la periferia la exactitud desciende a 42.25\%. Las dos condiciones no dejan visible la misma superficie (63.7\% y 36.3\%), pero la diferencia es lo bastante amplia para sugerir que el fondo aporta informaci\'on sobre la clase. Este resultado motiv\'o que la aplicaci\'on recorte la captura al marco gu\'ia antes de clasificarla.
 
 Los mapas de Grad-CAM \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017} coinciden, en los ejemplos analizados, con las lesiones visibles (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}), pero, al cuantificar cu\'anta atribuci\'on recae sobre la hoja m\'as all\'a de lo esperado por su \'area, el exceso medio en seis clases (270 im\'agenes con m\'ascara de la hoja) fue de apenas +0.037, con tres clases por encima de lo esperado y tres por debajo. Una explicaci\'on posible es que la se\~nal del fondo est\'e repartida en muchos p\'ixeles y, por ello, no destaque en los mapas locales.
 
@@ -266,9 +266,9 @@ Los mapas de Grad-CAM \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite
 \FloatBarrier
 \subsection{Desempe\~no en el Tel\'efono}
 
-Cuantizado a Int8, el modelo oficial pesa \textbf{3.74~MB}, un 72.9\% menos que la versi\'on en coma flotante (13.79~MB). Esa reducci\'on no le cost\'o precisi\'on. En las 5~015 im\'agenes de prueba, el modelo Int8 obtuvo un Macro $F_1$ de 0.9489 y una exactitud de 97.87\%, pr\'acticamente lo mismo que el original (0.9480 y 97.81\%), y coincidi\'o con \'el en el 99.74\% de las predicciones.
+Cuantizado a Int8, el modelo oficial pesa 3.74~MB, un 72.9\% menos que la versi\'on en coma flotante (13.79~MB). Esa reducci\'on no le cost\'o precisi\'on. En las 5~015 im\'agenes de prueba, el modelo Int8 obtuvo un Macro $F_1$ de 0.9489 y una exactitud de 97.87\%, pr\'acticamente lo mismo que el original (0.9480 y 97.81\%), y coincidi\'o con \'el en el 99.74\% de las predicciones.
 
-Las pruebas en el tel\'efono se hicieron en un Motorola edge 40 neo (MediaTek Dimensity 7030, 8~GB de RAM, Android 15), un equipo de gama media. Preparar la imagen tom\'o una mediana de \textbf{98~ms} (p95 de 279~ms) y la inferencia, \textbf{23~ms} (Tabla~\ref{tab:latencias_movil_c3}), ambos por debajo de la meta de 300~ms. Lo que m\'as tarda, entonces, no es el modelo sino el preprocesado, que se lleva cuatro veces m\'as tiempo que la inferencia. El flujo completo, desde la captura hasta que aparece el resultado, tom\'o 473~ms.
+Las pruebas en el tel\'efono se hicieron en un Motorola edge 40 neo (MediaTek Dimensity 7030, 8~GB de RAM, Android 15), un equipo de gama media. Preparar la imagen tom\'o una mediana de 98~ms (p95 de 279~ms) y la inferencia, 23~ms (Tabla~\ref{tab:latencias_movil_c3}), ambos por debajo de la meta de 300~ms. Lo que m\'as tarda, entonces, no es el modelo sino el preprocesado, que se lleva cuatro veces m\'as tiempo que la inferencia. El flujo completo, desde la captura hasta que aparece el resultado, tom\'o 473~ms.
 
 \begin{table}[H]
 \caption{Latencias medianas en el Motorola edge 40 neo}
@@ -293,7 +293,7 @@ Para verificar que la aplicaci\'on produce las mismas predicciones que el modelo
 Por \'ultimo, la interfaz incorpora los elementos descritos en el Cap\'itulo~2 (Figuras~\ref{fig:app_pantallas_1} y~\ref{fig:app_pantallas_2}):
 \begin{enumerate}
 \item \textbf{Marco gu\'ia.} La aplicaci\'on recorta la captura al marco con un margen de 15\%. En el tel\'efono de prueba, la imagen pasa de 12.6 a 3.02 megap\'ixeles.
-\item \textbf{Detector OOD.} Cuando la puntuaci\'on supera el umbral de 106.37, la aplicaci\'on muestra \textbf{«Imagen no reconocida»}. El detector rechaz\'o las cinco im\'agenes sint\'eticas de prueba (negro, blanco, gris, ruido y azul) y, por error, el 3.8\% de 500 im\'agenes de prueba v\'alidas.
+\item \textbf{Detector OOD.} Cuando la puntuaci\'on supera el umbral de 106.37, la aplicaci\'on muestra «Imagen no reconocida». El detector rechaz\'o las cinco im\'agenes sint\'eticas de prueba (negro, blanco, gris, ruido y azul) y, por error, el 3.8\% de 500 im\'agenes de prueba v\'alidas.
 \item \textbf{Aportes.} El productor puede guardar fotograf\'ias de su milpa para enviarlas cuando haya conexi\'on.
 \item \textbf{Gu\'ia de severidad.} Muestra una escala de tres niveles que el productor compara con su hoja, con pautas de bioinsumos.
 \end{enumerate}
@@ -376,7 +376,7 @@ EfficientNet-B0 & 97.97\% & 0.9483 & 0.9589 & 0.9400 \\
 \label{fig:comparativa_ensamble_bar}
 \end{figure}
 
-En un sistema de diagn\'ostico el recall tiene cierta mayor importancia, porque cada falso negativo deja sin atenci\'on una infecci\'on. El ensamble alcanz\'o un recall macro de \textbf{95.06\%}, y su matriz de confusi\'on (Figura~\ref{fig:matriz_ensamble}) muestra que detect\'o los 963 casos de necrosis letal de la prueba y m\'as del 98\% de los de roya y tiz\'on. Con fuentes no vistas, en cambio, el recall de necrosis letal se redujo a valores entre 0.72 y 0.81 en la evaluaci\'on LOSO.
+En un sistema de diagn\'ostico el recall tiene cierta mayor importancia, porque cada falso negativo deja sin atenci\'on una infecci\'on. El ensamble alcanz\'o un recall macro de 95.06\%, y su matriz de confusi\'on (Figura~\ref{fig:matriz_ensamble}) muestra que detect\'o los 963 casos de necrosis letal de la prueba y m\'as del 98\% de los de roya y tiz\'on. Con fuentes no vistas, en cambio, el recall de necrosis letal se redujo a valores entre 0.72 y 0.81 en la evaluaci\'on LOSO.
 
 \begin{figure}[H]
 \centering
@@ -385,7 +385,7 @@ En un sistema de diagn\'ostico el recall tiene cierta mayor importancia, porque 
 \label{fig:matriz_ensamble}
 \end{figure}
 
-El caso de la deficiencia de potasio nos muestra el efecto de ampliar el corpus de entrenamiento, ya que esta clase, que en los primeros entrenamientos ten\'ia un $F_1$ de 0.49, alcanz\'o \textbf{0.8475} en el ensamble y 0.8242 en el modelo oficial (Tabla~\ref{tab:desglose_clases}). La mejora coincide precisamente con la incorporaci\'on de nuevos repositorios de deficiencias nutricionales y con el uso de la ponderaci\'on \texttt{sqrt\_inverse} en la funci\'on de p\'erdida.
+El caso de la deficiencia de potasio nos muestra el efecto de ampliar el corpus de entrenamiento, ya que esta clase, que en los primeros entrenamientos ten\'ia un $F_1$ de 0.49, alcanz\'o 0.8475 en el ensamble y 0.8242 en el modelo oficial (Tabla~\ref{tab:desglose_clases}). La mejora coincide precisamente con la incorporaci\'on de nuevos repositorios de deficiencias nutricionales y con el uso de la ponderaci\'on \texttt{sqrt\_inverse} en la funci\'on de p\'erdida.
 
 \begin{table}[H]
 \caption{$F_1$ por clase de los modelos individuales y del ensamble}
@@ -412,3 +412,11 @@ Deficiencia de potasio & 93 & 0.8290 & 0.8208 & 0.7674 & \textbf{0.8475} \\
 \end{tabular}
 \end{singlespace}
 \end{table}
+
+\subsection{S\'intesis de los Resultados}
+
+Los resultados dejan dos lecturas. En la partici\'on de prueba el modelo cumple lo que se propuso: obtiene un Macro $F_1$ de 0.9480, la cuantizaci\'on no le resta desempe\~no y en el tel\'efono responde por debajo de la meta de 300~ms. La b\'usqueda de hiperpar\'ametros y el ensamble aportaron poco frente a eso. La configuraci\'on de Optuna no mejor\'o el resultado en prueba, y el ensamble gan\'o menos de un punto de Macro $F_1$ pero exigir\'ia ejecutar tres redes en el tel\'efono.
+
+Fuera de esa partici\'on el panorama cambia. Con fuentes que el modelo no vio, el Macro $F_1$ baj\'o a 0.6026, y en las fotograf\'ias de campo externas acert\'o 41 de 97. La ablaci\'on apunta en la misma direcci\'on, porque el modelo sigue acertando la mayor\'ia de las veces cuando solo ve el borde de la imagen. Las tres pruebas indican que parte de lo que aprendi\'o es propio de los repositorios de origen y no de la enfermedad.
+
+Por eso el sistema queda, por ahora, como una herramienta de orientaci\'on. Es poco probable que otra arquitectura o m\'as ajuste de hiperpar\'ametros cambien ese resultado. Lo que falta son fotograf\'ias tomadas en parcelas salvadore\~nas, y a eso responden el m\'odulo de aportes y las recomendaciones del cierre.

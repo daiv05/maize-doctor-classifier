@@ -5,7 +5,11 @@
 
 El proyecto permiti\'o construir una aplicaci\'on m\'ovil que diagnostica nueve condiciones de la hoja de ma\'iz sin conexi\'on y en un tel\'efono de gama media. El sistema funciona en el tel\'efono, se abstiene ante im\'agenes que no reconoce y orienta al productor con una gu\'ia de manejo, pero todav\'ia reconoce con dificultad los s\'intomas en fotograf\'ias de campo de otra procedencia.
 
-El modelo obtuvo un Macro $F_1$ de 0.9480 en la partici\'on de prueba, con medianas de 98~ms de preprocesado y 23~ms de inferencia, y un desempe\~no comparable entre laboratorio y campo (DIR de 0.9636).
+La hip\'otesis se acepta en los t\'erminos en que se formul\'o, porque se cumplen los criterios de la Tabla~\ref{tab:criterios_exito}. El modelo obtuvo un Macro $F_1$ de 0.9480 en la partici\'on de prueba, con medianas de 98~ms de preprocesado y 23~ms de inferencia, y un desempe\~no comparable entre laboratorio y campo (DIR de 0.9636). Esa aceptaci\'on tiene un alcance limitado. Los criterios se midieron sobre una partici\'on en la que las mismas fuentes aparecen en entrenamiento y en prueba, la comparaci\'on entre laboratorio y campo solo abarca tres clases, y la latencia se midi\'o en un \'unico tel\'efono de gama media.
+
+A la pregunta de investigaci\'on se responde que la aplicaci\'on lo logra solo en parte. Funciona sin conexi\'on, se abstiene cuando la imagen no es confiable y entrega una gu\'ia de manejo, pero en fotograf\'ias de campo ajenas al corpus acert\'o 41 de 97 (42\%). Con ese resultado sirve como orientaci\'on para el productor y todav\'ia no como un diagn\'ostico confiable en la parcela.
+
+Las conclusiones por objetivo son las siguientes:
 
 \begin{enumerate}
 \item El corpus re\'une 33~429 im\'agenes de 11 repositorios p\'ublicos, sin duplicados entre particiones seg\'un los hashes de archivo y de p\'ixeles. Su principal debilidad es la composici\'on, ya que varias fuentes aportan una sola clase y solo tres clases tienen im\'agenes de laboratorio, lo que facilita que el modelo asocie la fuente con la etiqueta.
@@ -13,6 +17,7 @@ El modelo obtuvo un Macro $F_1$ de 0.9480 en la partici\'on de prueba, con media
 \item El ensamble por votaci\'on suave alcanz\'o un Macro $F_1$ de 0.9567 y detect\'o todos los casos de necrosis letal de la partici\'on estratificada. Con fuentes no vistas, el recall de esa clase baj\'o a 0.79--0.81 en el ensamble y a 0.72--0.74 en EfficientNet-Lite0.
 \item La evaluaci\'on con fuentes separadas es el resultado m\'as importante del trabajo, el Macro $F_1$ cay\'o de 0.9311 a 0.6026 al evaluar sobre fuentes no vistas, y en 97 fotograf\'ias de campo externas el modelo acert\'o 41 (42\%). La ablaci\'on y el desglose por clase también muestran este comportamiento, el modelo conserva un 79.46\% de exactitud viendo solo el borde de la imagen, y la roya com\'un, casi toda de laboratorio, falla en 5 de 16 casos de campo.
 \item Cuantizado a Int8, el modelo pesa 3.74~MB y mantiene el desempe\~no del original (Macro $F_1$ de 0.9489). En el dispositivo móvil, las medianas fueron de 98~ms de preprocesado y 23~ms de inferencia, y las predicciones del tel\'efono coincidieron con las del modelo, por lo que no se observ\'o degradaci\'on por la cuantizaci\'on.
+\item El m\'odulo de aportes qued\'o integrado en la aplicaci\'on. Guarda cada fotograf\'ia en el tel\'efono y la env\'ia al servidor cuando hay conexi\'on. Con \'el existe el medio para reunir un conjunto de datos nacional, pero no el conjunto en s\'i, porque el m\'odulo no se prob\'o con productores y el corpus sigue sin fotograf\'ias salvadore\~nas.
 \end{enumerate}
 
 \section*{Limitaciones}
@@ -123,12 +128,21 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 
 \begin{singlespace}
 \begin{description}
-\item[Clever Hans Effect:] Fen\'omeno en el cual un modelo de aprendizaje autom\'atico alcanza una aparente alta precisi\'on apoy\'andose en correlaciones espurias o atajos del entorno (fondos, sensores, marcas de agua) en lugar de las caracter\'isticas intr\'insecas de la clase.
-\item[Disparate Impact Ratio (DIR):] M\'etrica de equidad que cuantifica el cociente entre el desempe\~no del grupo con peor resultado y el del mejor, aqu\'i medido con Macro $F_1$ o exactitud. Un valor inferior a 0.80 se toma como indicio de trato dispar.
+\item[Ablaci\'on espacial:] Prueba en la que se oculta una parte de la imagen, el centro o la periferia, y se mide cu\'anto cambia la exactitud del modelo. Sirve para saber en qu\'e zona de la imagen se apoya.
+\item[ADESCO:] Asociaci\'on de Desarrollo Comunal. Organizaci\'on de vecinos con reconocimiento legal que gestiona proyectos en su comunidad.
+\item[Bioinsumo:] Producto de origen biol\'ogico, como microorganismos, extractos vegetales o abonos org\'anicos, que se usa para nutrir el cultivo o para controlar plagas y enfermedades.
+\item[Cuantizaci\'on a enteros de 8 bits (Int8):] Conversi\'on de los pesos del modelo, guardados originalmente en coma flotante de 32 bits, a enteros de 8 bits. Reduce el tama\~no del modelo y el costo de cada inferencia.
+\item[Disparate Impact Ratio (DIR):] Cociente entre el desempe\~no del grupo con peor resultado y el del mejor. Aqu\'i se mide con Macro $F_1$ o exactitud entre im\'agenes de laboratorio y de campo. Un valor inferior a 0.80 se toma como indicio de trato dispar.
+\item[Edge AI:] Ejecuci\'on de un modelo de inteligencia artificial en el propio dispositivo del usuario, en este caso el tel\'efono, sin enviar los datos a un servidor.
+\item[Efecto Clever Hans:] Ocurre cuando un modelo acierta apoy\'andose en pistas ajenas a lo que debe reconocer, como el fondo, la c\'amara o una marca de agua, y no en las caracter\'isticas de la clase.
+\item[Grad-CAM:] T\'ecnica que genera un mapa de calor sobre la imagen para mostrar qu\'e regiones influyeron m\'as en la predicci\'on de una red convolucional.
 \item[Leave-One-Source-Out (LOSO):] Forma de validaci\'on en la que el modelo se entrena sin una fuente de datos completa y se eval\'ua solo con las im\'agenes de esa fuente. Sirve para medir c\'omo se comporta el modelo ante im\'agenes de una procedencia que no vio durante el entrenamiento.
-\item[Macro $F_1$-Score:] Media aritm\'etica no ponderada del valor $F_1$ calculado independientemente para cada clase. Asigna el mismo peso relativo a clases minoritarias y mayoritarias, siendo la m\'etrica est\'andar ante conjuntos desbalanceados.
-\item[Necrosis Letal del Ma\'iz (MLN):] Complejo viral provocado por la coinfecci\'on sin\'ergica del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus (como SCMV), con p\'erdidas de rendimiento de hasta 90\% documentadas en Kenia en 2012.
-\item[Out-of-Distribution (OOD):] Condici\'on que presentan aquellas muestras alimentadas a un clasificador cuyas caracter\'isticas estad\'isticas provienen de una distribuci\'on ajena a la utilizada durante el entrenamiento (ej. fotografiar una piedra o una mano frente a un modelo de hojas).
+\item[LIME y SHAP:] T\'ecnicas de explicabilidad que estiman cu\'anto aporta cada regi\'on de la imagen a la predicci\'on del modelo.
+\item[Macro $F_1$:] Promedio simple del $F_1$ de cada clase. Da el mismo peso a las clases con pocas im\'agenes que a las que tienen muchas, por lo que se usa en conjuntos desbalanceados.
+\item[Necrosis Letal del Ma\'iz (MLN):] Enfermedad causada por la infecci\'on simult\'anea del virus del moteado clor\'otico del ma\'iz (MCMV) y un potyvirus, como el SCMV. En Kenia se documentaron en 2012 p\'erdidas de rendimiento de hasta 90\%.
+\item[Out-of-Distribution (OOD):] Imagen distinta a las que el modelo vio durante el entrenamiento, por ejemplo una piedra o una mano ante un modelo entrenado con hojas.
+\item[Recall (sensibilidad):] Proporci\'on de los casos reales de una clase que el modelo detecta. Un recall bajo significa muchos falsos negativos.
+\item[Votaci\'on suave (\textit{Soft Voting}):] Forma de combinar varios modelos promediando las probabilidades que cada uno asigna a cada clase.
 \end{description}
 \end{singlespace}
 
@@ -136,7 +150,7 @@ Tan, M., \& Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolu
 \chapter*{Anexos}
 \addcontentsline{toc}{chapter}{Anexos}
 
-\section*{Anexo A: Registro de Enlaces y Repositorios Abiertos del Proyecto}
+\section*{Anexo A: Repositorios y Enlaces del Proyecto}
 
 Los repositorios y recursos de \textbf{DoctorMaiz} son los siguientes:
 
@@ -156,18 +170,18 @@ Cada fuente conserva su licencia original (Tabla~\ref{tab:fuentes_dataset}).
 \url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
 \end{itemize}
 
-\section*{Anexo B: Inventario Criptogr\'afico de Checkpoints Respaldados}
+\section*{Anexo B: Hashes de los Modelos Respaldados}
 
-La tabla siguiente lista los hashes SHA-256 de los modelos que sustentan la reproducibilidad de la tesina.
+La tabla siguiente lista los hashes SHA-256 de los modelos, para comprobar que un archivo descargado es el mismo que se evalu\'o en este trabajo.
 
 \begin{table}[H]
-\caption*{Hashes SHA-256 de los pesos f\'isicos de los modelos respaldados}
+\caption*{Hashes SHA-256 de los modelos respaldados}
 \centering
 \small
 \begin{singlespace}
 \begin{tabularx}{\textwidth}{p{4.0cm}cp{7.5cm}}
 \toprule
-\textbf{Modelo / Protocolo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del Checkpoint (\texttt{best.pth})} \\
+\textbf{Modelo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del Checkpoint (\texttt{best.pth})} \\
 \midrule
 EfficientNet-Lite0 Base (42, oficial) & 13.79 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
 EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.74 MB & \path{bb31467a58c11cd474159bd5739a7a57b1f1edfda6b5dbfae8fa91337f3c56b1} \\
