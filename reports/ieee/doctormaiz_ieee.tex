@@ -76,25 +76,22 @@ La pregunta de partida de este trabajo es si un teléfono de gama baja o media, 
 \section{Trabajos relacionados}\label{sec:relacionados}
 
 \subsection{Clasificación de enfermedades foliares}
-Con el repositorio PlantVillage \cite{hughes2015} aparecieron muchos clasificadores convolucionales que pasaban del 99\% de exactitud en partición aleatoria. Mohanty \textit{et~al.} \cite{mohanty2016} llegaron a 99.35\% en ese repositorio, pero con imágenes de otra procedencia la cifra cayó a 31.4\%. Ferentinos \cite{ferentinos2018} vio algo parecido al entrenar con imágenes de laboratorio y probar con imágenes de campo, y Barbedo \cite{barbedo2018} mostró que la variedad del conjunto de datos importa tanto como su tamaño.
+Con el repositorio PlantVillage \cite{hughes2015} aparecieron muchos clasificadores convolucionales que pasaban del 99\% de exactitud en partición aleatoria. Mohanty \textit{et~al.} \cite{mohanty2016} llegaron a 99.35\% en ese repositorio, pero con imágenes de otra procedencia la cifra cayó a 31.4\%. Ferentinos \cite{ferentinos2018} vio algo parecido al entrenar con imágenes de laboratorio y probar con imágenes de campo, y Barbedo \cite{barbedo2018} mostró que la variedad del conjunto de datos importa tanto como su tamaño, es decir que un corpus pequeño pero diverso puede superar a uno grande pero homogéneo.
 
-En maíz, DeChant \textit{et~al.} \cite{dechant2017} detectaron el tizón foliar en imágenes de campo, y PlantDoc \cite{singh2020} reunió fotografías de campo de varios cultivos justamente porque las de laboratorio se quedaban cortas. Ahmad \textit{et~al.} \cite{ahmad2023} estudiaron con detalle cómo generalizan los modelos entre condiciones controladas y de campo, y concluyeron que las particiones aleatorias inflan el desempeño real.
-
-\subsection{Aprendizaje por atajos y sesgo de procedencia}
-Un modelo puede acertar por las razones equivocadas, apoyándose en señales que acompañan a la etiqueta sin ser parte del fenómeno, como el fondo o una marca de agua \cite{geirhos2020}. Lapuschkin \textit{et~al.} \cite{lapuschkin2019} documentaron con métodos de atribución estos predictores de tipo \textit{Clever Hans}. Noyan \cite{noyan2022} mostró que en PlantVillage un clasificador entrenado solo con los píxeles del fondo supera con holgura al azar. Cuando el origen de las imágenes y la clase van ligados, como pasa al juntar repositorios que aportan una o dos clases cada uno, la forma directa de medir este efecto es validar agrupando por fuente.
+Un modelo puede acertar por las razones equivocadas, apoyándose en señales que acompañan a la etiqueta sin ser parte del "fenómeno" en si que se estudia, como el fondo o una marca de agua \cite{geirhos2020}. Lapuschkin \textit{et~al.} \cite{lapuschkin2019} documentaron con métodos de atribución estos predictores de tipo \textit{Clever Hans}. Noyan \cite{noyan2022} mostró que en PlantVillage un clasificador entrenado solo con los píxeles del fondo supera con holgura al azar.
 
 \subsection{Modelos ligeros y cuantización}
-Las arquitecturas pensadas para móviles reducen el cómputo con convoluciones separables en profundidad \cite{howard2017,sandler2018}, escalado compuesto \cite{tan2019} u operaciones que acceden menos a memoria \cite{ma2018}. Cuantizar a enteros de 8 bits deja el modelo en cerca de una cuarta parte de su tamaño y acelera la inferencia en CPU \cite{jacob2018}. Si además se cuantiza por canal de salida, la pérdida de exactitud en las convoluciones separables es menor \cite{krishnamoorthi2018}.
+Las arquitecturas pensadas para móviles reducen el cómputo con convoluciones separables en profundidad \cite{howard2017,sandler2018}, escalado compuesto \cite{tan2019} u operaciones que acceden menos a memoria \cite{ma2018}. Cuantizar a enteros de 8 bits deja el modelo en cerca de una cuarta parte de su tamaño y acelera la inferencia en CPU \cite{jacob2018}.
 
 \subsection{Detección fuera de distribución y abstención}
-Un clasificador con salida \textit{softmax} siempre escoge alguna de sus clases, aunque la imagen no tenga nada que ver con el dominio. La línea base más sencilla para detectar esas entradas es la probabilidad máxima \cite{hendrycks2017}. Lee \textit{et~al.} \cite{lee2018} propusieron usar la distancia de Mahalanobis sobre las representaciones internas, Ren \textit{et~al.} \cite{ren2021} la corrigieron restándole la distancia a una gaussiana de fondo y Mueller y Hein \cite{mueller2025} mostraron que normalizar las representaciones mejora la detección. Los ensambles también calibran mejor la incertidumbre \cite{lakshminarayanan2017}.
+Un clasificador con salida \textit{softmax} siempre escoge alguna de sus clases, aunque la imagen no tenga nada que ver con el dominio. Lee \textit{et~al.} \cite{lee2018} propusieron usar la distancia de Mahalanobis sobre las representaciones internas, Ren \textit{et~al.} \cite{ren2021} la corrigieron restándole la distancia a una gaussiana de fondo y Mueller y Hein \cite{mueller2025} mostraron que normalizar las representaciones mejora la detección.
 
-Se encontraron pocos trabajos que junten el despliegue sin conexión en teléfonos de gama media con la evaluación por fuente y un mecanismo de abstención. Este trabajo los combina y reporta el desempeño fuera de la partición de entrenamiento al lado del desempeño dentro de ella.
+Se encontraron pocos trabajos que junten el despliegue sin conexión en teléfonos con la evaluación por fuente y un mecanismo de abstención. Este trabajo los combina y además reporta el desempeño tanto dentro como fuera de la partición de entrenamiento.
 
 \section{Materiales y métodos}\label{sec:metodos}
 
 \subsection{Corpus y taxonomía}
-El sistema distingue nueve clases que se excluyen entre sí: tres enfermedades fúngicas (roya común, \textit{Puccinia sorghi}, tizón foliar del norte, \textit{Exserohilum turcicum}, y mancha gris, \textit{Cercospora zeae-maydis}), la necrosis letal del maíz, que aparece cuando la planta se infecta a la vez con el MCMV y un potyvirus \cite{mahuku2015}, el gusano cogollero (\textit{Spodoptera frugiperda}), las deficiencias de nitrógeno, fósforo y potasio, y la hoja sana. En la Fig.~\ref{fig:clases} hay un ejemplo de cada una.
+El sistema distingue nueve clases: tres enfermedades fúngicas (roya común, \textit{Puccinia sorghi}, tizón foliar del norte, \textit{Exserohilum turcicum}, y mancha gris, \textit{Cercospora zeae-maydis}), la necrosis letal del maíz, que aparece cuando la planta se infecta a la vez con el MCMV y un potyvirus \cite{mahuku2015}, el gusano cogollero (\textit{Spodoptera frugiperda}), las deficiencias de nitrógeno, fósforo y potasio, y la hoja sana. En la Fig.~\ref{fig:clases} hay un ejemplo de cada una.
 
 \begin{figure}[!t]
 \centering
@@ -117,7 +114,7 @@ El sistema distingue nueve clases que se excluyen entre sí: tres enfermedades f
 \label{fig:clases}
 \end{figure}
 
-Las 33\,429 imágenes vienen de 11 repositorios públicos (Tabla~\ref{tab:fuentes}), y cada una mantiene la licencia que declaró su fuente. El corpus está desbalanceado. Hay 8\,740 imágenes de hoja sana y solo 621 de deficiencia de potasio, una relación de 14.1:1. Las resoluciones también varían bastante, desde unos 256\,px en las imágenes de laboratorio hasta 3\,000--5\,000\,px en varias fuentes de campo.
+Las 33\,429 imágenes vienen de 11 repositorios públicos (Tabla~\ref{tab:fuentes}). Hay 8\,740 imágenes de hoja sana y solo 621 de deficiencia de potasio, una relación de 14.1:1. Las resoluciones también varían bastante, desde unos 256\,px en las imágenes de laboratorio hasta 3\,000--5\,000\,px en varias fuentes de campo.
 
 Solo tres clases tienen imágenes tomadas en laboratorio sobre fondo controlado, 3\,551 en total (10.6\% del corpus). El origen de las imágenes y la clase están relacionados (Tabla~\ref{tab:fuente_clase}). Varias fuentes aportan una sola clase, el 95.3\% de la roya común viene del laboratorio y una sola fuente (S1) pone el 36.3\% de las imágenes.
 
@@ -174,24 +171,24 @@ Def. K & \hz & \hz & \hz & \hm{210}{210} & \hz & \hz & \hm{308}{308} & \hm{103}{
 \end{table}
 
 \subsection{Depuración, auditoría y partición}
-Es común que los repositorios públicos redistribuyan el mismo material. Al consolidarlos se agruparon con un hash perceptual las imágenes visualmente idénticas dentro de cada clase y se dejó una copia por grupo. Así salieron más de 8\,000 repeticiones en las primeras etapas y 61 de las 1\,876 imágenes que se sumaron después. Con el corpus ya depurado se hizo una auditoría final con dos huellas SHA-256 por imagen, una del archivo y otra de los píxeles decodificados. Solo aparecieron cuatro pares idénticos con etiquetas que se contradecían, y se excluyeron.
+Es común que los repositorios públicos redistribuyan el mismo material, ya que cualquier persona puede descargar y compartir imágenes. Al consolidarlos se agruparon con un hash perceptual las imágenes visualmente idénticas dentro de cada clase y se dejó una copia por grupo. Con el corpus ya depurado se hizo una auditoría final con dos huellas SHA-256 por imagen, una del archivo y otra de los píxeles decodificados. Solo aparecieron cuatro pares idénticos con etiquetas que se contradecían, y se excluyeron.
 
-Cada imagen tiene un registro con un identificador sacado de su ruta, su huella, su fuente y el entorno donde se tomó. La partición oficial es 70/15/15, estratificada por clase y entorno, con 23\,400 imágenes de entrenamiento, 5\,014 de validación y 5\,015 de prueba. Las listas de cada partición se guardaron con su propia huella, de modo que cada experimento puede comprobar que usa exactamente la misma.
+Cada imagen tiene un registro con un identificador sacado de su ruta, su huella, su fuente y el entorno donde se tomó. La partición oficial es 70/15/15, estratificada por clase y entorno, con 23\,400 imágenes de entrenamiento, 5\,014 de validación y 5\,015 de prueba.
 
 \subsection{Arquitecturas y entrenamiento}
-Se compararon tres redes ligeras preentrenadas en ImageNet \cite{deng2009}. EfficientNet-Lite0 (3.38\,M parámetros) es la versión móvil de EfficientNet \cite{tan2019}. Cambia la activación \textit{swish} por ReLU6 y quita los bloques \textit{squeeze-and-excitation} \cite{hu2018}, lo que la hace más fácil de cuantizar. EfficientNet-B0 (4.02\,M) sí mantiene esos bloques. ShuffleNet-V2-x1.0 (1.26\,M) reduce los accesos a memoria dividiendo y barajando los canales \cite{ma2018}.
+Se compararon tres redes ligeras preentrenadas en ImageNet \cite{deng2009}. EfficientNet-Lite0 (3.38\,M parámetros) es la versión móvil de EfficientNet \cite{tan2019}, cambia la activación \textit{swish} por ReLU6 y quita los bloques \textit{squeeze-and-excitation} \cite{hu2018}, lo que la hace más fácil de cuantizar, EfficientNet-B0 (4.02\,M) sí mantiene esos bloques, y por último ShuffleNet-V2-x1.0 (1.26\,M) reduce los accesos a memoria dividiendo y barajando los canales \cite{ma2018}.
 
-Las imágenes se redimensionan a $224\times224$ y se normalizan con las estadísticas de ImageNet. Como aumento de datos se usaron volteos horizontales y verticales, rotaciones de hasta $15^\circ$ y cambios de brillo y contraste de $\pm10$\%. El tono no se altera, porque de él depende la señal de clorosis. A las clases que tienen al menos cuatro veces menos imágenes que la mayoritaria se les aplicó un aumento más fuerte, con recorte aleatorio de escala $[0.7,1]$, rotaciones de hasta $30^\circ$, una variación leve del tono y desenfoque gaussiano. Para compensar el desbalance, la pérdida de entropía cruzada lleva pesos por clase
+Las imágenes se redimensionan a $224\times224$ y se normalizan con las estadísticas de ImageNet. Como aumento de datos se usaron volteos horizontales y verticales, rotaciones de hasta $15^\circ$ y cambios de brillo y contraste de $\pm10$\%. El tono no se altera, porque de él depende la señal de clorosis que es útil para algunas enfermedades. A las clases que tienen al menos cuatro veces menos imágenes que la mayoritaria se les aplicó un aumento más fuerte, con recorte aleatorio de escala $[0.7,1]$, rotaciones de hasta $30^\circ$, una variación leve del tono y desenfoque gaussiano. Para compensar el desbalance, la pérdida de entropía cruzada lleva pesos por clase
 \begin{equation}
 w_c \propto n_c^{-1/2},
 \label{eq:pesos}
 \end{equation}
 donde $n_c$ es la cantidad de imágenes de entrenamiento de la clase $c$, además de un suavizado de etiquetas de 0.1.
 
-La configuración inicial usa AdamW con tasa de aprendizaje de $10^{-4}$, decaimiento de pesos de $10^{-4}$, lotes de 32 imágenes y recorte de la norma del gradiente en 1.0. La tasa sigue un calendario coseno con tres épocas previas de calentamiento lineal. El entrenamiento llegaba hasta 60 épocas y se detenía antes si el Macro \Fone{} de validación no mejoraba en 8 épocas seguidas. Todo corrió en GPU NVIDIA A10G de 24\,GB en la plataforma Modal, con PyTorch y semilla 42, salvo los experimentos con varias semillas.
+La configuración inicial usa AdamW con tasa de aprendizaje de $10^{-4}$, decaimiento de pesos de $10^{-4}$, lotes de 32 imágenes y recorte de la norma del gradiente en 1.0. La tasa sigue un calendario coseno con tres épocas previas de calentamiento lineal. El entrenamiento llegaba hasta 60 épocas y se detenía antes si el Macro \Fone{} de validación no mejoraba en 8 épocas seguidas. Todo fue ejecutado en GPU NVIDIA A10G de 24\,GB en la plataforma Modal, con PyTorch.
 
 \subsection{Búsqueda de hiperparámetros y ensamble}
-La búsqueda se hizo con Optuna \cite{akiba2019} sobre EfficientNet-Lite0, con el estimador de Parzen en árbol multivariado y con el objetivo de maximizar el Macro \Fone{} de validación. Se exploraron la tasa de aprendizaje (log-uniforme en $[10^{-5},3\times10^{-3}]$), el tamaño de lote ($\{16,32,64\}$), el decaimiento de pesos (log-uniforme en $[10^{-7},10^{-2}]$), la ponderación de la pérdida (ninguna, inversa o raíz inversa), el suavizado de etiquetas ($\{0,0.025,\dots,0.15\}$) y las épocas de calentamiento ($\{1,\dots,5\}$). Una poda por mediana corta los ensayos que van por debajo de la mediana de los anteriores en la misma época. Empieza a actuar después de cinco ensayos iniciales y desde la época 8.
+La búsqueda se hizo con Optuna \cite{akiba2019} sobre EfficientNet-Lite0, con el estimador de Parzen en árbol multivariado y con el objetivo de maximizar el Macro \Fone{} de validación. Se exploraron la tasa de aprendizaje (log-uniforme en $[10^{-5},3\times10^{-3}]$), el tamaño de lote ($\{16,32,64\}$), el decaimiento de pesos (log-uniforme en $[10^{-7},10^{-2}]$), la ponderación de la pérdida (ninguna, inversa o raíz inversa), el suavizado de etiquetas ($\{0,0.025,\dots,0.15\}$) y las épocas de calentamiento ($\{1,\dots,5\}$). Una poda por mediana corta los ensayos que van por debajo de la mediana de los anteriores en la misma época.
 
 El ensamble promedia las probabilidades de las $M=3$ redes,
 \begin{equation}
@@ -210,20 +207,20 @@ con $C=9$ y $P_c$, $R_c$ la precisión y la sensibilidad de la clase $c$. Se eli
 
 \textit{1) Partición de prueba.} Se midió el desempeño en las 5\,015 imágenes de prueba y se estimó con tres semillas cuánto varía de un entrenamiento a otro.
 
-\textit{2) Validación cruzada estratificada y agrupada.} Se compararon cinco pliegues estratificados con cinco pliegues agrupados por fuente. En estos últimos ningún repositorio está a la vez en entrenamiento y en evaluación. Los dos esquemas se probaron con la configuración inicial y con una ajustada, y se reporta la media con su intervalo de confianza del 95\%.
+\textit{2) Validación cruzada estratificada y agrupada.} Se compararon cinco pliegues estratificados con cinco pliegues agrupados por fuente, en este último una fuente solo aparece o en el conjunto de entrenamiento o en el de prueba, nunca en ambos. Los dos esquemas se probaron con la configuración inicial y con una ajustada, y se presenta la media con su intervalo de confianza del 95\%.
 
 \textit{3) Retención de una fuente.} En la evaluación LOSO (\textit{leave-one-source-out}) se entrena sin una fuente completa y luego se evalúa solo con ella, con tres semillas. Se retuvieron S2 y S3, las dos fuentes mixtas que cubren varias clases y tienen suficientes imágenes.
 
-\textit{4) Fotografías de campo externas.} Se juntaron 97 fotografías de campo que no están en el corpus, ordenadas por clase, y se pasaron por la misma cadena de abstención que usa la aplicación.
+\textit{4) Fotografías de campo externas.} Se juntaron 97 fotografías de campo que no están en el corpus, ordenadas por clase, y se pasaron por la misma cadena de abstención que usa la aplicación (el detector OOD).
 
 \textit{5) Disparidad entre entornos.} El \textit{disparate impact ratio} \cite{feldman2015} compara el desempeño $m$ en laboratorio y en campo,
 \begin{equation}
 \text{DIR}=\frac{\min(m_{\text{lab}},m_{\text{campo}})}{\max(m_{\text{lab}},m_{\text{campo}})},
 \label{eq:dir}
 \end{equation}
-y se considera aceptable desde 0.80. Solo se puede calcular en las tres clases que tienen imágenes de laboratorio, así que se acompaña con la tasa de falsos negativos por clase y entorno.
+y se considera aceptable desde 0.80. Solo se puede calcular en las tres clases que tienen imágenes de laboratorio.
 
-\textit{6) Dependencia del fondo.} La ablación espacial oculta en las imágenes de prueba una caja central que cubre el 36.3\% del área, o bien el anillo exterior que la complementa (63.7\%), y mide la exactitud con lo que queda visible. Como referencia se usa un predictor nulo que siempre responde la clase más frecuente de la prueba. También se tomaron 270 imágenes de prueba (30 por clase) y se comparó qué fracción de la atribución SHAP \cite{lundberg2017} cae sobre la hoja con la fracción del área que ocupa la hoja. Grad-CAM \cite{selvaraju2017} y LIME \cite{ribeiro2016} quedaron solo para inspección cualitativa.
+\textit{6) Dependencia del fondo.} La ablación espacial oculta en las imágenes de prueba una caja central que cubre el 36.3\% del área, o bien el anillo exterior que la complementa (63.7\%), y mide la exactitud con lo que queda visible. Como referencia se usa un predictor nulo que siempre responde la clase más frecuente de la prueba. También se tomaron 270 imágenes de prueba (30 por clase) y se comparó qué fracción de la atribución SHAP \cite{lundberg2017} cae sobre la hoja con la fracción del área que ocupa la hoja.
 
 \subsection{Despliegue en el dispositivo}
 El modelo se exportó a TensorFlow Lite con litert-torch mediante cuantización posterior al entrenamiento de rango dinámico \cite{jacob2018}. Los pesos de cada canal de salida $c$ de las convoluciones se cuantizan de forma simétrica,
@@ -238,7 +235,7 @@ mientras que la última capa totalmente conectada usa una sola escala para todo 
 s(z)=\min_{k}\,(z-\mu_k)^{\top}\Sigma^{-1}(z-\mu_k)-(z-\mu_0)^{\top}\Sigma_0^{-1}(z-\mu_0).
 \label{eq:rmd}
 \end{equation}
-El umbral $\tau=106.37$ corresponde al percentil 95 de la puntuación en validación. La aplicación muestra «Imagen no reconocida» y no da ningún diagnóstico si se cumple alguna de estas condiciones:
+El umbral $\tau=106.37$ corresponde al percentil 95 de la puntuación en validación. La imagen se toma como no reconocida si se cumple alguna de estas condiciones:
 \begin{equation}
 s(z)>\tau \quad\lor\quad p_{(1)}<0.60 \quad\lor\quad p_{(1)}-p_{(2)}<0.15,
 \label{eq:abstencion}
