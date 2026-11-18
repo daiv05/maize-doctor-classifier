@@ -245,9 +245,9 @@ donde $p_{(1)}$ y $p_{(2)}$ son las dos probabilidades más altas.
 \textit{Captura.} La cámara dibuja la silueta de una hoja como marco guía. La imagen se recorta a esa zona con un margen de 15\% y después se redimensiona con un filtro bilineal con antialias, el mismo que se usó en el entrenamiento.
 
 \subsection{Arquitectura del sistema}
-DoctorMaíz está formado por tres proyectos independientes (Fig.~\ref{fig:arquitectura}). La cadena de entrenamiento usa PyTorch, timm, Optuna, SHAP y LIME. La aplicación está escrita con Expo, React Native y TypeScript, ejecuta el modelo con \texttt{react-native-fast-tflite} y guarda el historial de diagnósticos (fecha, resultado y ubicación) en una base SQLite local con WatermelonDB. Debajo de cada diagnóstico aparece una guía de severidad de tres niveles, basada en escalas del CIMMYT y de Iowa State University Extension, para que el productor la compare con su hoja, y una lista de bioinsumos de referencia.
+DoctorMaíz está formado por tres proyectos independientes (Fig.~\ref{fig:arquitectura}). El pipeline de entrenamiento usa PyTorch y timm. La aplicación está escrita con Expo, React Native y TypeScript, ejecuta el modelo con \texttt{react-native-fast-tflite} y guarda el historial de diagnósticos (fecha, resultado y ubicación) en una base SQLite local con WatermelonDB. Debajo de cada diagnóstico se usa una guía de severidad de tres niveles, basada en escalas del CIMMYT y de Iowa State University Extension, para que el agricultor tenga la posibilidad de comparar su caso con los distintos niveles de daño que pueden causar las enfermedades.
 
-La API de sincronización (FastAPI, SQLAlchemy y MySQL 8.4) solo entra en juego cuando el usuario tiene una cuenta y decide enviar una corrección o una fotografía etiquetada. Cada aporte se guarda primero en el teléfono y se envía cuando vuelve la conexión. Si el token de acceso ya venció, la aplicación lo renueva. El servidor descarta los envíos repetidos y no deja pasar más de 30 solicitudes por minuto de cada cliente.
+Po último está la API de sincronización (FastAPI, SQLAlchemy y MySQL 8.4) solo se utiliza cuando el usuario tiene una cuenta y decide enviar una corrección o una fotografía etiquetada para aportar.
 
 \begin{figure}[!t]
 \centering
@@ -289,7 +289,7 @@ La API de sincronización (FastAPI, SQLAlchemy y MySQL 8.4) solo entra en juego 
 \section{Resultados}\label{sec:resultados}
 
 \subsection{Desempeño en la partición de prueba}
-Hacia la décima época, las tres arquitecturas rondaban un Macro \Fone{} de validación de 0.90. Se eligió EfficientNet-Lite0 como modelo oficial porque no pierde desempeño al cuantizarlo. En prueba obtuvo un Macro \Fone{} de 0.9480 y una exactitud de 97.81\%, y con tres semillas, $0.9435\pm0.0052$. En la Tabla~\ref{tab:criterios} están los criterios de éxito que se fijaron antes de los experimentos. Se cumplen todos, aunque se midieron en una partición que mezcla las fuentes.
+Hacia la décima época, las tres arquitecturas rondaban un Macro \Fone{} de validación de 0.90, y se eligió EfficientNet-Lite0 como modelo oficial porque no pierde desempeño al cuantizarlo. En prueba obtuvo un Macro \Fone{} de 0.9480 y una exactitud de 97.81\%, y con tres semillas, $0.9435\pm0.0052$. En la Tabla~\ref{tab:criterios} están los criterios de éxito que se fijaron antes de los experimentos.
 
 \begin{table}[!t]
 \caption{Criterios de éxito y resultado medido}
@@ -312,12 +312,10 @@ Sin conexión & Inferencia local en el teléfono & Cumple \\
 \end{table}
 
 \subsection{Búsqueda de hiperparámetros}
-Optuna probó 25 configuraciones en 12.65 horas de GPU (ocho completas, 15 podadas y dos interrumpidas). La que más influyó fue el número de épocas de calentamiento (importancia 0.52). La mejor configuración (lote de 16, una época de calentamiento, sin ponderación de la pérdida) superó a la inicial en validación por 0.12 puntos porcentuales (0.9573 frente a 0.9561), pero en prueba quedó 0.49 puntos por debajo (0.9431 frente a 0.9480), así que se mantuvo la configuración inicial.
+Con Optuna se probaron 25 configuraciones en 12.65 horas de GPU (ocho completas, 15 podadas y dos interrumpidas). La que más influyó fue el número de épocas de calentamiento (importancia 0.52) y la mejor configuración (lote de 16, una época de calentamiento, sin ponderación de la pérdida) superó a la inicial en validación por 0.12 puntos porcentuales (0.9573 frente a 0.9561), pero en prueba quedó 0.49 puntos por debajo (0.9431 frente a 0.9480), así que al final de decidió mantener la configuración inicial.
 
 \subsection{Ensamble}
-La Tabla~\ref{tab:ensamble} compara el ensamble con cada red por separado en la partición de prueba. Para esta comparación cada arquitectura se entrenó por su cuenta, por eso la fila de EfficientNet-Lite0 no coincide exactamente con el modelo oficial. El ensamble superó a la mejor red individual en 0.83 puntos de Macro \Fone{} y en 0.93 de sensibilidad macro, y detectó los 963 casos de necrosis letal de la prueba.
-
-La deficiencia de potasio sigue siendo la clase más difícil. Aun así, su \Fone{} subió de 0.49 en los primeros entrenamientos a 0.8242 en el modelo oficial, después de añadir nuevas fuentes de deficiencias y la ponderación~\eqref{eq:pesos}.
+La Tabla~\ref{tab:ensamble} compara el ensamble con cada red por separado en la partición de prueba. Para esta comparación se hicieron 3 nuevos entrenamientos separados para cada modelo. El ensamble superó al mejor modelo individual en 0.83 puntos de Macro \Fone{} y en 0.93 de sensibilidad macro.
 
 \begin{table}[!t]
 \caption{\Fone{} por clase y métricas globales en la partición de prueba (5\,015 imágenes)}
@@ -348,9 +346,9 @@ Exactitud (\%) & & 97.91 & 97.97 & 97.31 & \textbf{98.29} \\
 \end{table}
 
 \subsection{Generalización entre fuentes}
-Cómo se parten los datos importa mucho más que los hiperparámetros (Tabla~\ref{tab:generalizacion}). Con pliegues estratificados el Macro \Fone{} fue de 0.9311, y con pliegues agrupados por fuente cayó a 0.6026. El ajuste de hiperparámetros, en cambio, apenas lo movió de 0.9311 a 0.9463. El intervalo de confianza también se abrió, de $\pm0.0099$ a $\pm0.1240$, porque el resultado cambia según qué fuentes quedan fuera. Una caída de 0.33 no se puede achacar a la variación del entrenamiento. La desviación estándar fue de 0.0052 entre semillas y de 0.0080 entre pliegues estratificados.
+Con pliegues estratificados el Macro \Fone{} fue de 0.9311, y con pliegues agrupados por fuente cayó a 0.6026. El ajuste de hiperparámetros, en cambio, apenas lo movió de 0.9311 a 0.9463. El intervalo de confianza también se abrió, de $\pm0.0099$ a $\pm0.1240$, porque el resultado cambia según qué fuentes quedan fuera.
 
-En LOSO, retener S2 casi no afectó al modelo (Macro \Fone{} de 0.9933). Retener S3 sí bajó la exactitud a 80.38\%, con poca variación entre semillas. Con fuentes que no había visto, la sensibilidad para la necrosis letal se quedó entre 0.72 y 0.74 en EfficientNet-Lite0 y entre 0.79 y 0.81 en el ensamble. En la partición estratificada era del 100\%.
+En LOSO, retener S2 casi no afectó al modelo (Macro \Fone{} de 0.9933). Retener S3 sí bajó la exactitud a 80.38\%, con poca variación entre semillas. Con fuentes que no había visto, la sensibilidad para la necrosis letal se quedó entre 0.72 y 0.74 en EfficientNet-Lite0 y entre 0.79 y 0.81 en el ensamble, mientras que en la partición estratificada era del 100\%.
 
 \begin{table}[!t]
 \caption{Generalización entre fuentes}
@@ -403,7 +401,7 @@ Necrosis letal & 10 & 0 \\
 \end{table}
 
 \subsection{Disparidad entre laboratorio y campo}
-En las tres clases que tienen imágenes de laboratorio (533 de laboratorio y 1\,120 de campo en la prueba), el Macro \Fone{} fue de 0.9383 en laboratorio y de 0.9041 en campo, lo que da un DIR de 0.9636 (0.9956 si se usa la exactitud). Pero el valor agregado esconde diferencias entre clases (Tabla~\ref{tab:fnr}). La roya común falla en 1 de 322 casos de laboratorio y en 5 de 16 de campo, con un \Fone{} de 0.998 en laboratorio y de 0.77 en campo, porque el 95\% de sus imágenes vienen del laboratorio. Con la mancha gris pasa lo contrario.
+En las tres clases que tienen imágenes de laboratorio (533 de laboratorio y 1\,120 de campo en la prueba), el Macro \Fone{} fue de 0.9383 en laboratorio y de 0.9041 en campo, lo que da un DIR de 0.9636 (0.9956 si se usa la exactitud). La roya común falla en 1 de 322 casos de laboratorio y en 5 de 16 de campo, con un \Fone{} de 0.998 en laboratorio y de 0.77 en campo, porque el 95\% de sus imágenes vienen del laboratorio. Con la mancha gris pasa lo contrario.
 
 \begin{table}[!t]
 \caption{Tasa de falsos negativos por clase y entorno}
@@ -425,7 +423,7 @@ Tizón foliar & 3.01\% & 133 & 1.01\% & 892 \\
 \end{table}
 
 \subsection{Dependencia del fondo}
-La Fig.~\ref{fig:ablacion} muestra la exactitud cuando se ocultan partes de las 5\,015 imágenes de prueba. El predictor nulo acierta el 26.14\%. Con el centro oculto, el modelo todavía llega a 79.46\% de exactitud y conserva el 69.16\% de su confianza solo con el borde. Si lo que se oculta es la periferia, baja a 42.25\%. Las dos regiones no tienen la misma superficie, pero la diferencia es tan grande que deja claro que el fondo lleva información sobre la clase.
+La Fig.~\ref{fig:ablacion} muestra la exactitud cuando se ocultan partes de las 5\,015 imágenes de prueba. El predictor nulo acierta el 26.14\%. Con el centro oculto, el modelo todavía llega a 79.46\% de exactitud y conserva el 69.16\% de su confianza solo con el borde. Si lo que se oculta es la periferia, baja a 42.25\%. Las dos regiones no tienen la misma superficie, pero la diferencia es tan grande que deja en evidencia que el fondo si está llevando información sobre la clase.
 
 \begin{figure}[!t]
 \centering
@@ -453,6 +451,22 @@ La Fig.~\ref{fig:ablacion} muestra la exactitud cuando se ocultan partes de las 
 \caption{Exactitud según la región visible de la imagen. Entre paréntesis, el área visible.}
 \label{fig:ablacion}
 \end{figure}
+
+\begin{figure*}[!t]
+\centering
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{cccccc}
+\includegraphics[width=0.148\textwidth]{app/home.png} &
+\includegraphics[width=0.148\textwidth]{app/camara-marco-guia.png} &
+\includegraphics[width=0.148\textwidth]{app/resultado-mancha-gris.png} &
+\includegraphics[width=0.148\textwidth]{app/resultado-severidad.png} &
+\includegraphics[width=0.148\textwidth]{app/resultado-no-reconocida.png} &
+\includegraphics[width=0.148\textwidth]{app/contribuir.png} \\
+\footnotesize (a) Inicio & \footnotesize (b) Marco guía & \footnotesize (c) Diagnóstico & \footnotesize (d) Guía de severidad & \footnotesize (e) Imagen no reconocida & \footnotesize (f) Aportes
+\end{tabular}
+\caption{Pantallas de la aplicación DoctorMaíz.}
+\label{fig:app}
+\end{figure*}
 
 En los ejemplos revisados, los mapas de Grad-CAM, LIME y SHAP caen sobre las lesiones. Sin embargo, en las seis clases donde la hoja se pudo delimitar bien, la fracción de la atribución SHAP sobre la hoja superó a la fracción de área de la hoja por solo $+0.037$ en promedio, con tres clases por encima y tres por debajo. Los mapas resaltan los puntos de mayor peso, como la lesión, mientras que el fondo pesa poco en cada punto pero, por su extensión, influye en conjunto casi lo mismo que la hoja.
 
@@ -482,48 +496,22 @@ Paridad teléfono y servidor & --- & 143 de 143 \\
 \end{tabular}
 \end{table}
 
-\begin{figure*}[!t]
-\centering
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{cccccc}
-\includegraphics[width=0.148\textwidth]{app/home.png} &
-\includegraphics[width=0.148\textwidth]{app/camara-marco-guia.png} &
-\includegraphics[width=0.148\textwidth]{app/resultado-mancha-gris.png} &
-\includegraphics[width=0.148\textwidth]{app/resultado-severidad.png} &
-\includegraphics[width=0.148\textwidth]{app/resultado-no-reconocida.png} &
-\includegraphics[width=0.148\textwidth]{app/contribuir.png} \\
-\footnotesize (a) Inicio & \footnotesize (b) Marco guía & \footnotesize (c) Diagnóstico & \footnotesize (d) Guía de severidad & \footnotesize (e) Imagen no reconocida & \footnotesize (f) Aportes
-\end{tabular}
-\caption{Pantallas de la aplicación DoctorMaíz.}
-\label{fig:app}
-\end{figure*}
-
 \section{Discusión}\label{sec:discusion}
 
 \subsection{Dentro y fuera de la partición}
-Dentro de la partición estratificada, el modelo cumple los criterios de diseño y la cuantización no le quita desempeño. En el teléfono responde muy por debajo de la meta de 300\,ms. Fuera de ella, tres pruebas independientes apuntan a lo mismo: el Macro \Fone{} cae a 0.6026 con fuentes no vistas, el modelo acierta 41 de 97 fotografías de campo externas y mantiene casi toda su exactitud viendo solo el borde de la imagen. Una parte de lo que aprendió son rasgos de los repositorios de origen, como el fondo o la cámara. Lo mismo se ha observado en otros conjuntos agrícolas \cite{ahmad2023,noyan2022}.
+Dentro de la partición estratificada, el modelo cumple los criterios de diseño, y en el teléfono responde muy por debajo de la meta de 300\,ms. Fuera de ella, tres experimentos independientes apuntan a lo mismo: el Macro \Fone{} cae a 0.6026 con fuentes no vistas, el modelo acierta 41 de 97 fotografías de campo externas y mantiene casi toda su exactitud viendo solo el borde de la imagen. Una parte de lo que el modelo aprendió son rasgos de los repositorios de origen, como el fondo o la cámara. Lo mismo se ha observado en otros conjuntos agrícolas \cite{ahmad2023,noyan2022}.
 
-Con esto se entiende por qué ni la búsqueda de hiperparámetros ni el ensamble cambiaron mucho las cosas. Los dos se ajustan sobre la misma distribución mezclada, y lo que gana el ensamble (menos de un punto de Macro \Fone{}) no compensa ejecutar tres redes en el teléfono. La relación entre fuente y clase que muestra la Tabla~\ref{tab:fuente_clase} es un problema de los datos, y se corrige reuniendo otros. Lo mismo vale para el marco guía. Reduce el fondo que entra en la captura, pero lo que el modelo aprendió del fondo durante el entrenamiento sigue ahí.
-
-\subsection{Amenazas a la validez}
-\textit{Validez externa.} El corpus no tiene fotografías salvadoreñas y la aplicación no se probó con productores. El conjunto de campo externo es pequeño (unas diez fotografías por clase), así que sus cifras por clase solo dan una idea aproximada.
-
-\textit{Validez de constructo.} El DIR solo se puede calcular en tres clases, y en la roya común depende de 16 imágenes de campo. En la ablación, las dos regiones ocultas no tienen la misma superficie. La guía de severidad no mide el área afectada, y qué tan útil resulte depende del criterio de cada productor.
-
-\textit{Validez interna.} La partición oficial salió de una sola semilla y la evaluación LOSO cubrió solo dos fuentes. Las latencias se midieron en un único teléfono de gama media.
+Con esto se entiende por qué ni la búsqueda de hiperparámetros ni el ensamble cambiaron mucho las cosas, los dos se ajustan sobre la misma distribución mezclada, y lo que gana el ensamble (menos de un punto de Macro \Fone{}) no compensa ejecutar tres redes en el teléfono (es por ello que se decidió no desplegar este ensamble). La relación entre fuente y clase que muestra la Tabla~\ref{tab:fuente_clase} es un problema de los datos, y la corrección requiere, por tanto, reunir más datos de campo variados. El corpus no tiene fotografías salvadoreñas y el conjunto de campo externo que se utilizó es pequeño (unas diez fotografías por clase), así que sus cifras por clase solo dan una idea aproximada.
 
 \section{Conclusiones}\label{sec:conclusiones}
-DoctorMaíz clasifica sin conexión nueve condiciones de la hoja de maíz en un teléfono de gama media y se abstiene cuando no reconoce la imagen. Cada resultado viene con una guía de manejo. El modelo EfficientNet-Lite0 cuantizado a Int8 pesa 3.74\,MB, llega a un Macro \Fone{} de 0.9489 en la partición de prueba y tarda 23\,ms en la inferencia y 98\,ms en el preprocesado.
+DoctorMaíz clasifica sin conexión nueve condiciones de la hoja de maíz en un teléfono y logra abstenerse cuando no reconoce que se trate de una hoja de maíz. El modelo EfficientNet-Lite0 cuantizado a Int8 pesa 3.74\,MB, llega a un Macro \Fone{} de 0.9489 en la partición de prueba y tarda 23\,ms en la inferencia y 98\,ms en el preprocesado.
 
-El hallazgo principal es la distancia entre ese desempeño y el que se obtiene con fuentes que el modelo no vio. La validación agrupada por fuente, la retención de fuentes completas, las fotografías de campo externas y la ablación espacial dicen lo mismo. Cuando el origen de las imágenes y la clase están relacionados, una partición estratificada sobrestima lo que el modelo va a rendir en campo. Difícilmente otra arquitectura o más ajuste de hiperparámetros vayan a cerrar esa brecha. Lo que hace falta son fotografías tomadas en parcelas salvadoreñas, y el módulo de aportes de la aplicación está pensado para reunirlas.
+El hallazgo principal de este trabajo es la diferencia entre ese desempeño y el que se obtiene con fuentes que el modelo no vio. La validación agrupada por fuente, la retención de fuentes completas, las fotografías de campo externas y la ablación espacial confirman esto, cuando el origen de las imágenes y la clase están relacionados, una partición estratificada sobrestima lo que el modelo va a rendir en campo, difícilmente otra arquitectura o más ajuste de hiperparámetros vayan a cerrar esa brecha. Lo que hace falta son fotografías tomadas en parcelas locales, y el módulo de aportes de la aplicación está pensado para reunirlas.
 
-Por ahora DoctorMaíz orienta al productor, pero no sustituye un diagnóstico en la parcela. El siguiente paso es reentrenar con esas imágenes y evaluar siempre con fuentes completas fuera del entrenamiento. También falta validar la aplicación con productores y promotores del CENTA en cada zona productora, y bajar el tiempo de preprocesado en el teléfono.
+El siguiente paso sería reentrenar con esas imágenes y evaluar siempre con fuentes completas fuera del entrenamiento. También validar la aplicación con productores y promotores del CENTA en cada zona productora y capacitar a los especialistas para que la usen en sus visitas de campo como apoyo de diagnóstico. Con el tiempo, la aplicación podría ampliarse a otras enfermedades y plagas de maíz, y a otros cultivos.
 
 \section*{Disponibilidad de datos y código}
-El código de la cadena de entrenamiento, de la aplicación y de la API está en \url{https://github.com/daiv05/maize-doctor-classifier}, \url{https://github.com/Edenilson-Molina/maize-doctor-app} y \url{https://github.com/daiv05/maize-doctor-api}. El corpus consolidado está publicado en \url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}, y cada fuente mantiene su licencia original. La huella SHA-256 del modelo Int8 evaluado es \path{bb31467a58c11cd474159bd5739a7a57b1f1edfda6b5dbfae8fa91337f3c56b1}.
-
-\section*{Agradecimientos}
-Los autores agradecen a los docentes asesores Ing.~Bladimir Díaz Campos, Ing.~Karen Elvira Peñate Avilés e Ing.~Rodrigo Ernesto Vásquez Escalante, y a la Escuela de Ingeniería de Sistemas Informáticos de la Universidad de El Salvador.
+El código del pipelien de entrenamiento, de la aplicación y de la API está en \url{https://github.com/daiv05/maize-doctor-classifier}, \url{https://github.com/Edenilson-Molina/maize-doctor-app} y \url{https://github.com/daiv05/maize-doctor-api}. El corpus consolidado está publicado en \url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}. La huella SHA-256 del modelo Int8 evaluado es \path{bb31467a58c11cd474159bd5739a7a57b1f1edfda6b5dbfae8fa91337f3c56b1}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{referencias}
