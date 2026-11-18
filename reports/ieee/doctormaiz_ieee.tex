@@ -39,10 +39,12 @@
 
 \begin{document}
 
-\title{DoctorMaíz: diagnóstico fitosanitario sin conexión de la hoja de maíz en el teléfono y evaluación de su generalización entre fuentes de datos}
+\title{DoctorMaíz: Diagnóstico fitosanitario offline en hojas de maíz mediante dispositivos móviles y evaluación de generalización entre fuentes de datos}
 
 \author{%
-\IEEEauthorblockN{Josías Abner Rivas Fuentes, David Alejandro Deras Cerros y Elmer Edenilson Rosales Molina}
+\IEEEauthorblockN{Josías Abner Rivas Fuentes, rf20010@ues.edu.sv\\
+David Alejandro Deras Cerros, dc19019@ues.edu.sv\\
+Elmer Edenilson Rosales Molina, rm20001@ues.edu.sv}
 \IEEEauthorblockA{Escuela de Ingeniería de Sistemas Informáticos, Facultad de Ingeniería y Arquitectura\\
 Universidad de El Salvador, San Salvador, El Salvador}
 }
@@ -247,7 +249,7 @@ donde $p_{(1)}$ y $p_{(2)}$ son las dos probabilidades más altas.
 \subsection{Arquitectura del sistema}
 DoctorMaíz está formado por tres proyectos independientes (Fig.~\ref{fig:arquitectura}). El pipeline de entrenamiento usa PyTorch y timm. La aplicación está escrita con Expo, React Native y TypeScript, ejecuta el modelo con \texttt{react-native-fast-tflite} y guarda el historial de diagnósticos (fecha, resultado y ubicación) en una base SQLite local con WatermelonDB. Debajo de cada diagnóstico se usa una guía de severidad de tres niveles, basada en escalas del CIMMYT y de Iowa State University Extension, para que el agricultor tenga la posibilidad de comparar su caso con los distintos niveles de daño que pueden causar las enfermedades.
 
-Po último está la API de sincronización (FastAPI, SQLAlchemy y MySQL 8.4) solo se utiliza cuando el usuario tiene una cuenta y decide enviar una corrección o una fotografía etiquetada para aportar.
+Por último, está la API de sincronización (FastAPI, SQLAlchemy y MySQL 8.4) que solo se utiliza cuando el usuario tiene una cuenta y decide enviar una corrección o una fotografía etiquetada para aportar.
 
 \begin{figure}[!t]
 \centering
