@@ -52,7 +52,7 @@ Universidad de El Salvador, San Salvador, El Salvador}
 \maketitle
 
 \begin{abstract}
-En El Salvador, los pequeños productores de maíz reciben poca asistencia técnica y diagnostican a simple vista las afecciones foliares en parcelas donde suele faltar conectividad. Este artículo presenta el pipeline técnico completo y la solución móvil \textit{offline-first} DoctorMaíz, diseñada para clasificar nueve condiciones de la hoja de maíz directamente en un teléfono Android. Se curó un corpus de 33\,429 imágenes provenientes de 11 repositorios públicos mediante depuración perceptual, exclusión contractual de conflictos y auditoría doble SHA-256. El modelo oficial, EfficientNet-Lite0, alcanzó un Macro \Fone{} de 0.9480 y 97.81\% de exactitud en 5\,015 imágenes de prueba ($0.9435\pm0.0052$ en tres semillas). Sin embargo, la evaluación agrupada por fuente redujo el Macro \Fone{} de 0.9311 a 0.6026, y la ablación espacial mostró 79.46\% de exactitud con el centro oculto, evidenciando aprendizaje por atajos ligado al origen de los datos; ni la búsqueda de hiperparámetros, ni el ensamble, ni BackMix, ni la segmentación automática del fondo (que degradó el Macro \Fone{} a 0.7191 y fue descartada) cerraron dicha brecha. Para operar con seguridad en campo, se integró una cuantización híbrida Int8 (3.74\,MB, Macro \Fone{} de 0.9489, 99.74\% de acuerdo con PyTorch) y un detector fuera de distribución (OOD) por distancia de Mahalanobis relativa en 182 dimensiones PCA. En 97 fotografías de campo externas, el detector OOD rechazó 49 imágenes y el modelo emitió diagnóstico sobre las 48 restantes, acertando 41 (85.4\% sobre los diagnósticos emitidos; 42.3\% sobre el total). Finalmente, se detalla la aplicación DoctorMaíz (Expo/React Native, \texttt{react-native-fast-tflite} vía Nitro Modules, Skia, WatermelonDB y API opcional en FastAPI/MySQL), que logra paridad 143/143 con el servidor en 121\,ms medianos (98\,ms de preprocesado y 23\,ms de inferencia) e integra guía de severidad, mapa de cobertura, monitoreo agroclimático y ciencia ciudadana con privacidad cero-telemetría para reunir un banco local salvadoreño.
+En El Salvador, los pequeños productores de maíz suelen diagnosticar a simple vista las afecciones foliares en parcelas sin conectividad estable. Este artículo presenta el pipeline de aprendizaje automático y la aplicación móvil \textit{offline-first} DoctorMaíz, diseñada para clasificar nueve condiciones de la hoja de maíz directamente en un teléfono Android. Se consolidó un corpus de 33\,429 imágenes de 11 repositorios públicos con depuración perceptual y auditoría doble SHA-256. El modelo elegido, EfficientNet-Lite0, alcanzó un Macro \Fone{} de 0.9480 (97.81\% de exactitud) en prueba estratificada, pero cayó a 0.6026 en validación cruzada agrupada por fuente y conservó 79.46\% de exactitud con el centro oculto, evidenciando aprendizaje por atajos ligado al origen de los datos. Para operar con seguridad en campo, el modelo se exportó con cuantización híbrida Int8 (3.74\,MB, Macro \Fone{} de 0.9489) acoplado a un detector fuera de distribución (OOD) por distancia de Mahalanobis relativa. Sobre 97 fotografías de campo externas, el detector OOD rechazó 49 imágenes y el modelo acertó 41 de los 48 diagnósticos emitidos (85.4\% de exactitud selectiva). La aplicación final ejecuta el diagnóstico en 121\,ms medianos con paridad total respecto al servidor e integra guía de severidad, mapa de cobertura, agroclima y ciencia ciudadana con privacidad cero-telemetría para construir un banco fotográfico local.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -95,7 +95,7 @@ Pocas investigaciones integran en un mismo sistema el despliegue \textit{offline
 \section{Pipeline de datos y entrenamiento}\label{sec:pipeline}
 % ============================================================================
 
-Esta sección describe el proceso técnico completo desde la adquisición de datos hasta el modelo entrenado, detallando en cada etapa las herramientas empleadas, los hallazgos encontrados y las mitigaciones aplicadas (resumidas en la Tabla~\ref{tab:pipeline_resumen}).
+Esta sección describe el proceso técnico desde la adquisición de datos hasta el modelo entrenado, detallando en cada etapa las herramientas empleadas, los hallazgos encontrados y las mitigaciones aplicadas.
 
 \subsection{Adquisición, curación y taxonomía}
 El clasificador distingue nueve condiciones: tres enfermedades fúngicas —roya común (\textit{Puccinia sorghi}), tizón foliar del norte (\textit{Exserohilum turcicum}) y mancha gris (\textit{Cercospora zeae-maydis})—, la necrosis letal del maíz (coinfección del MCMV con un potyvirus \cite{mahuku2015}), el daño por gusano cogollero (\textit{Spodoptera frugiperda}), las deficiencias nutricionales de nitrógeno (N), fósforo (P) y potasio (K), y la hoja sana (Fig.~\ref{fig:clases}).
@@ -213,27 +213,6 @@ P_{\text{ens}}(y=c\mid x)=\frac{1}{M}\sum_{m=1}^{M}P_m(y=c\mid x).
 
 Toda la ejecución se rige por manifiestos de integridad verificables por SHA-256 y configuración determinista en GPU, logrando reproducir bit a bit el \textit{checkpoint} oficial en una corrida independiente un mes después.
 
-\begin{table*}[!t]
-\caption{Resumen de herramientas, hallazgos, mitigaciones y efecto medido a lo largo del pipeline de aprendizaje automático}
-\label{tab:pipeline_resumen}
-\centering
-\scriptsize
-\setlength{\tabcolsep}{3.5pt}
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.85cm}>{\raggedright\arraybackslash}p{2.65cm}>{\raggedright\arraybackslash}p{4.05cm}>{\raggedright\arraybackslash}p{3.95cm}>{\raggedright\arraybackslash}X@{}}
-\toprule
-\textbf{Etapa} & \textbf{Herramientas / Técnicas} & \textbf{Hallazgo principal} & \textbf{Mitigación aplicada} & \textbf{Efecto medido} \\
-\midrule
-Curación & Python 3.11, \texttt{pandas}, \texttt{Pillow}, parsers YOLO & Etiqueta \texttt{leaf} presente en 99.8\% de S8; desbalance inicial $32.9\times$; $V$ de Cramér 0.5030 & Ignorar \texttt{leaf}; descartar 52\,360 augmented y falsos equivalentes; ampliar con 4 fuentes Roboflow & Rescate de 500 GLS; desbalance baja a $14.1\times$; \Fone{} de K sube de 0.49 a 0.8242 \\
-Limpieza & \texttt{imagededup} (pHash), doble SHA-256 & 56/60 duplicados en ampliación eran recompresiones; 4 pares con etiquetas opuestas & pHash (umbral 0: 8\,599 eliminadas) + lista de exclusiones + auditoría por píxeles & 0/5\,015 (0.00\%) fugas exactas de archivo o píxel en prueba \\
-Preprocesado & \texttt{torchvision}, \texttt{OpenCV}, segmentador probado & CLAHE añade $+165\%$ latencia; segmentar fondo desploma Macro \Fone{} a 0.7191 sin quitar atajos & Descartar CLAHE y segmentador; mantener tono fijo y \textit{data augmentation} reforzado ($\ge4\times$); marco guía en app & Conserva Macro \Fone{} 0.9480 sin sobrecarga ni recortes destructivos \\
-Entrenamiento y HPO & PyTorch 2.12, \texttt{timm} 1.0, Modal A10G, Optuna 4.9 & Ganador HPO mejora val. ($+0.12$\,pp) pero cae en prueba ($-0.49$\,pp); subconfianza ECE 0.1397 & Protocolo \textit{lock-before-test} (1 evaluación); mantener configuración base; verificación SHA-256 & Evita sobreajuste a val.; reproducción bit a bit; HPO muestra caída ECE a 0.0600 \\
-Ensamble & Voto suave (Lite0 + B0 + ShuffleNet) & Bajo LOSO, ventaja sobre B0 cambia de signo ($+0.0045\pm0.0080$) y duplica ECE (0.0891) & Despliegue en dos niveles: solo Lite0 Int8 en teléfono; ensamble opcional en servidor & 3.74\,MB frente a ${\sim}34$\,MB sin degradar calibración \\
-OOD y borde & SVD-PCA, RMD, \texttt{litert-torch} 0.9, \texttt{torchao} & Covarianza 1\,280D ruidosa; p99 inflado $9\times$; FC \textit{per-channel} falla sin XNNPACK & L2 + PCA 182D + RMD + p95 ($\tau=106.37$); PT2E híbrido (backbone \textit{per-channel}, FC \textit{per-tensor}) & 5/5 OOD sintéticas detectadas; 3.8\% falso rechazo; 99.74\% acuerdo Int8 vs. FP32 \\
-Paridad móvil & Skia, filtro Pillow en TS, Nitro TFLite & Acuerdo inicial 84\% y RMD $\times50$ por \textit{aliasing} en reescalado bilineal simple & Reducción progresiva Skia + filtro bilineal equivalente a Pillow; CPU sin delegados & Paridad teléfono--servidor 143/143 (100\%); latencia mediana 121\,ms \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
 % ============================================================================
 \section{Evaluación, generalización y explicabilidad}\label{sec:evaluacion}
 % ============================================================================
@@ -312,7 +291,7 @@ Exactitud (\%) & & 97.91 & 97.97 & 97.31 & \textbf{98.29} \\
 \subsection{Generalización entre fuentes}
 La Tabla~\ref{tab:generalizacion} sintetiza la caída de desempeño al evaluar sobre fuentes nunca vistas. En validación cruzada de cinco pliegues, el Macro \Fone{} desciende de 0.9311 (estratificada) a 0.6026 (agrupada por fuente, 0.4359 contando clases ausentes como cero) y el intervalo de confianza se amplía de $\pm0.0099$ a $\pm0.1240$. En el banco \texttt{source\_grouped} (fuentes indivisibles), el Macro \Fone{} de prueba cae a 0.4007 (58.57\% de exactitud) pese a alcanzar 0.9664 en entrenamiento.
 
-En LOSO con tres semillas, retener S2 apenas alteró el desempeño (0.9933), pero retener S3 redujo la exactitud a 80.38\% (sensibilidad de necrosis letal entre 0.72 y 0.74 en Lite0 frente a 100\% en partición estratificada). Asimismo, en una campaña LOSO de 11 pliegues sobre 33\,268 imágenes, ni el balanceo de grupos de procedencia (0.5594) ni la sustitución de fondos mediante BackMix (0.5609) superaron a la línea base (0.5573, dispersión $\sigma\approx0.007$).
+En LOSO con tres semillas, retener S2 apenas alteró el desempeño (0.9933), pero retener S3 redujo la exactitud a 80.38\% (sensibilidad de necrosis letal entre 0.72 y 0.74 en Lite0 frente a 100\% en partición estratificada). Asimismo, en una campaña LOSO de 11 pliegues sobre 33\,268 imágenes, ni el balanceo de grupos de procedencia (0.5594) ni la sustitución aleatoria de fondos (0.5609) superaron a la línea base (0.5573, dispersión $\sigma\approx0.007$).
 
 \begin{table}[!t]
 \caption{Evaluación de generalización entre fuentes}
@@ -369,7 +348,7 @@ Necrosis letal & 10 & 0 \\
 \end{table}
 
 \subsection{Equidad entre entornos, ablación espacial y explicabilidad}
-En las tres clases presentes en ambos entornos (533 imágenes de laboratorio y 1\,120 de campo en prueba), el DIR agregado resultó de 0.9636 en Macro \Fone{} y 0.9956 en exactitud. Sin embargo, el desglose por clase (Tabla~\ref{tab:fnr}) expone una ilusión de equidad: la tasa de falsos negativos (FNR) en roya común salta de 0.31\% en laboratorio a 31.25\% en campo ($F_1=0.7742$ frente a 0.9984), dado que el 95.3\% de sus muestras proviene de laboratorio.
+En las tres clases presentes en ambos entornos (533 imágenes de laboratorio y 1\,120 de campo en prueba), el DIR agregado resultó de 0.9636 en Macro \Fone{} y 0.9956 en exactitud. Sin embargo, el desglose por clase (Tabla~\ref{tab:fnr}) expone una ilusión de equidad: la tasa de falsos negativos (FNR) en roya común salta de 0.31\% en laboratorio a 31.25\% en campo ($F_1=0.7742$ frente a 0.9984), reflejando su fuerte predominio de laboratorio en la Tabla~\ref{tab:fuente_clase}.
 
 \begin{table}[!t]
 \caption{Tasa de falsos negativos (FNR) por clase y entorno}
@@ -423,6 +402,26 @@ La ablación espacial (Fig.~\ref{fig:ablacion}) confirma el peso del fondo: con 
 \section{Detección fuera de distribución y optimización para el borde}\label{sec:borde}
 % ============================================================================
 
+\begin{table*}[!t]
+\caption{Síntesis de herramientas, hallazgos y mitigaciones en el pipeline de aprendizaje automático y optimización para el borde}
+\label{tab:pipeline_resumen}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.85cm}>{\raggedright\arraybackslash}p{2.65cm}>{\raggedright\arraybackslash}p{4.05cm}>{\raggedright\arraybackslash}p{3.95cm}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Etapa} & \textbf{Herramientas / Técnicas} & \textbf{Hallazgo principal} & \textbf{Mitigación aplicada} & \textbf{Efecto medido} \\
+\midrule
+Curación & Python 3.11, \texttt{pandas}, \texttt{Pillow}, parsers YOLO & Etiqueta \texttt{leaf} en 99.8\% de S8; desbalance inicial $32.9\times$; $V$ de Cramér 0.5030 & Ignorar \texttt{leaf}; descartar 52\,360 pre-aumentadas; ampliar con 4 fuentes Roboflow & Rescate de 500 GLS; desbalance baja a $14.1\times$; \Fone{} de K sube de 0.49 a 0.8242 \\
+Limpieza & \texttt{imagededup} (pHash), doble SHA-256 & 56/60 duplicados en ampliación eran recompresiones; 4 pares con etiquetas opuestas & pHash (umbral 0: 8\,599 eliminadas) + lista de exclusiones + auditoría por píxeles & 0/5\,015 (0.00\%) fugas exactas de archivo o píxel en prueba \\
+Preprocesado & \texttt{torchvision}, \texttt{OpenCV}, segmentador probado & CLAHE añade $+165\%$ latencia; segmentar fondo desploma Macro \Fone{} a 0.7191 & Descartar CLAHE y segmentador; tono fijo y \textit{data augmentation} reforzado ($\ge4\times$) & Conserva Macro \Fone{} 0.9480 sin sobrecarga ni recortes destructivos \\
+Entrenamiento y HPO & PyTorch 2.12, \texttt{timm} 1.0, Modal A10G, Optuna 4.9 & Ganador HPO mejora val. ($+0.12$\,pp) pero cae en prueba ($-0.49$\,pp); ECE 0.1397 & Bloqueo previo a prueba (1 evaluación); mantener base; verificación SHA-256 & Evita sobreajuste a val.; reproducción bit a bit; HPO baja ECE a 0.0600 \\
+Ensamble & Voto suave (Lite0 + B0 + ShuffleNet) & Bajo LOSO, ventaja sobre B0 cambia de signo ($+0.0045\pm0.0080$) y duplica ECE & Despliegue en dos niveles: solo Lite0 Int8 en móvil; ensamble opcional en servidor & 3.74\,MB frente a ${\sim}34$\,MB sin degradar calibración \\
+OOD y borde & SVD-PCA, RMD, \texttt{litert-torch} 0.9, \texttt{torchao} & Covarianza 1\,280D ruidosa; p99 inflado $9\times$; FC \textit{per-channel} falla sin XNNPACK & L2 + PCA 182D + RMD + p95 ($\tau=106.37$); PT2E híbrido (backbone \textit{per-channel}, FC \textit{per-tensor}) & 5/5 OOD sintéticas detectadas; 3.8\% falso rechazo; 99.74\% acuerdo Int8 vs. FP32 \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
 \subsection{Detector fuera de distribución (Mahalanobis++)}
 El modelo exportado expone dos salidas simultáneas: los 9 logits y el vector de características de la penúltima capa $\phi(x)\in\mathbb{R}^{1280}$. Al calibrar el detector surgieron dos problemas técnicos: invertir la covarianza en las 1\,280 dimensiones originales colapsaba por ruido espectral, y el percentil 99 de validación se inflaba hasta nueve veces respecto al percentil 95 por valores atípicos.
 
@@ -447,7 +446,7 @@ S_c=\frac{\max_i |W_{c,i}|}{127},\qquad q_{c,i}=\operatorname{clip}\!\left(\left
 
 Durante la exportación se detectó un fallo crítico: el núcleo CPU integrado de TFLite (usado en Android sin delegados) no admite escalas por canal en la capa totalmente conectada y altera silenciosamente los logits, mientras que cuantizar toda la red por tensor destruye las convoluciones separables en profundidad (el acuerdo top-1 cae a 0.30). La mitigación consistió en aplicar una \textit{cuantización híbrida} —backbone convolucional por canal y capa lineal final por tensor— verificada automáticamente por un validador estructural y \textit{cross-runtime} (\texttt{ai-edge-litert}).
 
-El modelo resultante ocupa 3.74\,MB (72.9\% menos que los 13.79\,MB en FP32), obtiene un Macro \Fone{} de 0.9489 y 97.87\% de exactitud en las 5\,015 imágenes de prueba, y coincide en el 99.74\% de las predicciones con PyTorch (Tabla~\ref{tab:movil}).
+El modelo resultante ocupa 3.74\,MB (72.9\% menos que los 13.79\,MB en FP32), obtiene un Macro \Fone{} de 0.9489 y 97.87\% de exactitud en las 5\,015 imágenes de prueba, y coincide en el 99.74\% de las predicciones con PyTorch (Tabla~\ref{tab:movil}). La Tabla~\ref{tab:pipeline_resumen} sintetiza los hallazgos, mitigaciones y herramientas acumuladas a lo largo de todo el pipeline hasta este punto.
 
 \begin{table}[!t]
 \caption{Comparación del modelo oficial en coma flotante y en Int8}
@@ -463,9 +462,6 @@ Tamaño en disco & 13.79\,MB & 3.74\,MB \\
 Macro \Fone{} en prueba (5\,015) & 0.9480 & 0.9489 \\
 Exactitud en prueba (5\,015) & 97.81\% & 97.87\% \\
 Acuerdo FP32 vs. Int8 & \multicolumn{2}{c}{99.74\%} \\
-Preprocesado móvil (mediana / p95) & --- & 98 / 279\,ms \\
-Inferencia móvil CPU (mediana) & --- & 23\,ms \\
-Paridad teléfono y servidor & --- & 143 de 143 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -532,8 +528,8 @@ Para garantizar autonomía completa sin cobertura celular, el paquete APK aloja 
 \textbf{Componente} & \textbf{Especificación} & \textbf{Función en el dispositivo} \\
 \midrule
 Modelo Int8 & Modelo TFLite Int8 (3.74\,MB) & Clasificación en 9 clases y extracción de \textit{features} 1\,280D en CPU. \\
-Estadísticas OOD & Parámetros en Base64 (1.61\,MB) & Matrices PCA (1\,280$\rightarrow$182), 9 centroides, covarianzas invertidas y $\tau=106.37$. \\
-Conocimiento agronómico & Etiquetas, catálogo y guía (22.8\,KB) & Recomendaciones de manejo y acordeón de severidad (3 niveles Cobb/CIMMYT). \\
+Estadísticas OOD & Parámetros PCA/RMD en Base64 (1.61\,MB) & Detección local fuera de distribución (Sección~\ref{sec:borde}). \\
+Conocimiento agronómico & Etiquetas, catálogo y guía (22.8\,KB) & Recomendaciones de manejo y guía visual de severidad. \\
 Base de datos local & WatermelonDB / SQLite (3 tablas) & Historial geolocalizado de escaneos, correcciones y aportes pendientes. \\
 Medios y bóveda & Sandbox local y Android KeyStore & Fotos a 1\,024\,px JPEG (0.8), sesión local, JWT y caché agroclimática. \\
 \bottomrule
@@ -563,7 +559,7 @@ Cada vez que el productor analiza una hoja, la aplicación ejecuta seis pasos lo
 \item \textit{Redimensionado equivalente al entrenamiento:} en el primer prototipo, reducir directamente una foto de alta resolución a $224\times224$ con un escalado simple descartaba gran parte de los píxeles (\textit{aliasing}), bajando la coincidencia con el servidor al 84\% y disparando la distancia OOD hasta $50\times$. Para corregirlo, la imagen se reduce primero de forma progresiva con Skia y en el paso final se aplica exactamente el mismo filtro bilineal con \textit{antialias} utilizado por \texttt{Pillow} durante el entrenamiento.
 \item \textit{Preparación de entrada:} los píxeles RGB se escalan a decimales, se normalizan con las estadísticas de ImageNet y se ordenan por canal de color en el formato esperado por la red ($3\times224\times224$).
 \item \textit{Ejecución en CPU:} la inferencia corre directamente en el procesador del teléfono sin aceleradores de hardware externos, evitando pequeñas diferencias numéricas entre fabricantes de chips.
-\item \textit{Control de calidad (abstención OOD):} a partir de las dos salidas del modelo se calculan las probabilidades de clase y la distancia RMD; si se incumple cualquiera de los tres umbrales de~\eqref{eq:abstencion}, la imagen se marca como no reconocida y se sugiere repetir la toma.
+\item \textit{Control de calidad (abstención OOD):} se aplica la regla compuesta~\eqref{eq:abstencion}; si falla algún criterio, la imagen se marca como no reconocida y se sugiere repetir la toma.
 \item \textit{Guardado selectivo en segundo plano:} si la fotografía es rechazada, no se almacena ni la imagen ni el registro; si es aceptada, el diagnóstico se muestra de inmediato y la fotografía comprimida se guarda en disco en segundo plano para no demorar la respuesta.
 \end{enumerate}
 
@@ -583,7 +579,7 @@ La Fig.~\ref{fig:app} muestra las pantallas principales y la Tabla~\ref{tab:capa
 \textbf{Módulo} & \textbf{Funcionalidad para el productor} & \textbf{Offline} & \textbf{Online} \\
 \midrule
 Escaneo y diagnóstico & Marco guía, 9 clases, gráfico de confianza, hipótesis secundaria ($p_{(1)}<70\%$) y abstención OOD. & Sí & --- \\
-Guía de severidad & Acordeón visual de 3 niveles (escalas Cobb/CIMMYT) y manejo recomendado. & Sí & --- \\
+Guía de severidad & Comparación visual guiada por niveles de daño y manejo recomendado. & Sí & --- \\
 Historial local & Búsqueda por texto, agrupación por fecha y filtros por condición. & Sí & --- \\
 Mapa de cobertura & Hasta 50 escaneos geolocalizados en Leaflet con pines por severidad (Esri/OSM). & Pines & Mosaicos \\
 Agroclima & Open-Meteo en 4 variables con alertas (roya 20--28\,$^\circ$C, humedad $>80\%$, viento $>15$\,km/h, suelo). & Caché & En vivo \\
@@ -603,13 +599,13 @@ Dos decisiones de diseño distinguen a la aplicación en el contexto rural:
 \section{Discusión y conclusiones}\label{sec:discusion}
 % ============================================================================
 
-Los resultados confirman que es viable ejecutar un clasificador fitosanitario de nueve clases y un detector OOD totalmente sin conexión en un teléfono Android de gama media, ocupando 3.74\,MB y respondiendo en 121\,ms medianos con paridad exacta respecto al servidor (143/143). En la partición estratificada, el sistema cumple holgadamente todos los criterios de ingeniería establecidos (Macro \Fone{} 0.9489 en Int8, exactitud 97.87\%, DIR agregado 0.9636).
+Esta investigación demuestra que es factible ejecutar un diagnóstico fitosanitario de nueve condiciones foliares y un detector fuera de distribución completamente sin conexión en un teléfono Android de gama media, con un modelo de 3.74\,MB, respuesta mediana de 121\,ms y paridad exacta respecto al servidor. Dentro de la distribución de entrenamiento, el sistema satisface todos los criterios de ingeniería planteados (Tabla~\ref{tab:criterios}).
 
-Sin embargo, el hallazgo científico central de la investigación es la brecha persistente al cruzar de fuentes conocidas a fotografías externas. Cuatro pruebas independientes —validación cruzada agrupada por fuente (0.6026), retención LOSO, ablación espacial (79.46\% con el centro oculto) y el desglose de roya común en campo (31.25\% de FNR)— demuestran que una fracción del desempeño en partición estratificada proviene de correlaciones con el origen de los datos ($V$ de Cramér 0.5030). Ni la búsqueda de hiperparámetros, ni el ensamble de tres arquitecturas, ni BackMix, ni la segmentación automática del fondo (que degradó el Macro \Fone{} a 0.7191 y fue descartada) resolvieron este problema, confirmando que se trata de una limitación estructural de los conjuntos públicos y no de capacidad del modelo.
+El hallazgo científico principal, sin embargo, es la brecha entre la evaluación estratificada y la generalización a fuentes externas. Las pruebas agrupadas por fuente, LOSO, la ablación espacial y el desglose de roya común en campo coinciden en que parte del desempeño in-distribution proviene de correlaciones con el origen de los datos ($V$ de Cramér 0.5030). Ninguna intervención sobre el modelo o el preprocesado —búsqueda de hiperparámetros, ensamble, sustitución aleatoria de fondos ni segmentación automática del fondo— cerró dicha brecha, lo que confirma que la limitación es estructural de los repositorios públicos y requiere fotografía capturada en el entorno objetivo.
 
-En ese escenario, la arquitectura de abstención OOD y la aplicación DoctorMaíz aportan una respuesta práctica de doble valor. Por un lado, protegen al productor en parcela: sobre las 97 fotografías de campo externas, el detector OOD bloqueó 49 imágenes fuera de dominio y permitió que el modelo acertara 41 de los 48 diagnósticos emitidos (85.4\% de exactitud selectiva). Por otro lado, convierten el uso cotidiano en el mecanismo ético y voluntario para recolectar el primer conjunto de datos fotográfico de parcelas salvadoreñas, sin comprometer la privacidad de las ubicaciones del agricultor.
+En este contexto, la solución móvil DoctorMaíz aporta una respuesta práctica de doble alcance. Por un lado, la abstención OOD protege al agricultor al bloquear la mitad de las fotografías externas fuera de dominio y elevar la exactitud sobre los diagnósticos emitidos a 85.4\% (41/48). Por otro, integra el diagnóstico con herramientas útiles en parcela (severidad guiada, historial, mapa y agroclima) y habilita un módulo voluntario de aportes con privacidad cero-telemetría para conformar el primer conjunto fotográfico salvadoreño.
 
-Entre las limitaciones abiertas destacan la ausencia actual de fotografías locales en el entrenamiento, la calibración \textit{softmax} pendiente (ECE 0.1397, abordable mediante escalado de temperatura), el tamaño acotado del lote externo de campo ($n=97$) y el filtrado perceptual pendiente entre copias secuenciales en particiones. Como trabajo futuro se propone coordinar campañas de captura y validación en campo con productores y promotores del CENTA, reentrenar evaluando siempre con fuentes completas retenidas (LOSO) y extender la taxonomía a nuevas afecciones y cultivos de interés regional.
+Las principales limitaciones abiertas son la ausencia actual de imágenes locales en el entrenamiento, la subconfianza de las probabilidades \textit{softmax} (ECE 0.1397, abordable mediante escalado de temperatura), el tamaño reducido del lote externo ($n=97$) y el filtrado perceptual pendiente entre capturas secuenciales en particiones. Como trabajo futuro se propone validar la aplicación en campo junto con productores y técnicos del CENTA, reentrenar evaluando siempre con fuentes completas retenidas (LOSO) y ampliar la cobertura a nuevas enfermedades y cultivos regionales.
 
 \bibliographystyle{IEEEtran}
 \bibliography{referencias}
