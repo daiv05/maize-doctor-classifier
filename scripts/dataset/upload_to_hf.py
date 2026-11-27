@@ -22,6 +22,7 @@ import tarfile
 from pathlib import Path
 
 from src.config import get_dataset_root
+from src.data.provenance import provenance_from_path
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -33,6 +34,20 @@ ENVIRONMENTS = ("lab", "real")
 SHARD_MAX_BYTES = 800 * 1024 * 1024
 
 SHARD_PREFIX = "clean"
+
+SOURCE_LICENSES = {
+    "corn-leaf-diseases-classification-roboflow": "CC-BY-4.0",
+    "corn-leaf-roboflow": "CC-BY-4.0",
+    "cropdg-unified-multidomain": "CC-BY-NC-SA-4.0",
+    "maize-2-roboflow": "CC-BY-4.0",
+    "maize-beans-tomatoes-africa": "Apache-2.0 / CC-BY-4.0 / CC0-1.0",
+    "maize-deficiency-scanner-roboflow": "CC-BY-4.0",
+    "maize-diseases": "CC-BY-NC-SA-4.0",
+    "maize-in-field-dataset": "CC-BY-NC-SA-4.0",
+    "maize-leaf-roboflow": "CC-BY-4.0",
+    "maize-nutrient-deficiency": "CC-BY-4.0",
+    "multicrop-disease-maiz": "CC-BY-4.0",
+}
 
 
 def collect_images(clean_dir: Path, classes: list[str]) -> list[tuple[Path, str, str]]:
@@ -87,16 +102,19 @@ def plan_shards(
 
 
 def write_metadata_csv(images: list[tuple[Path, str, str]], destination: Path) -> None:
-    """Escribe `metadata.csv` (file_name, label, environment) sin bytes de imagen.
+    """Escribe `metadata.csv` sin bytes de imagen, con la fuente y la licencia de cada una.
 
     `file_name` es la ruta relativa dentro del árbol ya extraído.
     """
     with open(destination, "w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["file_name", "label", "environment"])
+        writer.writerow(["file_name", "label", "environment", "source_id", "license"])
         for image_path, class_name, environment in images:
             file_name = f"{class_name}/{environment}/{image_path.name}"
-            writer.writerow([file_name, class_name, environment])
+            source_id = provenance_from_path(f"{SHARD_PREFIX}/{file_name}")
+            writer.writerow(
+                [file_name, class_name, environment, source_id, SOURCE_LICENSES.get(source_id)]
+            )
 
 
 def write_dataset_infos(
@@ -117,6 +135,8 @@ def write_dataset_infos(
                 "file_name": {"dtype": "string", "_type": "Value"},
                 "label": {"names": sorted(classes), "_type": "ClassLabel"},
                 "environment": {"names": list(ENVIRONMENTS), "_type": "ClassLabel"},
+                "source_id": {"dtype": "string", "_type": "Value"},
+                "license": {"dtype": "string", "_type": "Value"},
             },
             "splits": {
                 "train": {"name": "train", "num_examples": len(images)},
@@ -174,6 +194,19 @@ def _load_classes() -> list[str]:
 
     with open(PROJECT_ROOT / "config" / "dataset.yaml") as handle:
         return yaml.safe_load(handle)["dataset"]["classes"]
+
+
+def pending_uploads(written: list[Path], remote_files: set[str]) -> list[Path]:
+    """Selecciona los artefactos que hay que subir.
+
+    Un shard ya presente se omite porque el empaquetado es determinista; la metadata se sube
+    siempre porque conserva el nombre aunque cambie su contenido.
+
+    @param {list[Path]} written Artefactos generados en el staging.
+    @param {set[str]} remote_files Nombres presentes en el repo.
+    @returns {list[Path]} Artefactos pendientes, en su orden original.
+    """
+    return [p for p in written if p.suffix != ".tar" or p.name not in remote_files]
 
 
 def _delete_stale_shards(api, repo_id: str, keep: set[str], token: str | None) -> None:
@@ -289,10 +322,8 @@ def upload_clean_dataset(
     logger.info(f"Creando/verificando repo de dataset: {repo_id} (private={private})")
     api.create_repo(repo_id=repo_id, repo_type="dataset", private=private, exist_ok=True)
 
-    # Saltar lo que ya está en el repo reanuda una subida cortada sin repetir gigabytes: el
-    # empaquetado es determinista, así que un nombre repetido es el mismo contenido.
     remote_files = set(api.list_repo_files(repo_id=repo_id, repo_type="dataset"))
-    pending = [p for p in written if p.name not in remote_files]
+    pending = pending_uploads(written, remote_files)
     if len(pending) < len(written):
         logger.info(f"{len(written) - len(pending)} archivo(s) ya estaban en el repo; se omiten.")
 
