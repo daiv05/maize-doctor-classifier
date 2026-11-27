@@ -1,0 +1,73 @@
+\chapter{Marco Te\'orico}
+
+Este cap\'itulo sintetiza los fundamentos matem\'aticos y metodol\'ogicos de visi\'on por computadora, optimizaci\'on, evaluaci\'on entre dominios e inteligencia artificial en el borde (\textit{Edge AI}) que sustentan el dise\~no del sistema.
+
+\section{Redes Neuronales Convolucionales (CNN)}
+
+Las Redes Neuronales Convolucionales (\textit{Convolutional Neural Networks}, CNN) procesan im\'agenes representadas como tensores $I(x, y) \in \mathbb{R}^{h \times w \times c}$ (altura $h$, ancho $w$ y $c$ canales RGB) aprendiendo representaciones jer\'arquicas directamente desde los p\'ixeles \cite{chollet2021}. Cada capa aplica filtros entrenables $w$ mediante la convoluci\'on discreta bidimensional:
+\begin{equation}
+y(i, j) = \sum_{m} \sum_{n} x(i + m,\, j + n)\cdot w(m, n) + b.
+\end{equation}
+Al apilar convoluciones, activaciones no lineales y operaciones de reducci\'on espacial (\textit{pooling}), las capas iniciales extraen bordes y venaciones, las intermedias capturan texturas y halos clor\'oticos, y las profundas codifican patrones fitosanitarios complejos como p\'ustulas, lesiones necr\'oticas o perforaciones.
+
+\section{Arquitecturas Convolucionales Ligeras}
+
+Para ejecutar inferencia en tel\'efonos con memoria y CPU limitadas, las arquitecturas ligeras sustituyen la convoluci\'on densa por bloques de bajo costo:
+\begin{itemize}
+\item \textbf{Convoluciones separables y residuales invertidos:} introducidos en MobileNet \cite{howard2017,sandler2018}, separan el filtrado espacial por canal (\textit{depthwise}) de la proyecci\'on puntual $1\times1$ (\textit{pointwise}), reduciendo dr\'asticamente las operaciones en coma flotante.
+\item \textbf{Escalado compuesto (EfficientNet):} equilibra profundidad, ancho y resoluci\'on \cite{tan2019}. Mientras \textbf{EfficientNet-B0} emplea bloques de atenci\'on \textit{Squeeze-and-Excitation} (SE) \cite{hu2018} y activaciones \textit{swish}, la variante m\'ovil \textbf{EfficientNet-Lite0} \cite{tfblog2020} elimina los bloques SE y utiliza $\text{ReLU6}(z)=\min(\max(0,z),6)$ para facilitar la cuantizaci\'on entera.
+\item \textbf{Divisi\'on y barajado de canales (ShuffleNet-V2):} reduce los accesos a memoria mediante \textit{channel split} y \textit{channel shuffle} \cite{ma2018}.
+\end{itemize}
+
+\section{Transferencia de Aprendizaje}
+
+El aprendizaje por transferencia (\textit{Transfer Learning}) reutiliza los pesos $\theta_{\text{pretrained}}$ entrenados sobre ImageNet y los adapta al dominio agr\'icola mediante ajuste fino (\textit{fine-tuning}): $\theta = \theta_{\text{pretrained}} + \Delta\theta$ \cite{deng2009,chollet2021}. Para mejorar la invarianza frente a la captura en campo, se acompa\~na de \textit{Data Augmentation} \cite{shorten2019} (volteos, rotaciones, recortes y ajustes moderados de brillo y contraste), preservando el matiz crom\'atico (\textit{hue}) para no alterar las se\~nales de clorosis.
+
+\section{P\'erdida y Optimizaci\'on}
+
+En clasificaci\'on multiclase con $C$ categor\'ias, la capa \textit{softmax} convierte los \textit{logits} $z\in\mathbb{R}^{C}$ en probabilidades $\hat{y}_c = \exp(z_c)/\sum_{j}\exp(z_j)$ \cite{hastie2009}. El entrenamiento minimiza la entrop\'ia cruzada categ\'orica \cite{chollet2021} ponderada por clase y con suavizado de etiquetas (\textit{label smoothing}) $\varepsilon$ \cite{szegedy2016}:
+\begin{equation}
+\mathcal{L} = -\sum_{c=1}^{C} w_c\, y_c^{(\varepsilon)} \log(\hat{y}_c), \qquad y_c^{(\varepsilon)} = (1-\varepsilon)y_c + \frac{\varepsilon}{C}, \qquad w_c \propto n_c^{-1/2},
+\end{equation}
+donde $n_c$ es el n\'umero de muestras de la clase $c$. Los pesos se actualizan mediante descenso de gradiente adaptativo con Adam \cite{kingma2015} y decaimiento desacoplado (\textbf{AdamW}) \cite{loshchilov2019}, guiado por un calendario coseno tras calentamiento lineal. Para ajustar hiperpar\'ametros, \textit{Optuna} \cite{optuna2019} combina b\'usqueda bayesiana mediante estimador de \'arbol de Parzen (TPE) con poda temprana por mediana (\textit{MedianPruner}).
+
+\section{Ensambles y M\'etricas}
+
+Un ensamble por votaci\'on suave (\textit{Soft Voting}) \cite{hastie2009} promedia las probabilidades de $M$ redes heterog\'eneas para reducir la varianza individual:
+\begin{equation}
+P_{\text{ens}}(y=c\mid x) = \frac{1}{M}\sum_{m=1}^{M} P_m(y=c\mid x), \qquad \hat{y} = \arg\max_{c} P_{\text{ens}}(y=c\mid x).
+\label{eq:softvoting_mt}
+\end{equation}
+
+El rendimiento por clase se mide con Exactitud, Precisi\'on, Sensibilidad (\textit{Recall}) y $F_1$:
+\begin{equation}
+\text{Precisi\'on}_c = \frac{TP_c}{TP_c + FP_c}, \qquad \text{Recall}_c = \frac{TP_c}{TP_c + FN_c}, \qquad F_{1,c} = \frac{2\,\text{Precisi\'on}_c\cdot \text{Recall}_c}{\text{Precisi\'on}_c + \text{Recall}_c}.
+\end{equation}
+Para ponderar por igual a las clases minoritarias se emplea $\text{Macro }F_1 = \frac{1}{C}\sum_{c=1}^{C} F_{1,c}$, priorizando adem\'as la tasa de falsos negativos ($\text{FNR}_c = 1-\text{Recall}_c$). La fiabilidad probabil\'istica se audita mediante el Error Esperado de Calibraci\'on (ECE) \cite{guo2017}, y la equidad entre laboratorio y campo mediante el \textit{Disparate Impact Ratio} (DIR) \cite{feldman2015}, aceptable desde $0.80$:
+\begin{equation}
+\text{DIR} = \frac{\min(m_{\text{lab}},\, m_{\text{campo}})}{\max(m_{\text{lab}},\, m_{\text{campo}})}.
+\end{equation}
+
+\section{Generalizaci\'on y Explicabilidad}
+
+Cuando el origen de las im\'agenes se correlaciona con la etiqueta, una red puede explotar atajos visuales del fondo o la c\'amara (\textit{shortcut learning} \cite{geirhos2020} o efecto \textit{Clever Hans} \cite{lapuschkin2019}) en lugar de la lesi\'on \cite{ahmad2023a}. Para detectarlo se utilizan tres herramientas: validaci\'on agrupada por fuente (\textit{SourceGroupedKFold}) y retenci\'on completa de repositorios (\textit{Leave-One-Source-Out}, LOSO); ablaci\'on espacial (ocultando centro o periferia); y explicabilidad local (XAI) \cite{molnar2022} con \textit{Grad-CAM} \cite{selvaraju2017}, \textit{LIME} \cite{ribeiro2016} y \textit{KernelSHAP} \cite{lundberg2017}.
+
+\section{Despliegue en el Borde (Edge AI)}
+
+El enfoque \textit{Edge AI} ejecuta la inferencia directamente en la CPU del tel\'efono con TensorFlow Lite \cite{tflite2024}, combinando compresi\'on num\'erica y control de entradas fuera de dominio.
+
+\subsection{Cuantizaci\'on Int8}
+La cuantizaci\'on post-entrenamiento (\textit{Post-Training Quantization}, PTQ) \cite{jacob2018} mapea pesos en coma flotante $W$ a enteros sim\'etricos de 8 bits $q \in [-127, 127]$:
+\begin{equation}
+S_c = \frac{\max_{i}\lvert W_{c,i}\rvert}{127}, \qquad q_{c,i} = \operatorname{clip}\!\left(\left\lfloor\frac{W_{c,i}}{S_c}\right\rceil,\,-127,\,127\right),
+\label{eq:cuant_mt}
+\end{equation}
+reduciendo en torno a un 73\% el peso del modelo y acelerando su ejecuci\'on en procesadores m\'oviles.
+
+\subsection{Detecci\'on OOD}
+Como \textit{softmax} asigna una etiqueta incluso ante fotograf\'ias ajenas al cultivo \cite{lee2018}, se extrae el vector de la pen\'ultima capa $\phi(x)\in\mathbb{R}^{D}$, se normaliza a norma unitaria (Mahalanobis++ \cite{mahalanobispp2025}) y se proyecta con PCA a $z\in\mathbb{R}^{d}$. Sobre este subespacio se calcula la Distancia de Mahalanobis Relativa (RMD) \cite{ren2021}:
+\begin{equation}
+s(z) = \min_{k\in\{1,\dots,C\}} (z - \mu_k)^{\top}\Sigma^{-1}(z - \mu_k) - (z - \mu_0)^{\top}\Sigma_0^{-1}(z - \mu_0),
+\label{eq:rmd_mt}
+\end{equation}
+donde $(\mu_k, \Sigma)$ modelan las clases y $(\mu_0, \Sigma_0)$ el fondo global del entrenamiento. Si $s(z)$ supera el umbral calibrado o la confianza es insuficiente, el sistema se abstiene de diagnosticar.
