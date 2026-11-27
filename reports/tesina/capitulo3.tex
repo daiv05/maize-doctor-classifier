@@ -15,9 +15,9 @@ El entrenamiento y la selecci\'on de arquitecturas se ejecutaron bajo un entorno
 \toprule
 \textbf{Par\'ametro operativo} & \textbf{Configuraci\'on implementada} \\
 \midrule
-Entorno de c\'omputo & Modal con GPU NVIDIA A10G (24~GB VRAM), CUDA 12.6 y PyTorch 2.12.1. \\
-Planificador & Calendario coseno tras 3 \'epocas de calentamiento lineal sobre pesos de ImageNet \cite{deng2009}. \\
-Parada y convergencia & Parada temprana a 8 \'epocas sin mejora; las tres redes alcanzan Macro $F_1 \approx 0.90$ hacia la \'epoca 10 (Figura~\ref{fig:convergencia_entrenamiento}). \\
+Entorno de c\'omputo & Modal con GPU NVIDIA A10G (24~GB VRAM), CUDA 12.6, PyTorch 2.12.1 y \texttt{timm} 1.0. \\
+Optimizador y p\'erdida & AdamW ($\text{lr}=10^{-4}$, $\text{wd}=10^{-4}$, lote 32), recorte de gradiente en 1.0, pesos \texttt{sqrt\_inverse} ($w_c \propto n_c^{-1/2}$) y suavizado de etiquetas 0.10. \\
+Planificador y parada & Calendario coseno tras 3 \'epocas de calentamiento lineal (ImageNet \cite{deng2009}); parada temprana a 8 \'epocas sin mejora (Macro $F_1 \approx 0.90$ en \'epoca 10, Figura~\ref{fig:convergencia_entrenamiento}). \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}}
@@ -203,7 +203,7 @@ La b\'usqueda con Optuna evalu\'o 25 configuraciones de EfficientNet-Lite0 (m\'a
 \label{fig:opt_param}
 \end{figure}
 
-La Tabla~\ref{tab:opt_vs_base_c3} contrasta ambas configuraciones: aunque el ensayo 0 mejor\'o en +0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, en el conjunto de prueba cay\'o $-0.49$ puntos porcentuales frente a la configuraci\'on inicial. Por ello se conserv\'o la configuraci\'on inicial (tasa de aprendizaje $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.1), con un Macro $F_1$ de 0.9480 y una exactitud de 97.81\% en prueba.
+La Tabla~\ref{tab:opt_vs_base_c3} contrasta ambas configuraciones: aunque el ensayo 0 mejor\'o en +0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, en el conjunto de prueba cay\'o $-0.49$ puntos porcentuales frente a la configuraci\'on inicial. Por ello se conserv\'o la configuraci\'on inicial (AdamW con tasa de aprendizaje $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.10), con un Macro $F_1$ de 0.9480 y una exactitud de 97.81\% en prueba. En calibraci\'on probabil\'istica, el modelo oficial obtuvo un ECE de 0.1397 y puntuaci\'on Brier de 0.0380 (subconfianza atribuible al suavizado y los pesos por clase), mientras que eliminar dichos pesos en Optuna redujo el ECE en $-57\%$ (a 0.0600), reforzando la conveniencia de acoplar \textit{softmax} con el detector OOD en producci\'on.
 
 \begin{table}[H]
 \caption{Configuraci\'on inicial frente a la mejor configuraci\'on de Optuna}
@@ -267,7 +267,7 @@ EfficientNet-B0 & 97.97\% & 0.9483 & 0.9589 & 0.9400 \\
 \label{fig:matriz_ensamble}
 \end{figure}
 
-El desglose por clase (Tabla~\ref{tab:desglose_clases}) evidencia tambi\'en el efecto de ampliar el corpus: la deficiencia de potasio pas\'o de un $F_1$ de 0.49 en las primeras iteraciones a 0.8475 en el ensamble y 0.8242 en el modelo oficial tras incorporar nuevos repositorios nutricionales y aplicar la ponderaci\'on \texttt{sqrt\_inverse}. Sin embargo, con fuentes no vistas el recall de necrosis letal descendi\'o a 0.72--0.81 en LOSO, y ejecutar tres redes en el tel\'efono triplicar\'ia el consumo de memoria y latencia a cambio de menos de un punto de ganancia; por ello se mantuvo EfficientNet-Lite0 individual para el despliegue m\'ovil.
+El desglose por clase (Tabla~\ref{tab:desglose_clases}) evidencia tambi\'en el efecto de ampliar el corpus: la deficiencia de potasio pas\'o de un $F_1$ de 0.49 en las primeras iteraciones a 0.8475 en el ensamble y 0.8242 en el modelo oficial tras incorporar nuevos repositorios nutricionales y aplicar la ponderaci\'on \texttt{sqrt\_inverse}. Sin embargo, con fuentes no vistas el recall de necrosis letal descendi\'o a 0.72--0.81 en LOSO, la ventaja frente a EfficientNet-B0 en S3 result\'o inconsistente ($\Delta = +0.0045 \pm 0.0080$) y duplic\'o el ECE (de 0.0446 a 0.0891); dado que ejecutar tres redes en el tel\'efono triplicar\'ia memoria y latencia a cambio de menos de un punto de ganancia, se mantuvo EfficientNet-Lite0 individual para el despliegue m\'ovil.
 
 \begin{table}[H]
 \caption{$F_1$ por clase de los modelos individuales y del ensamble}
@@ -330,7 +330,7 @@ Hiperpar\'ametros ajustados & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.29
 
 La forma de partir los datos pesa mucho m\'as que los hiperpar\'ametros. Con la partici\'on estratificada el Macro $F_1$ fue de 0.9311, pero al evaluar sobre fuentes no vistas baj\'o a 0.6026 y el intervalo de confianza se ampli\'o de $\pm 0.0099$ a $\pm 0.1240$. Una ca\'ida de 0.33 no se explica por azar: entre tres semillas el Macro $F_1$ vari\'o apenas $\pm 0.0052$ y entre pliegues estratificados $\pm 0.0080$ (Figura~\ref{fig:kfold_sigmas}). Esto indica que el modelo, adem\'as de los s\'intomas, aprendi\'o rasgos propios de cada repositorio (fondo, luz o c\'amara), un fen\'omeno ya documentado en visi\'on agr\'icola \cite{ahmad2023a}.
 
-En la evaluaci\'on LOSO (\textit{leave-one-source-out}), el modelo se entren\'o sin una fuente completa y se evalu\'o sobre ella con tres semillas (Tabla~\ref{tab:loso_c3}). Sin \texttt{maize-diseases} el Macro $F_1$ qued\'o en 0.9933, pero al retirar \texttt{multicrop-disease-maiz} la exactitud baj\'o a 80.38\%, con m\'inima variaci\'on entre semillas, confirmando que la ca\'ida depende de la procedencia omitida.
+En la evaluaci\'on LOSO (\textit{leave-one-source-out}), el modelo se entren\'o sin una fuente completa y se evalu\'o sobre ella con tres semillas (Tabla~\ref{tab:loso_c3}). Sin \texttt{maize-diseases} el Macro $F_1$ qued\'o en 0.9933, pero al retirar \texttt{multicrop-disease-maiz} la exactitud baj\'o a 80.38\%, con m\'inima variaci\'on entre semillas; en la partici\'on de fuentes indivisibles (\texttt{source\_grouped}), el Macro $F_1$ descendi\'o a 0.4007 (58.57\% de exactitud). Adem\'as, en una campa\~na LOSO de 11 pliegues, ni el balanceo de fuentes (0.5594) ni la sustituci\'on aleatoria de fondos (0.5609) superaron a la l\'inea base (0.5573, $\sigma \approx 0.007$), confirmando que la brecha responde a la procedencia omitida.
 
 \begin{table}[H]
 \caption{Macro $F_1$ y exactitud en la fuente retenida, evaluaci\'on LOSO con tres semillas}
