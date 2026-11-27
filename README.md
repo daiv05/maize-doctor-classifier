@@ -315,8 +315,11 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 
 ## Licencia
 
-El código de este repositorio se distribuye bajo la licencia MIT. Ver [LICENSE](LICENSE).
+Código propiedad de la Universidad de El Salvador, bajo licencia propietaria (todos los derechos reservados). Ver [LICENSE](LICENSE). Para adquirirlo se debe presentar una solicitud formal a la Escuela de Ingeniería de Sistemas Informáticos.
 
-La licencia MIT cubre **el código, no los datos**. Las fuentes consolidadas conservan sus licencias originales, varias de ellas más restrictivas. Cualquier redistribución del corpus, de los splits o de artefactos derivados queda sujeta a esos términos, no a MIT. La licencia declarada de cada fuente está en su página individual y la auditoría bibliográfica señala qué metadatos faltan verificar.
+La licencia cubre **el código y la documentación propios, no los datos ni los modelos**:
+
+- Las fuentes de datos y las imágenes incluidas conservan sus licencias. Ver [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Los modelos entrenados y sus exportaciones se rigen por CC BY-NC-SA 4.0. Ver [MODEL_LICENSE.md](MODEL_LICENSE.md).
 
 Proyecto académico desarrollado en la Universidad de El Salvador.

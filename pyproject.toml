@@ -2,7 +2,7 @@
 name = "maize-doctor-classifier"
 version = "0.1.0"
 requires-python = ">=3.11"
-license = "MIT"
+license = "LicenseRef-Propietaria-UES"
 license-files = ["LICENSE"]
 authors = [
     { name = "Josias Abner Rivas Fuentes" },

@@ -1,7 +1,7 @@
 {
   "name": "maize-doctor-classifier",
   "private": true,
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "(git fetch --unshallow || true) && vitepress build docs",
