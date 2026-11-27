@@ -69,14 +69,9 @@ Este trabajo presenta la primera etapa de un sistema de clasificaci\'on de enfer
 \noindent\textbf{Palabras clave:} clasificaci\'on de enfermedades foliares, ma\'iz, redes neuronales convolucionales, \textit{transfer learning}, interpretabilidad, dispositivos m\'oviles
 
 \bigskip
-\noindent\textbf{Enlaces del proyecto.} El c\'odigo, los datos y la documentaci\'on ampliada de este trabajo est\'an disponibles p\'ublicamente:
+\noindent\textbf{Propiedad y licencia.} El c\'odigo fuente de \textbf{DoctorMa\'iz} es propiedad de la Universidad de El Salvador y se rige por una licencia propietaria, con todos los derechos reservados. Quien desee adquirirlo deber\'a presentar una solicitud formal a la Escuela de Ingenier\'ia de Sistemas Inform\'aticos de la Facultad de Ingenier\'ia y Arquitectura. Las im\'agenes del corpus conservan las licencias de sus fuentes y los modelos entrenados se rigen por la licencia CC BY-NC-SA 4.0, que no permite su uso comercial.
 
-\begin{itemize}
-\item Repositorio: \url{https://github.com/daiv05/maize-doctor-classifier}
-\item Sitio del proyecto: \url{https://doctor-maiz.deras.dev/es}
-\item Dataset en Hugging Face: \url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}
-\item Google Drive (dataset, CSV de duplicados y experimentos \texttt{outputs}, incluida la versi\'on final de los baselines): \url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
-\end{itemize}
+\noindent La documentaci\'on t\'ecnica est\'a disponible en \url{https://doctor-maiz.deras.dev/es}.
 
 \newpage
 
@@ -612,7 +607,7 @@ La confianza agregada lo confirma, ya que en EfficientNet-B0 los aciertos promed
 
 \subsection{Reproducibilidad}
 
-Todo el pipeline es reproducible desde el \href{https://github.com/daiv05/maize-doctor-classifier}{repositorio del proyecto}. El c\'odigo se instala como paquete editable y la configuraci\'on de dominio (clases, \texttt{target\_size}, semilla, perfil baseline) vive centralizada en un \'unico archivo, sin constantes dispersas. La semilla est\'a fijada (42) en la generaci\'on de splits, el muestreo y el entrenamiento, as\'i que los cortes train/val/test y las m\'etricas se regeneran igual entre m\'aquinas. Cada corrida se versiona con sus pesos, historial, predicciones por imagen y reportes. Las etapas se disparan con comandos \'unicos --- generar splits, entrenar los baselines, y producir los reportes de interpretabilidad ---, y el entrenamiento corre tanto en local como en GPU en la nube con el mismo c\'odigo. La documentaci\'on ampliada, con el detalle de cada etapa, est\'a en el \href{https://doctor-maiz.deras.dev/es}{sitio del proyecto}.
+Todo el pipeline es reproducible a partir del c\'odigo del proyecto, propiedad de la Universidad de El Salvador. El c\'odigo se instala como paquete editable y la configuraci\'on de dominio (clases, \texttt{target\_size}, semilla, perfil baseline) vive centralizada en un \'unico archivo, sin constantes dispersas. La semilla est\'a fijada (42) en la generaci\'on de splits, el muestreo y el entrenamiento, as\'i que los cortes train/val/test y las m\'etricas se regeneran igual entre m\'aquinas. Cada corrida se versiona con sus pesos, historial, predicciones por imagen y reportes. Las etapas se disparan con comandos \'unicos --- generar splits, entrenar los baselines, y producir los reportes de interpretabilidad ---, y el entrenamiento corre tanto en local como en GPU en la nube con el mismo c\'odigo. La documentaci\'on ampliada, con el detalle de cada etapa, est\'a en el \href{https://doctor-maiz.deras.dev/es}{sitio del proyecto}.
 
 \section{Conclusiones y Trabajo Futuro}
 
