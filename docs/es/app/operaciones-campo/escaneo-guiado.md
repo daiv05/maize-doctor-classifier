@@ -5,7 +5,7 @@ description: Protocolo de encuadre foliar, marco guía inteligente, detección f
 
 # Escaneo Guiado en el Surco
 
-La calidad del diagnóstico que emite una red neuronal convolucional depende directamente de la calidad de la imagen suministrada. Para evitar errores silenciosos en campo, DoctorMaiz incluye un **marco guía con silueta foliar** y un **filtro inteligente de imágenes no válidas**.
+La calidad del diagnóstico que emite una red neuronal convolucional depende directamente de la calidad de la imagen suministrada. Para evitar errores silenciosos en campo, DoctorMaíz incluye un **marco guía con silueta foliar** y un **filtro inteligente de imágenes no válidas**.
 
 ---
 
@@ -39,7 +39,7 @@ Al presionar el botón central **"Escanear"** o el botón de acción rápida en 
 
 Un problema crítico en las aplicaciones agrícolas convencionales es el **"sesgo de clasificación forzada"**: si le presentas al modelo una foto de un zapato, una maleza o el cielo, el algoritmo intentará forzar una de sus clases y dirá con 90 % de confianza que el zapato tiene *Roya Común*.
 
-DoctorMaiz previene este peligro mediante un **módulo detector OOD (*Out-Of-Distribution*) basado en Distancia de Mahalanobis**:
+DoctorMaíz previene este peligro mediante un **módulo detector OOD (*Out-Of-Distribution*) basado en Distancia de Mahalanobis**:
 
 <PhoneMockup 
   src="/app/resultado-no-reconocida.png" caption="Salvaguarda OOD en Acción" subtitle="Alerta honesta de imagen no reconocida" maxWidth="280px" center />
@@ -62,4 +62,4 @@ En sanidad vegetal, una app que tiene el coraje de decir *"no sé qué es esto, 
 Además de la cámara en vivo, puedes evaluar fotografías previamente capturadas tocando el icono de **Galería**:
 
 - **Fotos tomadas en la mañana sin batería:** Puedes capturar fotos con la cámara nativa del teléfono y luego cargarlas en lote en la app cuando cargues el dispositivo.
-- **Extracción de Coordenadas EXIF:** Si tu cámara nativa tenía activada la geolocalización, DoctorMaiz **extrae automáticamente las coordenadas GPS originales** contenidas en los metadatos EXIF de la imagen. El escaneo aparecerá ubicado en el punto exacto de la parcela donde fue tomada la foto original, no donde estás parado al importarla.
+- **Extracción de Coordenadas EXIF:** Si tu cámara nativa tenía activada la geolocalización, DoctorMaíz **extrae automáticamente las coordenadas GPS originales** contenidas en los metadatos EXIF de la imagen. El escaneo aparecerá ubicado en el punto exacto de la parcela donde fue tomada la foto original, no donde estás parado al importarla.

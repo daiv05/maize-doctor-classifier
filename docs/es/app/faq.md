@@ -5,7 +5,7 @@ description: Guía de resolución de dudas técnicas, problemas de cámara, cone
 
 # Preguntas Frecuentes y Solución de Problemas
 
-Esta sección reúne las consultas y dificultades más comunes reportadas por productores, agrónomos y técnicos durante el uso de DoctorMaiz en parcelas reales.
+Esta sección reúne las consultas y dificultades más comunes reportadas por productores, agrónomos y técnicos durante el uso de DoctorMaíz en parcelas reales.
 
 ---
 
@@ -20,7 +20,7 @@ Esta sección reúne las consultas y dificultades más comunes reportadas por pr
 
 ## Preguntas Frecuentes (FAQ)
 
-### ¿DoctorMaiz requiere conexión a internet para dar un diagnóstico?
+### ¿DoctorMaíz requiere conexión a internet para dar un diagnóstico?
 **No.** La red neuronal de visión artificial (`efficientnet_lite0`) corre de forma autónoma dentro del procesador del teléfono mediante TensorFlow Lite. Puedes estar en la montaña más aislada sin señal de celular y obtendrás el diagnóstico. En el teléfono de pruebas la inferencia toma 23 ms y el preprocesado de la foto 98 ms (medianas). Solo se requiere conexión para consultar el clima en vivo, cargar los mosaicos del mapa, sincronizar con la nube o aportar fotos al dataset.
 
 ### ¿Por qué la aplicación me muestra el mensaje "No Reconocida"?
@@ -42,8 +42,8 @@ El mensaje *"No Reconocida"* no es un error de la app: es el resultado de tres c
 Si un escaneo aparece en la lista de historial pero no se ve sobre el mapa, el escaneo no tiene coordenadas guardadas: el teléfono no obtuvo ubicación al momento del disparo.  
 **Solución:** Antes de iniciar el recorrido en la milpa, asegúrate de tener encendida la opción de **Ubicación** en la barra de ajustes rápidos de Android y dale 30 segundos al teléfono a cielo abierto para fijar satélites.
 
-### ¿DoctorMaiz puede sustituir el criterio de un agrónomo?
-**No.** DoctorMaiz es una herramienta de asistencia diagnóstica rápida. Las recomendaciones de la app mencionan grupos de productos (por ejemplo triazoles, estrobilurinas o *Bacillus*), pero la dosis comercial exacta y la decisión final de compra deben ajustarse según la edad fenológica del cultivo y las recomendaciones del técnico de tu cooperativa o centro de extensión agrícola (como CENTA o MAG).
+### ¿DoctorMaíz puede sustituir el criterio de un agrónomo?
+**No.** DoctorMaíz es una herramienta de asistencia diagnóstica rápida. Las recomendaciones de la app mencionan grupos de productos (por ejemplo triazoles, estrobilurinas o *Bacillus*), pero la dosis comercial exacta y la decisión final de compra deben ajustarse según la edad fenológica del cultivo y las recomendaciones del técnico de tu cooperativa o centro de extensión agrícola (como CENTA o MAG).
 
 ---
 
@@ -51,6 +51,6 @@ Si un escaneo aparece en la lista de historial pero no se ve sobre el mapa, el e
 
 | Síntoma en la App | Causa Probable | Solución Inmediata |
 |---|---|---|
-| **Pantalla de cámara en negro** | Permiso de cámara revocado en Android | Ve a *Ajustes del Teléfono > Aplicaciones > DoctorMaiz > Permisos* y activa "Cámara". |
+| **Pantalla de cámara en negro** | Permiso de cámara revocado en Android | Ve a *Ajustes del Teléfono > Aplicaciones > DoctorMaíz > Permisos* y activa "Cámara". |
 | **El mapa aparece en gris** | Falta de conexión a internet: las capas Satelital y Estándar descargan sus mosaicos en línea | Conéctate a internet para ver el mapa. |
 | **El escaneo tarda más de 2 segundos** | Teléfono con modo de ahorro extremo de batería activo | Desactiva el modo de ahorro de batería de Android para permitir que la CPU ejecute el modelo TFLite a su frecuencia nominal. |

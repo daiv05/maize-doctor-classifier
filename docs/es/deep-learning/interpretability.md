@@ -33,7 +33,7 @@ La gran ventaja de SHAP frente a LIME es su consistencia matemática: no depende
 
 Cada técnica tiene sus fortalezas y sus costes:
 
-| Herramienta | Cómo trabaja | Resolución | Costo de cálculo | Uso en DoctorMaiz |
+| Herramienta | Cómo trabaja | Resolución | Costo de cálculo | Uso en DoctorMaíz |
 |---|---|---|---|---|
 | **Grad-CAM** | Gradientes en la última capa | Mapa de calor continuo | Muy bajo (una pasada) | Inspección visual rápida y auditoría de campo |
 | **LIME** | Perturbación de superpíxeles | Regiones discretas (+ / −) | Alto (cientos de pasadas) | Análisis local de casos dudosos |

@@ -1,4 +1,4 @@
-# DoctorMaiz - Detección de Enfermedades, Plagas y Deficiencias Nutricionales en Cultivos de Maíz
+# DoctorMaíz - Detección de Enfermedades, Plagas y Deficiencias Nutricionales en Cultivos de Maíz
 
 > **Clasificación mediante Deep Learning en Dispositivos Móviles (Edge AI Offline)**
 
@@ -6,7 +6,7 @@
 
 ## Descripción
 
-DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que clasifica sin conexión.
+DoctorMaíz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que clasifica sin conexión.
 
 Este repositorio contiene el pipeline de datos, entrenamiento, evaluación, interpretabilidad y exportación. La aplicación móvil vive en [`maize-doctor-app`](https://github.com/Edenilson-Molina/maize-doctor-app), el backend opcional en [`maize-doctor-api`](https://github.com/daiv05/maize-doctor-api) y el segmentador de hoja en [`maize-doctor-segmenter-leaf`](https://github.com/abner-rivas/maize-doctor-segmenter-leaf).
 

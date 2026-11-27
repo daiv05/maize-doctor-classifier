@@ -1,11 +1,11 @@
 ---
 title: Primeros Pasos y Cuentas
-description: Modo invitado sin conexión, registro de productores, respaldo en la nube y sincronización en DoctorMaiz.
+description: Modo invitado sin conexión, registro de productores, respaldo en la nube y sincronización en DoctorMaíz.
 ---
 
 # Primeros Pasos y Gestión de Acceso
 
-DoctorMaiz respeta el principio de **cero fricción en el campo**: un agricultor que necesita evaluar una planta sospechosa no debe verse obligado a llenar formularios ni recordar contraseñas mientras se encuentra en medio de la milpa.
+DoctorMaíz respeta el principio de **cero fricción en el campo**: un agricultor que necesita evaluar una planta sospechosa no debe verse obligado a llenar formularios ni recordar contraseñas mientras se encuentra en medio de la milpa.
 
 ---
 
@@ -50,13 +50,13 @@ Registrarse toma menos de dos minutos y ofrece ventajas fundamentales para el ma
 
 ## Sincronización y Cola de Datos Offline
 
-En el campo, la cobertura celular suele ser nula o inestable. DoctorMaiz implementa una arquitectura **Offline-First con Cola de Sincronización Transparente**:
+En el campo, la cobertura celular suele ser nula o inestable. DoctorMaíz implementa una arquitectura **Offline-First con Cola de Sincronización Transparente**:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor A as Productor en Campo
-    participant App as App DoctorMaiz
+    participant App as App DoctorMaíz
     participant DB as SQLite Local
     participant Cloud as Servidor Central
 

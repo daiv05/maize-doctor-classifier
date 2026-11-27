@@ -153,7 +153,7 @@ Desarrollar y evaluar un sistema de visi\'on artificial para el diagn\'ostico fi
 
 El proyecto abarca el dise\~no, el desarrollo y la evaluaci\'on de una herramienta de diagn\'ostico fitosanitario para los peque\~nos productores de ma\'iz en El Salvador. Tiene dos componentes: la aplicaci\'on m\'ovil que usa el agricultor y el modelo de visi\'on artificial que se ejecuta dentro de ella.
 
-\subsubsection{Alcance de la Aplicaci\'on M\'ovil (DoctorMaiz)}
+\subsubsection{Alcance de la Aplicaci\'on M\'ovil (DoctorMa\'iz)}
 La aplicaci\'on incluye:
 \begin{itemize}
 \item \textbf{Diagn\'ostico sin conexi\'on.} El modelo cuantizado se ejecuta en el procesador del tel\'efono, sin internet ni datos m\'oviles.
@@ -202,7 +202,7 @@ Un modelo convolucional ligero, cuantizado a enteros de 8 bits y ejecutado sin c
 \midrule
 Rendimiento del modelo & Alcanzar Macro $F_1 \ge 0.85$ en la partici\'on de prueba retenida. & Macro $F_1$ \\
 Equidad entre entornos & Mantener un \textit{Disparate Impact Ratio} $\ge 0.80$ entre laboratorio y campo real. & DIR \\
-Confiabilidad de la evaluaci\'on & Ninguna imagen del conjunto de prueba aparece en entrenamiento ni validaci\'on, por hash de archivo y por p\'ixeles. & Solapamiento por SHA-256 y por p\'ixeles \\
+Confiabilidad de la evaluaci\'on & Ninguna imagen del conjunto de prueba aparece en entrenamiento ni validaci\'on, por \textit{hash} de archivo y por p\'ixeles. & Solapamiento por SHA-256 y por p\'ixeles \\
 Despliegue en el tel\'efono & Modelo Int8 de 20~MB o menos, preprocesado e inferencia de 300~ms o menos en un tel\'efono de gama media o baja y funcionamiento sin conexi\'on. & Tama\~no, latencia \\
 \bottomrule
 \end{tabularx}
@@ -258,7 +258,7 @@ El proyecto se organiz\'o seg\'un las fases de \textit{CRISP-DM} (\textit{Cross-
 \ganttbar[bar/.append style={fill=cyan!65!black, draw=cyan!90!black}]{Fase 2: Preparaci\'on de Datos}{5}{8} \\
 \ganttbar[bar/.append style={fill=teal!70!black, draw=teal!90!black}]{Fase 3: Modelado y Optuna}{9}{14} \\
 \ganttbar[bar/.append style={fill=orange!75!black, draw=orange!90!black}]{Fase 4: Evaluaci\'on y Sesgos}{15}{18} \\
-\ganttbar[bar/.append style={fill=green!60!black, draw=green!80!black}]{Fase 5: Edge AI y App M\'ovil}{19}{24} \\
+\ganttbar[bar/.append style={fill=green!60!black, draw=green!80!black}]{Fase 5: \textit{Edge AI} y App M\'ovil}{19}{24} \\
 \ganttbar[bar/.append style={fill=purple!65!black, draw=purple!90!black}]{Fase 6: Pruebas y Memoria}{25}{32} \\
 \ganttmilestone[milestone/.append style={fill=red!80!black, draw=red!90!black}]{Hito: Defensa Final (24/11)}{32}
 \end{ganttchart}%
@@ -282,7 +282,7 @@ El proyecto se organiz\'o seg\'un las fases de \textit{CRISP-DM} (\textit{Cross-
 \textbf{Fase 5: Despliegue y aplicaci\'on m\'ovil} & 18/08/26 & 29/09/26 & 6 & 60 h & Modelo cuantizado a Int8 y aplicaci\'on m\'ovil con inferencia local. \\
 \textbf{Fase 6: Pruebas finales y memoria} & 29/09/26 & 24/11/26 & 8 & 80 h & Pruebas en dispositivo f\'isico, memoria t\'ecnica y defensa. \\
 \midrule
-\textbf{Defensa del proyecto} & \multicolumn{2}{c}{\textbf{24 de noviembre de 2026}} & \textbf{32} & \textbf{320 h} & \textbf{Sistema DoctorMaiz y memoria final} \\
+\textbf{Defensa del proyecto} & \multicolumn{2}{c}{\textbf{24 de noviembre de 2026}} & \textbf{32} & \textbf{320 h} & \textbf{Sistema DoctorMa\'iz y memoria final} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
@@ -303,8 +303,8 @@ El presupuesto se organiza en cuatro rubros: el recurso humano, el entrenamiento
 \textbf{Rubro} & \textbf{Detalle} & \textbf{Costo} \\
 \midrule
 \multicolumn{3}{l}{\textit{Recurso humano}} \\
-Ingeniero de Datos / MLOps & 320 h & \$3,380.77 \\
-Investigador de Deep Learning & 320 h & \$3,056.53 \\
+Ingeniero de Datos / \textit{MLOps} & 320 h & \$3,380.77 \\
+Investigador de \textit{Deep Learning} & 320 h & \$3,056.53 \\
 Desarrollador M\'ovil Edge AI & 320 h & \$2,840.39 \\
 \midrule
 \multicolumn{3}{l}{\textit{Entrenamiento}} \\
@@ -318,7 +318,7 @@ Dispositivo de prueba & Motorola edge 40 neo, aportado por un integrante & \$0.0
 Servidor Hetzner & API, base de datos y sitio web (\$6.00 al mes durante 4 meses) & \$24.00 \\
 Volumen Hetzner de 100~GB & Fotograf\'ias aportadas y respaldos (\$7.67 al mes durante 4 meses) & \$30.68 \\
 Dominio & Registro anual & \$12.00 \\
-Distribuci\'on & APK en GitHub Releases, dataset en Hugging Face & \$0.00 \\
+Distribuci\'on & APK en GitHub Releases, \textit{dataset} en Hugging Face & \$0.00 \\
 \midrule
 \textbf{Total} & & \textbf{\$9,594.37} \\
 \bottomrule

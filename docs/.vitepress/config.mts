@@ -113,7 +113,7 @@ const esDatasetSidebar = [
 
 const esAppSidebar = [
   {
-    text: "DoctorMaiz App",
+    text: "DoctorMaíz App",
     items: [
       { text: "Visión General", link: "/es/app/" },
     ],
@@ -190,7 +190,7 @@ export default defineConfig({
       label: "Español",
       lang: "es-SV",
       link: "/es/",
-      title: "DoctorMaiz",
+      title: "DoctorMaíz",
       head: [
         [
           "meta",

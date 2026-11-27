@@ -1,11 +1,11 @@
 ---
-title: DoctorMaiz App Móvil
-description: Documentación oficial de la aplicación móvil DoctorMaiz para diagnóstico de patologías foliares de maíz mediante Edge AI offline.
+title: DoctorMaíz App Móvil
+description: Documentación oficial de la aplicación móvil DoctorMaíz para diagnóstico de patologías foliares de maíz mediante Edge AI offline.
 ---
 
-# DoctorMaiz · Aplicación Móvil de Campo
+# DoctorMaíz · Aplicación Móvil de Campo
 
-**DoctorMaiz** es la aplicación móvil complementaria del proyecto de investigación, diseñada específicamente para agricultores, agrónomos y técnicos de extensión rural. Su objetivo primordial es brindar **diagnóstico fitopatológico inmediato en el surco**, funcionando de forma **100 % autónoma sin necesidad de conexión celular ni acceso a internet**.
+**DoctorMaíz** es la aplicación móvil complementaria del proyecto de investigación, diseñada específicamente para agricultores, agrónomos y técnicos de extensión rural. Su objetivo primordial es brindar **diagnóstico fitopatológico inmediato en el surco**, funcionando de forma **100 % autónoma sin necesidad de conexión celular ni acceso a internet**.
 
 ---
 
@@ -26,7 +26,7 @@ description: Documentación oficial de la aplicación móvil DoctorMaiz para dia
 A diferencia de las soluciones basadas en servidores en la nube, el modelo de visión artificial corre íntegramente en la CPU del teléfono móvil mediante **TensorFlow Lite cuantizado a 8 bits (Int8)**. El productor puede diagnosticar en valles remotos o zonas montañosas sin cobertura telefónica.
 :::
 
-| Característica | Especificación en DoctorMaiz | Beneficio en Campo |
+| Característica | Especificación en DoctorMaíz | Beneficio en Campo |
 |---|:---:|---|
 | **Velocidad de Inferencia** | **~23 ms** (mediana, Motorola edge 40 neo) | Diagnóstico instantáneo sin esperas ni pausas |
 | **Tamaño del Modelo** | **3.74 MB** (`efficientnet_lite0_int8`) | No satura el almacenamiento del dispositivo |

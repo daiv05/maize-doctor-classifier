@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: "DoctorMaiz"
+  name: "DoctorMaíz"
   text: "Enfermedades, Plagas y Deficiencias en Maíz"
   tagline: "Sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales para pequeños productores de maíz en El Salvador, con clasificación sin conexión en dispositivos Android."
   image:
     src: /logo.svg
-    alt: DoctorMaiz
+    alt: DoctorMaíz
   actions:
     - theme: brand
       text: Empezando

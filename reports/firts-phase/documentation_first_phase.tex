@@ -64,9 +64,9 @@
 
 \section*{Resumen}
 \addcontentsline{toc}{section}{Resumen}
-Este trabajo presenta la primera etapa de un sistema de clasificaci\'on de enfermedades foliares, plagas y deficiencias nutricionales en ma\'iz mediante \textit{deep learning}, pensado para inferencia offline en dispositivos m\'oviles de gama media/baja. Se documenta la recolecci\'on y limpieza de un conjunto consolidado de 31~622 im\'agenes en 9 clases procedentes de 6 fuentes p\'ublicas, un an\'alisis exploratorio que revela un desbalance de hasta 32.9$\times$ y sesgos de dominio laboratorio/campo, el pipeline de preprocesamiento y balanceo, y la comparaci\'on de tres arquitecturas convolucionales ligeras preentrenadas en ImageNet (EfficientNet-B0, ShuffleNetV2-x1.0 y EfficientNet-Lite0). EfficientNet-B0 obtiene el mejor macro-F1 en prueba (0.9146), seguido de ShuffleNetV2-x1.0 (0.9030) y EfficientNet-Lite0 (0.8951), y los tres superan la meta de macro-F1 $\geq0.85$. El error se concentra en un solo cuello de botella, \texttt{potassium\_deficiency}, y en la confusi\'on entre lesiones foliares parecidas. El an\'alisis de interpretabilidad con LIME y Grad-CAM muestra que los modelos atienden al tejido foliar, pero se equivocan con alta confianza dentro del bloque de deficiencias nutricionales.
+Este trabajo presenta la primera etapa de un sistema de clasificaci\'on de enfermedades foliares, plagas y deficiencias nutricionales en ma\'iz mediante \textit{deep learning}, pensado para inferencia \textit{offline} en dispositivos m\'oviles de gama media/baja. Se documenta la recolecci\'on y limpieza de un conjunto consolidado de 31~622 im\'agenes en 9 clases procedentes de 6 fuentes p\'ublicas, un an\'alisis exploratorio que revela un desbalance de hasta 32.9$\times$ y sesgos de dominio laboratorio/campo, el \textit{pipeline} de preprocesamiento y balanceo, y la comparaci\'on de tres arquitecturas convolucionales ligeras preentrenadas en ImageNet (EfficientNet-B0, ShuffleNetV2-x1.0 y EfficientNet-Lite0). EfficientNet-B0 obtiene el mejor \textit{macro-F1} en prueba (0.9146), seguido de ShuffleNetV2-x1.0 (0.9030) y EfficientNet-Lite0 (0.8951), y los tres superan la meta de macro-F1 $\geq0.85$. El error se concentra en un solo cuello de botella, \texttt{potassium\_deficiency}, y en la confusi\'on entre lesiones foliares parecidas. El an\'alisis de interpretabilidad con \textit{LIME} y \textit{Grad-CAM} muestra que los modelos atienden al tejido foliar, pero se equivocan con alta confianza dentro del bloque de deficiencias nutricionales.
 
-\noindent\textbf{Palabras clave:} clasificaci\'on de enfermedades foliares, ma\'iz, redes neuronales convolucionales, transfer learning, interpretabilidad, dispositivos m\'oviles
+\noindent\textbf{Palabras clave:} clasificaci\'on de enfermedades foliares, ma\'iz, redes neuronales convolucionales, \textit{transfer learning}, interpretabilidad, dispositivos m\'oviles
 
 \bigskip
 \noindent\textbf{Enlaces del proyecto.} El c\'odigo, los datos y la documentaci\'on ampliada de este trabajo est\'an disponibles p\'ublicamente:
@@ -86,17 +86,17 @@ La agricultura representa el 5.6\% del PIB de El Salvador y sostiene a m\'as de 
 
 En zonas rurales la asistencia t\'ecnica agr\'icola escasea, as\'i que el diagn\'ostico depende de la experiencia de quien cultiva, lo que puede favorecer detecciones tard\'ias. Lo que este proyecto busca no es reemplazar el criterio del agricultor o de especialistas, sino ofrecer una herramienta de apoyo que detecte una condici\'on foliar, explique las posibles causas y oriente sobre que puede hacer para manejarla.
 
-La soluci\'on que se busca es un clasificador de im\'agenes liviano, capaz de correr completamente offline en dispositivos Android de gama media/baja (${\geq}$4~GB RAM, Snapdragon serie 6xx o equivalente). El flujo que se propone es que el agricultor toma o sube una foto de la hoja y la aplicaci\'on responde con la clase m\'as probable, su confianza y consejos de manejo. El modelo objetivo no debe superar los 20MB de tamaño y mantener una latencia ${\leq}300$~ms por imagen, con cuantizaci\'on INT8 y un runtime m\'ovil como TensorFlow Lite.
+La soluci\'on que se busca es un clasificador de im\'agenes liviano, capaz de correr completamente offline en dispositivos Android de gama media/baja (${\geq}$4~GB RAM, Snapdragon serie 6xx o equivalente). El flujo que se propone es que el agricultor toma o sube una foto de la hoja y la aplicaci\'on responde con la clase m\'as probable, su confianza y consejos de manejo. El modelo objetivo no debe superar los 20MB de tamaño y mantener una latencia ${\leq}300$~ms por imagen, con cuantizaci\'on INT8 y un \textit{runtime} m\'ovil como TensorFlow Lite.
 
-Esta primera etapa cubre la recolecci\'on y documentaci\'on del dataset, el an\'alisis exploratorio, el pipeline de preprocesamiento y balanceo, y la comparaci\'on de tres arquitecturas candidatas como \textit{baseline} sobre las 9 clases consideradas.
+Esta primera etapa cubre la recolecci\'on y documentaci\'on del \textit{dataset}, el an\'alisis exploratorio, el pipeline de preprocesamiento y balanceo, y la comparaci\'on de tres arquitecturas candidatas como \textit{baseline} sobre las 9 clases consideradas.
 
 \section{Trabajos Previos}
 
-Los primeros sistemas de diagn\'ostico foliar se apoyaban en aprendizaje cl\'asico, cómo SVM, K-Nearest Neighbors, Random Forest, sobre caracter\'isticas dise\~nadas a mano (color, textura, forma de la lesi\'on), con precisiones del 79\% al 90\% (Autores varios, 2026). Con la llegada de las CNN cambió totalmente el enfoque, ahora con estas redes se aprende sola la jerarqu\'ia de rasgos a partir de los p\'ixeles.
+Los primeros sistemas de diagn\'ostico foliar se apoyaban en aprendizaje cl\'asico, cómo SVM, \textit{K-Nearest Neighbors}, \textit{Random Forest}, sobre caracter\'isticas dise\~nadas a mano (color, textura, forma de la lesi\'on), con precisiones del 79\% al 90\% (Autores varios, 2026). Con la llegada de las CNN cambió totalmente el enfoque, ahora con estas redes se aprende sola la jerarqu\'ia de rasgos a partir de los p\'ixeles.
 
 En la mayoría de investigaciones la brecha de dominio laboratorio/campo es el mayor desafío, los modelos pioneros se entrenaron con \textit{PlantVillage}, hojas aisladas sobre fondos homog\'eneos, donde las CNN alcanzan exactitudes de 95.81\% a 99.53\% (Ahmad et al., 2023a). Pero al evaluarlos contra conjuntos de campo real (\textit{PlantDoc}, \textit{FieldPlant}, \textit{CD\&S}) la precisi\'on se desploma al rango de 33.27\% a 39.87\%. La causa es bastante fácil de ver, y es que en el campo, la hoja enferma puede tener contacto con hojas sanas, malezas, suelo, sombras y reflejos. Esto se combatió con el aumento de datos agresivo, la recolección y mezcla de fotos de laboratorio y campo, y la eliminaci\'on de fondo mediante un paso previo, arquitecturas como DenseNet169 estabilizan la generalizaci\'on en 77.50\% a 81.60\% (Ahmad et al., 2023b).
 
-Las investigaciones más recientes atacan estos problemas con esquemas h\'ibridos y en cascada, por un lado las CNN-ViT combinan la extracci\'on de texturas de las CNN con la capacidad de los Transformers para relacionar lesiones distantes, Shandilya et al.\ (2025) reportan F1 cercano al 99.13\% sobre conjuntos mixtos, aunque sistemas de campo como ZeaWatch ven caer su confianza al 70.8\% en condiciones reales (Baya et al., 2024).
+Las investigaciones más recientes atacan estos problemas con esquemas h\'ibridos y en cascada, por un lado las CNN-ViT combinan la extracci\'on de texturas de las CNN con la capacidad de los \textit{Transformers} para relacionar lesiones distantes, Shandilya et al.\ (2025) reportan F1 cercano al 99.13\% sobre conjuntos mixtos, aunque sistemas de campo como ZeaWatch ven caer su confianza al 70.8\% en condiciones reales (Baya et al., 2024).
 
 Otros separan el problema en dos etapas, una primera con un detector (Faster R-CNN, LS-RCNN) que a\'isla la hoja, seguido de un clasificador (Liu et al., 2022), o usan c\'amaras RGB-D para recortar el fondo antes de clasificar con modelos ligeros como MobileNetV2 (Nan et al., 2023).
 
@@ -120,7 +120,7 @@ Una imagen a color entra a la red como un tensor de forma $H \times W \times 3$,
 
 Un concepto que ayuda a entender c\'omo se construye esa jerarqu\'ia visual es el campo receptivo, la regi\'on de la imagen original que puede influir en la activaci\'on de una neurona dada. En las primeras capas ese campo es peque\~no, casi del tama\~no del filtro, pero al apilar convoluciones y reducir la resoluci\'on con \textit{pooling}, las capas profundas terminan integrando informaci\'on de \'areas cada vez m\'as amplias. As\'i es como la red pasa de detectar un borde oscuro aislado a reconocer una lesi\'on completa, formada por borde, color y textura combinados.
 
-Al final, los mapas de caracter\'isticas se proyectan hacia las clases mediante capas lineales. La funci\'on \textit{Softmax} convierte los logits $z_i$ en probabilidades:
+Al final, los mapas de caracter\'isticas se proyectan hacia las clases mediante capas lineales. La funci\'on \textit{Softmax} convierte los \textit{logits} $z_i$ en probabilidades:
 
 \begin{equation}
 \hat{p}_i = \frac{e^{z_i}}{\sum_{j=1}^{C} e^{z_j}}
@@ -135,7 +135,7 @@ El entrenamiento minimiza la Entrop\'ia Cruzada, que castiga la divergencia entr
 
 \subsection{Evoluci\'on hacia arquitecturas ligeras}
 
-La familia de arquitecturas CNN evolucion\'o desde LeNet y AlexNet hacia dise\~nos m\'as profundos como VGG y ResNet, esta \'ultima con conexiones residuales que facilitan entrenar redes muy profundas. Pero para el despliegue m\'ovil existen  las redes eficientes, dónde su pieza clave son las convoluciones depthwise-separable, que factorizan una convoluci\'on $k\times k$ en un filtro espacial por canal (\textit{depthwise}) y una convoluci\'on $1\times 1$ que combina canales (\textit{pointwise}). El ahorro de FLOPs respecto a la convoluci\'on est\'andar es:
+La familia de arquitecturas CNN evolucion\'o desde LeNet y AlexNet hacia dise\~nos m\'as profundos como VGG y ResNet, esta \'ultima con conexiones residuales que facilitan entrenar redes muy profundas. Pero para el despliegue m\'ovil existen  las redes eficientes, dónde su pieza clave son las convoluciones \textit{depthwise}-separable, que factorizan una convoluci\'on $k\times k$ en un filtro espacial por canal (\textit{depthwise}) y una convoluci\'on $1\times 1$ que combina canales (\textit{pointwise}). El ahorro de FLOPs respecto a la convoluci\'on est\'andar es:
 
 \begin{equation}
 \frac{\text{Costo separable}}{\text{Costo est\'andar}} \approx \frac{1}{C_{out}} + \frac{1}{k^2}
@@ -149,7 +149,7 @@ El \textbf{transfer learning} parte de una red ya entrenada en una tarea fuente 
 
 La tarea fuente m\'as usada en visi\'on por computadora es la clasificaci\'on sobre ImageNet (Deng et al., 2009), un conjunto masivo y diverso de im\'agenes naturales, pero no es la \'unica opci\'on ni la \'unica que existe. Tambi\'en se puede partir de pesos entrenados en otros dominios cercanos al problema, como conjuntos m\'as grandes de im\'agenes agr\'icolas o de plantas, o incluso de un preentrenamiento propio en una tarea relacionada dentro del mismo proyecto.
 
-En la pr\'actica, adoptar transfer learning implica reemplazar la capa clasificadora original por una ajustada a las clases del nuevo problema, y luego decidir cu\'anto del resto de la red se vuelve a entrenar. Dos estrategias habituales son el \textbf{fine-tuning} completo, donde se permite que todo el backbone ajuste sus pesos con descenso de gradiente sobre los nuevos datos, y el uso del modelo preentrenado como \textbf{extractor de caracter\'isticas} fijo, donde solo se entrena la capa final y el resto de la red permanece congelado. La primera opci\'on suele dar mejores resultados cuando hay suficientes datos objetivo y el dominio nuevo difiere bastante del original, mientras que la segunda es preferible con conjuntos muy peque\~nos, porque reduce el riesgo de sobreajuste.
+En la pr\'actica, adoptar transfer learning implica reemplazar la capa clasificadora original por una ajustada a las clases del nuevo problema, y luego decidir cu\'anto del resto de la red se vuelve a entrenar. Dos estrategias habituales son el \textbf{\textit{fine-tuning}} completo, donde se permite que todo el \textit{backbone} ajuste sus pesos con descenso de gradiente sobre los nuevos datos, y el uso del modelo preentrenado como \textbf{extractor de caracter\'isticas} fijo, donde solo se entrena la capa final y el resto de la red permanece congelado. La primera opci\'on suele dar mejores resultados cuando hay suficientes datos objetivo y el dominio nuevo difiere bastante del original, mientras que la segunda es preferible con conjuntos muy peque\~nos, porque reduce el riesgo de sobreajuste.
 
 \subsection{Baselines}
 
@@ -171,10 +171,10 @@ El \textbf{muestreo ponderado} interviene antes, al armar cada lote, eligiendo c
 
 \subsection{M\'etricas de evaluaci\'on}
 
-En datasets que no están balanceados, el \textit{accuracy} deja de ser confiable para evaluar un modelo, porque puede parecer bueno acertando pero al mirar más detenidamente solo lo hace con las clases más representadas, por eso se recomienda mirar precisi\'on, recall y F1 por clase:
+En datasets que no están balanceados, el \textit{accuracy} deja de ser confiable para evaluar un modelo, porque puede parecer bueno acertando pero al mirar más detenidamente solo lo hace con las clases más representadas, por eso se recomienda mirar precisi\'on, \textit{recall} y F1 por clase:
 
 \begin{equation}
-\text{Precision}_c = \frac{TP_c}{TP_c + FP_c}, \quad \text{Recall}_c = \frac{TP_c}{TP_c + FN_c}, \quad F1_c = \frac{2 \cdot \text{Precision}_c \cdot \text{Recall}_c}{\text{Precision}_c + \text{Recall}_c}
+\text{\textit{Precision}}_c = \frac{TP_c}{TP_c + FP_c}, \quad \text{Recall}_c = \frac{TP_c}{TP_c + FN_c}, \quad F1_c = \frac{2 \cdot \text{Precision}_c \cdot \text{Recall}_c}{\text{Precision}_c + \text{Recall}_c}
 \end{equation}
 
 El \textbf{F1-macro} promedia el F1 de todas las clases sin ponderar por soporte:
@@ -183,13 +183,13 @@ El \textbf{F1-macro} promedia el F1 de todas las clases sin ponderar por soporte
 F1_{\text{macro}} = \frac{1}{C}\sum_{c=1}^{C} F1_c
 \end{equation}
 
-A diferencia del F1-weighted, el macro exige reconocer la clase con 40 ejemplos con la misma destreza que la de 1~500. El umbral de \'exito del proyecto es $F1_{\text{macro}} \geq 0.85$.
+A diferencia del F1-\textit{weighted}, el macro exige reconocer la clase con 40 ejemplos con la misma destreza que la de 1~500. El umbral de \'exito del proyecto es $F1_{\text{macro}} \geq 0.85$.
 
 \subsection{Interpretabilidad}
 
 Una CNN es por defecto una caja negra, nos entrega una etiqueta o clase, pero no nos da una explicación. En el contexto de un sistema fiable, eso importa mucho, porque una clasificaci\'on equivocada se traduce en una decisi\'on de manejo equivocada, como fumigar sin necesidad. Es necesario poder revisar que el modelo mira donde est\'a el problema.
 
-Las tres t\'ecnicas m\'as usadas son LIME, SHAP y Grad-CAM.
+Las tres t\'ecnicas m\'as usadas son LIME, \textit{SHAP} y Grad-CAM.
 
 \textbf{LIME} (Ribeiro et al., 2016) explica una predicci\'on individual aproximando localmente el modelo con un modelo lineal simple. Para im\'agenes trabaja con superp\'ixeles, y el proceso segmenta la imagen, apaga algunos superp\'ixeles para generar variantes perturbadas, consulta al modelo por cada una, y ajusta un modelo lineal cuyos coeficientes son la importancia de cada regi\'on. Es agnóstico al modelo y muy intuitivo, pero tambi\'en el m\'as costoso y el menos estable, porque las perturbaciones son aleatorias.
 
@@ -359,7 +359,7 @@ Corn Leaf -- Roboflow & Campo real & CC BY 4.0 \\
 
 Dos fuentes m\'as fueron descartadas, tambi\'en detalladas en el Anexo~\ref{anexo:datasets}: \textit{Corn Leaf Diseases} (MIT), que solo distribuye im\'agenes aumentadas sint\'eticamente sin conservar los originales, y \textit{Multicrop Disease}, por mezclar sin metadatos im\'agenes preprocesadas, de laboratorio y de campo, imposibles de separar con confianza.
 
-Durante la limpieza se detectaron duplicados \emph{entre} fuentes mediante una huella perceptual, eliminando \textbf{8~538 im\'agenes} en \textbf{8~050 grupos}, sobre todo entre \textit{maize\_desease} ($\sim$6~508) y \textit{multi\_desease} ($\sim$1~980). Sin esa depuraci\'on, copias id\'enticas habr\'ian aparecido en train y validaci\'on, inflando las m\'etricas por fuga de datos. La Tabla~\ref{tab:classes} muestra la composici\'on final.
+Durante la limpieza se detectaron duplicados \emph{entre} fuentes mediante una huella perceptual, eliminando \textbf{8~538 im\'agenes} en \textbf{8~050 grupos}, sobre todo entre \textit{maize\_desease} ($\sim$6~508) y \textit{multi\_desease} ($\sim$1~980). Sin esa depuraci\'on, copias id\'enticas habr\'ian aparecido en \textit{train} y validaci\'on, inflando las m\'etricas por fuga de datos. La Tabla~\ref{tab:classes} muestra la composici\'on final.
 
 \begin{table}[H]
 \caption{Composici\'on del dataset limpio por clase}
@@ -371,7 +371,7 @@ Durante la limpieza se detectaron duplicados \emph{entre} fuentes mediante una h
 \toprule
 \textbf{Clase} & \textbf{Lab} & \textbf{Real} & \textbf{Total} \\
 \midrule
-healthy & 0 & 8~744 & 8~744 \\
+\textit{healthy} & 0 & 8~744 & 8~744 \\
 northern\_corn\_leaf\_blight & 888 & 5~942 & 6~830 \\
 lethal\_necrosis & 0 & 6~415 & 6~415 \\
 fall\_armyworm & 0 & 4~857 & 4~857 \\
@@ -457,9 +457,9 @@ Mirando la resoluci\'on por clase (Figura~\ref{fig:resporclase}). Las tres defic
 \label{fig:sesgos}
 \end{figure}
 
-Esto implica que será obligatorio aplicar un muestreo ponderado con augmentation dirigido a las clases minoritarias, y también evaluar la generalización con imágenes de campo, para asegurarse de que el modelo no aprenda a reconocer fondos de laboratorio en lugar de lesiones.
+Esto implica que será obligatorio aplicar un muestreo ponderado con \textit{augmentation} dirigido a las clases minoritarias, y también evaluar la generalización con imágenes de campo, para asegurarse de que el modelo no aprenda a reconocer fondos de laboratorio en lugar de lesiones.
 
-\section{Preprocesamiento, Feature Engineering y Estrategia}
+\section{Preprocesamiento, \textit{Feature Engineering} y Estrategia}
 
 Al ser clasificaci\'on de im\'agenes con transfer learning, no hay ingenier\'ia de \textit{features} manual, ya que las representaciones las aprende el backbone preentrenado en ImageNet. El esfuerzo se concentr\'o en normalizaci\'on, divisi\'on de datos, balanceo y en definir la estrategia de entrenamiento de cada etapa.
 
@@ -476,7 +476,7 @@ El balanceo opera en tres capas. Primero, un tope configurable por clase (1~500 
 
 Se seleccionaron tres redes ligeras preentrenadas en ImageNet, cada una en un punto distinto del eje que va de la precisi\'on a la eficiencia, y las tres convertibles a TFLite para el despliegue m\'ovil.
 
-\textbf{EfficientNet-B0} (Tan \& Le, 2019) introduce el \textit{compound scaling}, que escala profundidad, ancho y resoluci\'on a la vez con un coeficiente $\phi$. Usa bloques MBConv con m\'odulos Squeeze-and-Excitation y alcanza $\sim$77.1\% Top-1 con 5.3~M de par\'ametros. Representa el extremo de mayor precisi\'on.
+\textbf{EfficientNet-B0} (Tan \& Le, 2019) introduce el \textit{compound scaling}, que escala profundidad, ancho y resoluci\'on a la vez con un coeficiente $\phi$. Usa bloques MBConv con m\'odulos \textit{Squeeze-and-Excitation} y alcanza $\sim$77.1\% \textit{Top-1} con 5.3~M de par\'ametros. Representa el extremo de mayor precisi\'on.
 
 \textbf{EfficientNet-Lite0} (Google Brain, 2020) es una variante de B0 para hardware perimetral. Elimina los bloques SE, reemplaza Swish por ReLU6 (que estabiliza la cuantizaci\'on INT8, evitando la ca\'ida de $\sim$75\% a $\sim$46\% que produce Swish sin sustituir) y evita operaciones incompatibles con ciertos compiladores. Alcanza $\sim$74.9\% Top-1 con 4.7~M de par\'ametros. Representa el extremo de m\'axima facilidad de cuantizaci\'on.
 
@@ -505,7 +505,7 @@ ShuffleNetV2-x1.0 & 2.3 M & $\sim$69.4\% & $\sim$5 MB & M\'axima eficiencia \\
 \subsection{Estrategia de entrenamiento: baselines vs.\ principal}
 \label{sec:estrategia}
 
-La infraestructura de datos y de modelos es com\'un a las dos etapas, y lo que cambia es cu\'anto se afina el loop de entrenamiento. Los baselines usan una configuraci\'on deliberadamente sencilla para que las diferencias de resultado se deban a la arquitectura y no a trucos de entrenamiento, con learning rate fijo, un n\'umero de \'epocas cerrado y p\'erdida sin ponderar. El pipeline principal, ya sobre la arquitectura elegida, incorpora los mecanismos de optimizaci\'on y regularizaci\'on que la teor\'ia respalda (Tabla~\ref{tab:estrategia}).
+La infraestructura de datos y de modelos es com\'un a las dos etapas, y lo que cambia es cu\'anto se afina el \textit{loop} de entrenamiento. Los baselines usan una configuraci\'on deliberadamente sencilla para que las diferencias de resultado se deban a la arquitectura y no a trucos de entrenamiento, con \textit{learning rate} fijo, un n\'umero de \'epocas cerrado y p\'erdida sin ponderar. El pipeline principal, ya sobre la arquitectura elegida, incorpora los mecanismos de optimizaci\'on y regularizaci\'on que la teor\'ia respalda (Tabla~\ref{tab:estrategia}).
 
 \begin{table}[H]
 \caption{Configuraci\'on de entrenamiento por etapa}
@@ -518,10 +518,10 @@ La infraestructura de datos y de modelos es com\'un a las dos etapas, y lo que c
 \textbf{Elemento} & \textbf{Baselines (esta etapa)} & \textbf{Pipeline principal (previsto)} \\
 \midrule
 Datos & 9 clases, cap 1~500/clase & 9 clases, 100\% de im\'agenes \\
-Learning rate & Fijo ($10^{-4}$) & Scheduler (cosine o plateau) con warmup \\
-Parada & 30 \'epocas fijas & Early stopping (\textit{patience} 5 a 8), guardando el mejor checkpoint \\
-P\'erdida & CrossEntropy sin ponderar & CrossEntropy ponderada + \textit{label smoothing} \\
-Balanceo & Sampler + augmentation minoritaria & Sampler + p\'erdida ponderada \\
+Learning rate & Fijo ($10^{-4}$) & \textit{Scheduler} (\textit{cosine} o \textit{plateau}) con \textit{warmup} \\
+Parada & 30 \'epocas fijas & \textit{Early stopping} (\textit{patience} 5 a 8), guardando el mejor \textit{checkpoint} \\
+P\'erdida & \textit{CrossEntropy} sin ponderar & CrossEntropy ponderada + \textit{label smoothing} \\
+Balanceo & \textit{Sampler} + augmentation minoritaria & Sampler + p\'erdida ponderada \\
 Optimizador & AdamW & AdamW + \textit{gradient clipping} \\
 Interpretabilidad & LIME + Grad-CAM & + SHAP (vista global) \\
 \bottomrule
@@ -539,7 +539,7 @@ En este proyecto los baselines cumplen un doble papel, fijan el piso de macro-F1
 
 \subsection{Dataset y configuraci\'on}
 
-Los baselines se entrenan sobre el perfil \texttt{baseline}, que toma las 9 clases con un tope de 1~500 im\'agenes por clase, aplicado \emph{antes} de dividir. Solo se recortan las mayoritarias, mientras que las minoritarias quedan intactas (potasio 266, nitr\'ogeno 523, f\'osforo 612). El resultado es un subconjunto de 10~020 im\'agenes (Tabla~\ref{tab:baselinesplit}) que conserva el desbalance natural. El test es mayoritariamente de campo real (1~182 im\'agenes reales vs.\ 321 de laboratorio), lo que mide el desempe\~no en condiciones agr\'icolas.
+Los baselines se entrenan sobre el perfil \texttt{baseline}, que toma las 9 clases con un tope de 1~500 im\'agenes por clase, aplicado \emph{antes} de dividir. Solo se recortan las mayoritarias, mientras que las minoritarias quedan intactas (potasio 266, nitr\'ogeno 523, f\'osforo 612). El resultado es un subconjunto de 10~020 im\'agenes (Tabla~\ref{tab:baselinesplit}) que conserva el desbalance natural. El \textit{test} es mayoritariamente de campo real (1~182 im\'agenes reales vs.\ 321 de laboratorio), lo que mide el desempe\~no en condiciones agr\'icolas.
 
 \begin{table}[H]
 \caption{Composici\'on del dataset baseline (9 clases, cap 1~500/clase)}
@@ -561,11 +561,11 @@ Prueba (15\%) & 1~503 \\
 \end{singlespace}
 \end{table}
 
-Los tres modelos comparten la configuraci\'on baseline de la Tabla~\ref{tab:estrategia} (30 \'epocas, batch 32, AdamW con lr $10^{-4}$, p\'erdida sin ponderar), de modo que las diferencias vengan de la arquitectura y no del entrenamiento. Cada corrida se versiona por separado, con sus propios pesos, historial y m\'etricas. Con el cap de 1~500, solo \texttt{potassium\_deficiency} cruza el umbral de $4\times$ que activa la augmentation extendida.
+Los tres modelos comparten la configuraci\'on baseline de la Tabla~\ref{tab:estrategia} (30 \'epocas, \textit{batch} 32, AdamW con lr $10^{-4}$, p\'erdida sin ponderar), de modo que las diferencias vengan de la arquitectura y no del entrenamiento. Cada corrida se versiona por separado, con sus propios pesos, historial y m\'etricas. Con el cap de 1~500, solo \texttt{potassium\_deficiency} cruza el umbral de $4\times$ que activa la augmentation extendida.
 
 \subsection{Resultados globales}
 
-La Tabla~\ref{tab:results} resume el desempe\~no en prueba (1~503 im\'agenes, 9 clases). Los tres superan la meta con holgura y quedan a apenas 2 puntos entre s\'i, as\'i que en calidad son esencialmente equivalentes. EfficientNet-B0 lidera el macro-F1, mientras que ShuffleNetV2-x1.0 obtiene la menor loss y el checkpoint m\'as liviano, $\sim$3$\times$ menor que B0.
+La Tabla~\ref{tab:results} resume el desempe\~no en prueba (1~503 im\'agenes, 9 clases). Los tres superan la meta con holgura y quedan a apenas 2 puntos entre s\'i, as\'i que en calidad son esencialmente equivalentes. EfficientNet-B0 lidera el macro-F1, mientras que ShuffleNetV2-x1.0 obtiene la menor \textit{loss} y el checkpoint m\'as liviano, $\sim$3$\times$ menor que B0.
 
 \begin{table}[H]
 \caption{Comparaci\'on de modelos baseline en el conjunto de prueba}

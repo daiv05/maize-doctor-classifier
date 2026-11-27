@@ -247,7 +247,7 @@ Predictor nulo & Ninguna & 0.0\% & 26.14\% & 0.0 pp & --- \\
 
 Cuando se oculta el centro de la imagen, el modelo conserva un 79.46\% de exactitud a partir del borde, mientras que al ocultar la periferia la exactitud desciende a 42.25\%. Las dos condiciones no dejan visible la misma superficie (63.7\% y 36.3\%), pero la diferencia es lo bastante amplia para sugerir que el fondo aporta informaci\'on sobre la clase. Este resultado motiv\'o que la aplicaci\'on recorte la captura al marco gu\'ia antes de clasificarla, para que la hoja ocupe la mayor parte posible de la regi\'on visible.
 
-En los ejemplos analizados, los mapas de Grad-CAM \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017} coinciden con las lesiones visibles (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}). Para comprobarlo con n\'umeros se tomaron 270 im\'agenes de prueba, 30 por clase, y en cada una se midi\'o qu\'e parte de la atribuci\'on de SHAP cae sobre la hoja y qu\'e parte de la imagen ocupa la hoja. Si el modelo se fijara sobre todo en la hoja, la primera cifra ser\'ia claramente mayor que la segunda. En las seis clases donde la hoja pudo delimitarse bien, la diferencia media fue de apenas +0.037, con tres clases por encima y tres por debajo. El modelo, entonces, casi no atiende a la hoja m\'as de lo que cabr\'ia esperar por su tama\~no. Una explicaci\'on posible de que los mapas no lo muestren es que solo resaltan las zonas de mayor peso, como la lesi\'on. El fondo pesa poco en cada punto, pero ocupa tanta superficie que en conjunto influye casi lo mismo que la hoja.
+En los ejemplos analizados, los mapas de \textit{Grad-CAM} \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017} coinciden con las lesiones visibles (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}). Para comprobarlo con n\'umeros se tomaron 270 im\'agenes de prueba, 30 por clase, y en cada una se midi\'o qu\'e parte de la atribuci\'on de SHAP cae sobre la hoja y qu\'e parte de la imagen ocupa la hoja. Si el modelo se fijara sobre todo en la hoja, la primera cifra ser\'ia claramente mayor que la segunda. En las seis clases donde la hoja pudo delimitarse bien, la diferencia media fue de apenas +0.037, con tres clases por encima y tres por debajo. El modelo, entonces, casi no atiende a la hoja m\'as de lo que cabr\'ia esperar por su tama\~no. Una explicaci\'on posible de que los mapas no lo muestren es que solo resaltan las zonas de mayor peso, como la lesi\'on. El fondo pesa poco en cada punto, pero ocupa tanta superficie que en conjunto influye casi lo mismo que la hoja.
 
 \begin{figure}[H]
 \centering
@@ -317,7 +317,7 @@ Por \'ultimo, la interfaz incorpora los elementos descritos en el Cap\'itulo~2 (
 \includegraphics[width=\linewidth]{images/app/resultado-mancha-gris.png}
 \caption*{c) Diagn\'ostico.}
 \end{minipage}
-\caption{Flujo principal de la aplicaci\'on DoctorMaiz.}
+\caption{Flujo principal de la aplicaci\'on DoctorMa\'iz.}
 \label{fig:app_pantallas_1}
 \end{figure}
 

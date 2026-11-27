@@ -68,7 +68,7 @@
 \vspace{0.6cm}
 {\normalsize\bfseries CURSO DE ESPECIALIZACI\'ON EN MACHINE LEARNING\par}
 \vspace{0.6cm}
-{\normalsize\bfseries DISE\~NO E IMPLEMENTACI\'ON DE DOCTOR MA\'IZ: SISTEMA M\'OVIL BASADO EN REDES NEURONALES CONVOLUCIONALES PARA LA IDENTIFICACI\'ON FITOSANITARIA EN HOJAS DE MA\'IZ Y CONTRIBUCI\'ON A UN CONJUNTO DE DATOS NACIONAL\par}
+{\normalsize\bfseries DISE\~NO E IMPLEMENTACI\'ON DE DOCTORMA\'IZ: SISTEMA M\'OVIL BASADO EN REDES NEURONALES CONVOLUCIONALES PARA LA IDENTIFICACI\'ON FITOSANITARIA EN HOJAS DE MA\'IZ Y CONTRIBUCI\'ON A UN CONJUNTO DE DATOS NACIONAL\par}
 \vspace{0.8cm}
 {\small PRESENTADO POR:\par}
 \vspace{0.3cm}
@@ -148,7 +148,7 @@
 
 \noindent \small T\'itulo:
 \begin{center}
-{\normalsize\bfseries ``DISE\~NO E IMPLEMENTACI\'ON DE DOCTOR MA\'IZ: SISTEMA M\'OVIL BASADO EN REDES NEURONALES CONVOLUCIONALES PARA LA IDENTIFICACI\'ON FITOSANITARIA EN HOJAS DE MA\'IZ Y CONTRIBUCI\'ON A UN CONJUNTO DE DATOS NACIONAL''\par}
+{\normalsize\bfseries ``DISE\~NO E IMPLEMENTACI\'ON DE DOCTORMA\'IZ: SISTEMA M\'OVIL BASADO EN REDES NEURONALES CONVOLUCIONALES PARA LA IDENTIFICACI\'ON FITOSANITARIA EN HOJAS DE MA\'IZ Y CONTRIBUCI\'ON A UN CONJUNTO DE DATOS NACIONAL''\par}
 \end{center}
 \vspace{0.4cm}
 
@@ -261,9 +261,9 @@
 \onehalfspacing
 El ma\'iz es la base de la alimentaci\'on de las familias campesinas de El Salvador, y la mayor\'ia de los productores trabaja parcelas peque\~nas con poca asistencia t\'ecnica. Las enfermedades foliares, las plagas y las deficiencias nutricionales reducen el rendimiento si no se detectan a tiempo. Las herramientas de diagn\'ostico por visi\'on artificial suelen exigir conexi\'on a internet o tel\'efonos potentes, o fallan con fotograf\'ias distintas a las del entrenamiento.
 
-Esta investigaci\'on presenta DoctorMaiz, una aplicaci\'on m\'ovil que clasifica nueve condiciones de la hoja de ma\'iz (enfermedades, una plaga y deficiencias nutricionales) con una red convolucional que se ejecuta en el propio tel\'efono y sin conexi\'on. Incluye un marco gu\'ia para la captura, un detector de im\'agenes fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD) y un m\'odulo opcional para aportar fotograf\'ias a un conjunto de datos nacional.
+Esta investigaci\'on presenta DoctorMa\'iz, una aplicaci\'on m\'ovil que clasifica nueve condiciones de la hoja de ma\'iz (enfermedades, una plaga y deficiencias nutricionales) con una red convolucional que se ejecuta en el propio tel\'efono y sin conexi\'on. Incluye un marco gu\'ia para la captura, un detector de im\'agenes fuera de distribuci\'on (\textit{Out-of-Distribution}, OOD) y un m\'odulo opcional para aportar fotograf\'ias a un conjunto de datos nacional.
 
-Se reuni\'o un corpus de 33~429 im\'agenes de 11 repositorios internacionales, con control de integridad, revisi\'on de duplicados y registro de la procedencia. El modelo oficial es un modelo EfficientNet-Lite0, que obtuvo un Macro $F_1$ de 0.9480 y una exactitud de 97.81\% en 5~015 im\'agenes de prueba ($0.9435 \pm 0.0052$ con tres semillas). La b\'usqueda de hiperpar\'ametros con Optuna qued\'o como experimento complementario al no superar ese resultado en prueba, y se realizó también un ensamble de tres redes, dando como resultado un Macro $F_1$ de 0.9567.
+Se reuni\'o un corpus de 33~429 im\'agenes de 11 repositorios internacionales, con control de integridad, revisi\'on de duplicados y registro de la procedencia. El modelo oficial es un modelo EfficientNet-Lite0, que obtuvo un \textit{Macro} $F_1$ de 0.9480 y una exactitud de 97.81\% en 5~015 im\'agenes de prueba ($0.9435 \pm 0.0052$ con tres semillas). La b\'usqueda de hiperpar\'ametros con \textit{Optuna} qued\'o como experimento complementario al no superar ese resultado en prueba, y se realizó también un ensamble de tres redes, dando como resultado un Macro $F_1$ de 0.9567.
 
 La principal limitaci\'on es la generalizaci\'on, en fotograf\'ias de campo ajenas al corpus el modelo acert\'o 41 (42\%) y el detector rechaz\'o 49. La validaci\'on agrupada por fuente dio un Macro $F_1$ de $0.6026 \pm 0.1240$, frente a $0.9311 \pm 0.0099$ en la partici\'on estratificada. La ablaci\'on espacial indica que el modelo se apoya en la periferia de la imagen: la exactitud fue de 79.46\% al ocluir el centro y de 42.25\% al ocluir la periferia.
 

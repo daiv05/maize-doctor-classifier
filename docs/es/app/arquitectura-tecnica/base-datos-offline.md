@@ -5,7 +5,7 @@ description: Arquitectura de datos con WatermelonDB, SQLite embebido, almacenami
 
 # Base de Datos y Persistencia Offline
 
-En una aplicación agrícola de campo, la persistencia local no es una característica opcional: es el núcleo de la arquitectura. DoctorMaiz fue diseñada bajo la filosofía **Offline-First**, donde el dispositivo móvil es la fuente primaria de verdad y la nube actúa como un canal de respaldo y sincronización secundaria.
+En una aplicación agrícola de campo, la persistencia local no es una característica opcional: es el núcleo de la arquitectura. DoctorMaíz fue diseñada bajo la filosofía **Offline-First**, donde el dispositivo móvil es la fuente primaria de verdad y la nube actúa como un canal de respaldo y sincronización secundaria.
 
 ---
 
