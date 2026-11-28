@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 545" width="1400" height="545">
+  <defs>
+    <linearGradient id="gradIn" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4F7759"/>
+      <stop offset="100%" stop-color="#3E6247"/>
+    </linearGradient>
+    <linearGradient id="gradProc" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#224931"/>
+      <stop offset="100%" stop-color="#305C40"/>
+    </linearGradient>
+    <linearGradient id="gradOut" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C89F34"/>
+      <stop offset="100%" stop-color="#DDB84E"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-2%" y="-2%" width="104%" height="106%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#1F2937" flood-opacity="0.06"/>
+    </filter>
+    <style>
+      .sans { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+      .hdr { font-size: 18px; font-weight: 700; fill: #FFFFFF; letter-spacing: 0.8px; }
+      .subhdr { font-size: 13.5px; font-weight: 700; fill: #254A33; letter-spacing: 0.6px; }
+      .body { font-size: 14px; fill: #374151; }
+      .stepTitle { font-size: 14.5px; font-weight: 700; fill: #1F2937; }
+      .stepSub { font-size: 13px; fill: #525B66; }
+      .arrowLbl { font-size: 13px; font-weight: 600; fill: #6B7280; }
+    </style>
+  </defs>
+
+  <!-- Fondo general blanco suave -->
+  <rect x="0" y="0" width="1400" height="545" fill="#FFFFFF"/>
+
+  <!-- ==================== COLUMNA 1: ENTRADAS ==================== -->
+  <g filter="url(#cardShadow)">
+    <rect x="18" y="16" width="388" height="512" rx="14" fill="#FCFBF5" stroke="#E5E7DF" stroke-width="1.2"/>
+    <path d="M18,30 a14,14 0 0 1 14,-14 h360 a14,14 0 0 1 14,14 v40 h-388 z" fill="url(#gradIn)"/>
+  </g>
+  <text x="212" y="49" text-anchor="middle" class="sans hdr">ENTRADAS</text>
+
+  <!-- Subsección: Condiciones del entorno -->
+  <circle cx="58" cy="108" r="17" fill="#EAF1EC"/>
+  <!-- Ícono cámara -->
+  <g transform="translate(47,99)" fill="none" stroke="#2D5A3E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2,5 h3 l2,-2.5 h8 l2,2.5 h3 a2,2 0 0 1 2,2 v8.5 a2,2 0 0 1 -2,2 h-18 a2,2 0 0 1 -2,-2 v-8.5 a2,2 0 0 1 2,-2 z"/>
+    <circle cx="11" cy="11.2" r="3.4"/>
+  </g>
+  <text x="86" y="113" class="sans subhdr">CONDICIONES DEL ENTORNO</text>
+
+  <circle cx="54" cy="152" r="3.2" fill="#C9A035"/>
+  <text x="68" y="156" class="sans body">Fotografías de hojas tomadas por el</text>
+  <text x="68" y="175" class="sans body">agricultor directamente en su parcela.</text>
+
+  <circle cx="54" cy="208" r="3.2" fill="#C9A035"/>
+  <text x="68" y="212" class="sans body">Luz solar desigual, sombras marcadas</text>
+  <text x="68" y="231" class="sans body">y fondos con suelo o maleza.</text>
+
+  <circle cx="54" cy="264" r="3.2" fill="#C9A035"/>
+  <text x="68" y="268" class="sans body">Síntomas variados y plantas en distintas</text>
+  <text x="68" y="287" class="sans body">etapas de desarrollo.</text>
+
+  <!-- Divisor -->
+  <line x1="42" y1="322" x2="382" y2="322" stroke="#E2E5DC" stroke-width="1.2"/>
+
+  <!-- Subsección: Restricciones -->
+  <circle cx="58" cy="364" r="17" fill="#FBF2DC"/>
+  <!-- Ícono sin conexión / energía -->
+  <g transform="translate(48,354)" fill="none" stroke="#B68A25" stroke-width="1.9" stroke-linecap="round">
+    <path d="M10,2 v7"/>
+    <path d="M5.5,5.2 a7.5,7.5 0 1 0 9,0"/>
+  </g>
+  <text x="86" y="369" class="sans subhdr">RESTRICCIONES</text>
+
+  <circle cx="54" cy="408" r="3.2" fill="#C9A035"/>
+  <text x="68" y="412" class="sans body">Sin conexión móvil ni internet</text>
+  <text x="68" y="431" class="sans body">disponible en la parcela.</text>
+
+  <circle cx="54" cy="464" r="3.2" fill="#C9A035"/>
+  <text x="68" y="468" class="sans body">Teléfonos con poca memoria y</text>
+  <text x="68" y="487" class="sans body">procesador limitado.</text>
+
+  <!-- ==================== FLECHA 1: datos ==================== -->
+  <text x="454" y="256" text-anchor="middle" class="sans arrowLbl">datos</text>
+  <line x1="418" y1="272" x2="482" y2="272" stroke="#B78F2C" stroke-width="2.8" stroke-linecap="round"/>
+  <polyline points="472,262 485,272 472,282" fill="none" stroke="#B78F2C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ==================== COLUMNA 2: PROCESAMIENTO ==================== -->
+  <g filter="url(#cardShadow)">
+    <rect x="498" y="16" width="404" height="512" rx="14" fill="#FCFBF5" stroke="#E5E7DF" stroke-width="1.2"/>
+    <path d="M498,30 a14,14 0 0 1 14,-14 h376 a14,14 0 0 1 14,14 v40 h-404 z" fill="url(#gradProc)"/>
+  </g>
+  <text x="700" y="49" text-anchor="middle" class="sans hdr">PROCESAMIENTO</text>
+
+  <!-- Tarjeta del dispositivo -->
+  <rect x="524" y="88" width="352" height="56" rx="10" fill="#EFF2EE" stroke="#DCE2DA" stroke-width="1"/>
+  <!-- Ícono teléfono -->
+  <g transform="translate(543,101)" fill="none" stroke="#254A33" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="1" width="16" height="28" rx="3"/>
+    <line x1="8" y1="25" x2="12" y2="25"/>
+  </g>
+  <text x="576" y="113" class="sans" font-size="14.5" font-weight="700" fill="#224931">Sistema móvil Doctor Maíz</text>
+  <text x="576" y="132" class="sans" font-size="12.5" fill="#5B6570">Análisis de imagen en el dispositivo</text>
+
+  <!-- Línea vertical de pasos -->
+  <line x1="556" y1="184" x2="556" y2="412" stroke="#CBD5CE" stroke-width="2"/>
+
+  <!-- Paso 1 -->
+  <circle cx="556" cy="184" r="14" fill="#2A573B"/>
+  <text x="556" y="189" text-anchor="middle" class="sans" font-size="13" font-weight="700" fill="#FFFFFF">1</text>
+  <text x="584" y="179" class="sans stepTitle">Recepción y análisis de la fotografía</text>
+  <text x="584" y="198" class="sans stepSub">Procesar la captura directamente en el teléfono.</text>
+
+  <!-- Paso 2 -->
+  <circle cx="556" cy="256" r="14" fill="#2A573B"/>
+  <text x="556" y="261" text-anchor="middle" class="sans" font-size="13" font-weight="700" fill="#FFFFFF">2</text>
+  <text x="584" y="251" class="sans stepTitle">Validación de la imagen</text>
+  <text x="584" y="270" class="sans stepSub">Evaluar si la captura es válida y confiable.</text>
+
+  <!-- Paso 3 -->
+  <circle cx="556" cy="328" r="14" fill="#2A573B"/>
+  <text x="556" y="333" text-anchor="middle" class="sans" font-size="13" font-weight="700" fill="#FFFFFF">3</text>
+  <text x="584" y="321" class="sans stepTitle">Interpretación de síntomas</text>
+  <text x="584" y="340" class="sans stepSub">Distinguir los síntomas de la hoja del resto</text>
+  <text x="584" y="357" class="sans stepSub">de la escena y analizar el problema fitosanitario.</text>
+
+  <!-- Paso 4 -->
+  <circle cx="556" cy="408" r="14" fill="#2A573B"/>
+  <text x="556" y="413" text-anchor="middle" class="sans" font-size="13" font-weight="700" fill="#FFFFFF">4</text>
+  <text x="584" y="401" class="sans stepTitle">Asociación del resultado</text>
+  <text x="584" y="420" class="sans stepSub">Relacionar el diagnóstico con recomendaciones</text>
+  <text x="584" y="437" class="sans stepSub">agronómicas comprensibles.</text>
+
+  <!-- Cintillo inferior Procesamiento -->
+  <rect x="524" y="460" width="352" height="48" rx="9" fill="#FDF3E1" stroke="#ECD08C" stroke-width="1.1"/>
+  <polyline points="544,484 550,490 561,477" fill="none" stroke="#B68A25" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="574" y="481" class="sans" font-size="13.5" font-weight="700" fill="#8A6414">Enfoque: uso sencillo en campo</text>
+  <text x="574" y="498" class="sans" font-size="12.5" fill="#6E5A2B">y funcionamiento sin conexión.</text>
+
+  <!-- ==================== FLECHA 2: resultado ==================== -->
+  <text x="948" y="256" text-anchor="middle" class="sans arrowLbl">resultado</text>
+  <line x1="914" y1="272" x2="978" y2="272" stroke="#B78F2C" stroke-width="2.8" stroke-linecap="round"/>
+  <polyline points="968,262 981,272 968,282" fill="none" stroke="#B78F2C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ==================== COLUMNA 3: SALIDAS ESPERADAS ==================== -->
+  <g filter="url(#cardShadow)">
+    <rect x="994" y="16" width="388" height="512" rx="14" fill="#FCFBF5" stroke="#E5E7DF" stroke-width="1.2"/>
+    <path d="M994,30 a14,14 0 0 1 14,-14 h360 a14,14 0 0 1 14,14 v40 h-388 z" fill="url(#gradOut)"/>
+  </g>
+  <text x="1188" y="49" text-anchor="middle" class="sans hdr">SALIDAS ESPERADAS</text>
+
+  <!-- Subsección: Diagnóstico -->
+  <circle cx="1034" cy="108" r="17" fill="#EAF1EC"/>
+  <!-- Ícono hoja -->
+  <g transform="translate(1024,98)" fill="none" stroke="#2D5A3E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4,17 C4,8 10,3 17,3 C17,10 12,17 4,17 z"/>
+    <path d="M4,17 L11,10"/>
+  </g>
+  <text x="1062" y="113" class="sans subhdr">DIAGNÓSTICO</text>
+
+  <circle cx="1030" cy="152" r="3.2" fill="#C9A035"/>
+  <text x="1044" y="156" class="sans body">Identificación del problema presente</text>
+  <text x="1044" y="175" class="sans body">en la hoja.</text>
+
+  <circle cx="1030" cy="212" r="3.2" fill="#C9A035"/>
+  <text x="1044" y="216" class="sans body">Distinción entre plagas, enfermedades</text>
+  <text x="1044" y="235" class="sans body">y deficiencias nutricionales.</text>
+
+  <!-- Divisor -->
+  <line x1="1018" y1="274" x2="1358" y2="274" stroke="#E2E5DC" stroke-width="1.2"/>
+
+  <!-- Subsección: Decisión en la parcela -->
+  <circle cx="1034" cy="316" r="17" fill="#FBF2DC"/>
+  <polyline points="1026,316 1032,322 1043,310" fill="none" stroke="#B68A25" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1062" y="321" class="sans subhdr">DECISIÓN EN LA PARCELA</text>
+
+  <circle cx="1030" cy="360" r="3.2" fill="#C9A035"/>
+  <text x="1044" y="364" class="sans body">Abstención ante imágenes dudosas:</text>
+  <text x="1044" y="383" class="sans body">«Imagen no reconocida».</text>
+
+  <circle cx="1030" cy="416" r="3.2" fill="#C9A035"/>
+  <text x="1044" y="420" class="sans body">Guía de severidad y de bioinsumos</text>
+  <text x="1044" y="439" class="sans body">en lenguaje sencillo.</text>
+
+  <!-- Cintillo inferior Salidas -->
+  <rect x="1020" y="464" width="336" height="44" rx="9" fill="#EFF2EE" stroke="#DCE2DA" stroke-width="1"/>
+  <text x="1188" y="491" text-anchor="middle" class="sans" font-size="14" font-weight="700" fill="#254A33">Orientación para apoyar la decisión</text>
+</svg>

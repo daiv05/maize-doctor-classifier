@@ -16,7 +16,7 @@ Esa falta de cifras es parte del problema, si no se tiene un registro de diagn\'
 
 En las parcelas rurales salvadore\~nas no hay ayuda cercana o directa de especialistas, y el diagn\'ostico se hace a simple vista, el agricultor observa las manchas o el marchitamiento de la hoja e intenta reconocer la causa. No es f\'acil, porque varias condiciones se parecen. Una hoja amarillenta puede deberse a falta de nitr\'ogeno o a una virosis, y las lesiones del tiz\'on foliar se confunden con las de la mancha gris. La Tabla~\ref{tab:taxonomia} describe las nueve condiciones que cubre este trabajo.
 
-La asistencia t\'ecnica p\'ublica no alcanza para cubrir esa necesidad, hay pocas personas con conocimientos en diagn\'ostico fitosanitario para todos los productores dispersos en el país, y una visita agron\'omica puede tardar semanas o no llegar mientras la enfermedades avanzan \cite{centa2022}.
+La asistencia t\'ecnica p\'ublica no alcanza para cubrir esa necesidad, hay pocas personas con conocimientos en diagn\'ostico fitosanitario para todos los productores dispersos en el pa\'is, y una visita agron\'omica puede tardar semanas o no llegar mientras las enfermedades avanzan \cite{centa2022}.
 
 Ante el riesgo de perder la siembra, el agricultor suele acudir a un agroservicio, y sin un diagn\'ostico de por medio, la recomendaci\'on tiende a ser un agroqu\'imico de amplio espectro, aun cuando los s\'intomas se deben a una deficiencia nutricional del suelo, entonces el productor paga por un producto que no resuelve el problema y se aplican qu\'imicos de m\'as \cite{centa2022}.
 
@@ -36,98 +36,6 @@ De ah\'i surge la pregunta de investigaci\'on:
 \itshape
 \textquestiondown En qu\'e medida puede una aplicaci\'on m\'ovil que funciona sin conexi\'on, en tel\'efonos de gama baja o media, identificar problemas fitosanitarios en fotograf\'ias de hojas de ma\'iz tomadas en campo, abstenerse cuando la imagen no es confiable y orientar al agricultor salvadore\~no sobre el manejo de su cultivo?
 \end{quote}
-
-\subsubsection{Modelo conceptual de caja negra del sistema}
-
-Para delimitar el problema el sistema se representa como una caja negra (Figura~\ref{fig:caja_negra}).
-
-\begin{figure}[H]
-\centering
-\resizebox{0.98\textwidth}{!}{%
-\begin{tikzpicture}[
-    node distance=1.0cm and 0.9cm,
-    header/.style={
-        rectangle,
-        rounded corners=3pt,
-        minimum width=5.2cm,
-        minimum height=0.75cm,
-        text centered,
-        font=\bfseries\small,
-        text=white
-    },
-    card/.style={
-        rectangle,
-        rounded corners=5pt,
-        minimum width=5.3cm,
-        text width=4.9cm,
-        inner sep=8pt,
-        font=\scriptsize,
-        draw=gray!35,
-        line width=1pt,
-        align=left
-    },
-    arrow/.style={
-        -{Latex[length=3.5mm,width=2.5mm]},
-        line width=1.8pt,
-        draw=gray!70
-    }
-]
-
-\node[header, fill=blue!75!black] (head_in) {Entradas};
-\node[card, fill=blue!3, below=0.15cm of head_in] (box_in) {
-  \textbf{Condiciones del entorno:}
-  \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Fotograf\'ias de hojas tomadas por el agricultor en su parcela.
-    \item Luz solar desigual, sombras marcadas y fondos con suelo o maleza.
-    \item S\'intomas variados y plantas en distintas etapas de desarrollo.
-  \end{itemize}
-  \vspace{0.12cm}
-  \textbf{Restricciones:}
-  \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Sin conexi\'on m\'ovil ni internet en la parcela.
-    \item Tel\'efonos con poca memoria y procesador limitado.
-  \end{itemize}
-};
-
-\node[header, fill=gray!80!black, right=1.4cm of head_in] (head_proc) {Procesos};
-\node[card, fill=gray!4, below=0.15cm of head_proc] (box_proc) {
-  \textbf{Lo que debe hacer el sistema:}
-  \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Analizar la imagen en el propio tel\'efono.
-    \item Distinguir los s\'intomas de la hoja del resto de la escena.
-    \item Evaluar si la captura es v\'alida y confiable.
-    \item Relacionar el resultado con recomendaciones agron\'omicas.
-  \end{itemize}
-  \vspace{0.12cm}
-  \textbf{Pregunta t\'ecnica:}
-  \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item \textquestiondown C\'omo lograr un diagn\'ostico sensible y estable con fotograf\'ias de campo y los recursos de un tel\'efono modesto?
-  \end{itemize}
-};
-
-\node[header, fill=teal!70!black, right=1.4cm of head_proc] (head_out) {Salidas esperadas};
-\node[card, fill=teal!3, below=0.15cm of head_out] (box_out) {
-  \textbf{Diagn\'ostico:}
-  \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Identificaci\'on del problema de la hoja.
-    \item Distinci\'on entre plagas, enfermedades y deficiencias nutricionales.
-  \end{itemize}
-  \vspace{0.12cm}
-  \textbf{Decisi\'on en la parcela:}
-  \begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftskip}{-10pt}
-    \item Abstenci\'on ante im\'agenes dudosas («No reconocida»).
-    \item Gu\'ia de severidad y de bioinsumos en lenguaje sencillo.
-  \end{itemize}
-};
-
-\draw[arrow] (box_in.east) -- (box_proc.west);
-\draw[arrow] (box_proc.east) -- (box_out.west);
-
-\end{tikzpicture}%
-}
-\caption{Modelo conceptual de caja negra para el diagn\'ostico fitosanitario m\'ovil.}
-\label{fig:caja_negra}
-\end{figure}
 
 \section{Objetivos}
 
@@ -160,8 +68,9 @@ La aplicaci\'on incluye:
 \item \textbf{Captura con marco gu\'ia.} La c\'amara muestra un marco con la silueta de la hoja para que el agricultor la encuadre y deje fuera la mayor parte del suelo, las sombras y la maleza.
 \item \textbf{Rechazo de im\'agenes dudosas.} Si la captura no parece una hoja de ma\'iz o el modelo no est\'a seguro, la aplicaci\'on muestra «No reconocida» en lugar de un diagn\'ostico.
 \item \textbf{Resultado y gu\'ia de severidad.} El resultado se presenta con una explicación sencilla, con una gu\'ia visual de tres niveles (baja, moderada y cr\'itica) que el productor compara con su hoja, la aplicaci\'on no mide el da\~no ni la severidad..
-\item \textbf{Historial.} Cada evaluaci\'on se guarda en el tel\'efono con fecha, diagn\'ostico, severidad y ubicaci\'on GPS, para que el agricultor siga la evoluci\'on de su parcela durante el ciclo.
-\item \textbf{Aportes voluntarios.} El usuario puede guardar fotograf\'ias en el tel\'efono y enviarlas cuando tenga conexi\'on, con el fin de formar un conjunto de datos nacional que sirva para entrenar modelos futuros.
+\item \textbf{Historial y mapa de cobertura.} Cada evaluaci\'on se guarda en el tel\'efono con fecha, diagn\'ostico, severidad, condiciones clim\'aticas y ubicaci\'on GPS, permitiendo consultar la evoluci\'on del cultivo en una lista filtrable y en un mapa de cobertura de la parcela.
+\item \textbf{Monitoreo agroclim\'atico.} La pantalla principal integra un tablero de cuatro variables meteorol\'ogicas (temperatura, humedad relativa, velocidad del viento y humedad superficial del suelo) con alertas agron\'omicas y almacenamiento en cach\'e local para consulta sin conexi\'on.
+\item \textbf{Aportes voluntarios.} El usuario puede guardar fotograf\'ias etiquetadas o correcciones en el tel\'efono y enviarlas cuando tenga conexi\'on, con el fin de formar un conjunto de datos nacional que sirva para entrenar modelos futuros.
 \end{itemize}
 
 \subsubsection{Alcance del Componente de Inteligencia Artificial}
@@ -177,7 +86,7 @@ El componente de inteligencia artificial abarca:
 El proyecto tiene los siguientes l\'imites:
 \begin{itemize}
 \item El sistema analiza solo s\'intomas visibles en la l\'amina de la hoja. No cubre enfermedades de la ra\'iz, da\~nos internos del tallo sin s\'intomas en la hoja ni plagas del suelo.
-\item La aplicaci\'on funciona solo en Android. Requiere Android 7.0 (API 24) o superior, procesador ARM (v7 o v8), c\'amara trasera con enfoque autom\'atico y al menos 4~GB de RAM. Las pruebas en dispositivo se hicieron en Android 15. No hay versi\'on para iOS.
+\item La aplicaci\'on funciona en dispositivos Android. Requiere como m\'inimo Android 8.0 (API 26), procesador de arquitectura ARM (\texttt{armeabi-v7a} o \texttt{arm64-v8a}), 2~GB de memoria RAM (recomendado Android 10 o superior con 3--4~GB de RAM), 120~MB de almacenamiento libre y c\'amara trasera de al menos 8~MP con enfoque autom\'atico. Las pruebas de desempe\~no en dispositivo f\'isico se realizaron en Android 15. No incluye versi\'on para iOS.
 \item El diagn\'ostico no usa servicios en la nube y no hay sincronizaci\'on en tiempo real entre varios tel\'efonos.
 \item La aplicaci\'on orienta al productor, pero no reemplaza los an\'alisis de laboratorio, ni los dict\'amenes oficiales de cuarentena o certificaci\'on fitosanitaria del MAG.
 \item El corpus procede de 11 repositorios p\'ublicos internacionales y no incluye fotograf\'ias salvadore\~nas. El sistema reconoce solo las nueve clases de ese corpus, por lo que quedan fuera otras enfermedades presentes en el pa\'is, como la mancha de asfalto. La aplicaci\'on tampoco se prob\'o con productores.
@@ -225,7 +134,16 @@ La mayor\'ia de los productores de ma\'iz trabaja parcelas peque\~nas con m\'arg
 Muchas comunidades rurales tienen poco acceso a apoyo agron\'omico presencial \cite{centa2022}. Una herramienta que funciona sin conexi\'on en un tel\'efono de gama baja o media pone informaci\'on t\'ecnica al alcance del productor en su parcela, en un lenguaje que puede entender sin formaci\'on especializada. En lo ambiental, un diagn\'ostico m\'as preciso favorece un mejor manejo de plagas y puede reducir la aplicaci\'on de pesticidas cuando no hacen falta.
 
 \subsection{Justificaci\'on Acad\'emica e Institucional}
-Para la Escuela de Ingenier\'ia de Sistemas Inform\'aticos de la Universidad de El Salvador, el proyecto aplica el aprendizaje profundo embebido a un problema del agro nacional y deja disponibles el c\'odigo, el corpus consolidado y los modelos. Adem\'as, documenta un procedimiento de evaluaci\'on (auditor\'ia de duplicados, validaci\'on por fuente y an\'alisis de la dependencia del fondo) que puede reutilizarse en otros sistemas de visi\'on artificial con poca capacidad de c\'omputo y conectividad limitada.
+Para la Escuela de Ingenier\'ia de Sistemas Inform\'aticos de la Universidad de El Salvador, el proyecto aplica el aprendizaje profundo embebido a un problema prioritario del agro nacional y consolida un corpus estructurado y modelos auditables. Adem\'as, documenta un procedimiento riguroso de evaluaci\'on (auditor\'ia de duplicados por doble hash, validaci\'on agrupada por fuente y an\'alisis cuantitativo de la dependencia del fondo) que sirve como referencia metodol\'ogica para futuros sistemas de visi\'on artificial bajo restricciones de c\'omputo y conectividad.
+
+\subsection{Impacto Esperado}
+Seg\'un los registros agropecuarios nacionales, El Salvador cuenta con aproximadamente 395~588 productores, de los cuales 325~044 (82.1\%) corresponden a agricultura familiar que sostiene a m\'as de dos millones de personas rurales \cite{mag2023}. La producci\'on nacional ha alcanzado hasta 17.1 millones de quintales en 376~733 manzanas, con un rendimiento promedio de 45.5 quintales por manzana, vulnerable a pat\'ogenos que pueden comprometer entre el 40\% y el 70\% de la cosecha sin detecci\'on en las primeras dos semanas. El impacto esperado de \textbf{DoctorMa\'iz} se concreta en cuatro ejes:
+\begin{enumerate}
+\item \textbf{Respuesta oportuna en parcela:} reducir el tiempo de orientaci\'on fitosanitaria de semanas a menos de un segundo directamente en el surco.
+\item \textbf{Uso racional de insumos:} disminuir compras err\'oneas de agroqu\'imicos al distinguir entre enfermedades, plagas y deficiencias nutricionales.
+\item \textbf{Autonom\'ia fuera de red:} llevar diagn\'ostico asistido por \textit{Edge AI} a tel\'efonos de gama media o baja en zonas sin cobertura celular.
+\item \textbf{Soberan\'ia de datos agr\'icolas:} sentar, mediante aportes voluntarios, la base del primer repositorio nacional de im\'agenes foliares de ma\'iz.
+\end{enumerate}
 
 \section{Cronograma de Actividades}
 
@@ -269,9 +187,10 @@ El proyecto se organiz\'o seg\'un las fases de \textit{CRISP-DM} (\textit{Cross-
 \caption{Cronograma de actividades por fase (CRISP-DM), con horas por integrante}
 \label{tab:cronograma}
 \centering
-\small
+\footnotesize
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{p{4.3cm}ccccX}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabularx}{\textwidth}{p{4.2cm}ccccX}
 \toprule
 \textbf{Fase} & \textbf{Inicio} & \textbf{Fin} & \textbf{Semanas} & \textbf{Horas} & \textbf{Entregable principal} \\
 \midrule
@@ -290,50 +209,112 @@ El proyecto se organiz\'o seg\'un las fases de \textit{CRISP-DM} (\textit{Cross-
 
 \section{Presupuesto Global Estimado}
 
-El presupuesto se organiza en cuatro rubros: el recurso humano, el entrenamiento de los modelos, la inferencia y el despliegue (Tabla~\ref{tab:presupuesto}).
+El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyecto, estructurado en cuatro partidas auditables. La Tabla~\ref{tab:inventario_equipos} detalla el inventario de equipos de c\'omputo y dispositivo m\'ovil empleados como base para la depreciaci\'on, la Tabla~\ref{tab:presupuesto} presenta el presupuesto anal\'itico detallado y la Tabla~\ref{tab:presupuesto_resumen} consolida el cuadro resumen del presupuesto global.
 
 \begin{table}[H]
-\caption{Presupuesto del proyecto (USD)}
-\label{tab:presupuesto}
+\caption{Inventario de equipos}
+\label{tab:inventario_equipos}
 \centering
-\small
+\footnotesize
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{2.2cm}}
+\textit{(Valores expresados en d\'olares de los Estados Unidos de Am\'erica, USD)}\\[4pt]
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{1.9cm}>{\raggedleft\arraybackslash}p{1.75cm}@{}}
 \toprule
-\textbf{Rubro} & \textbf{Detalle} & \textbf{Costo} \\
+\textbf{C\'od.} & \textbf{Equipo} & \textbf{Especificaciones t\'ecnicas} & \textbf{Valor Activo} & \textbf{Cuota/Mes} \\
 \midrule
-\multicolumn{3}{l}{\textit{Recurso humano}} \\
-Ingeniero de Datos / \textit{MLOps} & 320 h & \$3,380.77 \\
-Investigador de \textit{Deep Learning} & 320 h & \$3,056.53 \\
-Desarrollador M\'ovil Edge AI & 320 h & \$2,840.39 \\
+2.1 & Laptop ASUS ROG Strix & AMD Ryzen 9 5900X, GPU RX 6700 XT OC, 16~GB RAM, 3~TB, Windows 11 & 2,200.00 & 61.11 \\
+2.2 & Laptop Lenovo Legion Pro 5 & AMD Ryzen 7 8745HX, GPU RTX 5060 8~GB, 32~GB RAM, 1~TB SSD & 2,000.00 & 55.56 \\
+2.3 & Laptop Dell Inspiron 3501 & Intel Core i5 11.\textsuperscript{a} gen, 16~GB RAM, 128~GB SSD, Windows 11 & 700.00 & 19.44 \\
+2.4 & Motorola edge 40 neo & MediaTek Dimensity 7030, 8~GB RAM, Android 15 (pruebas m\'oviles) & 350.00 & 9.72 \\
 \midrule
-\multicolumn{3}{l}{\textit{Entrenamiento}} \\
-GPU NVIDIA A10G en Modal & Modelos de referencia, entrenamiento principal, b\'usqueda de hiperpar\'ametros y experimentos de validaci\'on & \$250.00 \\
-\midrule
-\multicolumn{3}{l}{\textit{Inferencia}} \\
-Inferencia en el tel\'efono & Sin servidor de inferencia & \$0.00 \\
-Dispositivo de prueba & Motorola edge 40 neo, aportado por un integrante & \$0.00 \\
-\midrule
-\multicolumn{3}{l}{\textit{Despliegue (agosto a noviembre de 2026)}} \\
-Servidor Hetzner & API, base de datos y sitio web (\$6.00 al mes durante 4 meses) & \$24.00 \\
-Volumen Hetzner de 100~GB & Fotograf\'ias aportadas y respaldos (\$7.67 al mes durante 4 meses) & \$30.68 \\
-Dominio & Registro anual & \$12.00 \\
-Distribuci\'on & APK en GitHub Releases, \textit{dataset} en Hugging Face & \$0.00 \\
-\midrule
-\textbf{Total} & & \textbf{\$9,594.37} \\
+& \textbf{Total inventario} & \textbf{Depreciaci\'on lineal: vida \'util 36 meses, valor residual \$0.00} & \textbf{\$5,250.00} & \textbf{\$145.83} \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
 
-\subsection*{Recurso humano}
-Los salarios mensuales de referencia (\$1,500, \$1,350 y \$1,250) son el punto medio de la escala del sector p\'ublico salvadore\~no para perfiles equivalentes. Se estim\'o una dedicaci\'on de 2 horas diarias de lunes a viernes por integrante (10 horas semanales), que suman 320 horas en las 32 semanas del cronograma (Tabla~\ref{tab:cronograma}).
+\begin{table}[H]
+\caption{Presupuesto anal\'itico}
+\label{tab:presupuesto}
+\centering
+\footnotesize
+\begin{singlespace}
+\textit{(Expresado en d\'olares de los Estados Unidos de Am\'erica, USD)}\\[3pt]
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xcr>{\raggedleft\arraybackslash}p{1.85cm}>{\raggedleft\arraybackslash}p{1.95cm}@{}}
+\toprule
+\textbf{C\'od.} & \textbf{Concepto / Descripci\'on} & \textbf{Unid.} & \textbf{Cant.} & \textbf{Costo Unit.} & \textbf{Parcial} \\
+\midrule
+\multicolumn{6}{@{}l}{\textbf{1.0 Recursos humanos (honorarios profesionales)}} \\
+1.1 & Ingeniero de Datos / \textit{MLOps} (Jos\'ias Rivas) & h & 320 & 8.52 & 2,726.40 \\
+1.2 & Investigador de \textit{Deep Learning} (David Deras) & h & 320 & 7.67 & 2,454.40 \\
+1.3 & Desarrollador M\'ovil \textit{Edge AI} (Elmer Rosales) & h & 320 & 7.10 & 2,272.00 \\
+1.4 & Docente Asesor (Ing. Bladimir D\'iaz) & h & 32 & 15.00 & 480.00 \\
+1.5 & Docente Asesora (Ing. Karen Pe\~nate) & h & 32 & 15.00 & 480.00 \\
+1.6 & Docente Asesor (Ing. Rodrigo V\'asquez) & h & 32 & 15.00 & 480.00 \\
+& \textbf{Subtotal 1.0 Recursos humanos} & & & & \textbf{8,892.80} \\
+\midrule
+\multicolumn{6}{@{}l}{\textbf{2.0 Depreciaci\'on de equipos (seg\'un Tabla~\ref{tab:inventario_equipos})}} \\
+2.1 & Laptop ASUS ROG Strix & mes & 8 & 61.11 & 488.88 \\
+2.2 & Laptop Lenovo Legion Pro 5 & mes & 8 & 55.56 & 444.48 \\
+2.3 & Laptop Dell Inspiron 3501 & mes & 8 & 19.44 & 155.52 \\
+2.4 & Tel\'efono Motorola edge 40 neo & mes & 8 & 9.72 & 77.76 \\
+& \textbf{Subtotal 2.0 Depreciaci\'on de equipos} & & & & \textbf{1,166.64} \\
+\midrule
+\multicolumn{6}{@{}l}{\textbf{3.0 Conectividad y gastos operativos}} \\
+3.1 & Servicio de internet residencial (Elmer Rosales) & mes & 8 & 25.00 & 200.00 \\
+3.2 & Servicio de internet residencial (David Deras) & mes & 8 & 35.00 & 280.00 \\
+3.3 & Servicio de internet residencial (Jos\'ias Rivas) & mes & 8 & 45.00 & 360.00 \\
+3.4 & Papeler\'ia, \'utiles de oficina e impresiones & global & 1 & 40.00 & 40.00 \\
+3.5 & Transporte local (gestiones administrativas) & global & 1 & 45.00 & 45.00 \\
+& \textbf{Subtotal 3.0 Conectividad y gastos operativos} & & & & \textbf{925.00} \\
+\midrule
+\multicolumn{6}{@{}l}{\textbf{4.0 Infraestructura en la nube y despliegue}} \\
+4.1 & Cr\'editos GPU NVIDIA A10G (24~GB VRAM) en Modal & lote & 1 & 250.00 & 250.00 \\
+4.2 & Servidor VPS Hetzner (API, base de datos y portal) & mes & 4 & 6.00 & 24.00 \\
+4.3 & Volumen Hetzner 100~GB (fotograf\'ias y respaldos) & mes & 4 & 7.67 & 30.68 \\
+4.4 & Registro anual de nombre de dominio & a\~no & 1 & 12.00 & 12.00 \\
+4.5 & Inferencia local en CPU m\'ovil y \textit{dataset} p\'ublico & serv. & 1 & 0.00 & 0.00 \\
+& \textbf{Subtotal 4.0 Infraestructura en la nube y despliegue} & & & & \textbf{316.68} \\
+\midrule
+& \textbf{TOTAL GENERAL DEL PROYECTO} & & & & \textbf{\$11,301.12} \\
+\midrule\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
 
-\subsection*{Entrenamiento}
-Todo el entrenamiento se ejecut\'o en GPU NVIDIA A10G de la plataforma Modal, con un presupuesto de \$250 en cr\'editos. Ese monto cubri\'o los modelos de referencia iniciales, el entrenamiento del modelo oficial, la b\'usqueda de hiperpar\'ametros con Optuna y los experimentos de validaci\'on por fuente, con varias semillas y de explicabilidad. El entrenamiento es un costo de una sola vez: una vez exportado, el modelo no requiere m\'as GPU.
+\begin{table}[H]
+\caption{Cuadro resumen del presupuesto global}
+\label{tab:presupuesto_resumen}
+\centering
+\footnotesize
+\begin{singlespace}
+\textit{(Expresado en d\'olares de los Estados Unidos de Am\'erica, USD)}\\[4pt]
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{2.0cm}>{\raggedleft\arraybackslash}p{2.65cm}>{\raggedleft\arraybackslash}p{2.0cm}>{\raggedleft\arraybackslash}p{1.45cm}@{}}
+\toprule
+\textbf{C\'od.} & \textbf{Categor\'ia de Gasto} & \textbf{Aporte} & \textbf{Desembolso Efec.} & \textbf{Total} & \textbf{Part. (\%)} \\
+\midrule
+1.0 & Recursos humanos (honorarios y asesor\'ia) & 8,892.80 & 0.00 & 8,892.80 & 78.69\% \\
+2.0 & Depreciaci\'on de equipos y dispositivo m\'ovil & 1,166.64 & 0.00 & 1,166.64 & 10.32\% \\
+3.0 & Conectividad a internet, papeler\'ia y transporte & 0.00 & 925.00 & 925.00 & 8.19\% \\
+4.0 & Infraestructura cloud, entrenamiento y despliegue & 0.00 & 316.68 & 316.68 & 2.80\% \\
+\midrule
+& \textbf{TOTAL GENERAL} & \textbf{\$10,059.44} & \textbf{\$1,241.68} & \textbf{\$11,301.12} & \textbf{100.00\%} \\
+& \textbf{Estructura de financiamiento (\%)} & \textbf{89.01\%} & \textbf{10.99\%} & \textbf{100.00\%} & \\
+\midrule\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
 
-\subsection*{Inferencia}
-El modelo se ejecuta en el procesador del tel\'efono, de modo que cada diagn\'ostico no tiene costo de servidor ni consume datos m\'oviles. El costo de inferencia no crece con el n\'umero de usuarios, lo que hace viable distribuir la aplicaci\'on de forma gratuita. Las pruebas en dispositivo se hicieron con un tel\'efono de gama media propiedad de un integrante del equipo.
-
-\subsection*{Despliegue y operaci\'on}
-La API de sincronizaci\'on, su base de datos y el sitio web del proyecto comparten un servidor en Hetzner, con un volumen adicional de 100~GB para las fotograf\'ias aportadas por los usuarios. El APK se compila y publica en GitHub Releases mediante GitHub Actions, y el corpus consolidado se distribuye en Hugging Face, ambos sin costo. Mantener el sistema en operaci\'on cuesta \$176.04 al a\~no (\$72.00 de servidor, \$92.04 de volumen y \$12.00 de dominio).
+\subsection*{Notas del presupuesto}
+\begin{itemize}\setlength{\itemsep}{4pt}
+\item \textbf{Honorarios:} las tarifas del equipo investigador (\$8.52/h, \$7.67/h y \$7.10/h) derivan de remuneraciones mensuales de referencia de \$1,500, \$1,350 y \$1,250 sobre la jornada legal salvadore\~na de 176~h/mes (44~h/semana), imputadas a 10~h/semana durante 32 semanas; la asesor\'ia docente se valor\'o en 1~h/semana por asesor a \$15.00/h, sin consultor\'ia externa remunerada.
+\item \textbf{Depreciaci\'on:} los activos de la Tabla~\ref{tab:inventario_equipos} se deprecian por m\'etodo lineal a 36 meses con valor residual nulo (\$0.00).
+\item \textbf{Gastos operativos:} corresponden a desembolso efectivo por conectividad residencial, papeler\'ia y traslados administrativos; el consumo el\'ectrico residencial se asume dentro de los gastos dom\'esticos.
+\item \textbf{Infraestructura y sostenibilidad:} no se adquirieron suscripciones propietarias adicionales (las bibliotecas empleadas son de c\'odigo abierto); la inferencia local no tiene costo por usuario y mantener la API en operaci\'on requiere \$176.04 al a\~no.
+\end{itemize}

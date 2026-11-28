@@ -1,5 +1,27 @@
 \chapter{An\'alisis y Dise\~no de la Soluci\'on}
 
+\section{Soluci\'on Propuesta}
+
+Ante las tres restricciones identificadas en el Cap\'itulo~1 (conectividad rural limitada, dispositivos de recursos modestos y alta variabilidad de las fotograf\'ias en parcela), se propone \textbf{DoctorMa\'iz}, un sistema m\'ovil de diagn\'ostico fitosanitario sustentado en inteligencia artificial en el borde (\textit{Edge AI}). En lugar de depender de servidores remotos, la aplicaci\'on ejecuta todo el an\'alisis en el tel\'efono del agricultor y se organiza en cuatro pilares:
+
+\begin{itemize}
+\item \textbf{Clasificaci\'on local sin conexi\'on:} una red neuronal convolucional ligera cuantizada a enteros de 8 bits (Int8) identifica nueve condiciones foliares directamente en la CPU del tel\'efono.
+\item \textbf{Red de seguridad ante capturas dudosas:} un marco gu\'ia de encuadre y un detector fuera de distribuci\'on (OOD) permiten abstenerse (\guillemotleft Imagen no reconocida\guillemotright) cuando la toma no es confiable.
+\item \textbf{Apoyo pr\'actico en la parcela:} cada diagn\'ostico se traduce en una gu\'ia visual de severidad, pautas de manejo, historial geolocalizado, mapa de cobertura y tablero agroclim\'atico.
+\item \textbf{Crecimiento evolutivo con datos locales:} un m\'odulo opcional de aportes voluntarios y sincronizaci\'on diferida (con privacidad cero-telemetr\'ia sobre el historial personal) sienta las bases de un conjunto de datos nacional.
+\end{itemize}
+
+Para delimitar el comportamiento del sistema antes de detallar su implementaci\'on interna, la Figura~\ref{fig:caja_negra} lo representa como un modelo conceptual de caja negra. De izquierda a derecha, el sistema recibe fotograf\'ias tomadas bajo luz irregular, sombras y fondos naturales en equipos con poca memoria y sin internet (\textit{Entradas}); ejecuta en el dispositivo cuatro pasos internos de \textit{Procesamiento} (recepci\'on, validaci\'on de confiabilidad, interpretaci\'on de s\'intomas y asociaci\'on agron\'omica); y entrega un diagn\'ostico diferenciado o una abstenci\'on segura junto con la gu\'ia de severidad para orientar la decisi\'on en campo (\textit{Salidas esperadas}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/modelo_caja_negra.png}
+\caption{Modelo conceptual de caja negra de la soluci\'on propuesta.}
+\label{fig:caja_negra}
+\end{figure}
+
+Las secciones siguientes abren esta caja negra componente por componente: la taxonom\'ia de condiciones objetivo, la curaci\'on y auditor\'ia del corpus, las arquitecturas evaluadas, la optimizaci\'on para el dispositivo m\'ovil, el protocolo de sincronizaci\'on y la arquitectura general del sistema.
+
 \section{Condiciones Agron\'omicas Objetivo}
 
 El sistema clasifica la hoja de ma\'iz en nueve categor\'ias mutuamente excluyentes (Tabla~\ref{tab:taxonomia}): tres enfermedades causadas por hongos, un complejo viral, una plaga, tres deficiencias nutricionales y la hoja sana.
@@ -126,7 +148,7 @@ La licencia es la declarada por cada repositorio de origen.
 \subsection{An\'alisis Exploratorio}
 El corpus est\'a fuertemente desbalanceado. La clase sana tiene cerca de 8~700 im\'agenes y el tiz\'on foliar cerca de 6~800, mientras que la deficiencia de potasio tiene 621, una relaci\'on de 14.1:1 (Figura~\ref{fig:eda_distribuciones}). Las resoluciones tambi\'en var\'ian mucho y se agrupan en tres rangos: alrededor de 256 p\'ixeles en las im\'agenes de laboratorio, alrededor de 640 en las de Roboflow y las deficiencias nutricionales, y entre 3~000 y 5~000 en varias fuentes de campo. Todas se reducen a $224\times224$ antes de entrar al modelo, de modo que las fotograf\'ias grandes pierden parte del detalle fino de las lesiones.
 
-Solo tres clases tienen im\'agenes de laboratorio, tomadas sobre un fondo controlado: la roya com\'un (95\% de sus im\'agenes, 2~150 de 2~256), la mancha gris (27\%) y el tiz\'on foliar (13\%). Las otras seis clases son por completo de campo. En conjunto, el laboratorio aporta 3~551 im\'agenes, el 10.6\% del corpus. Esta composici\'on condiciona la evaluaci\'on del Cap\'itulo~3: la comparaci\'on entre laboratorio y campo solo puede hacerse en esas tres clases, y la roya, con apenas 106 im\'agenes de campo, es la clase con m\'as riesgo de fallar en campo.
+Solo tres clases tienen im\'agenes de laboratorio, tomadas sobre un fondo controlado: la roya com\'un (95\% de sus im\'agenes, 2~150 de 2~256), la mancha gris (27\%) y el tiz\'on foliar (13\%). Las otras seis clases son por completo de campo. En conjunto, el laboratorio aporta 3~551 im\'agenes, el 10.6\% del corpus. Esta composici\'on condiciona la evaluaci\'on del Cap\'itulo~4: la comparaci\'on entre laboratorio y campo solo puede hacerse en esas tres clases, y la roya, con apenas 106 im\'agenes de campo, es la clase con m\'as riesgo de fallar en campo.
 
 \begin{figure}[H]
 \centering
@@ -155,19 +177,24 @@ Adem\'as, la procedencia (la fuente de donde proviene la imagen) y la etiqueta (
 \end{figure}
 
 \subsection{Auditor\'ia de Duplicados y Partici\'on}
-Los repositorios p\'ublicos redistribuyen con frecuencia el mismo material, as\'i que la primera depuraci\'on se hizo al reunir el corpus. Cada clase se revis\'o con un hash perceptual (PHash), que agrupa las im\'agenes visualmente id\'enticas, y se conserv\'o una sola copia de cada grupo. En las primeras etapas se detectaron m\'as de 8~000 im\'agenes repetidas, cerca de la mitad de tiz\'on foliar, en una ampliaci\'on posterior del corpus se eliminaron otras 61 de las 1~876 im\'agenes incorporadas.
-
-Sobre el corpus ya depurado se hizo una auditor\'ia final, en la que cada imagen se compar\'o con el resto mediante dos \textit{hashes} SHA-256, uno del archivo y otro de los p\'ixeles decodificados. No qued\'o ning\'un duplicado, salvo cuatro pares de im\'agenes id\'enticas con etiquetas contradictorias, que se excluyeron luego del corpus.
-
-La partici\'on oficial reparte las 33~429 im\'agenes en 70/15/15, estratificada por clase y entorno: 23~400 de entrenamiento, 5~014 de validaci\'on y 5~015 de prueba.
+Para depurar las 11 fuentes p\'ublicas y garantizar cero fugas entre particiones, el corpus atraves\'o cuatro etapas secuenciales:
+\begin{enumerate}\setlength{\itemsep}{2pt}
+\item \textbf{Curaci\'on agron\'omica y de etiquetas:} se descartaron 52~360 im\'agenes pre-aumentadas de PlantVillage sin originales, 891 registros multietiqueta o indefinidos, 433 im\'agenes de \texttt{Nutrient\_Sufficiency} (la suficiencia nutricional no descarta pat\'ogenos) y 99 fotograf\'ias de roya del sur (\textit{Puccinia polysora}) asimiladas err\'oneamente a roya com\'un. En la fuente \path{corn-leaf-diseases-classification-roboflow}, ignorar la etiqueta envolvente \texttt{leaf} (presente en el 99.8\% de los registros) permiti\'o rescatar 500 im\'agenes de mancha gris en campo.
+\item \textbf{Deduplicaci\'on perceptual (pHash):} dado que los repositorios redistribuyen copias recomprimidas que el \textit{hash} de archivo no detecta, cada clase se depur\'o con pHash (umbral 0), eliminando 8~599 im\'agenes redundantes en la consolidaci\'on inicial y 61 adicionales en la ampliaci\'on.
+\item \textbf{Auditor\'ia criptogr\'afica doble (SHA-256):} cada imagen depurada se contrast\'o mediante dos huellas SHA-256 (archivo binario y p\'ixeles RGB tras corregir la orientaci\'on EXIF), excluyendo \'unicamente cuatro pares id\'enticos con etiquetas contradictorias y confirmando cero fugas exactas.
+\item \textbf{Partici\'on oficial estratificada (70/15/15):} las 33~429 im\'agenes verificadas se repartieron por clase y entorno en 23~400 de entrenamiento, 5~014 de validaci\'on y 5~015 de prueba bloqueada.
+\end{enumerate}
 
 \subsection{Trazabilidad de los Datos}
+Cada imagen posee un registro con identificador \'unico, huella SHA-256, fuente y entorno (laboratorio o campo). Las listas de partici\'on y los manifiestos de ejecuci\'on se resguardan bajo control criptogr\'afico y configuraci\'on determinista en GPU, logrando reproducir bit a bit el modelo oficial en una corrida independiente un mes despu\'es y aplicando un bloqueo contractual previo a una \'unica evaluaci\'on en prueba para evitar sesgo de selecci\'on.
 
-Cada imagen del corpus tiene un registro con un identificador \'unico, la huella SHA-256 del archivo, la fuente de la que proviene y el entorno de captura (laboratorio o campo). El identificador se calcula a partir de la ruta de la imagen, de modo que una misma imagen conserva su identidad en cualquier ejecuci\'on. La huella permite detectar si un archivo cambi\'o entre versiones del corpus, y la fuente y el entorno permiten formar las particiones agrupadas del Cap\'itulo~3.
-
-Las listas de entrenamiento, validaci\'on y prueba se guardaron con su propia huella, de modo que cada experimento puede comprobar que usa exactamente la misma partici\'on.
-
-Lo que se busca es que las ejecuciones puedan tener trazabilidad y ofrecer mayor fiabilidad en los resultados, de modo que puedan ser reproducidos y auditados.
+\subsection{Preprocesado, Aumento de Datos y T\'ecnicas Descartadas}
+Todas las im\'agenes se redimensionan a $224\times224$ y se normalizan con las estad\'isticas de ImageNet. Para compensar el desbalance $14.1:1$ sin distorsionar los s\'intomas foliares se aplic\'o una pol\'itica diferenciada de aumento de datos (\textit{Data Augmentation}):
+\begin{itemize}\setlength{\itemsep}{2pt}
+\item \textbf{Aumento est\'andar:} volteos horizontales y verticales, rotaciones de $\pm 15^\circ$ y variaciones de brillo y contraste de $\pm 10\%$, manteniendo fijo el tono para preservar las se\~nales de clorosis.
+\item \textbf{Aumento reforzado (clases con desbalance $\ge 4\times$):} en deficiencias de N, P, K y mancha gris se activan recortes aleatorios en escala $[0.7, 1.0]$, rotaciones de $\pm 30^\circ$, variaci\'on leve de tono ($\le 0.05$) y desenfoque gaussiano, complementando la ponderaci\'on \texttt{sqrt\_inverse} ($w_c \propto n_c^{-1/2}$) en la p\'erdida.
+\item \textbf{T\'ecnicas descartadas por evidencia negativa:} la ecualizaci\'on \textbf{CLAHE} increment\'o el tiempo de preprocesado en $+165\%$ (de 9.3 a 24.7~ms/imagen) sin mejorar la validaci\'on; y un m\'odulo de \textbf{segmentaci\'on autom\'atica del fondo} desplom\'o el Macro $F_1$ de prueba de 0.9480 a 0.7191 (89.03\% de exactitud) por recortes destructivos y p\'erdida de contexto, por lo que ambos fueron descartados y sustituidos en campo por el marco gu\'ia de la aplicaci\'on.
+\end{itemize}
 
 \section{Arquitecturas y B\'usqueda de Hiperpar\'ametros}
 
@@ -186,7 +213,7 @@ La b\'usqueda de hiperpar\'ametros se hizo con Optuna \cite{optuna2019}, usando 
 \caption{Espacio de b\'usqueda de hiperpar\'ametros explorado con Optuna}
 \label{tab:hpo_espacio}
 \centering
-\small
+\footnotesize
 \begin{singlespace}
 \begin{tabular}{lp{7.2cm}}
 \toprule
@@ -204,45 +231,57 @@ La b\'usqueda de hiperpar\'ametros se hizo con Optuna \cite{optuna2019}, usando 
 \end{table}
 
 \subsection{Ensamble Multimodelo por Soft Voting}
-El ensamble promedia las probabilidades de las tres redes, entrenadas por separado, para que los errores de una arquitectura se compensen con las otras:
-\begin{equation}
-P_{\text{ens}}(y = c \mid x) = \frac{1}{M} \sum_{m=1}^{M} P_m(y = c \mid x)
-\end{equation}
-donde $M=3$ es el n\'umero de redes y $c \in \{1, \dots, 9\}$. La clase predicha es la de mayor probabilidad promedio: $\hat{y} = \arg\max_c P_{\text{ens}}(y = c \mid x)$.
+Siguiendo la formulaci\'on~\eqref{eq:softvoting_mt} del Cap\'itulo~2, el ensamble combina las probabilidades de las $M=3$ arquitecturas entrenadas por separado (EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2-x1.0) con pesos uniformes para evaluar si la diversidad arquitect\'onica reduce errores en las clases cr\'iticas y minoritarias.
 
 \section{Despliegue en Dispositivo M\'ovil}
 
 \subsection{Cuantizaci\'on a Enteros de 8 Bits (Int8)}
-Para que el modelo funcione en tel\'efonos de forma eficiente, se decidió realizar una cuantizaci\'on a enteros de 8 bits despu\'es del entrenamiento (\textit{Post-Training Quantization}, PTQ) \cite{jacob2018} y se export\'o a TensorFlow Lite con litert-torch. Los pesos $W_{f,c,i}$ de cada canal de salida $c$ se escalan por separado:
-\begin{equation}
-S_c = \frac{\max_i \lvert W_{f,c,i} \rvert}{127}, \qquad q_{c,i} = \operatorname{clip}\!\left(\left\lfloor \frac{W_{f,c,i}}{S_c} \right\rceil,\; -127,\; 127\right)
-\end{equation}
+Para ejecutar el modelo oficial en tel\'efonos sin p\'erdida de precisi\'on, se aplic\'o cuantizaci\'on din\'amica post-entrenamiento Int8~\eqref{eq:cuant_mt} mediante \texttt{litert-torch} 0.9.4 y \texttt{torchao}. Durante la exportaci\'on se detect\'o que el n\'ucleo CPU integrado de TensorFlow Lite en Android (usado sin delegados para garantizar determinismo entre chips) no admite escalas por canal en la capa lineal final y corrompe los \textit{logits}, mientras que cuantizar toda la red por tensor degrada las convoluciones separables en profundidad. Como mitigaci\'on se aplic\'o una \textbf{cuantizaci\'on h\'ibrida} (cuerpo convolucional por canal y cabezal lineal por tensor), verificada autom\'aticamente entre motores antes de empaquetar el binario.
 
 \subsection{Detector de Anomal\'ias Fuera de Distribuci\'on (OOD)}
-El modelo siempre responde con alguna de las clases que aprendi\'o, aunque la fotograf\'ia no tenga relaci\'on con el ma\'iz. Si se le muestra suelo o un zapato, elegir\'a de todos modos una enfermedad, a veces incluso con mucha seguridad, porque solo puede repartir su confianza entre las etiquetas que conoce \cite{lee2018}. Por eso, antes de mostrar un diagn\'ostico, la aplicaci\'on comprueba si la imagen se parece a las que el modelo vio durante el entrenamiento.
+Para evitar diagn\'osticos forzados ante capturas ajenas al ma\'iz, el modelo exportado expone dos salidas simult\'aneas: los 9 \textit{logits} y el vector de caracter\'isticas de la pen\'ultima capa ($1280$ dimensiones). Al calibrar la distancia RMD~\eqref{eq:rmd_mt}, invertir la covarianza en $1280$ dimensiones colapsaba por ruido espectral; por ello el vector se normaliza a norma unitaria y se proyecta mediante PCA a las $182$ componentes que explican el $99.01\%$ de la varianza de entrenamiento.
 
-Para hacerlo aprovecha la descripci\'on num\'erica que la red construye de cada imagen justo antes de clasificarla, una especie de huella de su contenido. Durante el entrenamiento se registra en qu\'e zona se agrupan las huellas de cada clase. Cuando llega una fotograf\'ia nueva, se mide qu\'e tan lejos queda su huella del grupo m\'as cercano con la distancia de Mahalanobis, que considera cu\'anto var\'ian normalmente las im\'agenes de ese grupo \cite{mahalanobispp2025}. A esa medida se le resta la distancia al conjunto completo de entrenamiento, para no castigar rasgos que comparte cualquier fotograf\'ia, como la iluminaci\'on o el encuadre \cite{ren2021}.
-
-El l\'imite de aceptaci\'on se fij\'o de modo que el 95\% de las im\'agenes del conjunto de validaci\'on quede por debajo de \'el. Adem\'as, el diagn\'ostico se descarta cuando el modelo duda: si la enfermedad m\'as probable no alcanza el 60\% de confianza o aventaja a la segunda por menos de 15 puntos. En cualquiera de estos casos la aplicaci\'on muestra «Imagen no reconocida» y no emite diagn\'ostico.
+El umbral de rechazo se fij\'o en el percentil 95 de validaci\'on ($\tau = 106.37$). En operaci\'on, la aplicaci\'on descarta la captura y muestra \guillemotleft Imagen no reconocida\guillemotright{} si se cumple cualquiera de tres condiciones: $\text{RMD} > 106.37$, probabilidad m\'axima inferior a $0.60$, o margen entre las dos clases principales menor a $0.15$.
 
 \subsection{Mitigaci\'on en la Interfaz}
-La interfaz incorpora dos elementos que complementan al modelo:
-\begin{enumerate}
-\item \textbf{Marco gu\'ia.} La c\'amara muestra la silueta de una hoja (\textit{Ac\'erquese a 20--30 cm y llene el marco}) y la imagen se recorta a esa regi\'on, con un margen de 15\%, antes de pasar al modelo.
-\item \textbf{Gu\'ia de severidad.} Debajo del diagn\'ostico se muestra una escala de tres niveles (baja, moderada y cr\'itica), basada en escalas del CIMMYT y de Iowa State University Extension, que el productor compara con su hoja, junto con bioinsumos disponibles en el agroservicio.
+Para compensar las limitaciones inherentes del clasificador en condiciones de campo, la interfaz incorpora tres decisiones de dise\~no:
+\begin{enumerate}\setlength{\itemsep}{2pt}
+\item \textbf{Marco gu\'ia foliar:} la c\'amara superpone una silueta de $260\times320$~dp (\textit{ac\'erquese a 20--30~cm y llene el marco}) y recorta la toma con un 15\% de margen adicional antes de procesarla, reduciendo la influencia del fondo detectada en el an\'alisis espacial.
+\item \textbf{Gu\'ia visual de severidad:} debajo del diagn\'ostico se muestra un acorde\'on comparativo de tres niveles (baja, moderada y cr\'itica), basado en escalas del CIMMYT y Cobb, junto con recomendaciones de bioinsumos. Se prefiri\'o esta gu\'ia frente a un porcentaje autom\'atico porque una fotograf\'ia a 20--30~cm cubre solo ${\sim}10\times10$~cm de una hoja en una planta con m\'as de 14 hojas, haciendo enga\~noso estimar el da\~no global a partir de una \'unica toma.
+\item \textbf{Transparencia ante incertidumbre:} si la captura es rechazada por el detector OOD se descarta sin almacenarse en el historial; cuando es aceptada pero su confianza se sit\'ua entre el 60\% y el 70\%, la pantalla muestra tambi\'en la segunda condici\'on m\'as probable para respaldar el criterio del productor.
 \end{enumerate}
+
+La integraci\'on t\'ecnica del flujo de inferencia local paso a paso dentro de la aplicaci\'on se detalla en la Secci\'on~4.1.2 del Cap\'itulo~4.
 
 \section{Sincronizaci\'on y Aportes al Conjunto de Datos}
 
-La aplicaci\'on no necesita un servidor para diagnosticar, por eso el servidor en la nube solo interviene cuando el productor decide compartir informaci\'on, y para eso debe crear una cuenta. Puede enviar una correcci\'on, si considera que el diagn\'ostico fue equivocado, o una fotograf\'ia con la etiqueta que \'el mismo le asigna, que pasa a formar parte del conjunto de datos colaborativo. Con la fotograf\'ia solo viajan la etiqueta, una nota opcional y la fecha.
+El intercambio con el servidor es estrictamente opcional y se dise\~n\'o para recolectar evidencia de campo sin comprometer la operaci\'on aut\'onoma ni la privacidad del productor. La Tabla~\ref{tab:politicas_sync_c3} resume los cuatro principios que rigen este flujo, cuya secuencia operativa se ilustra en la Figura~\ref{fig:secuencia_sync}.
 
-Como en la parcela puede no haber se\~nal, cada aporte se guarda primero en el tel\'efono y se env\'ia despu\'es, cuando vuelve la conexi\'on o cuando el usuario lo pide (Figura~\ref{fig:secuencia_sync}). En el servidor, la API (FastAPI con MySQL 8.4) rechaza los env\'ios repetidos y acepta como m\'aximo 30 solicitudes por minuto, para evitar abusos y proteger la base de datos.
+\begin{table}[H]
+\caption{Principios de dise\~no del mecanismo de sincronizaci\'on y aportes}
+\label{tab:politicas_sync_c3}
+\centering
+\footnotesize
+\begin{singlespace}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash\bfseries}p{3.6cm}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Principio} & \textbf{Comportamiento implementado} \\
+\midrule
+Privacidad por dise\~no (cero telemetr\'ia) & El historial personal de diagn\'osticos y las coordenadas GPS permanecen \'unicamente en la base local SQLite y nunca se transmiten al servidor. \\
+Colaboraci\'on voluntaria & El servidor solo interviene si el productor crea una cuenta y decide compartir una correcci\'on o una fotograf\'ia etiquetada para el futuro corpus nacional. \\
+Cola diferida \textit{offline} & Cada registro se almacena primero en el tel\'efono en estado pendiente y se env\'ia autom\'aticamente al recuperar cobertura o al pulsar sincronizaci\'on manual. \\
+Recepci\'on idempotente y segura & La API valida la integridad de la imagen, aplica un l\'imite de 30 solicitudes/min por usuario y garantiza unicidad por usuario e identificador local para evitar duplicados tras cortes de red. \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
   life/.style={draw=gray!60, line width=0.5pt, dashed},
-  pt/.style={draw=blue!55!black, fill=blue!5, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.7cm, minimum width=2.4cm},
+  pt/.style={draw=blue!55!black, fill=blue!5, rounded corners=2pt, align=center, font=\scriptsize, minimum height=0.65cm, minimum width=2.4cm},
   msg/.style={-{Latex[length=2mm]}, line width=0.7pt},
   rmsg/.style={-{Latex[length=2mm]}, line width=0.7pt, dashed},
   self/.style={font=\tiny, align=left, draw=gray!50, fill=yellow!8, rounded corners=1pt, inner sep=2pt},
@@ -252,97 +291,98 @@ Como en la parcela puede no haber se\~nal, cada aporte se guarda primero en el t
 \node[pt] (A) at (3.4,0) {App DoctorMa\'iz};
 \node[pt] (D) at (6.8,0) {SQLite local};
 \node[pt] (S) at (10.2,0) {Servidor (API)};
-\draw[life] (P) -- (0,-9.2);
-\draw[life] (A) -- (3.4,-9.2);
-\draw[life] (D) -- (6.8,-9.2);
-\draw[life] (S) -- (10.2,-9.2);
+\draw[life] (P) -- (0,-7.8);
+\draw[life] (A) -- (3.4,-7.8);
+\draw[life] (D) -- (6.8,-7.8);
+\draw[life] (S) -- (10.2,-7.8);
 
-\draw[msg] (0,-0.9) -- (3.4,-0.9) node[midway, lab, above] {1. Toma foto};
-\draw[msg] (3.4,-1.6) -- (6.8,-1.6) node[midway, lab, above] {2. Guarda aporte pendiente};
-\draw[rmsg] (6.8,-2.1) -- (3.4,-2.1) node[midway, lab, above] {3. Confirmaci\'on local};
-\node[self, anchor=west] at (3.6,-2.9) {4. Disparo: cambio de red o bot\'on};
-\draw[msg] (3.4,-3.6) -- (6.8,-3.6) node[midway, lab, above] {5. \textquestiondown Hay pendientes?};
-\draw[rmsg] (6.8,-4.1) -- (3.4,-4.1) node[midway, lab, above] {6. No: termina sin enviar};
-\node[self, anchor=west] at (3.6,-4.8) {7. S\'i: comprueba red y sesi\'on};
-\draw[msg] (3.4,-5.6) -- (10.2,-5.6) node[midway, lab, above] {8. POST aporte};
-\draw[rmsg] (10.2,-6.1) -- (3.4,-6.1) node[midway, lab, above] {9. 401 si el \textit{token} venci\'o};
-\draw[msg] (3.4,-6.6) -- (10.2,-6.6) node[midway, lab, above] {10. Renueva el token y reintenta};
-\draw[rmsg] (10.2,-7.1) -- (3.4,-7.1) node[midway, lab, above] {11. 201 o 200 (confirmaci\'on)};
-\draw[msg] (3.4,-7.7) -- (6.8,-7.7) node[midway, lab, above] {12. Marca el registro como sincronizado};
-\node[self, anchor=west] at (3.6,-8.4) {Si el env\'io falla, el registro queda pendiente};
+\draw[msg] (0,-0.75) -- (3.4,-0.75) node[midway, lab, above] {1. Toma foto};
+\draw[msg] (3.4,-1.35) -- (6.8,-1.35) node[midway, lab, above] {2. Guarda aporte pendiente};
+\draw[rmsg] (6.8,-1.8) -- (3.4,-1.8) node[midway, lab, above] {3. Confirmaci\'on local};
+\node[self, anchor=west] at (3.6,-2.45) {4. Disparo: cambio de red o bot\'on};
+\draw[msg] (3.4,-3.05) -- (6.8,-3.05) node[midway, lab, above] {5. \textquestiondown Hay pendientes?};
+\draw[rmsg] (6.8,-3.5) -- (3.4,-3.5) node[midway, lab, above] {6. No: termina sin enviar};
+\node[self, anchor=west] at (3.6,-4.1) {7. S\'i: comprueba red y sesi\'on};
+\draw[msg] (3.4,-4.75) -- (10.2,-4.75) node[midway, lab, above] {8. POST aporte};
+\draw[rmsg] (10.2,-5.2) -- (3.4,-5.2) node[midway, lab, above] {9. 401 si el \textit{token} venci\'o};
+\draw[msg] (3.4,-5.65) -- (10.2,-5.65) node[midway, lab, above] {10. Renueva el token y reintenta};
+\draw[rmsg] (10.2,-6.1) -- (3.4,-6.1) node[midway, lab, above] {11. 201 o 200 (confirmaci\'on)};
+\draw[msg] (3.4,-6.6) -- (6.8,-6.6) node[midway, lab, above] {12. Marca el registro como sincronizado};
+\node[self, anchor=west] at (3.6,-7.2) {Si el env\'io falla, el registro queda pendiente};
 \end{tikzpicture}
 \caption{Flujo de sincronizaci\'on de un aporte.}
 \label{fig:secuencia_sync}
 \end{figure}
 
-\section{Arquitectura General del Sistema}
+\section{Arquitectura del Sistema}
 
-El sistema se compone de tres repositorios independientes (Tabla~\ref{tab:tecnologias_c2}).
+El sistema se compone de tres m\'odulos independientes cuya pila tecnol\'ogica se detalla en la Tabla~\ref{tab:tecnologias_c2}. La Figura~\ref{fig:arquitectura_flujo} resume la interacci\'on entre la fase de entrenamiento en la nube, el despliegue aut\'onomo en el dispositivo y el servicio opcional de sincronizaci\'on; los detalles de implementaci\'on y artefactos empaquetados de la aplicaci\'on m\'ovil y la API se presentan en la Secci\'on~4.1 del Cap\'itulo~4.
 
 \begin{table}[H]
-\caption{Tecnolog\'ias principales por proyecto}
+\caption{Tecnolog\'ias y herramientas principales por m\'odulo del sistema}
 \label{tab:tecnologias_c2}
 \centering
-\small
+\footnotesize
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{4.2cm}X}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.6cm}X}
 \toprule
-\textbf{Proyecto} & \textbf{Funci\'on} & \textbf{Tecnolog\'ias} \\
+\textbf{M\'odulo} & \textbf{Funci\'on principal} & \textbf{Entorno y herramientas utilizadas} \\
 \midrule
-\textit{Pipeline} del modelo & Entrenamiento, exportaci\'on y explicabilidad & PyTorch, timm, Optuna, litert-torch y ONNX \textit{Runtime} para exportaci\'on, Modal (GPU A10G) para entrenamiento en la nube, \textit{SHAP} y \textit{LIME}. \\
-Aplicaci\'on m\'ovil & Captura, inferencia local y sincronizaci\'on & Expo, React Native, TypeScript, \texttt{react-native-fast-tflite} para inferencia, WatermelonDB con SQLite local y NativeWind. \\
-API de sincronizaci\'on & Versi\'on de la app y aportes al dataset colaborativo & FastAPI, SQLAlchemy, Alembic, MySQL en Docker Compose, JWT y bcrypt para autenticaci\'on y slowapi para l\'imites de tasa. \\
+\textit{Pipeline} de aprendizaje autom\'atico & Curaci\'on, entrenamiento, evaluaci\'on, cuantizaci\'on y explicabilidad & Python 3.11, PyTorch 2.12, \texttt{timm} 1.0, Optuna 4.9, \texttt{imagededup}, \texttt{Pillow}, \texttt{OpenCV}, \texttt{litert-torch} 0.9, \texttt{torchao}, ONNX \textit{Runtime}, \textit{SHAP}, \textit{LIME} y GPU NVIDIA A10G (24~GB) en Modal. \\
+Aplicaci\'on m\'ovil Android & Captura guiada, inferencia local, gesti\'on de parcela y sincronizaci\'on diferida & Android 8.0+ (API 26+, probado en Android 15), Expo 57 (New Architecture), React Native 0.86, TypeScript 6.0, \texttt{react-native-fast-tflite} 3.0 con Nitro Modules C++, Skia 2.6, WatermelonDB 0.28 (SQLite), Android KeyStore, Leaflet 1.9.4, Open-Meteo, NativeWind y compilaci\'on ARM con Gradle y R8. \\
+API de sincronizaci\'on & Cuentas, recepci\'on idempotente de aportes y control de versiones & Python 3.12, FastAPI 0.115, SQLAlchemy 2.0 as\'incrono, Alembic, MySQL 8.4 en Docker Compose, autenticaci\'on JWT HS256 con rotaci\'on, \texttt{bcrypt}, \texttt{slowapi} y validaci\'on de im\'agenes con \texttt{Pillow}. \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
 \end{table}
 
-La aplicaci\'on no tiene dependencia con el entorno de entrenamiento, solo empaqueta el modelo \texttt{.tflite}, las etiquetas y los par\'ametros del detector OOD, y se comunica con la API por HTTP. La Figura~\ref{fig:arquitectura_flujo} resume el flujo completo.
-
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=0.7cm and 0.75cm,
-    stage/.style={
-        rectangle, rounded corners=4pt, draw=gray!50, line width=0.8pt,
-        minimum width=2.9cm, minimum height=1.35cm, text width=2.7cm,
-        align=center, font=\footnotesize, fill=gray!4
+    boxbase/.style={
+        rectangle, rounded corners=4pt, line width=0.8pt,
+        minimum width=3.55cm, text width=3.35cm, minimum height=1.70cm,
+        align=center, font=\footnotesize, inner sep=3.5pt
     },
-    phase/.style={font=\scriptsize\bfseries\itshape, text=gray!60!black},
-    arrow/.style={-{Latex[length=2.8mm]}, line width=1pt, draw=gray!60}
+    ml/.style={boxbase, draw=blue!55!black, fill=blue!6},
+    mob/.style={boxbase, draw=green!45!black, fill=green!6},
+    api/.style={boxbase, draw=orange!60!black, fill=orange!6},
+    phase/.style={font=\footnotesize\bfseries\itshape},
+    arrow/.style={-{Latex[length=2.5mm]}, line width=0.95pt, draw=gray!65!black},
+    xarr/.style={-{Latex[length=2.5mm]}, line width=0.95pt, dashed, draw=gray!60!black},
+    biarr/.style={{Latex[length=2.5mm]}-{Latex[length=2.5mm]}, line width=0.95pt, dashed, draw=gray!60!black}
 ]
-\node[phase] (lbl1) {Fase de entrenamiento y selecci\'on};
-\node[stage, fill=blue!6, draw=blue!55!black, below=0.35cm of lbl1, xshift=-3.3cm] (datos)
-  {\textbf{Fuentes p\'ublicas}\\[2pt]33~429 im\'agenes\\11 fuentes};
-\node[stage, fill=blue!6, draw=blue!55!black, right=of datos] (pipe)
-  {\textbf{Preparaci\'on de datos}\\[2pt]Depuraci\'on\\y particiones};
-\node[stage, fill=blue!6, draw=blue!55!black, right=of pipe] (optuna)
-  {\textbf{Entrenamiento}\\[2pt]GPU A10G en Modal\\Comparaci\'on y Optuna};
-\node[stage, fill=blue!6, draw=blue!55!black, right=of optuna] (lite0)
-  {\textbf{EfficientNet-Lite0}\\[2pt]Modelo oficial};
+% Fase 1: Entrenamiento
+\node[phase, text=blue!65!black] (lbl1) at (6.48, 1.40) {Fase de entrenamiento y selecci\'on del modelo};
+\node[ml] (datos) at (0,0) {\textbf{Fuentes p\'ublicas}\\[2pt]33~429 im\'agenes\\11 repositorios};
+\node[ml] (pipe) at (4.32,0) {\textbf{Curaci\'on de datos}\\[2pt]Auditor\'ia pHash y SHA\\Partici\'on 70/15/15};
+\node[ml] (optuna) at (8.64,0) {\textbf{Entrenamiento}\\[2pt]GPU A10G en Modal\\Optuna y calibraci\'on};
+\node[ml] (lite0) at (12.96,0) {\textbf{EfficientNet-Lite0}\\[2pt]Modelo de producci\'on\\Pesos ImageNet};
+
 \draw[arrow] (datos) -- (pipe);
 \draw[arrow] (pipe) -- (optuna);
 \draw[arrow] (optuna) -- (lite0);
 
-\node[phase, below=1.3cm of datos, xshift=1.2cm] (lbl2) {Fase de despliegue m\'ovil};
-\node[stage, fill=green!6, draw=green!45!black, below=0.35cm of lbl2, xshift=-3.3cm] (quant)
-  {\textbf{Cuantizaci\'on Int8}\\[2pt]PTQ con litert-torch};
-\node[stage, fill=green!6, draw=green!45!black, right=of quant] (app)
-  {\textbf{App DoctorMa\'iz}\\[2pt]React Native\\y Fast-TFLite};
-\node[stage, fill=green!6, draw=green!45!black, right=of app] (ood)
-  {\textbf{Captura y OOD}\\[2pt]Marco gu\'ia y\\distancia RMD};
-\node[stage, fill=green!6, draw=green!45!black, right=of ood] (off)
-  {\textbf{Inferencia local}\\[2pt]CPU, sin conexi\'on};
+% Fase 2: Despliegue móvil
+\node[phase, text=green!50!black] (lbl2) at (6.48, -2.40) {Fase de despliegue m\'ovil aut\'onomo};
+\node[mob] (quant) at (0,-3.80) {\textbf{Cuantizaci\'on Int8}\\[2pt]PTQ de 3.74~MB\\Calibraci\'on por capa};
+\node[mob] (app) at (4.32,-3.80) {\textbf{App DoctorMa\'iz}\\[2pt]React Native (Expo)\\Motor Fast-TFLite};
+\node[mob] (ood) at (8.64,-3.80) {\textbf{Captura y OOD}\\[2pt]Marco gu\'ia en c\'amara\\Distancia RMD y PCA};
+\node[mob] (off) at (12.96,-3.80) {\textbf{Inferencia local}\\[2pt]CPU m\'ovil aut\'onoma\\Diagn\'ostico \textit{offline}};
+
 \draw[arrow] (quant) -- (app);
 \draw[arrow] (app) -- (ood);
 \draw[arrow] (ood) -- (off);
 
-\node[stage, fill=orange!6, draw=orange!60!black, below=1.1cm of app] (api)
-  {\textbf{API DoctorMa\'iz}\\[2pt]FastAPI y MySQL\\Cuentas,\\correcciones y aportes};
-\draw[arrow, dashed, {Latex[length=2.8mm]}-{Latex[length=2.8mm]}] (app.south) -- node[right, font=\scriptsize\itshape, text=gray!60!black] {sincronizaci\'on opcional} (api.north);
+% Conexión Fase 1 -> Fase 2
+\draw[xarr] (lite0.south) -- ++(0,-0.75) -| node[pos=0.28, fill=white, inner sep=2.5pt, font=\fontsize{7.5}{8.5}\selectfont\itshape, text=gray!60!black] {entrega de modelo Int8 y estad\'isticas OOD} (quant.north);
 
-\draw[arrow, dashed] (lite0.south) |- ++(0,-0.55) -| (quant.north);
+% Fase 3: Sincronización en la nube
+\node[api] (api_node) at (4.32,-6.70) {\textbf{API DoctorMa\'iz}\\[2pt]FastAPI + MySQL 8.4\\Sincronizaci\'on diferida};
+\draw[biarr] (app.south) -- node[right=8pt, font=\fontsize{7.5}{8.5}\selectfont\itshape, text=gray!60!black] {sincronizaci\'on opcional} (api_node.north);
+
 \end{tikzpicture}
-\caption{Arquitectura del sistema DoctorMa\'iz.}
+\caption{Arquitectura general del sistema DoctorMa\'iz.}
 \label{fig:arquitectura_flujo}
 \end{figure}

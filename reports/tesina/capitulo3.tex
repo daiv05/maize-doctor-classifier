@@ -1,24 +1,267 @@
 \chapter{Estrategia de Implementaci\'on y An\'alisis de Resultados}
 
-\section{Estrategia y Entorno de Implementaci\'on}
+\section{Implementaci\'on de la Soluci\'on}
 
-\subsection{Infraestructura de C\'omputo y Entrenamiento en la Nube}
-El entrenamiento se realiz\'o en la plataforma Modal, sobre GPU NVIDIA A10G de 24~GB de VRAM, con CUDA 12.6 y PyTorch 2.12.1.
+La soluci\'on \textbf{DoctorMa\'iz} se implement\'o mediante tres componentes desacoplados que articulan el entrenamiento en la nube, la inferencia aut\'onoma en parcela y la sincronizaci\'on voluntaria de aportes.
 
-En todos los entrenamientos se utiliz\'o un calendario de tasa de aprendizaje de tipo coseno, precedido por tres \'epocas de calentamiento lineal. Este calentamiento evita que los primeros pasos de optimizaci\'on alteren en exceso los pesos preentrenados en ImageNet \cite{deng2009} mientras la red se adapta a las nuevas clases. El entrenamiento se detiene cuando el Macro $F_1$ de validaci\'on no mejora durante 8 \'epocas consecutivas. Como muestra la Figura~\ref{fig:convergencia_entrenamiento}, las tres arquitecturas alcanzan un Macro $F_1$ cercano a 0.90 en torno a la d\'ecima \'epoca, y a partir de ese punto las mejoras son graduales.
+\subsection{Infraestructura de Entrenamiento del Modelo}
+El entrenamiento y la selecci\'on de arquitecturas se ejecutaron bajo un entorno reproducible en la nube:
+
+\vspace{0.1cm}
+\noindent{\footnotesize
+\begin{singlespace}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash\bfseries}p{3.6cm}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Par\'ametro operativo} & \textbf{Configuraci\'on implementada} \\
+\midrule
+Entorno de c\'omputo & Modal con GPU NVIDIA A10G (24~GB VRAM), CUDA 12.6, PyTorch 2.12.1 y \texttt{timm} 1.0. \\
+Optimizador y p\'erdida & AdamW ($\text{lr}=10^{-4}$, $\text{wd}=10^{-4}$, lote 32), recorte de gradiente en 1.0, pesos \texttt{sqrt\_inverse} ($w_c \propto n_c^{-1/2}$) y suavizado de etiquetas 0.10. \\
+Planificador y parada & Calendario coseno tras 3 \'epocas de calentamiento lineal (ImageNet \cite{deng2009}); parada temprana a 8 \'epocas sin mejora (Macro $F_1 \approx 0.90$ en \'epoca 10, Figura~\ref{fig:convergencia_entrenamiento}). \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}}
+\vspace{0.1cm}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.84\linewidth]{images/training/training_convergence.png}
+\includegraphics[width=0.68\linewidth]{images/training/training_convergence.png}
 \caption{Macro $F_1$ de validaci\'on y p\'erdida por \'epoca de las tres arquitecturas con la configuraci\'on inicial.}
 \label{fig:convergencia_entrenamiento}
 \end{figure}
 
+\subsection{Arquitectura e Integraci\'on de la Aplicaci\'on M\'ovil}
+La aplicaci\'on Android \textbf{DoctorMa\'iz} se construy\'o para operar de forma aut\'onoma en parcela sin dependencia de red, integrando tres capas t\'ecnicas clave:
+\begin{itemize}\setlength{\itemsep}{2pt}
+\item \textbf{Plataforma y compilaci\'on:} compatible desde Android 8.0 (API 26), desarrollada con Expo 57, React Native 0.86 y TypeScript 6.0, compilada con Gradle y R8 para arquitecturas ARM de 32 y 64 bits y evaluada en Android 15.
+\item \textbf{Motor nativo y preprocesado:} ejecuci\'on del modelo Int8 mediante \texttt{react-native-fast-tflite} sobre Nitro Modules en C++ (evitando el puente as\'incrono de JavaScript) y reescalado fiel en memoria con Skia 2.6.
+\item \textbf{Verificaci\'on de contrato:} al iniciar, la aplicaci\'on valida el tensor de entrada $[1,3,224,224]$ y la doble salida del binario antes de habilitar la c\'amara.
+\end{itemize}
+
+La Figura~\ref{fig:flujo_diagnostico_movil} sintetiza el flujo de diagn\'ostico local sin conexi\'on, la Tabla~\ref{tab:artefactos_movil_c4} detalla los artefactos empaquetados en el dispositivo y la Tabla~\ref{tab:capacidades_movil_c4} clasifica los m\'odulos construidos seg\'un disponibilidad de red; el recorrido visual de pantallas se presenta en el Anexo~A.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.45cm and 0.48cm,
+    proc/.style={
+        rectangle, rounded corners=4pt, draw=blue!55!black, fill=blue!6,
+        line width=0.75pt, minimum height=1.18cm, text width=2.85cm,
+        align=center, font=\scriptsize
+    },
+    inf/.style={
+        rectangle, rounded corners=4pt, draw=green!45!black, fill=green!6,
+        line width=0.75pt, minimum height=1.18cm, text width=2.95cm,
+        align=center, font=\scriptsize
+    },
+    dec/.style={
+        diamond, aspect=2.0, draw=orange!65!black, fill=orange!8,
+        line width=0.75pt, inner sep=1.4pt, align=center, font=\scriptsize
+    },
+    outok/.style={
+        rectangle, rounded corners=4pt, draw=green!50!black, fill=green!8,
+        line width=0.75pt, minimum height=0.98cm, text width=5.6cm,
+        align=center, font=\scriptsize
+    },
+    outno/.style={
+        rectangle, rounded corners=4pt, draw=red!55!black, fill=red!6,
+        line width=0.75pt, minimum height=0.98cm, text width=5.4cm,
+        align=center, font=\scriptsize
+    },
+    arr/.style={-{Latex[length=2.4mm]}, line width=0.8pt, draw=gray!65!black}
+]
+\node[proc] (cap) {\textbf{1. Captura guiada}\\[2pt]Marco $260\times320$~dp\\o galer\'ia (EXIF GPS)};
+\node[proc, right=of cap] (pre) {\textbf{2. Preprocesado Skia}\\[2pt]Recorte $+15\%$, reducci\'on\\progresiva y \textit{antialias}};
+\node[inf, right=of pre] (inf) {\textbf{3. TFLite Int8 (C++)}\\[2pt]Tensor $3\times224\times224$\\9 logits + 1~280 rasgos};
+\node[dec, right=0.52cm of inf] (ood) {\textbf{\textquestiondown V\'alida?}\\\tiny RMD, $p_{\max}$,\\[-1pt]\tiny margen};
+
+\node[outno, below=0.92cm of pre, xshift=-0.2cm] (rej) {\textbf{Abstenci\'on segura:} muestra \guillemotleft Imagen no reconocida\guillemotright,\\no almacena en historial y solicita reencuadre.};
+\node[outok, below=0.92cm of ood, xshift=-1.1cm] (ok) {\textbf{Diagn\'ostico local:} clase, confianza, hip\'otesis secundaria\\($<70\%$), gu\'ia de severidad y guardado en SQLite.};
+
+\draw[arr] (cap) -- (pre);
+\draw[arr] (pre) -- (inf);
+\draw[arr] (inf) -- (ood);
+\draw[arr] (ood.south) -- ++(0,-0.34) -| node[pos=0.25, above, font=\scriptsize\bfseries, text=red!60!black] {No} (rej.north);
+\draw[arr] (ood.south) -- node[pos=0.62, right, font=\scriptsize\bfseries, text=green!45!black] {S\'i} (ood.south |- ok.north);
+\end{tikzpicture}
+\caption{Flujo de diagn\'ostico local (\textit{on-device}) en la aplicaci\'on DoctorMa\'iz.}
+\label{fig:flujo_diagnostico_movil}
+\end{figure}
+
+\begin{table}[H]
+\caption{Artefactos y bases de datos alojados localmente en el dispositivo m\'ovil}
+\label{tab:artefactos_movil_c4}
+\centering
+\footnotesize
+\begin{singlespace}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Componente alojado} & \textbf{Tama\~no y formato} & \textbf{Funci\'on dentro del dispositivo} \\
+\midrule
+Modelo neuronal Int8 & Binario TFLite de 3.74~MB & Clasificaci\'on local en 9 clases (entrada $[1,3,224,224]$ y doble salida: 9 logits y 1~280 caracter\'isticas). \\
+Estad\'isticas OOD & 1.61~MB en Base64 (\texttt{float32}) & Proyecci\'on PCA ($1280\rightarrow182$), 9 centroides de clase, covarianzas invertidas y umbral $\tau=106.37$. \\
+Cat\'alogo agron\'omico & 22.8~KB integrados en paquete & Descripci\'on de s\'intomas, manejo recomendado y gu\'ia visual de severidad en tres niveles. \\
+Base de datos local & WatermelonDB sobre SQLite (3 tablas) & Almacenamiento reactivo del historial geolocalizado de escaneos, correcciones y aportes pendientes. \\
+Medios y b\'oveda & Almac\'en privado y Android KeyStore & Fotograf\'ias comprimidas a 1~024~px JPEG (calidad 0.8), credenciales SHA-256, tokens JWT y cach\'e clim\'atica. \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+\begin{table}[H]
+\caption{M\'odulos funcionales de la aplicaci\'on seg\'un disponibilidad de red}
+\label{tab:capacidades_movil_c4}
+\centering
+\footnotesize
+\begin{singlespace}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}Xcc@{}}
+\toprule
+\textbf{M\'odulo de la aplicaci\'on} & \textbf{Capacidad ofrecida al productor} & \textbf{Sin red} & \textbf{Con red} \\
+\midrule
+Escaneo guiado y diagn\'ostico & Marco foliar $260\times320$~dp, clasificaci\'on en 9 clases, gr\'afico de confianza, hip\'otesis secundaria ($<70\%$) y abstenci\'on OOD. & S\'i & --- \\
+Gu\'ia de severidad y manejo & Acorde\'on visual comparativo de tres niveles de da\~no y recomendaciones agron\'omicas. & S\'i & --- \\
+Historial de parcela & Registro cronol\'ogico con b\'usqueda por texto y filtros r\'apidos por condici\'on. & S\'i & --- \\
+Mapa de cobertura & Cartograf\'ia Leaflet de hasta 50 escaneos geolocalizados con pines codificados por severidad (capas satelital Esri y OSM). & Pines GPS & Mosaicos \\
+Monitoreo agroclim\'atico & Tablero Open-Meteo de 4 variables con alertas fitosanitarias (roya 20--28~$^\circ$C, humedad $>80\%$, viento $>15$~km/h y humedad de suelo). & Cach\'e local & En vivo \\
+Ciencia ciudadana y correcciones & Captura voluntaria de fotograf\'ias etiquetadas y correcciones sobre diagn\'osticos para reentrenamiento futuro. & Cola local & Sincronizaci\'on \\
+Perfil, rangos y actualizaciones & Operaci\'on en modo invitado o cuenta registrada, 4 rangos de actividad y verificaci\'on de nuevas versiones de la app. & Sesi\'on local & Respaldo / versi\'on \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+\subsection{Despliegue del Servicio de Sincronizaci\'on (API)}
+El servicio opcional de respaldo y ciencia ciudadana se despleg\'o de forma independiente a la operaci\'on en campo, garantizando recepci\'on segura e idempotente de los aportes voluntarios:
+
+\begin{center}
+\begin{tikzpicture}
+\node[
+    draw=blue!45!black, fill=gray!4, rounded corners=3pt,
+    line width=0.6pt, inner sep=8pt, text width=0.96\textwidth,
+    font=\small
+] (apibox) {%
+\begin{singlespace}
+\begin{itemize}\setlength{\itemsep}{2pt}\setlength{\leftmargin}{1.1em}
+\item \textbf{Despliegue y persistencia:} implementado con FastAPI 0.115, SQLAlchemy 2.0 as\'incrono y MySQL 8.4 orquestados en contenedores Docker Compose.
+\item \textbf{Seguridad y control de acceso:} autenticaci\'on JWT HS256 con rotaci\'on de tokens, contrase\~nas cifradas con \texttt{bcrypt} y l\'imite de 30 solicitudes por minuto por usuario.
+\item \textbf{Integridad e idempotencia:} validaci\'on de im\'agenes en recepci\'on y restricciones de unicidad por usuario e identificador local para evitar duplicados ante reintentos por cortes de se\~nal.
+\item \textbf{Privacidad cero telemetr\'ia:} el servidor \'unicamente recibe correcciones o fotograf\'ias aportadas de forma expl\'icita; el historial personal de diagn\'osticos y las coordenadas GPS nunca salen del tel\'efono.
+\end{itemize}
+\end{singlespace}
+};
+\fill[blue!55!black] (apibox.north west) rectangle ([xshift=3.2pt]apibox.south west);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Automatizaci\'on, Integraci\'on Continua y Documentaci\'on}
+Conforme al lineamiento de trazabilidad, el proyecto mantiene un portal web de documentaci\'on t\'ecnica viva bajo control de versiones Git y organiza sus flujos automatizados de construcci\'on e integraci\'on en tres repositorios independientes, sintetizados en la Figura~\ref{fig:automatizacion_repos}:
+\begin{itemize}\setlength{\itemsep}{2pt}
+\item \textbf{Repositorio del clasificador y documentaci\'on cient\'ifica:} orquesta de forma automatizada en Modal la curaci\'on (pHash y doble SHA-256), el entrenamiento determinista con AdamW, la exportaci\'on PTQ h\'ibrida Int8 con calibraci\'on OOD y paridad en servidor, la transferencia verificada de artefactos hacia la aplicaci\'on (con huella SHA-256 y manifiesto de procedencia) y el portal documental.
+\item \textbf{Repositorio de la aplicaci\'on m\'ovil:} recibe los artefactos verificados, ejecuta validaci\'on de tipos, pruebas unitarias y paridad en dispositivo (143/143), y automatiza mediante GitHub Actions la compilaci\'on ARM con Gradle/R8, la auditor\'ia del paquete de producci\'on, la publicaci\'on de versiones en GitHub Releases y su registro autom\'atico en la API.
+\item \textbf{Repositorio de la API de sincronizaci\'on:} empaqueta FastAPI y MySQL 8.4 en Docker Compose con migraciones Alembic, ejecuta pruebas de integraci\'on sobre una base de datos real en contenedor, gestiona el registro y consulta de versiones de la aplicaci\'on y recibe aportes idempotentes para futuros ciclos de reentrenamiento.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\vspace*{0.4cm}
+\begin{tikzpicture}[
+    boxbase/.style={
+        rectangle, rounded corners=4pt, line width=0.75pt,
+        minimum width=4.60cm, text width=4.35cm, minimum height=1.80cm,
+        align=center, font=\fontsize{8.5}{10.5}\selectfont, inner sep=4.5pt
+    },
+    ml/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    mob/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    api/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    arr/.style={-{Latex[length=2.4mm, width=1.5mm]}, line width=0.75pt, draw=gray!65!black},
+    xarr/.style={-{Latex[length=2.4mm, width=1.5mm]}, line width=0.85pt, dashed, draw=gray!60!black},
+    lbl/.style={fill=white, inner sep=2.5pt, font=\fontsize{7.5}{8.5}\selectfont\itshape, text=gray!60!black, rotate=90}
+]
+
+% =========================================================================
+% ENCABEZADOS DE COLUMNA (Sin contenedores ni fondos externos)
+% =========================================================================
+\node[align=center] (hml) at (0, 0.50) {\textbf{\large Pipeline ML}\\[2pt]{\footnotesize\color{gray!60!black} Automatizaci\'on en Modal}};
+\node[align=center] (hmob) at (5.60, 0.50) {\textbf{\large DoctorMa\'iz}\\[2pt]{\footnotesize\color{gray!60!black} Integraci\'on continua (CI/CD)}};
+\node[align=center] (hapi) at (11.20, 0.50) {\textbf{\large API}\\[2pt]{\footnotesize\color{gray!60!black} Docker y FastAPI}};
+
+% =========================================================================
+% PASOS: PIPELINE ML
+% =========================================================================
+\node[ml] (m1) at (0, -1.25)
+  {\textbf{Curaci\'on y partici\'on}\\[2.5pt]pHash y doble SHA-256\\Partici\'on estratificada 70/15/15};
+
+\node[ml] (m2) at (0, -3.50)
+  {\textbf{Entrenamiento reproducible}\\[2.5pt]GPU A10G en Modal (AdamW)\\Manifiesto determinista};
+
+\node[ml] (m3) at (0, -5.75)
+  {\textbf{Exportaci\'on y validaci\'on}\\[2.5pt]PTQ h\'ibrida Int8 y PCA-RMD\\Paridad PyTorch vs.\ TFLite};
+
+\node[ml] (m4) at (0, -8.00)
+  {\textbf{Empaquetado y portal}\\[2.5pt]Transferencia verificada (SHA-256)\\Portal documental bajo Git};
+
+\draw[arr] (m1) -- (m2);
+\draw[arr] (m2) -- (m3);
+\draw[arr] (m3) -- (m4);
+
+% =========================================================================
+% PASOS: DOCTORMAÍZ (MÓVIL)
+% =========================================================================
+\node[mob] (a1) at (5.60, -1.25)
+  {\textbf{Ingesta verificada}\\[2.5pt]Modelo Int8 y estad\'isticas OOD\\Manifiesto de procedencia};
+
+\node[mob] (a2) at (5.60, -3.50)
+  {\textbf{Calidad y paridad}\\[2.5pt]Validaci\'on de tipos y pruebas\\Paridad en dispositivo (143/143)};
+
+\node[mob] (a3) at (5.60, -5.75)
+  {\textbf{Compilaci\'on y auditor\'ia}\\[2.5pt]Gradle/R8 ARM y firma APK\\Auditor\'ia del paquete final};
+
+\node[mob] (a4) at (5.60, -8.00)
+  {\textbf{Publicaci\'on de versi\'on}\\[2.5pt]Publicaci\'on en GitHub Releases\\Registro autom\'atico en API};
+
+\draw[arr] (a1) -- (a2);
+\draw[arr] (a2) -- (a3);
+\draw[arr] (a3) -- (a4);
+
+% =========================================================================
+% PASOS: API
+% =========================================================================
+\node[api] (s1) at (11.20, -1.25)
+  {\textbf{Empaquetado y migraci\'on}\\[2.5pt]Docker Compose y MySQL 8.4\\Migraciones con Alembic};
+
+\node[api] (s2) at (11.20, -3.50)
+  {\textbf{Pruebas de integraci\'on}\\[2.5pt]Pruebas sobre MySQL real\\Validaci\'on de esquema y API};
+
+\node[api] (s3) at (11.20, -5.75)
+  {\textbf{Registro de versiones}\\[2.5pt]Alta de nuevas versiones\\Consulta de actualizaci\'on m\'ovil};
+
+\node[api] (s4) at (11.20, -8.00)
+  {\textbf{Recepci\'on de aportes}\\[2.5pt]Ingesta idempotente (JWT)\\Base para reentrenamiento};
+
+\draw[arr] (s1) -- (s2);
+\draw[arr] (s2) -- (s3);
+\draw[arr] (s3) -- (s4);
+
+% =========================================================================
+% CONEXIONES ENTRE REPOSITORIOS (Líneas discontinuas con rótulos en cursiva y gris)
+% =========================================================================
+\draw[xarr] (m4.east) -- ++(0.50, 0) -- ++(0, 6.75) node[midway, lbl] {sincronizaci\'on SHA-256} -- (a1.west);
+
+\draw[xarr] (a4.east) -- ++(0.50, 0) -- ++(0, 2.25) node[midway, lbl] {registro en API} -- (s3.west);
+
+\end{tikzpicture}
+\vspace*{0.3cm}
+\caption{Flujo automatizado de integraci\'on.}
+\label{fig:automatizacion_repos}
+\end{figure}
+
 \section{Resultados}
 
-El sistema cumple los seis criterios de \'exito (Tabla~\ref{tab:estado_criterios_c3}). Estos criterios se midieron sobre una partici\'on que mezcla las fuentes, as\'i que el desempe\~no en campo se analiza aparte, con la validaci\'on por fuente y las fotograf\'ias externas (Secciones~\ref{sec:generalizacion} y~\ref{sec:campo_externo}).
+El sistema cumple los seis criterios de \'exito definidos para el proyecto (Tabla~\ref{tab:estado_criterios_c3}). Estos criterios se midieron sobre una partici\'on que mezcla las fuentes, por lo que el desempe\~no real en campo se analiza aparte mediante la validaci\'on por fuente y las fotograf\'ias externas (Secciones~\ref{sec:generalizacion} y~\ref{sec:campo_externo}).
 
-El modelo oficial elegido es EfficientNet-Lite0 y es el que se usa en la aplicaci\'on, esto gracias a que en pruebas realizadas con cada modelo, es el que mejor equilibra exactitud y velocidad de inferencia, además de no verse afectado por la cuantizaci\'on a Int8.
+El modelo oficial seleccionado es EfficientNet-Lite0, ya que en las pruebas comparativas ofreci\'o el mejor equilibrio entre exactitud y velocidad de inferencia, adem\'as de conservar su desempe\~no tras la cuantizaci\'on a Int8.
 
 \begin{table}[H]
 \caption{Estado de los criterios de \'exito}
@@ -43,7 +286,7 @@ Funcionamiento sin conexi\'on & Clasificaci\'on local en el tel\'efono. & Cumple
 
 \subsection{B\'usqueda Bayesiana de Hiperpar\'ametros}
 
-La b\'usqueda de hiperpar\'ametros con Optuna evalu\'o 25 configuraciones de EfficientNet-Lite0, cada una con un m\'aximo de 60 \'epocas. De ellas, 8 completaron el entrenamiento, 15 fueron detenidas por la poda al quedar por debajo de la mediana y 2 quedaron sin terminar porque se alcanzaron los límites de créditos de c\'omputo. La b\'usqueda consumi\'o en total 12.65 horas de GPU, y la configuraci\'on con mejor Macro $F_1$ de validaci\'on fue la del ensayo 0. Como muestra la Figura~\ref{fig:opt_param}, solo ese ensayo super\'o, por poco, a la configuraci\'on inicial, y los ensayos podados quedaron claramente por debajo.
+La b\'usqueda con Optuna evalu\'o 25 configuraciones de EfficientNet-Lite0 (m\'aximo 60 \'epocas): 8 completaron el entrenamiento, 15 fueron detenidas por poda temprana al quedar por debajo de la mediana y 2 finalizaron por l\'imite de cr\'editos de c\'omputo (12.65 horas de GPU en total). Como muestra la Figura~\ref{fig:opt_param}, solo el ensayo 0 super\'o ligeramente a la configuraci\'on inicial en validaci\'on, y el n\'umero de \'epocas de calentamiento result\'o ser el hiperpar\'ametro m\'as influyente (peso de 0.52), muy por encima de la ponderaci\'on de la p\'erdida (0.15), el suavizado de etiquetas (0.11), la tasa de aprendizaje (0.10) y el tama\~no de lote (0.09).
 
 \begin{figure}[H]
 \centering
@@ -62,7 +305,7 @@ La b\'usqueda de hiperpar\'ametros con Optuna evalu\'o 25 configuraciones de Eff
 \label{fig:opt_param}
 \end{figure}
 
-El an\'alisis de importancia (Figura~\ref{fig:opt_param}) indica que el n\'umero de \'epocas de calentamiento es el hiperpar\'ametro que m\'as influye en el resultado, con un peso de 0.52, muy por encima de la ponderaci\'on de la p\'erdida (0.15), el suavizado de etiquetas (0.11), la tasa de aprendizaje (0.10) y el tama\~no de lote (0.09). La Tabla~\ref{tab:opt_vs_base_c3} compara la mejor configuraci\'on encontrada con la utilizada inicialmente.
+La Tabla~\ref{tab:opt_vs_base_c3} contrasta ambas configuraciones: aunque el ensayo 0 mejor\'o en +0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, en el conjunto de prueba cay\'o $-0.49$ puntos porcentuales frente a la configuraci\'on inicial. Por ello se conserv\'o la configuraci\'on inicial (AdamW con tasa de aprendizaje $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.10), con un Macro $F_1$ de 0.9480 y una exactitud de 97.81\% en prueba. En calibraci\'on probabil\'istica, el modelo oficial obtuvo un ECE de 0.1397 y puntuaci\'on Brier de 0.0380 (subconfianza atribuible al suavizado y los pesos por clase), mientras que eliminar dichos pesos en Optuna redujo el ECE en $-57\%$ (a 0.0600), reforzando la conveniencia de acoplar \textit{softmax} con el detector OOD en producci\'on.
 
 \begin{table}[H]
 \caption{Configuraci\'on inicial frente a la mejor configuraci\'on de Optuna}
@@ -87,266 +330,9 @@ Suavizado de etiquetas & 0.10 & 0.075 & --- \\
 \end{singlespace}
 \end{table}
 
-La configuraci\'on encontrada por Optuna mejor\'o en 0.12 puntos porcentuales el Macro $F_1$ de validaci\'on, pero en el conjunto de prueba obtuvo 0.49 puntos menos que la configuraci\'on inicial. Una mejora tan peque\~na, que adem\'as no se traslada a la prueba, es casi insignificante, no representando un cambio real en el desempe\~no del modelo. Por ese motivo se conserv\'o la configuraci\'on inicial (tasa de aprendizaje de $10^{-4}$, lote de 32, ponderaci\'on \texttt{sqrt\_inverse} y suavizado de 0.1), con la que el modelo oficial alcanz\'o en prueba un Macro $F_1$ de 0.9480 y una exactitud de 97.81\%.
-
-\subsection{Generalizaci\'on entre Fuentes}\label{sec:generalizacion}
-
-Con el fin de medir cu\'anto depende el desempe\~no de las fuentes vistas durante el entrenamiento, se realiz\'o una validaci\'on cruzada de 5 pliegues con dos esquemas de partici\'on. El primero es la partici\'on estratificada que se usa normalmente y el segundo agrupa las im\'agenes por fuente, de modo que ning\'un repositorio aparece a la vez en entrenamiento y en evaluaci\'on. Cada esquema se prob\'o con la configuraci\'on inicial y con una configuraci\'on ajustada (Optuna) (Tabla~\ref{tab:kfold_2x2_c3} y Figura~\ref{fig:kfold_sigmas}).
-
-\begin{table}[H]
-\caption{Validaci\'on cruzada de 5 pliegues con partici\'on estratificada y agrupada por fuente}
-\label{tab:kfold_2x2_c3}
-\centering
-\small
-\begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
-\toprule
-\textbf{Configuraci\'on} & \textbf{Estratificada (media $\pm$ IC95)} & \textbf{Agrupada por fuente (media $\pm$ IC95)} & \textbf{Diferencia} \\
-\midrule
-Hiperpar\'ametros iniciales & $0.9311 \pm 0.0099$ & $\mathbf{0.6026 \pm 0.1240}$ & $\mathbf{-0.3286}$ \\
-Hiperpar\'ametros ajustados & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
-\midrule
-\multicolumn{4}{p{\dimexpr\textwidth-2\tabcolsep\relax}}{} \\
-\end{tabularx}
-\end{singlespace}
-\end{table}
-
-\begin{figure}[tbp]
-\centering
-\includegraphics[width=\linewidth]{images/resultados/kfold_2x2.png}
-\caption*{a) Macro $F_1$ e intervalo de confianza seg\'un la partici\'on.}
-\vspace{0.4cm}
-\includegraphics[width=\linewidth]{images/resultados/diferencias_en_sigmas.png}
-\caption*{b) Magnitud de cada efecto en desviaciones est\'andar.}
-\caption{Efecto de la partici\'on frente al ajuste de hiperpar\'ametros.}
-\label{fig:kfold_sigmas}
-\end{figure}
-
-La forma de partir los datos pesa mucho m\'as que los hiperpar\'ametros. Con la partici\'on estratificada el Macro $F_1$ fue de 0.9311, y al evaluar con fuentes que el modelo no vio durante el entrenamiento baj\'o a 0.6026. Ajustar los hiperpar\'ametros apenas lo movi\'o, de 0.9311 a 0.9463. El intervalo de confianza tambi\'en creci\'o, de $\pm 0.0099$ a $\pm 0.1240$, porque el resultado cambia bastante seg\'un qu\'e fuente quede fuera.
-
-Una ca\'ida de 0.33 no se explica por el azar del entrenamiento, entre tres semillas, el Macro $F_1$ vari\'o con una desviaci\'on est\'andar de 0.0052, y entre pliegues estratificados, de 0.0080 (Figura~\ref{fig:kfold_sigmas}). La conclusión es que el modelo, adem\'as de los s\'intomas y a pesar del preprocesado y aumento de datos, haya aprendido rasgos de cada repositorio, como el fondo, la luz o la c\'amara, algo que ya se ha observado en otros trabajos con im\'agenes de cultivos \cite{ahmad2023a}.
-
-En la evaluaci\'on LOSO (\textit{leave-one-source-out}), el modelo se entren\'o sin una fuente completa y se prob\'o solo con las im\'agenes de esa fuente, con tres semillas (Tabla~\ref{tab:loso_c3}). Sin \texttt{maize-diseases}, el Macro $F_1$ qued\'o en 0.9933, casi igual que si esa fuente se hubiera visto. Con \texttt{multicrop-disease-maiz} el resultado fue otro, y la exactitud baj\'o a 80.38\%.
-
-\begin{table}[H]
-\caption{Macro $F_1$ y exactitud en la fuente retenida, evaluaci\'on LOSO con tres semillas}
-\label{tab:loso_c3}
-\centering
-\small
-\begin{singlespace}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.6cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
-\toprule
-\textbf{Fuente retenida} & \textbf{Macro $F_1$ (media $\pm$ DE)} & \textbf{Exactitud (media $\pm$ DE)} & \textbf{Semillas} \\
-\midrule
-\texttt{maize-diseases} & 0.9933 $\pm$ 0.0006 & 99.37\% $\pm$ 0.07 pp & 3 \\
-\texttt{multicrop-}\allowbreak{}\texttt{disease-maiz} & 0.9019 $\pm$ 0.0044 & 80.38\% $\pm$ 0.32 pp & 3 \\
-\bottomrule
-\end{tabularx}
-\end{singlespace}
-\end{table}
-
-Los resultados casi no cambian entre las tres semillas, as\'i que la ca\'ida al retirar \texttt{multicrop-disease-maiz} no es solo casualidad, la caída depende de qu\'e fuente se deja fuera, y es consistente con la validaci\'on cruzada por fuente.
-
-\FloatBarrier
-\subsection{Fotograf\'ias de Campo Externas}
-\label{sec:campo_externo}
-
-La prueba m\'as cercana al uso real consisti\'o en evaluar el modelo oficial con 97 fotograf\'ias de campo ajenas al corpus, organizadas por clase. El modelo acert\'o 41 de ellas (42\%) y el detector OOD rechaz\'o 49 (Tabla~\ref{tab:campo_externo}). Esta cifra concuerda con la ca\'ida observada en la validaci\'on por fuente y constituye la principal limitaci\'on del sistema. El desempe\~no, adem\'as, es muy desigual entre clases. La mancha gris y el gusano cogollero se reconocieron en las 10 fotograf\'ias de cada una, mientras que ninguna de las 10 de necrosis letal se clasific\'o correctamente.
-
-\begin{table}[H]
-\caption{Aciertos del modelo oficial en fotograf\'ias de campo externas, por clase}
-\label{tab:campo_externo}
-\centering
-\small
-\begin{singlespace}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Clase} & \textbf{Fotograf\'ias} & \textbf{Aciertos} \\
-\midrule
-Roya com\'un & 18 & 2 \\
-Deficiencia de f\'osforo & 10 & 2 \\
-Mancha gris & 10 & 10 \\
-Deficiencia de nitr\'ogeno & 10 & 6 \\
-Deficiencia de potasio & 9 & 4 \\
-Tiz\'on foliar & 10 & 5 \\
-Gusano cogollero & 10 & 10 \\
-Necrosis letal & 10 & 0 \\
-Hoja sana & 10 & 2 \\
-\midrule
-\textbf{Total} & \textbf{97} & \textbf{41} \\
-\bottomrule
-\end{tabular}
-\end{singlespace}
-\end{table}
-
-\subsection{Equidad entre Laboratorio y Campo}
-
-Para comparar el desempe\~no entre im\'agenes de laboratorio y de campo se utiliz\'o el \textit{Disparate Impact Ratio} (DIR), que divide el desempe\~no del entorno con peor resultado entre el del mejor. Seg\'un la regla de los cuatro quintos, un valor igual o superior a 0.80 se considera aceptable. Dado que solo la roya, la mancha gris y el tiz\'on cuentan con im\'agenes de laboratorio, el c\'alculo se restringi\'o a esas tres clases. Con el modelo oficial, evaluado sobre 533 im\'agenes de laboratorio y 1~120 de campo, el Macro $F_1$ fue de 0.9383 y 0.9041, respectivamente, lo que da un DIR de 0.9636 (0.9956 si se calcula sobre la exactitud).
-
-\begin{figure}[tbp]
-\centering
-\includegraphics[width=0.72\linewidth]{images/fairness/fairness_disparity.png}
-\caption*{a) Disparidad por entorno.}
-\vspace{0.4cm}
-\includegraphics[width=\linewidth]{images/fairness/disaggregated_confusion_matrices.png}
-\caption*{b) Matrices de confusi\'on por entorno.}
-\caption{Desempe\~no por entorno de captura.}
-\label{fig:fairness_panel}
-\end{figure}
-
-Sin embargo, un DIR cercano a uno no implica que todas las clases se comporten igual en ambos entornos. El desglose de falsos negativos (Tabla~\ref{tab:fnr_c3}) revela diferencias importantes. La roya com\'un apenas falla en laboratorio (1 de 322 casos), pero falla en 5 de los 16 casos de campo (31.25\%), lo que es coherente con que el 95\% de sus im\'agenes procedan del laboratorio. Esta diferencia se mantiene con el modelo oficial, cuyo $F_1$ para la roya es de 0.998 en laboratorio y de 0.77 en campo. La mancha gris presenta el patr\'on contrario, con un 15.58\% de falsos negativos en laboratorio y un 5.16\% en campo.
-
-\begin{table}[H]
-\caption{Tasa de falsos negativos ($FNR$) por clase y entorno.}
-\label{tab:fnr_c3}
-\centering
-\small
-\begin{singlespace}
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Clase} & \textbf{$FNR$ laboratorio} & \textbf{Im\'agenes} & \textbf{$FNR$ campo} & \textbf{Im\'agenes} \\
-\midrule
-Roya com\'un & 0.31\% & 322 & \textbf{31.25\%} & 16 \\
-Mancha gris & 15.58\% & 77 & 5.16\% & 213 \\
-Tiz\'on foliar & 3.01\% & 133 & 1.01\% & 892 \\
-\bottomrule
-\end{tabular}
-\end{singlespace}
-\end{table}
-
-\FloatBarrier
-\subsection{Dependencia del Fondo}\label{sec:dependencia_fondo}
-
-Para determinar en qu\'e medida el modelo se apoya en la hoja o en el entorno, se ocultaron distintas regiones de las 5~015 im\'agenes de prueba y se midi\'o la exactitud con lo que quedaba visible (Tabla~\ref{tab:ablacion_c3} y Figura~\ref{fig:ablacion_grafico}). Como referencia se us\'o un predictor nulo, que no mira la imagen y lo que hace es responder siempre con la clase m\'as frecuente de la prueba, la hoja sana. Ese predictor acierta el 26.14\% de las veces, as\'i que cualquier exactitud por encima de ese valor indica que la regi\'on visible todav\'ia contiene informaci\'on sobre la clase.
-
-\begin{table}[H]
-\caption{Exactitud al ocultar regiones de la imagen.}
-\label{tab:ablacion_c3}
-\centering
-\small
-\begin{singlespace}
-\begin{tabular}{lccccc}
-\toprule
-\textbf{Condici\'on} & \textbf{Regi\'on visible} & \textbf{\'Area} & \textbf{Exactitud} & \textbf{Sobre el nulo} & \textbf{Confianza retenida} \\
-\midrule
-Imagen completa & Toda la escena & 100.0\% & 97.91\% & +71.77 pp & 100.0\% \\
-\textbf{Centro oculto} & \textbf{Borde} & \textbf{63.7\%} & \textbf{79.46\%} & \textbf{+53.32 pp} & \textbf{69.16\%} \\
-Periferia oculta & Centro & 36.3\% & 42.25\% & +16.11 pp & 42.66\% \\
-Predictor nulo & Ninguna & 0.0\% & 26.14\% & 0.0 pp & --- \\
-\bottomrule
-\end{tabular}
-\end{singlespace}
-\end{table}
-
-\begin{figure}[tbp]
-\centering
-\includegraphics[width=0.65\linewidth]{images/resultados/ablacion_control_nulo.png}
-\caption{Exactitud seg\'un la regi\'on visible de la imagen.}
-\label{fig:ablacion_grafico}
-\end{figure}
-
-Cuando se oculta el centro de la imagen, el modelo conserva un 79.46\% de exactitud a partir del borde, mientras que al ocultar la periferia la exactitud desciende a 42.25\%. Las dos condiciones no dejan visible la misma superficie (63.7\% y 36.3\%), pero la diferencia es lo bastante amplia para sugerir que el fondo aporta informaci\'on sobre la clase. Este resultado motiv\'o que la aplicaci\'on recorte la captura al marco gu\'ia antes de clasificarla, para que la hoja ocupe la mayor parte posible de la regi\'on visible.
-
-En los ejemplos analizados, los mapas de \textit{Grad-CAM} \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017} coinciden con las lesiones visibles (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}). Para comprobarlo con n\'umeros se tomaron 270 im\'agenes de prueba, 30 por clase, y en cada una se midi\'o qu\'e parte de la atribuci\'on de SHAP cae sobre la hoja y qu\'e parte de la imagen ocupa la hoja. Si el modelo se fijara sobre todo en la hoja, la primera cifra ser\'ia claramente mayor que la segunda. En las seis clases donde la hoja pudo delimitarse bien, la diferencia media fue de apenas +0.037, con tres clases por encima y tres por debajo. El modelo, entonces, casi no atiende a la hoja m\'as de lo que cabr\'ia esperar por su tama\~no. Una explicaci\'on posible de que los mapas no lo muestren es que solo resaltan las zonas de mayor peso, como la lesi\'on. El fondo pesa poco en cada punto, pero ocupa tanta superficie que en conjunto influye casi lo mismo que la hoja.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.72\linewidth]{images/fairness/gradcam_samples.png}
-\caption{Mapas de activaci\'on Grad-CAM en im\'agenes de campo y de laboratorio.}
-\label{fig:gradcam_panel_c3}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\linewidth]{images/xai/panel_compare_common_rust.png}
-\caption{Explicaciones locales de LIME, SHAP y Grad-CAM para la roya com\'un.}
-\label{fig:shap_lime_c3}
-\end{figure}
-
-\FloatBarrier
-\subsection{Desempe\~no en el Tel\'efono}
-
-Cuantizado a Int8, el modelo oficial pesa 3.74~MB, un 72.9\% menos que la versi\'on en coma flotante (13.79~MB). Esa reducci\'on no le cost\'o precisi\'on. En las 5~015 im\'agenes de prueba, el modelo Int8 obtuvo un Macro $F_1$ de 0.9489 y una exactitud de 97.87\%, pr\'acticamente lo mismo que el original (0.9480 y 97.81\%), y coincidi\'o con \'el en el 99.74\% de las predicciones.
-
-Las pruebas en el tel\'efono se hicieron en un Motorola edge 40 neo (MediaTek Dimensity 7030, 8~GB de RAM, Android 15), un equipo de gama media. Preparar la imagen tom\'o una mediana de 98~ms (p95 de 279~ms) y la inferencia, 23~ms (Tabla~\ref{tab:latencias_movil_c3}), ambos por debajo de la meta de 300~ms. Lo que m\'as tarda, entonces, no es el modelo sino el preprocesado, que se lleva cuatro veces m\'as tiempo que la inferencia. El flujo completo, desde la captura hasta que aparece el resultado, tom\'o 473~ms.
-
-\begin{table}[H]
-\caption{Latencias medianas en el Motorola edge 40 neo}
-\label{tab:latencias_movil_c3}
-\centering
-\small
-\begin{singlespace}
-\begin{tabular}{llc}
-\toprule
-\textbf{Fase} & \textbf{Modelo} & \textbf{Mediana} \\
-\midrule
-Preprocesado & Oficial (Int8) & 98 ms \\
-Inferencia & Oficial (Int8) & 23 ms \\
-Flujo completo & Versi\'on anterior & 473 ms \\
-\bottomrule
-\end{tabular}
-\end{singlespace}
-\end{table}
-
-Para verificar que la aplicaci\'on produce las mismas predicciones que el modelo evaluado en las secciones anteriores, se procesaron en el tel\'efono 143 im\'agenes, 95 fotograf\'ias de campo y 48 del corpus. Las predicciones coincidieron con las del modelo Int8 en las 143 im\'agenes. El tel\'efono acert\'o 45 de las 48 im\'agenes del corpus (93.8\%) y 38 de las 95 fotograf\'ias de campo (40.0\%), cifras similares a las obtenidas en las pruebas de las secciones anteriores.
-
-Por \'ultimo, la interfaz incorpora los elementos descritos en el Cap\'itulo~2 (Figuras~\ref{fig:app_pantallas_1} y~\ref{fig:app_pantallas_2}):
-\begin{enumerate}
-\item \textbf{Marco gu\'ia.} La aplicaci\'on recorta la captura al marco con un margen de 15\%. En el tel\'efono de prueba, la imagen pasa de 12.6 a 3.02 megap\'ixeles.
-\item \textbf{Detector OOD.} Cuando la puntuaci\'on supera el umbral de 106.37, la aplicaci\'on muestra «Imagen no reconocida». El detector rechaz\'o las cinco im\'agenes sint\'eticas de prueba (negro, blanco, gris, ruido y azul) y, por error, el 3.8\% de 500 im\'agenes de prueba v\'alidas.
-\item \textbf{Aportes.} El productor puede guardar fotograf\'ias de su milpa para enviarlas cuando haya conexi\'on.
-\item \textbf{Gu\'ia de severidad.} Muestra una escala de tres niveles que el productor compara con su hoja, con pautas de bioinsumos.
-\end{enumerate}
-
-\begin{figure}[H]
-\centering
-\begin{minipage}[b]{0.31\linewidth}
-\centering
-\includegraphics[width=\linewidth]{images/app/home.png}
-\caption*{a) Pantalla de inicio.}
-\end{minipage}
-\hfill
-\begin{minipage}[b]{0.31\linewidth}
-\centering
-\includegraphics[width=\linewidth]{images/app/camara-marco-guia.png}
-\caption*{b) Marco gu\'ia.}
-\end{minipage}
-\hfill
-\begin{minipage}[b]{0.31\linewidth}
-\centering
-\includegraphics[width=\linewidth]{images/app/resultado-mancha-gris.png}
-\caption*{c) Diagn\'ostico.}
-\end{minipage}
-\caption{Flujo principal de la aplicaci\'on DoctorMa\'iz.}
-\label{fig:app_pantallas_1}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\begin{minipage}[b]{0.31\linewidth}
-\centering
-\includegraphics[width=\linewidth]{images/app/resultado-no-reconocida.png}
-\caption*{a) Imagen no reconocida.}
-\end{minipage}
-\hfill
-\begin{minipage}[b]{0.31\linewidth}
-\centering
-\includegraphics[width=\linewidth]{images/app/contribuir.png}
-\caption*{b) Aporte de fotograf\'ias.}
-\end{minipage}
-\hfill
-\begin{minipage}[b]{0.31\linewidth}
-\centering
-\includegraphics[width=\linewidth]{images/app/resultado-severidad.png}
-\caption*{c) Gu\'ia de severidad.}
-\end{minipage}
-\caption{Rechazo de im\'agenes, aportes y gu\'ia de severidad.}
-\label{fig:app_pantallas_2}
-\end{figure}
-
 \subsection{Ensamble}
 
-Tambi\'en se evalu\'o un ensamble por votaci\'on suave de las tres arquitecturas, que super\'o a cada una por separado en la partici\'on estratificada (Tabla~\ref{tab:resultados_ensamble_c3} y Figura~\ref{fig:comparativa_ensamble_bar}). Para el ensamble se usaron entrenamientos hist\'oricos de cada arquitectura, hechos espec\'ificamente para esta comparaci\'on.
+Tambi\'en se evalu\'o un ensamble por votaci\'on suave de las tres arquitecturas (Tabla~\ref{tab:resultados_ensamble_c3} y Figura~\ref{fig:comparativa_ensamble_bar}), utilizando entrenamientos hist\'oricos dedicados para esta comparativa. El ensamble super\'o a cada modelo individual en la partici\'on estratificada (+0.83 pp en Macro $F_1$), alcanz\'o un recall macro de 95.06\% y detect\'o los 963 casos de necrosis letal y m\'as del 98\% de los de roya y tiz\'on (Figura~\ref{fig:matriz_ensamble}).
 
 \begin{table}[H]
 \caption{Ensamble frente a modelos individuales en la prueba (5~015 im\'agenes)}
@@ -371,21 +357,19 @@ EfficientNet-B0 & 97.97\% & 0.9483 & 0.9589 & 0.9400 \\
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.72\linewidth]{images/ensemble/ensemble_comparison_bar.png}
+\includegraphics[width=0.70\linewidth]{images/ensemble/ensemble_comparison_bar.png}
 \caption{Desempe\~no del ensamble frente a los modelos individuales.}
 \label{fig:comparativa_ensamble_bar}
 \end{figure}
 
-En un sistema de diagn\'ostico el recall tiene cierta mayor importancia, porque cada falso negativo deja sin atenci\'on una infecci\'on. El ensamble alcanz\'o un recall macro de 95.06\%, y su matriz de confusi\'on (Figura~\ref{fig:matriz_ensamble}) muestra que detect\'o los 963 casos de necrosis letal de la prueba y m\'as del 98\% de los de roya y tiz\'on. Con fuentes no vistas, en cambio, el recall de necrosis letal se redujo a valores entre 0.72 y 0.81 en la evaluaci\'on LOSO.
-
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.68\linewidth]{images/ensemble/confusion_matrix_ensemble.png}
+\includegraphics[width=0.66\linewidth]{images/ensemble/confusion_matrix_ensemble.png}
 \caption{Matriz de confusi\'on normalizada del ensamble sobre 5~015 im\'agenes de prueba.}
 \label{fig:matriz_ensamble}
 \end{figure}
 
-El caso de la deficiencia de potasio nos muestra el efecto de ampliar el corpus de entrenamiento, ya que esta clase, que en los primeros entrenamientos ten\'ia un $F_1$ de 0.49, alcanz\'o 0.8475 en el ensamble y 0.8242 en el modelo oficial (Tabla~\ref{tab:desglose_clases}). La mejora coincide precisamente con la incorporaci\'on de nuevos repositorios de deficiencias nutricionales y con el uso de la ponderaci\'on \texttt{sqrt\_inverse} en la funci\'on de p\'erdida.
+El desglose por clase (Tabla~\ref{tab:desglose_clases}) evidencia tambi\'en el efecto de ampliar el corpus: la deficiencia de potasio pas\'o de un $F_1$ de 0.49 en las primeras iteraciones a 0.8475 en el ensamble y 0.8242 en el modelo oficial tras incorporar nuevos repositorios nutricionales y aplicar la ponderaci\'on \texttt{sqrt\_inverse}. Sin embargo, con fuentes no vistas el recall de necrosis letal descendi\'o a 0.72--0.81 en LOSO, la ventaja frente a EfficientNet-B0 en S3 result\'o inconsistente ($\Delta = +0.0045 \pm 0.0080$) y duplic\'o el ECE (de 0.0446 a 0.0891); dado que ejecutar tres redes en el tel\'efono triplicar\'ia memoria y latencia a cambio de menos de un punto de ganancia, se mantuvo EfficientNet-Lite0 individual para el despliegue m\'ovil.
 
 \begin{table}[H]
 \caption{$F_1$ por clase de los modelos individuales y del ensamble}
@@ -413,12 +397,212 @@ Deficiencia de potasio & 93 & 0.8290 & 0.8208 & 0.7674 & \textbf{0.8475} \\
 \end{singlespace}
 \end{table}
 
+\FloatBarrier
+\subsection{Generalizaci\'on entre Fuentes}\label{sec:generalizacion}
+
+Con el fin de medir cu\'anto depende el desempe\~no de las fuentes vistas durante el entrenamiento, se realiz\'o una validaci\'on cruzada de 5 pliegues con dos esquemas de partici\'on: estratificada tradicional y agrupada por fuente (donde ning\'un repositorio aparece a la vez en entrenamiento y evaluaci\'on). Cada esquema se evalu\'o con la configuraci\'on inicial y la ajustada con Optuna (Tabla~\ref{tab:kfold_2x2_c3} y Figura~\ref{fig:kfold_sigmas}).
+
+\begin{table}[H]
+\caption{Validaci\'on cruzada de 5 pliegues con partici\'on estratificada y agrupada por fuente}
+\label{tab:kfold_2x2_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
+\toprule
+\textbf{Configuraci\'on} & \textbf{Estratificada (media $\pm$ IC95)} & \textbf{Agrupada por fuente (media $\pm$ IC95)} & \textbf{Diferencia} \\
+\midrule
+Hiperpar\'ametros iniciales & $0.9311 \pm 0.0099$ & $\mathbf{0.6026 \pm 0.1240}$ & $\mathbf{-0.3286}$ \\
+Hiperpar\'ametros ajustados & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=\linewidth]{images/resultados/kfold_2x2.png}
+\caption*{a) Macro $F_1$ e intervalo de confianza seg\'un la partici\'on.}
+\vspace{0.35cm}
+\includegraphics[width=\linewidth]{images/resultados/diferencias_en_sigmas.png}
+\caption*{b) Magnitud de cada efecto en desviaciones est\'andar.}
+\caption{Efecto de la partici\'on frente al ajuste de hiperpar\'ametros.}
+\label{fig:kfold_sigmas}
+\end{figure}
+
+La forma de partir los datos pesa mucho m\'as que los hiperpar\'ametros. Con la partici\'on estratificada el Macro $F_1$ fue de 0.9311, pero al evaluar sobre fuentes no vistas baj\'o a 0.6026 y el intervalo de confianza se ampli\'o de $\pm 0.0099$ a $\pm 0.1240$. Una ca\'ida de 0.33 no se explica por azar: entre tres semillas el Macro $F_1$ vari\'o apenas $\pm 0.0052$ y entre pliegues estratificados $\pm 0.0080$ (Figura~\ref{fig:kfold_sigmas}). Esto indica que el modelo, adem\'as de los s\'intomas, aprendi\'o rasgos propios de cada repositorio (fondo, luz o c\'amara), un fen\'omeno ya documentado en visi\'on agr\'icola \cite{ahmad2023a}.
+
+En la evaluaci\'on LOSO (\textit{leave-one-source-out}), el modelo se entren\'o sin una fuente completa y se evalu\'o sobre ella con tres semillas (Tabla~\ref{tab:loso_c3}). Sin \texttt{maize-diseases} el Macro $F_1$ qued\'o en 0.9933, pero al retirar \texttt{multicrop-disease-maiz} la exactitud baj\'o a 80.38\%, con m\'inima variaci\'on entre semillas; en la partici\'on de fuentes indivisibles (\texttt{source\_grouped}), el Macro $F_1$ descendi\'o a 0.4007 (58.57\% de exactitud). Adem\'as, en una campa\~na LOSO de 11 pliegues, ni el balanceo de fuentes (0.5594) ni la sustituci\'on aleatoria de fondos (0.5609) superaron a la l\'inea base (0.5573, $\sigma \approx 0.007$), confirmando que la brecha responde a la procedencia omitida.
+
+\begin{table}[H]
+\caption{Macro $F_1$ y exactitud en la fuente retenida, evaluaci\'on LOSO con tres semillas}
+\label{tab:loso_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.6cm}>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X}
+\toprule
+\textbf{Fuente retenida} & \textbf{Macro $F_1$ (media $\pm$ DE)} & \textbf{Exactitud (media $\pm$ DE)} & \textbf{Semillas} \\
+\midrule
+\texttt{maize-diseases} & 0.9933 $\pm$ 0.0006 & 99.37\% $\pm$ 0.07 pp & 3 \\
+\texttt{multicrop-}\allowbreak{}\texttt{disease-maiz} & 0.9019 $\pm$ 0.0044 & 80.38\% $\pm$ 0.32 pp & 3 \\
+\bottomrule
+\end{tabularx}
+\end{singlespace}
+\end{table}
+
+\FloatBarrier
+\subsection{Fotograf\'ias de Campo Externas}\label{sec:campo_externo}
+
+La prueba m\'as cercana al uso real consisti\'o en evaluar el modelo oficial con 97 fotograf\'ias de campo ajenas al corpus, organizadas por clase (Tabla~\ref{tab:campo_externo}). El modelo acert\'o 41 de ellas (42\%) y el detector OOD rechaz\'o 49, confirmando la brecha observada en la validaci\'on por fuente. El desempe\~no result\'o desigual entre clases: mancha gris y gusano cogollero se reconocieron en las 10 fotograf\'ias de cada una, mientras que ninguna de las 10 de necrosis letal fue clasificada correctamente.
+
+\begin{table}[H]
+\caption{Aciertos del modelo oficial en fotograf\'ias de campo externas, por clase}
+\label{tab:campo_externo}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Clase} & \textbf{Fotograf\'ias} & \textbf{Aciertos} \\
+\midrule
+Roya com\'un & 18 & 2 \\
+Deficiencia de f\'osforo & 10 & 2 \\
+Mancha gris & 10 & 10 \\
+Deficiencia de nitr\'ogeno & 10 & 6 \\
+Deficiencia de potasio & 9 & 4 \\
+Tiz\'on foliar & 10 & 5 \\
+Gusano cogollero & 10 & 10 \\
+Necrosis letal & 10 & 0 \\
+Hoja sana & 10 & 2 \\
+\midrule
+\textbf{Total} & \textbf{97} & \textbf{41} \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
+
+\FloatBarrier
+\subsection{Equidad entre Laboratorio y Campo}
+
+Sobre las tres clases que disponen de im\'agenes de laboratorio (roya com\'un, mancha gris y tiz\'on foliar; 533 im\'agenes de laboratorio y 1~120 de campo), el \textit{Disparate Impact Ratio} (DIR) alcanz\'o 0.9636 en Macro $F_1$ (0.9383 en laboratorio y 0.9041 en campo; 0.9956 en exactitud), superando el umbral de los cuatro quintos (0.80) (Figura~\ref{fig:fairness_panel}). Sin embargo, el desglose de falsos negativos (Tabla~\ref{tab:fnr_c3}) revela una asimetr\'ia oculta: la roya com\'un apenas falla en laboratorio (0.31\%, 1 de 322), pero falla en 5 de los 16 casos de campo (31.25\%), reflejando que el 95\% de sus im\'agenes provienen de laboratorio ($F_1$ de 0.998 frente a 0.77 en campo). La mancha gris muestra el patr\'on inverso (15.58\% en laboratorio frente a 5.16\% en campo).
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.70\linewidth]{images/fairness/fairness_disparity.png}
+\caption*{a) Disparidad por entorno.}
+\vspace{0.35cm}
+\includegraphics[width=\linewidth]{images/fairness/disaggregated_confusion_matrices.png}
+\caption*{b) Matrices de confusi\'on por entorno.}
+\caption{Desempe\~no por entorno de captura.}
+\label{fig:fairness_panel}
+\end{figure}
+
+\begin{table}[H]
+\caption{Tasa de falsos negativos ($FNR$) por clase y entorno.}
+\label{tab:fnr_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Clase} & \textbf{$FNR$ laboratorio} & \textbf{Im\'agenes} & \textbf{$FNR$ campo} & \textbf{Im\'agenes} \\
+\midrule
+Roya com\'un & 0.31\% & 322 & \textbf{31.25\%} & 16 \\
+Mancha gris & 15.58\% & 77 & 5.16\% & 213 \\
+Tiz\'on foliar & 3.01\% & 133 & 1.01\% & 892 \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
+
+\FloatBarrier
+\subsection{Dependencia del Fondo}\label{sec:dependencia_fondo}
+
+Para cuantificar cu\'anto se apoya el modelo en la hoja o en el entorno, se ocultaron regiones de las 5~015 im\'agenes de prueba y se compar\'o la exactitud frente a un predictor nulo que siempre predice la clase mayoritaria (26.14\%) (Tabla~\ref{tab:ablacion_c3} y Figura~\ref{fig:ablacion_grafico}). Al ocultar el centro, el modelo conserva un 79.46\% de exactitud usando solo el borde (63.7\% del \'area), mientras que al ocultar la periferia la exactitud desciende a 42.25\%. Este hallazgo motiv\'o el recorte al marco gu\'ia en la aplicaci\'on m\'ovil para maximizar la proporci\'on de l\'amina foliar visible.
+
+\begin{table}[H]
+\caption{Exactitud al ocultar regiones de la imagen.}
+\label{tab:ablacion_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Condici\'on} & \textbf{Regi\'on visible} & \textbf{\'Area} & \textbf{Exactitud} & \textbf{Sobre el nulo} & \textbf{Confianza retenida} \\
+\midrule
+Imagen completa & Toda la escena & 100.0\% & 97.91\% & +71.77 pp & 100.0\% \\
+\textbf{Centro oculto} & \textbf{Borde} & \textbf{63.7\%} & \textbf{79.46\%} & \textbf{+53.32 pp} & \textbf{69.16\%} \\
+Periferia oculta & Centro & 36.3\% & 42.25\% & +16.11 pp & 42.66\% \\
+Predictor nulo & Ninguna & 0.0\% & 26.14\% & 0.0 pp & --- \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.64\linewidth]{images/resultados/ablacion_control_nulo.png}
+\caption{Exactitud seg\'un la regi\'on visible de la imagen.}
+\label{fig:ablacion_grafico}
+\end{figure}
+
+En los ejemplos visuales, los mapas de \textit{Grad-CAM} \cite{selvaraju2017}, LIME \cite{ribeiro2016} y SHAP \cite{lundberg2017} coinciden con las lesiones visibles (Figuras~\ref{fig:gradcam_panel_c3} y~\ref{fig:shap_lime_c3}). No obstante, al medir cuantitativamente sobre 270 im\'agenes de prueba (30 por clase) qu\'e fracci\'on de la atribuci\'on SHAP recae sobre la hoja respecto al \'area que esta ocupa, la diferencia media en las seis clases segmentables fue de apenas +0.037 (tres por encima y tres por debajo): aunque los mapas destacan picos puntuales sobre la lesi\'on, el fondo ocupa tanta superficie que su peso acumulado influye casi lo mismo que la hoja.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.70\linewidth]{images/fairness/gradcam_samples.png}
+\caption{Mapas de activaci\'on Grad-CAM en im\'agenes de campo y de laboratorio.}
+\label{fig:gradcam_panel_c3}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.83\linewidth]{images/xai/panel_compare_common_rust.png}
+\caption{Explicaciones locales de LIME, SHAP y Grad-CAM para la roya com\'un.}
+\label{fig:shap_lime_c3}
+\end{figure}
+
+\FloatBarrier
+\subsection{Desempe\~no en el Tel\'efono}
+
+Cuantizado a Int8 mediante cuantizaci\'on h\'ibrida, el modelo oficial pesa 3.74~MB, un 72.9\% menos que la versi\'on en coma flotante (13.79~MB), sin p\'erdida de precisi\'on: sobre las 5~015 im\'agenes de prueba obtuvo un Macro $F_1$ de 0.9489 y una exactitud de 97.87\% (frente a 0.9480 y 97.81\% del original), con un 99.74\% de coincidencia en las predicciones.
+
+Las mediciones en dispositivo se realizaron en un Motorola edge 40 neo (MediaTek Dimensity 7030, 8~GB de RAM, Android 15). El preprocesado tom\'o una mediana de 98~ms (p95 de 279~ms) y la inferencia 23~ms (Tabla~\ref{tab:latencias_movil_c3}), ambos muy por debajo de la meta de 300~ms; el cuello de botella no es la red neuronal sino el reescalado de la imagen, que consume cuatro veces m\'as tiempo que la inferencia. El flujo completo desde la captura hasta la presentaci\'on del resultado tom\'o 473~ms.
+
+\begin{table}[H]
+\caption{Latencias medianas en el Motorola edge 40 neo}
+\label{tab:latencias_movil_c3}
+\centering
+\small
+\begin{singlespace}
+\begin{tabular}{llc}
+\toprule
+\textbf{Fase} & \textbf{Modelo} & \textbf{Mediana} \\
+\midrule
+Preprocesado & Oficial (Int8) & 98 ms \\
+Inferencia & Oficial (Int8) & 23 ms \\
+Flujo completo & Versi\'on anterior & 473 ms \\
+\bottomrule
+\end{tabular}
+\end{singlespace}
+\end{table}
+
+Para verificar paridad num\'erica entre la aplicaci\'on y el servidor, se procesaron en el tel\'efono 143 im\'agenes (95 fotograf\'ias de campo externas y 48 del corpus). En el primer prototipo, la coincidencia fue de apenas 84\% debido al \textit{aliasing} del escalado bilineal en un solo paso, que alteraba la clase predicha y multiplicaba hasta por cincuenta la distancia de Mahalanobis del detector OOD. Tras incorporar la reducci\'on progresiva por mitades en memoria con Skia seguida del filtro bilineal con \textit{antialias} equivalente a \texttt{Pillow}, el tel\'efono igual\'o al modelo Int8 del servidor en las \textbf{143 de 143 im\'agenes (100\%)}, acertando 45 de 48 im\'agenes del corpus (93.8\%) y 38 de 95 fotos de campo (40.0\%).
+
+Por \'ultimo, la interfaz incorpora los elementos descritos en el Cap\'itulo~3 (cuyas pantallas y recorrido operativo se presentan en el Manual de Usuario del Anexo~A):
+\begin{enumerate}
+\item \textbf{Marco gu\'ia.} La aplicaci\'on recorta la captura al marco con un margen de 15\%. En el tel\'efono de prueba, la imagen pasa de 12.6 a 3.02 megap\'ixeles.
+\item \textbf{Detector OOD.} Cuando la puntuaci\'on supera el umbral de 106.37, la aplicaci\'on muestra \guillemotleft Imagen no reconocida\guillemotright. El detector rechaz\'o las cinco im\'agenes sint\'eticas de prueba (negro, blanco, gris, ruido y azul) y, por error, el 3.8\% de 500 im\'agenes de prueba v\'alidas.
+\item \textbf{Aportes.} El productor puede guardar fotograf\'ias de su milpa para enviarlas cuando haya conexi\'on.
+\end{enumerate}
+
 \subsection{S\'intesis de los Resultados}
 
-Los resultados dejan dos conclusiones: 
+Los resultados dejan tres conclusiones operativas integradas:
 
-En la partici\'on de prueba el modelo cumple lo que se propuso: obtiene un Macro $F_1$ de 0.9480, la cuantizaci\'on no le resta desempe\~no y en el tel\'efono responde por debajo de la meta de 300~ms. La b\'usqueda de hiperpar\'ametros y el ensamble aportaron poco frente a eso. La configuraci\'on de Optuna no mejor\'o el resultado en prueba, y el ensamble gan\'o menos de un punto de Macro $F_1$ pero exigir\'ia ejecutar tres redes en el tel\'efono.
+En la partici\'on de prueba el modelo cumple lo que se propuso: obtiene un Macro $F_1$ de 0.9480, la cuantizaci\'on Int8 no le resta desempe\~no (0.9489) y en el tel\'efono responde por debajo de la meta de 300~ms. Ni la b\'usqueda de hiperpar\'ametros con Optuna ni el ensamble de tres redes justificaron sustituir al modelo base en producci\'on.
 
-Fuera de esa partici\'on la lectura es bastante distinta, con fuentes que el modelo no vio, el Macro $F_1$ baj\'o a 0.6026, y en las fotograf\'ias de campo externas acert\'o 41 de 97. La ablaci\'on apunta en la misma direcci\'on, porque el modelo sigue acertando la mayor\'ia de las veces cuando solo ve el borde de la imagen. Las tres pruebas indican que parte de lo que aprendi\'o es propio de los repositorios de origen y no de la enfermedad.
+Desde el punto de vista de ingenier\'ia de software, la aplicaci\'on m\'ovil \textbf{DoctorMa\'iz} cumpli\'o su objetivo de operaci\'on aut\'onoma en campo: alcanz\'o una paridad del 100\% (143/143) frente al servidor tras corregir el reescalado de im\'agenes, integr\'o el marco gu\'ia, la abstenci\'on OOD, el historial geolocalizado y la gu\'ia visual de severidad completamente sin conexi\'on, y dej\'o operativo el mecanismo diferido de aportes con la API bajo privacidad de cero telemetr\'ia.
 
-Por eso el sistema queda, por ahora, como una herramienta de orientaci\'on. Es poco probable que otra arquitectura o m\'as ajuste de hiperpar\'ametros cambien ese resultado. Lo que falta son fotograf\'ias tomadas en parcelas salvadore\~nas, y a eso responden el m\'odulo de aportes y las recomendaciones del cierre.
+Fuera de la partici\'on de prueba la lectura del clasificador es distinta: con fuentes no vistas el Macro $F_1$ baj\'o a 0.6026, y en las fotograf\'ias de campo externas acert\'o 41 de 97. La ablaci\'on apunta en la misma direcci\'on, pues el modelo conserva 79.46\% de exactitud viendo solo el borde de la imagen. Las tres pruebas confirman que parte de lo aprendido corresponde a los repositorios de origen y no solo a la lesi\'on. Por ello el sistema queda, por ahora, como una herramienta de orientaci\'on: lo que falta no es otra arquitectura sino fotograf\'ias tomadas en parcelas salvadore\~nas, y a ese vac\'io responden el m\'odulo de aportes de la aplicaci\'on y las recomendaciones del cierre.
