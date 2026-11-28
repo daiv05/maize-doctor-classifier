@@ -155,6 +155,108 @@ El servicio opcional de respaldo y ciencia ciudadana se despleg\'o de forma inde
 \end{tikzpicture}
 \end{center}
 
+\subsection{Automatizaci\'on, Integraci\'on Continua y Documentaci\'on}
+Conforme al lineamiento de trazabilidad, el proyecto mantiene un portal web de documentaci\'on t\'ecnica viva bajo control de versiones Git y organiza sus flujos automatizados de construcci\'on e integraci\'on en tres repositorios independientes, sintetizados en la Figura~\ref{fig:automatizacion_repos}:
+\begin{itemize}\setlength{\itemsep}{2pt}
+\item \textbf{Repositorio del clasificador y documentaci\'on cient\'ifica:} orquesta de forma automatizada en Modal la curaci\'on (pHash y doble SHA-256), el entrenamiento determinista con AdamW, la exportaci\'on PTQ h\'ibrida Int8 con calibraci\'on OOD y paridad en servidor, la transferencia verificada de artefactos hacia la aplicaci\'on (con huella SHA-256 y manifiesto de procedencia) y el portal documental.
+\item \textbf{Repositorio de la aplicaci\'on m\'ovil:} recibe los artefactos verificados, ejecuta validaci\'on de tipos, pruebas unitarias y paridad en dispositivo (143/143), y automatiza mediante GitHub Actions la compilaci\'on ARM con Gradle/R8, la auditor\'ia del paquete de producci\'on, la publicaci\'on de versiones en GitHub Releases y su registro autom\'atico en la API.
+\item \textbf{Repositorio de la API de sincronizaci\'on:} empaqueta FastAPI y MySQL 8.4 en Docker Compose con migraciones Alembic, ejecuta pruebas de integraci\'on sobre una base de datos real en contenedor, gestiona el registro y consulta de versiones de la aplicaci\'on y recibe aportes idempotentes para futuros ciclos de reentrenamiento.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\vspace*{0.4cm}
+\begin{tikzpicture}[
+    boxbase/.style={
+        rectangle, rounded corners=4pt, line width=0.75pt,
+        minimum width=4.60cm, text width=4.35cm, minimum height=1.80cm,
+        align=center, font=\fontsize{8.5}{10.5}\selectfont, inner sep=4.5pt
+    },
+    ml/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    mob/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    api/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    arr/.style={-{Latex[length=2.4mm, width=1.5mm]}, line width=0.75pt, draw=gray!65!black},
+    xarr/.style={-{Latex[length=2.4mm, width=1.5mm]}, line width=0.85pt, dashed, draw=gray!60!black},
+    lbl/.style={fill=white, inner sep=2.5pt, font=\fontsize{7.5}{8.5}\selectfont\itshape, text=gray!60!black, rotate=90}
+]
+
+% =========================================================================
+% ENCABEZADOS DE COLUMNA (Sin contenedores ni fondos externos)
+% =========================================================================
+\node[align=center] (hml) at (0, 0.50) {\textbf{\large Pipeline ML}\\[2pt]{\footnotesize\color{gray!60!black} Automatizaci\'on en Modal}};
+\node[align=center] (hmob) at (5.60, 0.50) {\textbf{\large DoctorMa\'iz}\\[2pt]{\footnotesize\color{gray!60!black} Integraci\'on continua (CI/CD)}};
+\node[align=center] (hapi) at (11.20, 0.50) {\textbf{\large API}\\[2pt]{\footnotesize\color{gray!60!black} Docker y FastAPI}};
+
+% =========================================================================
+% PASOS: PIPELINE ML
+% =========================================================================
+\node[ml] (m1) at (0, -1.25)
+  {\textbf{Curaci\'on y partici\'on}\\[2.5pt]pHash y doble SHA-256\\Partici\'on estratificada 70/15/15};
+
+\node[ml] (m2) at (0, -3.50)
+  {\textbf{Entrenamiento reproducible}\\[2.5pt]GPU A10G en Modal (AdamW)\\Manifiesto determinista};
+
+\node[ml] (m3) at (0, -5.75)
+  {\textbf{Exportaci\'on y validaci\'on}\\[2.5pt]PTQ h\'ibrida Int8 y PCA-RMD\\Paridad PyTorch vs.\ TFLite};
+
+\node[ml] (m4) at (0, -8.00)
+  {\textbf{Empaquetado y portal}\\[2.5pt]Transferencia verificada (SHA-256)\\Portal documental bajo Git};
+
+\draw[arr] (m1) -- (m2);
+\draw[arr] (m2) -- (m3);
+\draw[arr] (m3) -- (m4);
+
+% =========================================================================
+% PASOS: DOCTORMAÍZ (MÓVIL)
+% =========================================================================
+\node[mob] (a1) at (5.60, -1.25)
+  {\textbf{Ingesta verificada}\\[2.5pt]Modelo Int8 y estad\'isticas OOD\\Manifiesto de procedencia};
+
+\node[mob] (a2) at (5.60, -3.50)
+  {\textbf{Calidad y paridad}\\[2.5pt]Validaci\'on de tipos y pruebas\\Paridad en dispositivo (143/143)};
+
+\node[mob] (a3) at (5.60, -5.75)
+  {\textbf{Compilaci\'on y auditor\'ia}\\[2.5pt]Gradle/R8 ARM y firma APK\\Auditor\'ia del paquete final};
+
+\node[mob] (a4) at (5.60, -8.00)
+  {\textbf{Publicaci\'on de versi\'on}\\[2.5pt]Publicaci\'on en GitHub Releases\\Registro autom\'atico en API};
+
+\draw[arr] (a1) -- (a2);
+\draw[arr] (a2) -- (a3);
+\draw[arr] (a3) -- (a4);
+
+% =========================================================================
+% PASOS: API
+% =========================================================================
+\node[api] (s1) at (11.20, -1.25)
+  {\textbf{Empaquetado y migraci\'on}\\[2.5pt]Docker Compose y MySQL 8.4\\Migraciones con Alembic};
+
+\node[api] (s2) at (11.20, -3.50)
+  {\textbf{Pruebas de integraci\'on}\\[2.5pt]Pruebas sobre MySQL real\\Validaci\'on de esquema y API};
+
+\node[api] (s3) at (11.20, -5.75)
+  {\textbf{Registro de versiones}\\[2.5pt]Alta de nuevas versiones\\Consulta de actualizaci\'on m\'ovil};
+
+\node[api] (s4) at (11.20, -8.00)
+  {\textbf{Recepci\'on de aportes}\\[2.5pt]Ingesta idempotente (JWT)\\Base para reentrenamiento};
+
+\draw[arr] (s1) -- (s2);
+\draw[arr] (s2) -- (s3);
+\draw[arr] (s3) -- (s4);
+
+% =========================================================================
+% CONEXIONES ENTRE REPOSITORIOS (Líneas discontinuas con rótulos en cursiva y gris)
+% =========================================================================
+\draw[xarr] (m4.east) -- ++(0.50, 0) -- ++(0, 6.75) node[midway, lbl] {sincronizaci\'on SHA-256} -- (a1.west);
+
+\draw[xarr] (a4.east) -- ++(0.50, 0) -- ++(0, 2.25) node[midway, lbl] {registro en API} -- (s3.west);
+
+\end{tikzpicture}
+\vspace*{0.3cm}
+\caption{Flujo automatizado de integraci\'on.}
+\label{fig:automatizacion_repos}
+\end{figure}
+
 \section{Resultados}
 
 El sistema cumple los seis criterios de \'exito definidos para el proyecto (Tabla~\ref{tab:estado_criterios_c3}). Estos criterios se midieron sobre una partici\'on que mezcla las fuentes, por lo que el desempe\~no real en campo se analiza aparte mediante la validaci\'on por fuente y las fotograf\'ias externas (Secciones~\ref{sec:generalizacion} y~\ref{sec:campo_externo}).
