@@ -45,7 +45,7 @@ Con base en los resultados, se proponen cinco recomendaciones al Ministerio de A
 \item \textbf{Crear un banco nacional de im\'agenes.} Financiar, junto con la Universidad de El Salvador, la captura de fotograf\'ias de variedades y condiciones locales para reentrenar el modelo.
 \item \textbf{Aprovechar los aportes para la vigilancia fitosanitaria.} Evaluar el uso de las fotograf\'ias aportadas por los usuarios en un tablero de vigilancia del MAG, con reglas claras sobre el uso de los datos y de la ubicaci\'on.
 \item \textbf{Capacitar a las comunidades.} Ense\~nar a cooperativas y ADESCOs a usar el marco gu\'ia de captura y presentar la herramienta como un apoyo al criterio del productor.
-\item \textbf{Establecer un protocolo de gobernanza y resguardo de los datos.} Definir las condiciones institucionales de custodia, control de calidad y uso agron\'omico de las fotograf\'ias aportadas voluntariamente por los productores.
+\item \textbf{Definir las condiciones de uso y gobernanza de datos.} Acordar con la Universidad de El Salvador, titular del c\'odigo, las condiciones institucionales para que el MAG y el CENTA utilicen la herramienta, as\'i como establecer un protocolo de custodia, control de calidad y uso agron\'omico de las fotograf\'ias aportadas voluntariamente por los productores.
 \end{enumerate}
 
 \newpage
@@ -192,9 +192,10 @@ TensorFlow. (2024). \textit{TensorFlow Lite guide}. Google. \url{https://www.ten
 \addcontentsline{toc}{chapter}{Anexos}
 
 \section*{Anexo A: Manual de Usuario}
+\addcontentsline{toc}{section}{Anexo A: Manual de Usuario}
 
 \begin{singlespace}
-{\small\noindent\textit{Gu\'ia operativa resumida de \textbf{DoctorMa\'iz} para productores y t\'ecnicos en campo. La versi\'on extendida, junto con preguntas frecuentes y cat\'alogo ilustrado de enfermedades, se encuentra en la documentaci\'on interna del repositorio de la aplicaci\'on m\'ovil.}}
+{\small\noindent\textit{Gu\'ia operativa resumida de \textbf{DoctorMa\'iz} para productores y t\'ecnicos en campo. La versi\'on extendida, junto con preguntas frecuentes y cat\'alogo ilustrado de enfermedades, se encuentra en la documentaci\'on oficial del proyecto (\url{https://doctor-maiz.deras.dev/es}).}}
 \end{singlespace}
 
 % ==================== PÁGINA 1 DEL MANUAL ====================
@@ -314,6 +315,7 @@ Aportes figuran como pendientes & Verifique tener sesi\'on iniciada y conexi\'on
 \clearpage
 
 \section*{Anexo B: Hashes de los Modelos}
+\addcontentsline{toc}{section}{Anexo B: Hashes de los Modelos}
 
 La tabla siguiente lista los hashes SHA-256 de los modelos, para comprobar la integridad de los artefactos evaluados en este trabajo.
 
@@ -324,7 +326,7 @@ La tabla siguiente lista los hashes SHA-256 de los modelos, para comprobar la in
 \begin{singlespace}
 \begin{tabularx}{\textwidth}{p{4.0cm}cp{7.5cm}}
 \toprule
-\textbf{Modelo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del Checkpoint (\texttt{best.pth})} \\
+\textbf{Modelo} & \textbf{Tama\~no} & \textbf{Hash SHA-256 del \textit{Checkpoint} (\texttt{best.pth})} \\
 \midrule
 EfficientNet-Lite0 Base (42, oficial) & 13.79 MB & \path{860180f33bf1749ffee9f3cccb9569a47afd9ca0fcef52713e18f99f82a57859} \\
 EfficientNet-Lite0 Int8 (M\'ovil, \texttt{model\_int8.tflite}) & 3.74 MB & \path{bb31467a58c11cd474159bd5739a7a57b1f1edfda6b5dbfae8fa91337f3c56b1} \\
@@ -333,3 +335,13 @@ EfficientNet-B0 Referencia & 16.36 MB & \path{0e367a5318c068c9bcc90a6bec0d17a0b0
 \end{tabularx}
 \end{singlespace}
 \end{table}
+
+\section*{Anexo C: Documentaci\'on y Licenciamiento del Proyecto}
+\addcontentsline{toc}{section}{Anexo C: Documentaci\'on y Licenciamiento del Proyecto}
+
+El proyecto mantiene un sitio web de seguimiento que funciona como documentaci\'on viva e historial de trabajo mediante Git. En \'el se pueden consultar los an\'alisis de los conjuntos de datos, la metodolog\'ia y los resultados:\par
+\url{https://doctor-maiz.deras.dev/es}
+
+El c\'odigo fuente de \textbf{DoctorMa\'iz} es propiedad de la Universidad de El Salvador y se rige por una licencia propietaria, con todos los derechos reservados. Quien desee adquirirlo deber\'a presentar una solicitud formal a la Escuela de Ingenier\'ia de Sistemas Inform\'aticos de la Facultad de Ingenier\'ia y Arquitectura.
+
+Las im\'agenes del corpus conservan las licencias de sus fuentes y los modelos entrenados se rigen por la licencia CC BY-NC-SA 4.0, que no permite su uso comercial. La Tabla~\ref{tab:fuentes_dataset} indica la licencia de cada fuente.

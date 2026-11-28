@@ -1,11 +1,11 @@
 ---
 title: Instalación y Requisitos
-description: Requisitos técnicos del dispositivo móvil, descarga del APK e instalación de permisos para DoctorMaiz.
+description: Requisitos técnicos del dispositivo móvil, descarga del APK e instalación de permisos para DoctorMaíz.
 ---
 
 # Instalación y Requisitos
 
-DoctorMaiz fue desarrollada pensando en la heterogeneidad de teléfonos inteligentes utilizados por los agricultores en América Latina. La aplicación está optimizada para ejecutarse con fluidez en dispositivos de gama media y baja.
+DoctorMaíz fue desarrollada pensando en la heterogeneidad de teléfonos inteligentes utilizados por los agricultores en América Latina. La aplicación está optimizada para ejecutarse con fluidez en dispositivos de gama media y baja.
 
 ---
 
@@ -51,7 +51,7 @@ Si es la primera vez que instalas una aplicación fuera de Google Play Store:
 
 ## Configuración de Permisos en el Primer Inicio
 
-Al abrir DoctorMaiz por primera vez, la aplicación solicitará dos permisos indispensables para la labor agronómica:
+Al abrir DoctorMaíz por primera vez, la aplicación solicitará dos permisos indispensables para la labor agronómica:
 
 ```mermaid
 graph LR

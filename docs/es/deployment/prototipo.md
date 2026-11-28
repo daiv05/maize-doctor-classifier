@@ -1,6 +1,6 @@
 # Prototipo en dispositivo
 
-El prototipo de DoctorMaiz se probó en un Motorola edge 40 neo (MediaTek Dimensity 7030, Android 15) con el modelo `efficientnet_lite0` cuantizado a int8 (3.74 MB), sin conexión.
+El prototipo de DoctorMaíz se probó en un Motorola edge 40 neo (MediaTek Dimensity 7030, Android 15) con el modelo `efficientnet_lite0` cuantizado a int8 (3.74 MB), sin conexión.
 
 ## Uso de la app
 

@@ -1,11 +1,11 @@
 ---
 title: Catálogo de Sanidad Vegetal del Maíz
-description: Atlas fitopatológico de las 9 patologías y deficiencias nutricionales diagnosticadas por DoctorMaiz.
+description: Atlas fitopatológico de las 9 patologías y deficiencias nutricionales diagnosticadas por DoctorMaíz.
 ---
 
 # Catálogo de Sanidad Vegetal del Maíz
 
-DoctorMaiz clasifica **9 condiciones fitosanitarias** clave en el cultivo de maíz (*Zea mays*), abarcando hongos, un virus, una plaga masticadora, desbalances nutricionales y tejido sano.
+DoctorMaíz clasifica **9 condiciones fitosanitarias** clave en el cultivo de maíz (*Zea mays*), abarcando hongos, un virus, una plaga masticadora, desbalances nutricionales y tejido sano.
 
 <PhoneGallery gap="2rem">
   <PhoneMockup 
@@ -52,7 +52,7 @@ Pústulas redondeadas a oblongas de 1 a 2 mm, inicialmente doradas o color canel
 - **Condiciones Frecuentes:** Días cálidos (25 °C a 32 °C) con noches húmedas y períodos secos intercalados.
 
 <PhoneMockup 
-  src="/app/resultado-mancha-gris.png" caption="Diagnóstico en DoctorMaiz" subtitle="Cercospora identificada con nivel de confianza" maxWidth="280px" center />
+  src="/app/resultado-mancha-gris.png" caption="Diagnóstico en DoctorMaíz" subtitle="Cercospora identificada con nivel de confianza" maxWidth="280px" center />
 
 ### Síntomas Visuales
 Lesiones marrones o canela muy particulares: tienen **forma rectangular perfecta**, porque el crecimiento del micelio se ve bloqueado lateralmente por las nervaduras secundarias de la hoja de maíz. Pueden alcanzar de 1 a 6 cm de largo.
@@ -108,7 +108,7 @@ Hojas tiernas con perforaciones alargadas tipo "perdigonada" o ventanillas trans
 - **Síntomas Visuales:** Amarillamiento seguido de una **necrosis o quemadura marginal** a lo largo de los bordes externos de las hojas basales, mientras que la nervadura central permanece verde.
 
 <PhoneMockup 
-  src="/app/resultado-potasio.png" caption="Diagnóstico en DoctorMaiz" subtitle="Deficiencia de K detectada en campo" maxWidth="280px" center />
+  src="/app/resultado-potasio.png" caption="Diagnóstico en DoctorMaíz" subtitle="Deficiencia de K detectada en campo" maxWidth="280px" center />
 
 - **Manejo:** Fertilización con cloruro de potasio (KCl) o sulfato de potasio al fondo del surco.
 

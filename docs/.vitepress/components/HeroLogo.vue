@@ -1,7 +1,7 @@
 <template>
   <div class="hero-logo-wrapper">
     <div class="glass-container">
-      <img src="/logo.svg" alt="DoctorMaiz Logo" class="hero-logo-img" />
+      <img src="/logo.svg" alt="DoctorMaíz Logo" class="hero-logo-img" />
     </div>
   </div>
 </template>

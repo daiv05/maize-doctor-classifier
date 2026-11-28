@@ -1,4 +1,4 @@
-# DoctorMaiz - Detección de Enfermedades, Plagas y Deficiencias Nutricionales en Cultivos de Maíz
+# DoctorMaíz - Detección de Enfermedades, Plagas y Deficiencias Nutricionales en Cultivos de Maíz
 
 > **Clasificación mediante Deep Learning en Dispositivos Móviles (Edge AI Offline)**
 
@@ -6,7 +6,7 @@
 
 ## Descripción
 
-DoctorMaiz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que clasifica sin conexión.
+DoctorMaíz es un sistema de clasificación de enfermedades foliares, plagas y deficiencias nutricionales en cultivos de maíz, pensado para pequeños agricultores de subsistencia en zonas rurales sin conectividad. Utiliza un modelo de Deep Learning cuantizado (TensorFlow Lite Int8) embebido en una aplicación Android que clasifica sin conexión.
 
 Este repositorio contiene el pipeline de datos, entrenamiento, evaluación, interpretabilidad y exportación. La aplicación móvil vive en [`maize-doctor-app`](https://github.com/Edenilson-Molina/maize-doctor-app), el backend opcional en [`maize-doctor-api`](https://github.com/daiv05/maize-doctor-api) y el segmentador de hoja en [`maize-doctor-segmenter-leaf`](https://github.com/abner-rivas/maize-doctor-segmenter-leaf).
 
@@ -315,8 +315,11 @@ Documentación completa construida con VitePress (`npm install && npm run docs:d
 
 ## Licencia
 
-El código de este repositorio se distribuye bajo la licencia MIT. Ver [LICENSE](LICENSE).
+Código propiedad de la Universidad de El Salvador, bajo licencia propietaria (todos los derechos reservados). Ver [LICENSE](LICENSE). Para adquirirlo se debe presentar una solicitud formal a la Escuela de Ingeniería de Sistemas Informáticos.
 
-La licencia MIT cubre **el código, no los datos**. Las fuentes consolidadas conservan sus licencias originales, varias de ellas más restrictivas. Cualquier redistribución del corpus, de los splits o de artefactos derivados queda sujeta a esos términos, no a MIT. La licencia declarada de cada fuente está en su página individual y la auditoría bibliográfica señala qué metadatos faltan verificar.
+La licencia cubre **el código y la documentación propios, no los datos ni los modelos**:
+
+- Las fuentes de datos y las imágenes incluidas conservan sus licencias. Ver [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Los modelos entrenados y sus exportaciones se rigen por CC BY-NC-SA 4.0. Ver [MODEL_LICENSE.md](MODEL_LICENSE.md).
 
 Proyecto académico desarrollado en la Universidad de El Salvador.

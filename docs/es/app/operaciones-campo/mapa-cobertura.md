@@ -5,7 +5,7 @@ description: Geolocalización de escaneos, código de colores de pines, vista sa
 
 # Mapa de Cobertura y Cartografía del Lote
 
-Uno de los mayores avances de DoctorMaiz respecto a los métodos tradicionales de papel y lápiz es la capacidad de **mapear espacialmente la sanidad del cultivo**. 
+Uno de los mayores avances de DoctorMaíz respecto a los métodos tradicionales de papel y lápiz es la capacidad de **mapear espacialmente la sanidad del cultivo**. 
 
 Cada vez que capturas una hoja, la aplicación asocia silenciosamente la coordenada GPS de alta precisión, construyendo un mapa de calor que permite identificar por dónde está entrando la plaga a la finca.
 
@@ -48,8 +48,8 @@ En la agricultura convencional, cuando el productor ve roya en una orilla, suele
 - Mayor estrés químico en plantas sanas.
 - Aceleración de la resistencia genética del patógeno.
 
-### La Estrategia de "Cordón Sanitario" con DoctorMaiz
-Con el mapa de DoctorMaiz, el productor puede:
+### La Estrategia de "Cordón Sanitario" con DoctorMaíz
+Con el mapa de DoctorMaíz, el productor puede:
 1. Identificar que los pines rojos se concentran en el **extremo este** (de donde sopla el viento dominante).
 2. Trazar un **cordón de contención**: aplicar fungicida sistémico únicamente en las primeras 6 hileras del foco y aplicar preventivos biológicos más económicos en el resto del lote.
 3. Repetir el recorrido a los 7 días para verificar si los nuevos pines se mantienen en verde o amarillo.

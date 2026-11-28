@@ -1,6 +1,6 @@
 # Guía
 
-DoctorMaiz clasifica fotografías de hojas de maíz en nueve condiciones (hoja sana, roya común, tizón foliar del norte, mancha gris, necrosis letal, gusano cogollero y deficiencias de nitrógeno, fósforo y potasio) y clasifica sin conexión en teléfonos Android; las mediciones se hicieron en un teléfono de gama media. Este sitio documenta los datos, el modelado, los pipelines, los resultados y la app.
+DoctorMaíz clasifica fotografías de hojas de maíz en nueve condiciones (hoja sana, roya común, tizón foliar del norte, mancha gris, necrosis letal, gusano cogollero y deficiencias de nitrógeno, fósforo y potasio) y clasifica sin conexión en teléfonos Android; las mediciones se hicieron en un teléfono de gama media. Este sitio documenta los datos, el modelado, los pipelines, los resultados y la app.
 
 ## Componentes
 

@@ -1,4 +1,4 @@
-# Respaldo de modelos DoctorMaiz
+# Respaldo de modelos DoctorMaíz
 
 Paquete con los checkpoints `best.pth` ya entrenados de las corridas del proyecto y una copia de sus resultados. Contiene 18 modelos; `RESULTS_SUMMARY.md` resume las cifras de cada experimento.
 

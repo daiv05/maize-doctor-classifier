@@ -1,6 +1,6 @@
 # Aplicación móvil con React Native y Expo
 
-DoctorMaiz es una aplicación en React Native con Expo que ejecuta el modelo en el teléfono, sin necesidad de conexión. Esta página describe los artefactos que se exportan desde PyTorch y cómo la app los usa.
+DoctorMaíz es una aplicación en React Native con Expo que ejecuta el modelo en el teléfono, sin necesidad de conexión. Esta página describe los artefactos que se exportan desde PyTorch y cómo la app los usa.
 
 ## Artefactos exportados
 

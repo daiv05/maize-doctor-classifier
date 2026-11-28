@@ -44,7 +44,7 @@ El sistema clasifica la hoja de ma\'iz en nueve categor\'ias mutuamente excluyen
 \textbf{Deficiencia de Nitr\'ogeno} & Desbalance nutricional abi\'otico & Clorosis en ``V'' invertida desde la punta hacia la base. & Reducci\'on de porte, espigas peque\~nas y bajo llenado. \\
 \textbf{Deficiencia de F\'osforo} & Desbalance nutricional abi\'otico & Coloraci\'on p\'urpura o rojiza en bordes de hojas j\'ovenes. & Retraso radicular y esterilidad parcial de la mazorca. \\
 \textbf{Deficiencia de Potasio} & Desbalance nutricional abi\'otico & Clorosis y necrosis marginal desde el \'apice foliar. & Acame o volcamiento del tallo y grano liviano. \\
-\textbf{Planta Sana (Healthy)} & Control agron\'omico & L\'amina foliar verde homog\'enea sin lesiones ni plagas. & Crecimiento \'optimo seg\'un potencial gen\'etico del cultivar. \\
+\textbf{Planta Sana (\textit{Healthy})} & Control agron\'omico & L\'amina foliar verde homog\'enea sin lesiones ni plagas. & Crecimiento \'optimo seg\'un potencial gen\'etico del cultivar. \\
 \bottomrule
 \end{tabularx}
 \end{singlespace}
@@ -180,7 +180,7 @@ Adem\'as, la procedencia (la fuente de donde proviene la imagen) y la etiqueta (
 Para depurar las 11 fuentes p\'ublicas y garantizar cero fugas entre particiones, el corpus atraves\'o cuatro etapas secuenciales:
 \begin{enumerate}\setlength{\itemsep}{2pt}
 \item \textbf{Curaci\'on agron\'omica y de etiquetas:} se descartaron 52~360 im\'agenes pre-aumentadas de PlantVillage sin originales, 891 registros multietiqueta o indefinidos, 433 im\'agenes de \texttt{Nutrient\_Sufficiency} (la suficiencia nutricional no descarta pat\'ogenos) y 99 fotograf\'ias de roya del sur (\textit{Puccinia polysora}) asimiladas err\'oneamente a roya com\'un. En la fuente \path{corn-leaf-diseases-classification-roboflow}, ignorar la etiqueta envolvente \texttt{leaf} (presente en el 99.8\% de los registros) permiti\'o rescatar 500 im\'agenes de mancha gris en campo.
-\item \textbf{Deduplicaci\'on perceptual (pHash):} dado que los repositorios redistribuyen copias recomprimidas que el hash de archivo no detecta, cada clase se depur\'o con pHash (umbral 0), eliminando 8~599 im\'agenes redundantes en la consolidaci\'on inicial y 61 adicionales en la ampliaci\'on.
+\item \textbf{Deduplicaci\'on perceptual (pHash):} dado que los repositorios redistribuyen copias recomprimidas que el \textit{hash} de archivo no detecta, cada clase se depur\'o con pHash (umbral 0), eliminando 8~599 im\'agenes redundantes en la consolidaci\'on inicial y 61 adicionales en la ampliaci\'on.
 \item \textbf{Auditor\'ia criptogr\'afica doble (SHA-256):} cada imagen depurada se contrast\'o mediante dos huellas SHA-256 (archivo binario y p\'ixeles RGB tras corregir la orientaci\'on EXIF), excluyendo \'unicamente cuatro pares id\'enticos con etiquetas contradictorias y confirmando cero fugas exactas.
 \item \textbf{Partici\'on oficial estratificada (70/15/15):} las 33~429 im\'agenes verificadas se repartieron por clase y entorno en 23~400 de entrenamiento, 5~014 de validaci\'on y 5~015 de prueba bloqueada.
 \end{enumerate}
@@ -219,7 +219,7 @@ La b\'usqueda de hiperpar\'ametros se hizo con Optuna \cite{optuna2019}, usando 
 \toprule
 \textbf{Hiperpar\'ametro} & \textbf{Rango / Opciones} \\
 \midrule
-\texttt{learning\_rate} & Log-uniforme: $[10^{-5}, 3\times10^{-3}]$ \\
+\texttt{learning\_rate} & \textit{Log}-uniforme: $[10^{-5}, 3\times10^{-3}]$ \\
 \texttt{batch\_size} & Categ\'orico: $\{16, 32, 64\}$ \\
 \texttt{weight\_decay} & Log-uniforme: $[10^{-7}, 10^{-2}]$ \\
 \texttt{class\_weights} & Categ\'orico: $\{\text{none}, \text{inverse}, \text{sqrt\_inverse}\}$ \\
@@ -304,7 +304,7 @@ Recepci\'on idempotente y segura & La API valida la integridad de la imagen, apl
 \draw[rmsg] (6.8,-3.5) -- (3.4,-3.5) node[midway, lab, above] {6. No: termina sin enviar};
 \node[self, anchor=west] at (3.6,-4.1) {7. S\'i: comprueba red y sesi\'on};
 \draw[msg] (3.4,-4.75) -- (10.2,-4.75) node[midway, lab, above] {8. POST aporte};
-\draw[rmsg] (10.2,-5.2) -- (3.4,-5.2) node[midway, lab, above] {9. 401 si el token venci\'o};
+\draw[rmsg] (10.2,-5.2) -- (3.4,-5.2) node[midway, lab, above] {9. 401 si el \textit{token} venci\'o};
 \draw[msg] (3.4,-5.65) -- (10.2,-5.65) node[midway, lab, above] {10. Renueva el token y reintenta};
 \draw[rmsg] (10.2,-6.1) -- (3.4,-6.1) node[midway, lab, above] {11. 201 o 200 (confirmaci\'on)};
 \draw[msg] (3.4,-6.6) -- (6.8,-6.6) node[midway, lab, above] {12. Marca el registro como sincronizado};
@@ -329,7 +329,7 @@ El sistema se compone de tres m\'odulos independientes cuya pila tecnol\'ogica s
 \toprule
 \textbf{M\'odulo} & \textbf{Funci\'on principal} & \textbf{Entorno y herramientas utilizadas} \\
 \midrule
-Pipeline de aprendizaje autom\'atico & Curaci\'on, entrenamiento, evaluaci\'on, cuantizaci\'on y explicabilidad & Python 3.11, PyTorch 2.12, \texttt{timm} 1.0, Optuna 4.9, \texttt{imagededup}, \texttt{Pillow}, \texttt{OpenCV}, \texttt{litert-torch} 0.9, \texttt{torchao}, ONNX Runtime, SHAP, LIME y GPU NVIDIA A10G (24~GB) en Modal. \\
+\textit{Pipeline} de aprendizaje autom\'atico & Curaci\'on, entrenamiento, evaluaci\'on, cuantizaci\'on y explicabilidad & Python 3.11, PyTorch 2.12, \texttt{timm} 1.0, Optuna 4.9, \texttt{imagededup}, \texttt{Pillow}, \texttt{OpenCV}, \texttt{litert-torch} 0.9, \texttt{torchao}, ONNX \textit{Runtime}, \textit{SHAP}, \textit{LIME} y GPU NVIDIA A10G (24~GB) en Modal. \\
 Aplicaci\'on m\'ovil Android & Captura guiada, inferencia local, gesti\'on de parcela y sincronizaci\'on diferida & Android 8.0+ (API 26+, probado en Android 15), Expo 57 (New Architecture), React Native 0.86, TypeScript 6.0, \texttt{react-native-fast-tflite} 3.0 con Nitro Modules C++, Skia 2.6, WatermelonDB 0.28 (SQLite), Android KeyStore, Leaflet 1.9.4, Open-Meteo, NativeWind y compilaci\'on ARM con Gradle y R8. \\
 API de sincronizaci\'on & Cuentas, recepci\'on idempotente de aportes y control de versiones & Python 3.12, FastAPI 0.115, SQLAlchemy 2.0 as\'incrono, Alembic, MySQL 8.4 en Docker Compose, autenticaci\'on JWT HS256 con rotaci\'on, \texttt{bcrypt}, \texttt{slowapi} y validaci\'on de im\'agenes con \texttt{Pillow}. \\
 \bottomrule

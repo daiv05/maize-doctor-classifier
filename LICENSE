@@ -1,22 +1,28 @@
-MIT License
+Licencia propietaria. Todos los derechos reservados.
 
-Copyright (c) 2026 Josias Abner Rivas Fuentes, David Alejandro Deras Cerros,
-Elmer Edenilson Rosales Molina
+Copyright (c) 2026 Universidad de El Salvador
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Autores: Josias Abner Rivas Fuentes, David Alejandro Deras Cerros y
+Elmer Edenilson Rosales Molina.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+El código fuente y la documentación propia de este repositorio son propiedad
+de la Universidad de El Salvador. No se concede permiso para usar, copiar,
+modificar, publicar, distribuir, sublicenciar ni vender este material sin
+autorización escrita de la universidad.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Para adquirir el código o una licencia de uso se debe presentar una solicitud
+formal a la Escuela de Ingeniería de Sistemas Informáticos de la Facultad de
+Ingeniería y Arquitectura de la Universidad de El Salvador.
+
+Alcance
+-------
+Esta licencia no cubre material de terceros ni lo restringe. Las librerías,
+los datos, las imágenes, las tipografías y los modelos conservan sus propias
+licencias, descritas en THIRD_PARTY_NOTICES.md y MODEL_LICENSE.md.
+
+Las versiones de este material publicadas anteriormente bajo la licencia MIT
+conservan esa licencia para quienes las recibieron.
+
+EL SOFTWARE SE ENTREGA "TAL CUAL", SIN GARANTÍAS DE NINGÚN TIPO, EXPRESAS NI
+IMPLÍCITAS. EN NINGÚN CASO LOS AUTORES NI EL TITULAR SERÁN RESPONSABLES DE
+RECLAMACIONES, DAÑOS U OTRAS RESPONSABILIDADES DERIVADAS DE SU USO.

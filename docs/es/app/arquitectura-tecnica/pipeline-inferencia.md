@@ -30,7 +30,7 @@ La cuantización reduce en un **72 %** el peso del archivo respecto al TFLite Fl
 
 ## Contrato de Preprocesamiento de Píxeles
 
-Un error habitual en aplicaciones de visión artificial móvil es procesar la imagen de manera distinta a como fue entrenada la red neuronal. DoctorMaiz implementa un pipeline estricto de preprocesamiento:
+Un error habitual en aplicaciones de visión artificial móvil es procesar la imagen de manera distinta a como fue entrenada la red neuronal. DoctorMaíz implementa un pipeline estricto de preprocesamiento:
 
 ```mermaid
 flowchart TD

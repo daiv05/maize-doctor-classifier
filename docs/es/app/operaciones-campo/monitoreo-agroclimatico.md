@@ -7,7 +7,7 @@ description: Integración GPS con Open-Meteo, caché local de la última lectura
 
 Las enfermedades foliares en el cultivo de maíz no aparecen de forma espontánea: son el resultado de la interacción entre el hospedero (la planta de maíz), el patógeno (las esporas del hongo) y el **ambiente meteorológico** (el triángulo de la enfermedad). 
 
-DoctorMaiz integra un tablero de 4 variables meteorológicas directamente en la pantalla de inicio y muestra, para cada una, un criterio de manejo agronómico.
+DoctorMaíz integra un tablero de 4 variables meteorológicas directamente en la pantalla de inicio y muestra, para cada una, un criterio de manejo agronómico.
 
 ---
 

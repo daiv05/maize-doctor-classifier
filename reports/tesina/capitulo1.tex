@@ -111,7 +111,7 @@ Un modelo convolucional ligero, cuantizado a enteros de 8 bits y ejecutado sin c
 \midrule
 Rendimiento del modelo & Alcanzar Macro $F_1 \ge 0.85$ en la partici\'on de prueba retenida. & Macro $F_1$ \\
 Equidad entre entornos & Mantener un \textit{Disparate Impact Ratio} $\ge 0.80$ entre laboratorio y campo real. & DIR \\
-Confiabilidad de la evaluaci\'on & Ninguna imagen del conjunto de prueba aparece en entrenamiento ni validaci\'on, por hash de archivo y por p\'ixeles. & Solapamiento por SHA-256 y por p\'ixeles \\
+Confiabilidad de la evaluaci\'on & Ninguna imagen del conjunto de prueba aparece en entrenamiento ni validaci\'on, por \textit{hash} de archivo y por p\'ixeles. & Solapamiento por SHA-256 y por p\'ixeles \\
 Despliegue en el tel\'efono & Modelo Int8 de 20~MB o menos, preprocesado e inferencia de 300~ms o menos en un tel\'efono de gama media o baja y funcionamiento sin conexi\'on. & Tama\~no, latencia \\
 \bottomrule
 \end{tabularx}
@@ -176,7 +176,7 @@ El proyecto se organiz\'o seg\'un las fases de \textit{CRISP-DM} (\textit{Cross-
 \ganttbar[bar/.append style={fill=cyan!65!black, draw=cyan!90!black}]{Fase 2: Preparaci\'on de Datos}{5}{8} \\
 \ganttbar[bar/.append style={fill=teal!70!black, draw=teal!90!black}]{Fase 3: Modelado y Optuna}{9}{14} \\
 \ganttbar[bar/.append style={fill=orange!75!black, draw=orange!90!black}]{Fase 4: Evaluaci\'on y Sesgos}{15}{18} \\
-\ganttbar[bar/.append style={fill=green!60!black, draw=green!80!black}]{Fase 5: Edge AI y App M\'ovil}{19}{24} \\
+\ganttbar[bar/.append style={fill=green!60!black, draw=green!80!black}]{Fase 5: \textit{Edge AI} y App M\'ovil}{19}{24} \\
 \ganttbar[bar/.append style={fill=purple!65!black, draw=purple!90!black}]{Fase 6: Pruebas y Memoria}{25}{32} \\
 \ganttmilestone[milestone/.append style={fill=red!80!black, draw=red!90!black}]{Hito: Defensa Final (24/11)}{32}
 \end{ganttchart}%
@@ -249,9 +249,9 @@ El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyec
 \textbf{C\'od.} & \textbf{Concepto / Descripci\'on} & \textbf{Unid.} & \textbf{Cant.} & \textbf{Costo Unit.} & \textbf{Parcial} \\
 \midrule
 \multicolumn{6}{@{}l}{\textbf{1.0 Recursos humanos (honorarios profesionales)}} \\
-1.1 & Ingeniero de Datos / MLOps (Jos\'ias Rivas) & h & 320 & 8.52 & 2,726.40 \\
-1.2 & Investigador de Deep Learning (David Deras) & h & 320 & 7.67 & 2,454.40 \\
-1.3 & Desarrollador M\'ovil Edge AI (Elmer Rosales) & h & 320 & 7.10 & 2,272.00 \\
+1.1 & Ingeniero de Datos / \textit{MLOps} (Jos\'ias Rivas) & h & 320 & 8.52 & 2,726.40 \\
+1.2 & Investigador de \textit{Deep Learning} (David Deras) & h & 320 & 7.67 & 2,454.40 \\
+1.3 & Desarrollador M\'ovil \textit{Edge AI} (Elmer Rosales) & h & 320 & 7.10 & 2,272.00 \\
 1.4 & Docente Asesor (Ing. Bladimir D\'iaz) & h & 32 & 15.00 & 480.00 \\
 1.5 & Docente Asesora (Ing. Karen Pe\~nate) & h & 32 & 15.00 & 480.00 \\
 1.6 & Docente Asesor (Ing. Rodrigo V\'asquez) & h & 32 & 15.00 & 480.00 \\
@@ -277,7 +277,7 @@ El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyec
 4.2 & Servidor VPS Hetzner (API, base de datos y portal) & mes & 4 & 6.00 & 24.00 \\
 4.3 & Volumen Hetzner 100~GB (fotograf\'ias y respaldos) & mes & 4 & 7.67 & 30.68 \\
 4.4 & Registro anual de nombre de dominio & a\~no & 1 & 12.00 & 12.00 \\
-4.5 & Inferencia local en CPU m\'ovil y dataset p\'ublico & serv. & 1 & 0.00 & 0.00 \\
+4.5 & Inferencia local en CPU m\'ovil y \textit{dataset} p\'ublico & serv. & 1 & 0.00 & 0.00 \\
 & \textbf{Subtotal 4.0 Infraestructura en la nube y despliegue} & & & & \textbf{316.68} \\
 \midrule
 & \textbf{TOTAL GENERAL DEL PROYECTO} & & & & \textbf{\$11,301.12} \\

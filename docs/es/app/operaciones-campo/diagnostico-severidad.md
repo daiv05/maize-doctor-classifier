@@ -38,7 +38,7 @@ Es tentador exigir que la inteligencia artificial entregue un número como *"Sev
 Una fotografía de celular captura apenas un área de **10 × 10 cm** de una sola hoja. Un maíz desarrollado tiene más de **14 hojas activas** y alcanza más de dos metros de altura. Un porcentaje matemático calculado sobre una foto aislada no representa el estado de salud de la planta ni del lote.
 :::
 
-Por rigor agronómico, DoctorMaiz combina la **clasificación asistida por visión** con un **acordeón técnico de tres niveles de severidad** basado en escalas científicas homologadas (CIMMYT y CIAT).
+Por rigor agronómico, DoctorMaíz combina la **clasificación asistida por visión** con un **acordeón técnico de tres niveles de severidad** basado en escalas científicas homologadas (CIMMYT y CIAT).
 
 ---
 
@@ -82,4 +82,4 @@ Para tomar una decisión que involucre compras o aplicaciones a gran escala, **n
 1. Ingresa a la parcela descartando las primeras dos hileras del borde (*efecto orilla*).
 2. Recorre el lote siguiendo una trayectoria en forma de **"W"** o **"X"**.
 3. Realiza de **15 a 20 escaneos** distribuidos a lo largo del recorrido.
-4. Consulta el **Mapa de Cobertura** en DoctorMaiz: si más del 30 % de los puntos muestran severidad moderada o alta, procede con la aplicación generalizada.
+4. Consulta el **Mapa de Cobertura** en DoctorMaíz: si más del 30 % de los puntos muestran severidad moderada o alta, procede con la aplicación generalizada.

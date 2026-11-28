@@ -131,7 +131,7 @@ La [síntesis experimental](resultados-por-protocolo.md) reúne los resultados p
 | Artefacto | SHA-256 | Alcance |
 |---|---|---|
 | [Síntesis](resultados-por-protocolo.md) | `390cc1a70f9c724cef920a8bde1a36ae73a132933391d722137a182fe6ef2d41` | Protocolos, resultados y límites |
-| [Guía del paquete](paquete-de-modelos.md) | `5727e3a7cf2b43aea1efca643f3084079c69b148b2218597c05644abcf9047a5` | Contenido, carga, integridad y distribución |
+| [Guía del paquete](paquete-de-modelos.md) | `f08bdcb7eae3add61c99eea20929d51238ee71ec7a06b07f81b18a083e9c7f2c` | Contenido, carga, integridad y distribución |
 | [model_index.csv](evidencia/model_package/model_index.csv) | `77454998beb78524d495893fa25fa2f2918c77129fc112445094948280fa00b4` | 18 checkpoints verificados, rutas, hashes y tamaños |
 | [model_comparison_results.csv](evidencia/model_package/model_comparison_results.csv) | `67f3359868b46d5fe68dac217ccaffae006ab4510ccfcd4e3f771eda297c8fbb` | 18 runs y cuatro resultados de ensamble sin checkpoint único |
 | `model_checksums.sha256` | `77940bbbfd9dd8a5a37ee2a65fec618ed28187b7debb45e95370684c4149bb1f` | Comprobación local de los 18 `best.pth` |

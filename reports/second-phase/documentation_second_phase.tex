@@ -67,24 +67,16 @@
 
 Este documento presenta los resultados correspondientes a la \textbf{Etapa 2} del proyecto de investigaci\'on aplicada enfocado en el diagn\'ostico de patolog\'ias foliares en cultivos de ma\'iz para peque\~nos productores de El Salvador. Partiendo de los hallazgos de la Etapa 1 —donde se validaron tres arquitecturas convolucionales ligeras (\textit{baselines}) sobre un conjunto topado a 10~020 im\'agenes identificando a la deficiencia de potasio como principal cuello de botella—, en esta segunda fase se escal\'o el entrenamiento al corpus consolidado completo de \textbf{33~438 im\'agenes} en 9 clases, integrando cuatro nuevos conjuntos de datos dirigidos a fortalecer las patolog\'ias minoritarias. 
 
-Se implement\'o una optimizaci\'on bayesiana de hiperpar\'ametros utilizando \textit{Optuna} con poda temprana (\textit{MedianPruner}) sobre GPUs en la nube, logrando mejoras de hasta +0.93 puntos porcentuales y ahorrando 8 horas de c\'omputo en GPU. Se desarroll\'o un ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) combinando EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2, alcanzando una exactitud del \textbf{98.29\%}, un Macro $F_1$ de \textbf{0.9567} y un Macro Recall de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba retenida, minimizando los falsos negativos de bioseguridad. La evaluaci\'on rigurosa mediante un experimento cruzado $2\times2$ revel\'o que el protocolo de partici\'on pesa veintid\'os veces m\'as que los hiperpar\'ametros: mientras la evaluaci\'on tradicional arroja un Macro $F_1$ de 0.94, la validaci\'on honesta fuera de fuente (validaci\'on cruzada agrupada por procedencia en 5 pliegues) se sit\'ua en 0.60, demostrando la existencia de atajos visuales de procedencia en los datasets p\'ublicos.
+Se implement\'o una optimizaci\'on bayesiana de hiperpar\'ametros utilizando \textit{Optuna} con poda temprana (\textit{MedianPruner}) sobre GPUs en la nube, logrando mejoras de hasta +0.93 puntos porcentuales y ahorrando 8 horas de c\'omputo en GPU. Se desarroll\'o un ensamble heterog\'eneo por votaci\'on suave (\textit{Soft Voting}) combinando EfficientNet-Lite0, EfficientNet-B0 y ShuffleNet-V2, alcanzando una exactitud del \textbf{98.29\%}, un \textit{Macro} $F_1$ de \textbf{0.9567} y un Macro \textit{Recall} de \textbf{95.06\%} sobre 5~015 im\'agenes de prueba retenida, minimizando los falsos negativos de bioseguridad. La evaluaci\'on rigurosa mediante un experimento cruzado $2\times2$ revel\'o que el protocolo de partici\'on pesa veintid\'os veces m\'as que los hiperpar\'ametros: mientras la evaluaci\'on tradicional arroja un Macro $F_1$ de 0.94, la validaci\'on honesta fuera de fuente (validaci\'on cruzada agrupada por procedencia en 5 pliegues) se sit\'ua en 0.60, demostrando la existencia de atajos visuales de procedencia en los \textit{datasets} p\'ublicos.
 
-La auditor\'ia de equidad (\textit{Fairness}) confirm\'o paridad entre laboratorio y campo real sobre las clases comparables ($DIR = 0.9604$ en Macro $F_1$ y $0.9901$ en exactitud), pero evidenci\'o mediante ablaci\'on espacial que el anillo perif\'erico de la foto retiene el 79.46\% de acierto con el centro de la escena tapado, y que la atribuci\'on de SHAP sobre el tejido foliar apenas supera su nivel de azar ($+0.037$ de exceso medio). Para responder a este reto, se construy\'o y prob\'o en hardware f\'isico (Motorola edge 40 neo) la aplicaci\'on m\'ovil offline \textbf{DoctorMaiz} en React Native, con un modelo cuantizado a Int8 (3.56~MB) que infiere en apenas 60~ms, guiando el encuadre con un marco foliar e integrando un detector de anomal\'ias fuera de dominio (OOD) por distancia de Mahalanobis. Finalmente, se analizan las implicaciones socioecon\'omicas en el agro salvadore\~no y se proponen cinco pol\'iticas p\'ublicas concretas para su adopci\'on en el CENTA y el Ministerio de Agricultura y Ganader\'ia.
+La auditor\'ia de equidad (\textit{Fairness}) confirm\'o paridad entre laboratorio y campo real sobre las clases comparables ($DIR = 0.9604$ en Macro $F_1$ y $0.9901$ en exactitud), pero evidenci\'o mediante ablaci\'on espacial que el anillo perif\'erico de la foto retiene el 79.46\% de acierto con el centro de la escena tapado, y que la atribuci\'on de \textit{SHAP} sobre el tejido foliar apenas supera su nivel de azar ($+0.037$ de exceso medio). Para responder a este reto, se construy\'o y prob\'o en hardware f\'isico (Motorola edge 40 neo) la aplicaci\'on m\'ovil \textit{offline} \textbf{DoctorMa\'iz} en React Native, con un modelo cuantizado a Int8 (3.56~MB) que infiere en apenas 60~ms, guiando el encuadre con un marco foliar e integrando un detector de anomal\'ias fuera de dominio (OOD) por distancia de Mahalanobis. Finalmente, se analizan las implicaciones socioecon\'omicas en el agro salvadore\~no y se proponen cinco pol\'iticas p\'ublicas concretas para su adopci\'on en el CENTA y el Ministerio de Agricultura y Ganader\'ia.
 
-\noindent\textbf{Palabras clave:} deep learning m\'ovil, ma\'iz, optimizaci\'on bayesiana, ensamble multimodelo, sesgo de procedencia, equidad algor\'itmica, Edge AI, pol\'iticas p\'ublicas agr\'icolas.
+\noindent\textbf{Palabras clave:} \textit{deep learning} m\'ovil, ma\'iz, optimizaci\'on bayesiana, ensamble multimodelo, sesgo de procedencia, equidad algor\'itmica, \textit{Edge AI}, pol\'iticas p\'ublicas agr\'icolas.
 
 \bigskip
-\noindent\textbf{Enlaces del proyecto.} El c\'odigo, los pesos exportados y la documentaci\'on completa est\'an disponibles p\'ublicamente:
+\noindent\textbf{Propiedad y licencia.} El c\'odigo fuente de \textbf{DoctorMa\'iz} es propiedad de la Universidad de El Salvador y se rige por una licencia propietaria, con todos los derechos reservados. Quien desee adquirirlo deber\'a presentar una solicitud formal a la Escuela de Ingenier\'ia de Sistemas Inform\'aticos de la Facultad de Ingenier\'ia y Arquitectura. Las im\'agenes del corpus conservan las licencias de sus fuentes y los modelos entrenados se rigen por la licencia CC BY-NC-SA 4.0, que no permite su uso comercial.
 
-\begin{itemize}
-\item Clasificador (\textit{pipeline} de entrenamiento, evaluaci\'on y exportaci\'on): \url{https://github.com/daiv05/maize-doctor-classifier}
-\item Aplicaci\'on m\'ovil \textbf{DoctorMaiz} (React Native, inferencia \textit{offline}): \url{https://github.com/Edenilson-Molina/maize-doctor-app}
-\item Segmentador foliar (detecci\'on y segmentaci\'on de instancias de hoja): \url{https://github.com/abner-rivas/maize-doctor-segmenter-leaf}
-\item API (cuenta de usuario, sincronizaci\'on opcional y avisos de actualizaci\'on): \url{https://github.com/daiv05/maize-doctor-api}
-\item Sitio web y documentaci\'on t\'ecnica: \url{https://doctor-maiz.deras.dev/es}
-\item Dataset consolidado en Hugging Face: \url{https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies}
-\item Artefactos de evaluaci\'on y modelos exportados: \url{https://drive.google.com/drive/folders/1OeZdWggfp7nVkaYHW_oOuCma5xbwhns6?usp=drive_link}
-\end{itemize}
+\noindent La documentaci\'on t\'ecnica est\'a disponible en \url{https://doctor-maiz.deras.dev/es}.
 
 \newpage
 
@@ -108,11 +100,11 @@ Para responder a estos retos, en esta \textbf{Etapa 2} se ampli\'o el corpus a \
 
 \section{Optimizaci\'on de Hiperpar\'ametros}
 
-En esta etapa se desarroll\'o un pipeline automatizado de \textbf{Optimizaci\'on Bayesiana de Hiperpar\'ametros (HPO)} implementado con la librer\'ia \textbf{Optuna}, ejecutando m\'ultiples ensayos (\textit{trials}) en paralelo sobre instancias GPU NVIDIA A10G (24~GB VRAM) en la nube mediante Modal.
+En esta etapa se desarroll\'o un \textit{pipeline} automatizado de \textbf{Optimizaci\'on Bayesiana de Hiperpar\'ametros (HPO)} implementado con la librer\'ia \textbf{Optuna}, ejecutando m\'ultiples ensayos (\textit{trials}) en paralelo sobre instancias GPU NVIDIA A10G (24~GB VRAM) en la nube mediante Modal.
 
 \subsection{Metodolog\'ia de b\'usqueda y espacio de configuraci\'on}
 
-La funci\'on objetivo del optimizador se orient\'o a maximizar el \textbf{Macro $F_1$-Score} sobre el conjunto de validaci\'on oficial, penalizando de forma equitativa los fallos en patolog\'ias minoritarias. El muestreo probabil\'istico se realiz\'o mediante el estimador de \'arbol de Parzen multivariado (\textit{TPE Sampler}), que modela las dependencias e interacciones mutuas entre variables continuas y categ\'oricas.
+La funci\'on objetivo del optimizador se orient\'o a maximizar el \textbf{Macro $F_1$-\textit{Score}} sobre el conjunto de validaci\'on oficial, penalizando de forma equitativa los fallos en patolog\'ias minoritarias. El muestreo probabil\'istico se realiz\'o mediante el estimador de \'arbol de Parzen multivariado (\textit{TPE Sampler}), que modela las dependencias e interacciones mutuas entre variables continuas y categ\'oricas.
 
 El espacio de b\'usqueda abarc\'o siete dimensiones operativas clave (Tabla~\ref{tab:hpo_space}):
 
@@ -126,7 +118,7 @@ El espacio de b\'usqueda abarc\'o siete dimensiones operativas clave (Tabla~\ref
 \toprule
 \textbf{Hiperpar\'ametro} & \textbf{Espacio / Rango} & \textbf{Justificaci\'on T\'ecnica} \\
 \midrule
-\texttt{learning\_rate} & Log-uniforme: $[10^{-5}, 10^{-3}]$ & Control de convergencia y estabilidad del gradiente en AdamW. \\
+\texttt{learning\_rate} & \textit{Log}-uniforme: $[10^{-5}, 10^{-3}]$ & Control de convergencia y estabilidad del gradiente en AdamW. \\
 \texttt{batch\_size} & Categ\'orico: $\{16, 32, 64\}$ & Estabilidad estoc\'astica y saturaci\'on de memoria en GPU. \\
 \texttt{weight\_decay} & Log-uniforme: $[10^{-6}, 10^{-2}]$ & Regularizaci\'on $L_2$ para prevenir memorizaci\'on de fondos. \\
 \texttt{class\_weights} & Categ\'orico: $\{\text{none}, \text{inv}, \text{sqrt\_inv}\}$ & Ponderaci\'on de la p\'erdida frente al desbalance de clases. \\
@@ -156,7 +148,7 @@ De los 15 ensayos corridos sobre la arquitectura de referencia EfficientNet-B0, 
 \begin{minipage}[b]{0.48\linewidth}
 \centering
 \includegraphics[width=\linewidth]{images/tuning/param_importances.png}
-\caption{Importancia de hiperpar\'ametros evaluada por Random Forest.}
+\caption{Importancia de hiperpar\'ametros evaluada por \textit{Random Forest}.}
 \label{fig:param_importance}
 \end{minipage}
 \end{figure}
@@ -184,10 +176,10 @@ La configuraci\'on \'optima obtenida (Trial \#12) mejor\'o al baseline de esta n
 \midrule
 Macro $F_1$ en Validaci\'on & 0.9551 & \textbf{0.9553} & +0.02 pp \\
 \textbf{Macro $F_1$ en Prueba Retenida} & 0.9426 & \textbf{0.9483} & \textbf{+0.57 pp netos} \\
-Learning Rate & $1.00 \times 10^{-4}$ & $4.55 \times 10^{-4}$ & 4.5$\times$ m\'as \'agil con Warmup \\
-Batch Size & 32 & 64 & Mayor saturaci\'on de GPU \\
+\textit{Learning Rate} & $1.00 \times 10^{-4}$ & $4.55 \times 10^{-4}$ & 4.5$\times$ m\'as \'agil con \textit{Warmup} \\
+\textit{Batch Size} & 32 & 64 & Mayor saturaci\'on de GPU \\
 Ponderaci\'on de P\'erdida & Sin ponderar & \texttt{sqrt\_inverse} & Mitiga desbalance de clases \\
-Label Smoothing & 0.00 & 0.10 & Probabilidades calibradas \\
+\textit{Label Smoothing} & 0.00 & 0.10 & Probabilidades calibradas \\
 \bottomrule
 \end{tabular}
 \end{singlespace}
@@ -214,7 +206,7 @@ Para alcanzar el m\'aximo nivel de bioseguridad en el diagn\'ostico, se adopt\'o
 Se seleccionaron tres arquitecturas convolucionales avanzadas con sesgos inductivos (\textit{inductive bias}) profundamente dispares:
 \begin{enumerate}
 \item \textbf{EfficientNet-B0 (MBConv con atenci\'on):} Dise\~no con escalado compuesto de profundidad y ancho, provisto de m\'odulos Squeeze-and-Excitation que asignan pesos de importancia a cada canal convolucional (4.02 millones de par\'ametros).
-\item \textbf{ShuffleNet-V2-x1.0 (Channel Split y Shuffle):} Arquitectura ultra-eficiente que divide las caracter\'isticas en dos ramas y baraja los canales para comunicar informaci\'on sin elevar el costo de acceso a memoria (1.26 millones de par\'ametros).
+\item \textbf{ShuffleNet-V2-x1.0 (\textit{Channel Split} y \textit{Shuffle}):} Arquitectura ultra-eficiente que divide las caracter\'isticas en dos ramas y baraja los canales para comunicar informaci\'on sin elevar el costo de acceso a memoria (1.26 millones de par\'ametros).
 \item \textbf{EfficientNet-Lite0 (MBConv sin atenci\'on):} Variante adaptada para dispositivos m\'oviles, libre de activaciones trascendentes y orientada a la cuantizaci\'on Int8 (3.38 millones de par\'ametros).
 \end{enumerate}
 
@@ -229,7 +221,7 @@ Las tres redes se entrenaron sobre el conjunto completo de 33~438 im\'agenes uti
 
 \subsection{Mecanismo de agregaci\'on: Soft Voting}
 
-El ensamble opera mediante votaci\'on suave (\textit{Soft Voting}), promediando las distribuciones de probabilidad posterior emitidas por la funci\'on Softmax de cada red:
+El ensamble opera mediante votaci\'on suave (\textit{Soft Voting}), promediando las distribuciones de probabilidad posterior emitidas por la funci\'on \textit{Softmax} de cada red:
 
 \begin{equation}
 P_{\text{ens}}(y = c \mid x) = \frac{1}{M} \sum_{m=1}^{M} P_m(y = c \mid x)
@@ -241,19 +233,19 @@ donde $M=3$ y $c \in \{1, \dots, 9\}$. La clase predicha final corresponde a la 
 Al evaluar el ensamble frente a los modelos individuales sobre el conjunto de prueba independiente (5~015 im\'agenes), la combinaci\'on super\'o a todas las arquitecturas en cada una de las m\'etricas globales (Tabla~\ref{tab:ensemble_results} y Figura~\ref{fig:ensemble_bar}).
 
 \begin{table}[H]
-\caption{Desempe\~no cuantitativo del Ensamble vs. Modelos Individuales en Test}
+\caption{Desempe\~no cuantitativo del Ensamble vs. Modelos Individuales en \textit{Test}}
 \label{tab:ensemble_results}
 \centering
 \small
 \begin{singlespace}
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Modelo / Configuraci\'on} & \textbf{Accuracy} & \textbf{Macro $F_1$} & \textbf{Precision} & \textbf{Recall} \\
+\textbf{Modelo / Configuraci\'on} & \textbf{\textit{Accuracy}} & \textbf{Macro $F_1$} & \textbf{\textit{Precision}} & \textbf{Recall} \\
 \midrule
 ShuffleNet-V2-x1.0 & 97.31\% & 0.9330 & 0.9388 & 0.9298 \\
 EfficientNet-Lite0 (m\'ovil desplegada) & 97.91\% & 0.9468 & 0.9533 & 0.9413 \\
 EfficientNet-B0 (referencia individual) & 97.97\% & 0.9483 & 0.9589 & 0.9400 \\
-\textbf{Soft Voting Ensemble (3 modelos)} & \textbf{98.29\%} & \textbf{0.9567} & \textbf{0.9642} & \textbf{0.9506} \\
+\textbf{Soft Voting \textit{Ensemble} (3 modelos)} & \textbf{98.29\%} & \textbf{0.9567} & \textbf{0.9642} & \textbf{0.9506} \\
 \midrule
 \textit{Ganancia neta vs. Mejor individual} & \textit{+0.32 pp} & \textit{+0.84 pp} & \textit{+0.53 pp} & \textbf{\textit{+1.06 pp}} \\
 \bottomrule
@@ -282,10 +274,10 @@ El aporte m\'as contundente del ensamble reside en el \textbf{Macro Recall de 95
 Estos resultados sustentan una arquitectura de despliegue en dos niveles:
 \begin{itemize}
 \item \textbf{Nivel 1 (M\'ovil Offline):} En la parcela sin internet, el tel\'efono ejecuta \texttt{EfficientNet-Lite0} cuantizado a Int8, entregando respuestas en 60~ms con un s\'olido $F_1$ de 0.9468.
-\item \textbf{Nivel 2 (Nube / API para Extensi\'on):} Cuando hay conectividad o cuando t\'ecnicos agr\'icolas revisan diagn\'osticos en el servidor, un backend podría correr el \textbf{ensamble completo} alcanzando el 95.67\% de $F_1$ para resolver casos complejos.
+\item \textbf{Nivel 2 (Nube / API para Extensi\'on):} Cuando hay conectividad o cuando t\'ecnicos agr\'icolas revisan diagn\'osticos en el servidor, un \textit{backend} podría correr el \textbf{ensamble completo} alcanzando el 95.67\% de $F_1$ para resolver casos complejos.
 \end{itemize}
 
-Cabe aclarar que para este proyecto solo se despleg\'o el nivel 1 en la aplicaci\'on m\'ovil \textbf{DoctorMaiz}, mientras que el nivel 2 queda como una opci\'on futura para extensi\'on de servicios.
+Cabe aclarar que para este proyecto solo se despleg\'o el nivel 1 en la aplicaci\'on m\'ovil \textbf{DoctorMa\'iz}, mientras que el nivel 2 queda como una opci\'on futura para extensi\'on de servicios.
 
 \newpage
 
@@ -308,8 +300,8 @@ El conjunto de evaluaci\'on final se conform\'o con \textbf{5~015 im\'agenes} es
 \textbf{Clase Agron\'omica} & \textbf{Muestras} & \textbf{Lite0 ($F_1$)} & \textbf{B0 ($F_1$)} & \textbf{ShuffleNet ($F_1$)} & \textbf{Ensamble ($F_1$)} \\
 \midrule
 Necrosis Letal (MLN) & 963 & 0.9990 & 0.9984 & 0.9974 & \textbf{1.0000} \\
-Planta Sana (Healthy) & 1~311 & 0.9936 & 0.9954 & 0.9901 & \textbf{0.9958} \\
-Roya Com\'un (Common Rust) & 338 & 0.9866 & 0.9896 & 0.9867 & \textbf{0.9882} \\
+Planta Sana (\textit{Healthy}) & 1~311 & 0.9936 & 0.9954 & 0.9901 & \textbf{0.9958} \\
+Roya Com\'un (\textit{Common Rust}) & 338 & 0.9866 & 0.9896 & 0.9867 & \textbf{0.9882} \\
 Gusano Cogollero & 728 & 0.9814 & 0.9877 & 0.9815 & \textbf{0.9856} \\
 Tiz\'on Foliar (NCLB) & 1~025 & 0.9797 & 0.9769 & 0.9728 & \textbf{0.9809} \\
 Mancha Gris (GLS) & 290 & \textbf{0.9451} & 0.9194 & 0.9120 & 0.9388 \\
@@ -344,7 +336,7 @@ Para auditar si el modelo aprendi\'o a generalizar o memoriz\'o las sesiones de 
 \begin{singlespace}
 \begin{tabular}{lccc}
 \toprule
-\textbf{Configuraci\'on} & \textbf{CV Estratificada (5 folds)} & \textbf{CV Agrupada por Fuente} & \textbf{Ca\'ida ($\Delta$)} \\
+\textbf{Configuraci\'on} & \textbf{CV Estratificada (5 \textit{folds})} & \textbf{CV Agrupada por Fuente} & \textbf{Ca\'ida ($\Delta$)} \\
 \midrule
 Configuraci\'on Base & $0.9311 \pm 0.0099$ & $\mathbf{0.6026 \pm 0.1240}$ & $\mathbf{-0.3286}$ \\
 Configuraci\'on de B0 & $0.9463 \pm 0.0052$ & $0.6499 \pm 0.1508$ & $-0.2964$ \\
@@ -465,7 +457,7 @@ Tiz\'on Foliar (NCLB) & 3.01\% & 133 & 1.01\% & 892 \\
 \end{singlespace}
 \end{table}
 
-\subsection{Prueba de oclusi\'on espacial (Clever Hans Check)}
+\subsection{Prueba de oclusi\'on espacial (\textit{Clever Hans} \textit{Check})}
 
 Para verificar si la red atiende a la patolog\'ia o al entorno, se realiz\'o una auditor\'ia de oclusi\'on geom\'etrica sobre las 5~015 im\'agenes de prueba, contrastando el resultado contra un predictor nulo constante (Tabla~\ref{tab:ablation}). La m\'ascara es un rect\'angulo fijo que abarca del 20\% al 80\% de cada eje, al ocluir el centro se tapa el 36.3\% del \'area y queda visible un anillo perif\'erico del 63.7\%, al ocluir la periferia se tapa ese 63.7\% y queda visible la caja central del 36.3\%. Es una m\'ascara geom\'etrica, no anat\'omica, es decir que no a\'isla la lesi\'on ni la l\'amina foliar, sino regiones de la escena.
 
@@ -507,7 +499,7 @@ Con esto se puede concluir que en una parcela salvadore\~na el suelo y la luz no
 
 Recortar el fondo mediante un segmentador autom\'atico a negro degrad\'o el Macro $F_1$ a 0.7191, esta ca\'ida mezcla dos efectos: la p\'erdida del atajo de procedencia, y los errores de la propia segmentaci\'on, que sobre clases de fondo poco contrastado rechaza o recorta tejido leg\'itimo.
 
-\subsection{Auditor\'ia visual con Grad-CAM y SHAP}
+\subsection{Auditor\'ia visual con \textit{Grad-CAM} y SHAP}
 
 Para auditar cualitativamente la atenci\'on, se generaron mapas de activaci\'on con Grad-CAM y valores de importancia con SHAP (Figuras~\ref{fig:gradcam_panel} y~\ref{fig:xai_compare}).
 
@@ -521,7 +513,7 @@ Para auditar cualitativamente la atenci\'on, se generaron mapas de activaci\'on 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.62\linewidth]{images/xai/panel_compare_common_rust.png}
-\caption{Panel comparado de interpretabilidad con segmentaci\'on SLIC: LIME, SHAP y Grad-CAM.}
+\caption{Panel comparado de interpretabilidad con segmentaci\'on SLIC: \textit{LIME}, SHAP y Grad-CAM.}
 \label{fig:xai_compare}
 \end{figure}
 
@@ -560,7 +552,7 @@ Este resultado no contradice la prueba de oclusi\'on, porque ambas t\'ecnicas re
 
 \section{Prototipo Funcional y Desplegado}
 
-El objetivo \'ultimo de este proyecto no es acumular checkpoints en la nube, sino poner una herramienta operativa en las manos de campesinos y promotores agr\'icolas. Se construy\'o la aplicaci\'on m\'ovil nativa \textbf{DoctorMaiz}, desarrollada en React Native y TypeScript sobre Expo, con motor de inferencia completamente desconectado (\textit{offline}).
+El objetivo \'ultimo de este proyecto no es acumular \textit{checkpoints} en la nube, sino poner una herramienta operativa en las manos de campesinos y promotores agr\'icolas. Se construy\'o la aplicaci\'on m\'ovil nativa \textbf{DoctorMa\'iz}, desarrollada en React Native y TypeScript sobre Expo, con motor de inferencia completamente desconectado (\textit{offline}).
 
 \subsection{Optimizaci\'on para el borde: Cuantizaci\'on Int8 a 3.56 MB}
 
@@ -573,7 +565,7 @@ Para cumplir con las restricciones de hardware rural (dispositivos de gama media
 
 \subsection{Pruebas de latencia en hardware real (Motorola edge 40 neo)}
 
-El prototipo final fue instalado y medido en un dispositivo f\'isico aut\'entico: un smartphone \textbf{Motorola edge 40 neo} (procesador MediaTek Dimensity 7030, 8 n\'ucleos a 2.5~GHz, pantalla 1080$\times$2400 px, Android 15).
+El prototipo final fue instalado y medido en un dispositivo f\'isico aut\'entico: un \textit{smartphone} \textbf{Motorola edge 40 neo} (procesador MediaTek Dimensity 7030, 8 n\'ucleos a 2.5~GHz, pantalla 1080$\times$2400 px, Android 15).
 
 Las mediciones instrumentadas mediante \texttt{adb logcat} arrojaron tiempos sobresalientes (Tabla~\ref{tab:mobile_latencies}):
 
@@ -668,7 +660,7 @@ La viabilidad de una soluci\'on de inteligencia artificial en el sector agropecu
 
 Para traducir los avances t\'ecnicos de este proyecto en acciones, se proponen cinco medidas de pol\'itica p\'ublica dirigidas al Ministerio de Agricultura y Ganader\'ia (MAG) y al CENTA:
 
-\subsubsection{1. Adopci\'on a futuro de DoctorMaiz como herramienta oficial de extensi\'on}
+\subsubsection{1. Adopci\'on a futuro de DoctorMa\'iz como herramienta oficial de extensi\'on}
 El MAG puede homologar la aplicaci\'on m\'ovil como herramienta de apoyo digital de bolsillo para los m\'as de 300 extensionistas y promotores agr\'icolas comunitarios del CENTA. Su funcionamiento offline permite que el t\'ecnico emita diagn\'osticos estandarizados en caser\'ios remotos de Caba\~nas o Moraz\'an sin consumir datos m\'oviles, complementando el juicio agron\'omico presencial y reduciendo el tiempo de atenci\'on.
 
 \subsubsection{2. Red Nacional de Alerta Fitosanitaria Temprana}
@@ -681,7 +673,7 @@ La auditor\'ia de procedencia de este proyecto demostr\'o que entrenar con fotos
 El despliegue de la aplicaci\'on debe acompa\~narse de talleres pr\'acticos en cooperativas agr\'icolas y ADESCOs, ense\~nando a los productores el uso correcto del marco gu\'ia de la c\'amara y la interpretaci\'on del detector OOD. La tecnolog\'ia debe presentarse como un \textit{«asistente de apoyo»} y no como un reemplazo del saber campesino, fomentando la confianza y evitando la exclusi\'on de adultos mayores o mujeres productoras.
 
 \subsubsection{5. Soberan\'ia tecnol\'ogica y protecci\'on de datos campesinos}
-El c\'odigo fuente, las arquitecturas y los pesos cuantizados de DoctorMaiz deben mantenerse bajo licencias de c\'odigo abierto (\textit{Open Source}, Apache 2.0 o MIT). El Estado no debe ceder la propiedad de los modelos agron\'omicos a corporaciones transnacionales de semillas o agroqu\'imicos, garantizando que el patrimonio de datos del ma\'iz pertenezca a la sociedad salvadore\~na y protegiendo la privacidad de los productores frente a cualquier explotaci\'on comercial de su informaci\'on.
+El c\'odigo fuente de DoctorMa\'iz es propiedad de la Universidad de El Salvador, que debe definir las condiciones de su uso p\'ublico; los modelos entrenados se rigen por la licencia CC BY-NC-SA 4.0, que no permite su uso comercial. El Estado no debe ceder la propiedad de los modelos agron\'omicos a corporaciones transnacionales de semillas o agroqu\'imicos, garantizando que el patrimonio de datos del ma\'iz pertenezca a la sociedad salvadore\~na y protegiendo la privacidad de los productores frente a cualquier explotaci\'on comercial de su informaci\'on.
 
 \newpage
 

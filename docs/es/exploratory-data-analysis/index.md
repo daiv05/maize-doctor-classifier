@@ -2,7 +2,7 @@
 
 El EDA busca responder tres preguntas antes de diseñar el pipeline de entrenamiento: ¿qué hay en el dataset?, ¿qué problemas tiene?, y ¿qué decisiones impone?
 
-El análisis completo y reproducible, con todo el código, está en la notebook [`notebooks/01_eda.ipynb`](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb). Esta página resume los resultados y las decisiones que se derivaron.
+El análisis completo y reproducible, con todo el código, está en la notebook `notebooks/01_eda.ipynb`. Esta página resume los resultados y las decisiones que se derivaron.
 
 ::: warning Instantánea histórica — agosto de 2026
 Esta página y sus figuras reflejan el corpus ampliado de **33 438 imágenes**, anterior a las exclusiones contractuales vigentes. No es el EDA de `master_manifest.csv` actual, que contiene 33 429 muestras elegibles. Los cambios históricos llevaron el dataset desde **31 623** imágenes y el desbalance máximo desde **32.9x** a **14.1x**.
@@ -49,7 +49,7 @@ Antes de las métricas numéricas, un grid de 4 imágenes aleatorias por clase (
 
 ![Muestra visual representativa por clase](/eda/eda_00_muestra_visual.png)
 
-- [Ver análisis completo: sección 1.1 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
+- Análisis completo: sección 1.1 de la notebook `01_eda.ipynb`.
 
 ## 1. Distribución de clases
 
@@ -61,7 +61,7 @@ El dataset presenta un **desbalance severo**: `healthy` (8 744 imágenes) supera
 
 El proyecto compensa el desbalance con pérdida ponderada (`class_weights = sqrt_inverse`) y, en los baselines, con `WeightedRandomSampler`; las clases con razón mayor a 4x (`potassium_deficiency`, `nitrogen_deficiency`, `phosphorus_deficiency` y `gray_leaf_spot`) reciben un pipeline de augmentation más agresivo (`CornMinorityTransforms`).
 
-- [Ver análisis completo: sección 1.2 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
+- Análisis completo: sección 1.2 de la notebook `01_eda.ipynb`.
 
 ## 2. Sesgo de entorno (lab vs real)
 
@@ -90,7 +90,7 @@ Con la ampliación de agosto 2026 esto cambió. En la primera etapa las tres def
 
 El mismo patrón persiste en `lethal_necrosis`, que depende de dos fuentes (`maize_africa` y `multi_desease`), y `common_rust`, cuyo material de laboratorio domina desde `cropdg`/`maize_desease`.
 
-- [Ver análisis completo: sección 1.3 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
+- Análisis completo: sección 1.3 de la notebook `01_eda.ipynb`.
 
 ## 3. Resolución y dimensiones
 
@@ -116,7 +116,7 @@ Los violin plots confirman que **la resolución no es independiente de la clase*
 - **`common_rust` y `gray_leaf_spot`:** distribuciones bimodales (lab ~256 px, campo ~640 px).
 - **`healthy`, `lethal_necrosis` y `northern_corn_leaf_blight`:** colas más largas (hasta 3000-5000+ px), con mayor dispersión de aspect ratio. Estas clases sufren la mayor pérdida de detalle durante el resize, y el resize a cuadrado distorsionará la geometría de las lesiones en imágenes con aspect ratio lejos de 1.0.
 
-- [Ver análisis completo: sección 1.4 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
+- Análisis completo: sección 1.4 de la notebook `01_eda.ipynb`.
 
 ## 4. Calidad de imagen
 
@@ -144,7 +144,7 @@ En un problema de enfermedades foliares, el color es una señal diagnóstica pri
 
 El análisis del canal Hue por clase y entorno permite verificar si las firmas cromáticas de cada enfermedad son detectables estadísticamente, y si existen diferencias de dominio de color entre imágenes lab y real que podrían actuar como shortcuts para el modelo.
 
-- [Ver análisis completo: sección 1.5 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
+- Análisis completo: sección 1.5 de la notebook `01_eda.ipynb`.
 
 ## 5. Duplicados y limpieza
 
@@ -156,9 +156,9 @@ Se eliminaron **8 599 imágenes** agrupadas en **8 110 grupos**. Las fuentes con
 
 > Deduplicación de agosto 2026. De ese total, 61 imágenes en 60 grupos corresponden a los cuatro datasets nuevos, y todos los grupos están dentro de ellos: no hay duplicados contra el material preexistente de `clean/`. El desglose fue `maize_2_roboflow` (35 grupos, internos), `corn_leaf_diseases_classification_roboflow` (20, internos) y 5 grupos cruzados entre las dos fuentes nuevas de GLS - estos últimos idénticos byte a byte, evidencia de que ambos datasets de Roboflow redistribuyen material común. Solo esos 5 eran copias exactas; los otros 56 son *near-duplicates* que un hash criptográfico no habría detectado.
 
-El dataset actual (y publicado en <a href="https://huggingface.co/datasets/daiv05/corn-leaf-diseases-pests-and-deficiencies" target="_blank" rel="noopener noreferrer">Hugging Face</a>) es **post-deduplicación**. `src/cleanup/find_duplicates.py` escribe sus registros en `outputs/cleanup/duplicates/`; los CSV de las ejecuciones anteriores ya no están versionados en el repositorio.
+El dataset actual es **post-deduplicación**. `src/cleanup/find_duplicates.py` escribe sus registros en `outputs/cleanup/duplicates/`; los CSV de las ejecuciones anteriores ya no están versionados en el repositorio.
 
-- [Ver análisis completo: sección 1.6 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
+- Análisis completo: sección 1.6 de la notebook `01_eda.ipynb`.
 
 ## 6. Sesgos identificados
 
@@ -177,7 +177,7 @@ A partir de los análisis anteriores se identifican cinco sesgos que afectan dir
 
 El sesgo de `fall_armyworm` es especialmente relevante, se decidió mezclar las dos fuentes de imágenes: `hoja con daño sin insecto visible` y `hoja con daño y gusano visible`. Esto se hizo porque al final la clase es `fall_armyworm` y la clasificación y recomendación de tratamiento no depende de la presencia del insecto, sino del patrón de daño foliar. Sin embargo, esto introduce un sesgo, por lo que se tendrá especial cuidado en la validación y en la interpretación de métricas,
 
-- [Ver análisis completo: sección 1.7 de la notebook](https://github.com/daiv05/maize-doctor-classifier/blob/master/notebooks/01_eda.ipynb)
+- Análisis completo: sección 1.7 de la notebook `01_eda.ipynb`.
 
 ## Conclusiones
 
