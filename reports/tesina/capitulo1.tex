@@ -187,9 +187,10 @@ El proyecto se organiz\'o seg\'un las fases de \textit{CRISP-DM} (\textit{Cross-
 \caption{Cronograma de actividades por fase (CRISP-DM), con horas por integrante}
 \label{tab:cronograma}
 \centering
-\small
+\footnotesize
 \begin{singlespace}
-\begin{tabularx}{\textwidth}{p{4.3cm}ccccX}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabularx}{\textwidth}{p{4.2cm}ccccX}
 \toprule
 \textbf{Fase} & \textbf{Inicio} & \textbf{Fin} & \textbf{Semanas} & \textbf{Horas} & \textbf{Entregable principal} \\
 \midrule
@@ -214,11 +215,12 @@ El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyec
 \caption{Inventario de equipos}
 \label{tab:inventario_equipos}
 \centering
-\scriptsize
+\footnotesize
 \begin{singlespace}
-\textit{(Valores expresados en d\'olares de los Estados Unidos de Am\'erica --- USD)}\\[4pt]
+\textit{(Valores expresados en d\'olares de los Estados Unidos de Am\'erica, USD)}\\[4pt]
 \setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{1.75cm}>{\raggedleft\arraybackslash}p{1.65cm}@{}}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{1.9cm}>{\raggedleft\arraybackslash}p{1.75cm}@{}}
 \toprule
 \textbf{C\'od.} & \textbf{Equipo} & \textbf{Especificaciones t\'ecnicas} & \textbf{Valor Activo} & \textbf{Cuota/Mes} \\
 \midrule
@@ -237,11 +239,12 @@ El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyec
 \caption{Presupuesto anal\'itico}
 \label{tab:presupuesto}
 \centering
-\scriptsize
+\footnotesize
 \begin{singlespace}
-\textit{(Expresado en d\'olares de los Estados Unidos de Am\'erica --- USD)}\\[4pt]
+\textit{(Expresado en d\'olares de los Estados Unidos de Am\'erica, USD)}\\[3pt]
 \setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xcr>{\raggedleft\arraybackslash}p{1.65cm}>{\raggedleft\arraybackslash}p{1.85cm}@{}}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xcr>{\raggedleft\arraybackslash}p{1.85cm}>{\raggedleft\arraybackslash}p{1.95cm}@{}}
 \toprule
 \textbf{C\'od.} & \textbf{Concepto / Descripci\'on} & \textbf{Unid.} & \textbf{Cant.} & \textbf{Costo Unit.} & \textbf{Parcial} \\
 \midrule
@@ -249,9 +252,9 @@ El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyec
 1.1 & Ingeniero de Datos / MLOps (Jos\'ias Rivas) & h & 320 & 8.52 & 2,726.40 \\
 1.2 & Investigador de Deep Learning (David Deras) & h & 320 & 7.67 & 2,454.40 \\
 1.3 & Desarrollador M\'ovil Edge AI (Elmer Rosales) & h & 320 & 7.10 & 2,272.00 \\
-1.4 & Docente Asesor --- Ing. Bladimir D\'iaz & h & 32 & 15.00 & 480.00 \\
-1.5 & Docente Asesora --- Ing. Karen Pe\~nate & h & 32 & 15.00 & 480.00 \\
-1.6 & Docente Asesor --- Ing. Rodrigo V\'asquez & h & 32 & 15.00 & 480.00 \\
+1.4 & Docente Asesor (Ing. Bladimir D\'iaz) & h & 32 & 15.00 & 480.00 \\
+1.5 & Docente Asesora (Ing. Karen Pe\~nate) & h & 32 & 15.00 & 480.00 \\
+1.6 & Docente Asesor (Ing. Rodrigo V\'asquez) & h & 32 & 15.00 & 480.00 \\
 & \textbf{Subtotal 1.0 Recursos humanos} & & & & \textbf{8,892.80} \\
 \midrule
 \multicolumn{6}{@{}l}{\textbf{2.0 Depreciaci\'on de equipos (seg\'un Tabla~\ref{tab:inventario_equipos})}} \\
@@ -287,13 +290,14 @@ El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyec
 \caption{Cuadro resumen del presupuesto global}
 \label{tab:presupuesto_resumen}
 \centering
-\scriptsize
+\footnotesize
 \begin{singlespace}
-\textit{(Expresado en d\'olares de los Estados Unidos de Am\'erica --- USD)}\\[4pt]
+\textit{(Expresado en d\'olares de los Estados Unidos de Am\'erica, USD)}\\[4pt]
 \setlength{\tabcolsep}{4pt}
-\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{2.2cm}>{\raggedleft\arraybackslash}p{2.35cm}>{\raggedleft\arraybackslash}p{2.0cm}>{\raggedleft\arraybackslash}p{1.25cm}@{}}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedleft\arraybackslash}p{2.0cm}>{\raggedleft\arraybackslash}p{2.65cm}>{\raggedleft\arraybackslash}p{2.0cm}>{\raggedleft\arraybackslash}p{1.45cm}@{}}
 \toprule
-\textbf{C\'od.} & \textbf{Categor\'ia de Gasto} & \textbf{Aporte Especie} & \textbf{Desembolso Efec.} & \textbf{Total} & \textbf{Part. (\%)} \\
+\textbf{C\'od.} & \textbf{Categor\'ia de Gasto} & \textbf{Aporte} & \textbf{Desembolso Efec.} & \textbf{Total} & \textbf{Part. (\%)} \\
 \midrule
 1.0 & Recursos humanos (honorarios y asesor\'ia) & 8,892.80 & 0.00 & 8,892.80 & 78.69\% \\
 2.0 & Depreciaci\'on de equipos y dispositivo m\'ovil & 1,166.64 & 0.00 & 1,166.64 & 10.32\% \\
@@ -308,7 +312,7 @@ El presupuesto integral cubre las 32 semanas (8 meses) de ejecuci\'on del proyec
 \end{table}
 
 \subsection*{Notas del presupuesto}
-\begin{itemize}
+\begin{itemize}\setlength{\itemsep}{4pt}
 \item \textbf{Honorarios:} las tarifas del equipo investigador (\$8.52/h, \$7.67/h y \$7.10/h) derivan de remuneraciones mensuales de referencia de \$1,500, \$1,350 y \$1,250 sobre la jornada legal salvadore\~na de 176~h/mes (44~h/semana), imputadas a 10~h/semana durante 32 semanas; la asesor\'ia docente se valor\'o en 1~h/semana por asesor a \$15.00/h, sin consultor\'ia externa remunerada.
 \item \textbf{Depreciaci\'on:} los activos de la Tabla~\ref{tab:inventario_equipos} se deprecian por m\'etodo lineal a 36 meses con valor residual nulo (\$0.00).
 \item \textbf{Gastos operativos:} corresponden a desembolso efectivo por conectividad residencial, papeler\'ia y traslados administrativos; el consumo el\'ectrico residencial se asume dentro de los gastos dom\'esticos.

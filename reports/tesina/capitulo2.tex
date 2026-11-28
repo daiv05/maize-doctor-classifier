@@ -2,16 +2,16 @@
 
 \section{Soluci\'on Propuesta}
 
-Ante las tres restricciones identificadas en el Cap\'itulo~1 —conectividad rural limitada, dispositivos de recursos modestos y alta variabilidad de las fotograf\'ias en parcela—, se propone \textbf{DoctorMa\'iz}, un sistema m\'ovil de diagn\'ostico fitosanitario sustentado en inteligencia artificial en el borde (\textit{Edge AI}). En lugar de depender de servidores remotos, la aplicaci\'on ejecuta todo el an\'alisis en el tel\'efono del agricultor y se organiza en cuatro pilares:
+Ante las tres restricciones identificadas en el Cap\'itulo~1 (conectividad rural limitada, dispositivos de recursos modestos y alta variabilidad de las fotograf\'ias en parcela), se propone \textbf{DoctorMa\'iz}, un sistema m\'ovil de diagn\'ostico fitosanitario sustentado en inteligencia artificial en el borde (\textit{Edge AI}). En lugar de depender de servidores remotos, la aplicaci\'on ejecuta todo el an\'alisis en el tel\'efono del agricultor y se organiza en cuatro pilares:
 
 \begin{itemize}
 \item \textbf{Clasificaci\'on local sin conexi\'on:} una red neuronal convolucional ligera cuantizada a enteros de 8 bits (Int8) identifica nueve condiciones foliares directamente en la CPU del tel\'efono.
 \item \textbf{Red de seguridad ante capturas dudosas:} un marco gu\'ia de encuadre y un detector fuera de distribuci\'on (OOD) permiten abstenerse (\guillemotleft Imagen no reconocida\guillemotright) cuando la toma no es confiable.
 \item \textbf{Apoyo pr\'actico en la parcela:} cada diagn\'ostico se traduce en una gu\'ia visual de severidad, pautas de manejo, historial geolocalizado, mapa de cobertura y tablero agroclim\'atico.
-\item \textbf{Crecimiento evolutivo con datos locales:} un m\'odulo opcional de aportes voluntarios y sincronizaci\'on diferida —con privacidad cero-telemetr\'ia sobre el historial personal— sienta las bases de un conjunto de datos nacional.
+\item \textbf{Crecimiento evolutivo con datos locales:} un m\'odulo opcional de aportes voluntarios y sincronizaci\'on diferida (con privacidad cero-telemetr\'ia sobre el historial personal) sienta las bases de un conjunto de datos nacional.
 \end{itemize}
 
-Para delimitar el comportamiento del sistema antes de detallar su implementaci\'on interna, la Figura~\ref{fig:caja_negra} lo representa como un modelo conceptual de caja negra. De izquierda a derecha, el sistema recibe fotograf\'ias tomadas bajo luz irregular, sombras y fondos naturales en equipos con poca memoria y sin internet (\textit{Entradas}); ejecuta en el dispositivo cuatro pasos internos —recepci\'on, validaci\'on de confiabilidad, interpretaci\'on de s\'intomas y asociaci\'on agron\'omica— (\textit{Procesamiento}); y entrega un diagn\'ostico diferenciado o una abstenci\'on segura junto con la gu\'ia de severidad para orientar la decisi\'on en campo (\textit{Salidas esperadas}).
+Para delimitar el comportamiento del sistema antes de detallar su implementaci\'on interna, la Figura~\ref{fig:caja_negra} lo representa como un modelo conceptual de caja negra. De izquierda a derecha, el sistema recibe fotograf\'ias tomadas bajo luz irregular, sombras y fondos naturales en equipos con poca memoria y sin internet (\textit{Entradas}); ejecuta en el dispositivo cuatro pasos internos de \textit{Procesamiento} (recepci\'on, validaci\'on de confiabilidad, interpretaci\'on de s\'intomas y asociaci\'on agron\'omica); y entrega un diagn\'ostico diferenciado o una abstenci\'on segura junto con la gu\'ia de severidad para orientar la decisi\'on en campo (\textit{Salidas esperadas}).
 
 \begin{figure}[H]
 \centering
@@ -177,9 +177,13 @@ Adem\'as, la procedencia (la fuente de donde proviene la imagen) y la etiqueta (
 \end{figure}
 
 \subsection{Auditor\'ia de Duplicados y Partici\'on}
-Antes de deduplicar se aplicaron filtros estrictos de calidad agron\'omica sobre las 11 fuentes: se descartaron 52~360 im\'agenes pre-aumentadas de PlantVillage sin originales, 891 registros multietiqueta o indefinidos, 433 im\'agenes de \texttt{Nutrient\_Sufficiency} (la suficiencia nutricional no descarta pat\'ogenos) y 99 fotograf\'ias de roya del sur (\textit{Puccinia polysora}) asimiladas err\'oneamente a roya com\'un. En la fuente \path{corn-leaf-diseases-classification-roboflow}, ignorar la etiqueta envolvente \texttt{leaf} (presente en el 99.8\% de los registros) permiti\'o rescatar 500 im\'agenes de mancha gris en campo.
-
-Los repositorios p\'ublicos redistribuyen con frecuencia el mismo material con distinta compresi\'on, por lo que cada clase se depur\'o mediante hash perceptual (pHash, umbral 0), eliminando 8~599 im\'agenes redundantes en la consolidaci\'on inicial y 61 adicionales en la ampliaci\'on. Sobre el corpus depurado se ejecut\'o una auditor\'ia final con dos huellas SHA-256 (archivo binario y p\'ixeles RGB tras corregir orientaci\'on EXIF), excluyendo \'unicamente cuatro pares id\'enticos con etiquetas contradictorias. La partici\'on oficial 70/15/15, estratificada por clase y entorno, reparte las 33~429 im\'agenes en 23~400 de entrenamiento, 5~014 de validaci\'on y 5~015 de prueba (0 fugas exactas).
+Para depurar las 11 fuentes p\'ublicas y garantizar cero fugas entre particiones, el corpus atraves\'o cuatro etapas secuenciales:
+\begin{enumerate}\setlength{\itemsep}{2pt}
+\item \textbf{Curaci\'on agron\'omica y de etiquetas:} se descartaron 52~360 im\'agenes pre-aumentadas de PlantVillage sin originales, 891 registros multietiqueta o indefinidos, 433 im\'agenes de \texttt{Nutrient\_Sufficiency} (la suficiencia nutricional no descarta pat\'ogenos) y 99 fotograf\'ias de roya del sur (\textit{Puccinia polysora}) asimiladas err\'oneamente a roya com\'un. En la fuente \path{corn-leaf-diseases-classification-roboflow}, ignorar la etiqueta envolvente \texttt{leaf} (presente en el 99.8\% de los registros) permiti\'o rescatar 500 im\'agenes de mancha gris en campo.
+\item \textbf{Deduplicaci\'on perceptual (pHash):} dado que los repositorios redistribuyen copias recomprimidas que el hash de archivo no detecta, cada clase se depur\'o con pHash (umbral 0), eliminando 8~599 im\'agenes redundantes en la consolidaci\'on inicial y 61 adicionales en la ampliaci\'on.
+\item \textbf{Auditor\'ia criptogr\'afica doble (SHA-256):} cada imagen depurada se contrast\'o mediante dos huellas SHA-256 (archivo binario y p\'ixeles RGB tras corregir la orientaci\'on EXIF), excluyendo \'unicamente cuatro pares id\'enticos con etiquetas contradictorias y confirmando cero fugas exactas.
+\item \textbf{Partici\'on oficial estratificada (70/15/15):} las 33~429 im\'agenes verificadas se repartieron por clase y entorno en 23~400 de entrenamiento, 5~014 de validaci\'on y 5~015 de prueba bloqueada.
+\end{enumerate}
 
 \subsection{Trazabilidad de los Datos}
 Cada imagen posee un registro con identificador \'unico, huella SHA-256, fuente y entorno (laboratorio o campo). Las listas de partici\'on y los manifiestos de ejecuci\'on se resguardan bajo control criptogr\'afico y configuraci\'on determinista en GPU, logrando reproducir bit a bit el modelo oficial en una corrida independiente un mes despu\'es y aplicando un bloqueo contractual previo a una \'unica evaluaci\'on en prueba para evitar sesgo de selecci\'on.
@@ -209,7 +213,7 @@ La b\'usqueda de hiperpar\'ametros se hizo con Optuna \cite{optuna2019}, usando 
 \caption{Espacio de b\'usqueda de hiperpar\'ametros explorado con Optuna}
 \label{tab:hpo_espacio}
 \centering
-\small
+\footnotesize
 \begin{singlespace}
 \begin{tabular}{lp{7.2cm}}
 \toprule
@@ -232,7 +236,7 @@ Siguiendo la formulaci\'on~\eqref{eq:softvoting_mt} del Cap\'itulo~2, el ensambl
 \section{Despliegue en Dispositivo M\'ovil}
 
 \subsection{Cuantizaci\'on a Enteros de 8 Bits (Int8)}
-Para ejecutar el modelo oficial en tel\'efonos sin p\'erdida de precisi\'on, se aplic\'o cuantizaci\'on din\'amica post-entrenamiento Int8~\eqref{eq:cuant_mt} mediante \texttt{litert-torch} 0.9.4 y \texttt{torchao}. Durante la exportaci\'on se detect\'o que el n\'ucleo CPU integrado de TensorFlow Lite en Android (usado sin delegados para garantizar determinismo entre chips) no admite escalas por canal en la capa lineal final y corrompe los \textit{logits}, mientras que cuantizar toda la red por tensor degrada las convoluciones separables en profundidad. Como mitigaci\'on se aplic\'o una \textbf{cuantizaci\'on h\'ibrida} —cuerpo convolucional por canal y cabezal lineal por tensor— verificada autom\'aticamente entre motores antes de empaquetar el binario.
+Para ejecutar el modelo oficial en tel\'efonos sin p\'erdida de precisi\'on, se aplic\'o cuantizaci\'on din\'amica post-entrenamiento Int8~\eqref{eq:cuant_mt} mediante \texttt{litert-torch} 0.9.4 y \texttt{torchao}. Durante la exportaci\'on se detect\'o que el n\'ucleo CPU integrado de TensorFlow Lite en Android (usado sin delegados para garantizar determinismo entre chips) no admite escalas por canal en la capa lineal final y corrompe los \textit{logits}, mientras que cuantizar toda la red por tensor degrada las convoluciones separables en profundidad. Como mitigaci\'on se aplic\'o una \textbf{cuantizaci\'on h\'ibrida} (cuerpo convolucional por canal y cabezal lineal por tensor), verificada autom\'aticamente entre motores antes de empaquetar el binario.
 
 \subsection{Detector de Anomal\'ias Fuera de Distribuci\'on (OOD)}
 Para evitar diagn\'osticos forzados ante capturas ajenas al ma\'iz, el modelo exportado expone dos salidas simult\'aneas: los 9 \textit{logits} y el vector de caracter\'isticas de la pen\'ultima capa ($1280$ dimensiones). Al calibrar la distancia RMD~\eqref{eq:rmd_mt}, invertir la covarianza en $1280$ dimensiones colapsaba por ruido espectral; por ello el vector se normaliza a norma unitaria y se proyecta mediante PCA a las $182$ componentes que explican el $99.01\%$ de la varianza de entrenamiento.
@@ -249,7 +253,7 @@ Para compensar las limitaciones inherentes del clasificador en condiciones de ca
 
 La integraci\'on t\'ecnica del flujo de inferencia local paso a paso dentro de la aplicaci\'on se detalla en la Secci\'on~4.1.2 del Cap\'itulo~4.
 
-\section{Sincronizaci\'on y Aportes}
+\section{Sincronizaci\'on y Aportes al Conjunto de Datos}
 
 El intercambio con el servidor es estrictamente opcional y se dise\~n\'o para recolectar evidencia de campo sin comprometer la operaci\'on aut\'onoma ni la privacidad del productor. La Tabla~\ref{tab:politicas_sync_c3} resume los cuatro principios que rigen este flujo, cuya secuencia operativa se ilustra en la Figura~\ref{fig:secuencia_sync}.
 
@@ -336,53 +340,55 @@ API de sincronizaci\'on & Cuentas, recepci\'on idempotente de aportes y control 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=0.55cm and 0.65cm,
-    stage/.style={
-        rectangle, rounded corners=4pt, draw=gray!50, line width=0.8pt,
-        minimum width=2.85cm, minimum height=1.12cm, text width=2.65cm,
-        align=center, font=\footnotesize, fill=gray!4
+    boxbase/.style={
+        rectangle, rounded corners=4pt, line width=0.8pt,
+        minimum width=3.55cm, text width=3.35cm, minimum height=1.70cm,
+        align=center, font=\footnotesize, inner sep=3.5pt
     },
-    phase/.style={font=\scriptsize\bfseries\itshape, text=gray!60!black},
-    arrow/.style={-{Latex[length=2.6mm]}, line width=0.95pt, draw=gray!60}
+    ml/.style={boxbase, draw=blue!55!black, fill=blue!6},
+    mob/.style={boxbase, draw=green!45!black, fill=green!6},
+    api/.style={boxbase, draw=orange!60!black, fill=orange!6},
+    phase/.style={font=\footnotesize\bfseries\itshape},
+    arrow/.style={-{Latex[length=2.5mm]}, line width=0.95pt, draw=gray!65!black},
+    xarr/.style={-{Latex[length=2.5mm]}, line width=0.95pt, dashed, draw=gray!60!black},
+    biarr/.style={{Latex[length=2.5mm]}-{Latex[length=2.5mm]}, line width=0.95pt, dashed, draw=gray!60!black}
 ]
-\node[phase] (lbl1) {Fase de entrenamiento y selecci\'on};
-\node[stage, fill=blue!6, draw=blue!55!black, below=0.25cm of lbl1, xshift=-3.2cm] (datos)
-  {\textbf{Fuentes p\'ublicas}\\[1pt]33~429 im\'agenes\\11 fuentes};
-\node[stage, fill=blue!6, draw=blue!55!black, right=of datos] (pipe)
-  {\textbf{Preparaci\'on de datos}\\[1pt]Depuraci\'on\\y particiones};
-\node[stage, fill=blue!6, draw=blue!55!black, right=of pipe] (optuna)
-  {\textbf{Entrenamiento}\\[1pt]GPU A10G en Modal\\Comparaci\'on y Optuna};
-\node[stage, fill=blue!6, draw=blue!55!black, right=of optuna] (lite0)
-  {\textbf{EfficientNet-Lite0}\\[1pt]Modelo oficial};
+% Fase 1: Entrenamiento
+\node[phase, text=blue!65!black] (lbl1) at (6.48, 1.40) {Fase de entrenamiento y selecci\'on del modelo};
+\node[ml] (datos) at (0,0) {\textbf{Fuentes p\'ublicas}\\[2pt]33~429 im\'agenes\\11 repositorios};
+\node[ml] (pipe) at (4.32,0) {\textbf{Curaci\'on de datos}\\[2pt]Auditor\'ia pHash y SHA\\Partici\'on 70/15/15};
+\node[ml] (optuna) at (8.64,0) {\textbf{Entrenamiento}\\[2pt]GPU A10G en Modal\\Optuna y calibraci\'on};
+\node[ml] (lite0) at (12.96,0) {\textbf{EfficientNet-Lite0}\\[2pt]Modelo de producci\'on\\Pesos ImageNet};
+
 \draw[arrow] (datos) -- (pipe);
 \draw[arrow] (pipe) -- (optuna);
 \draw[arrow] (optuna) -- (lite0);
 
-\node[phase, below=0.9cm of datos, xshift=1.2cm] (lbl2) {Fase de despliegue m\'ovil};
-\node[stage, fill=green!6, draw=green!45!black, below=0.25cm of lbl2, xshift=-3.2cm] (quant)
-  {\textbf{Cuantizaci\'on Int8}\\[1pt]PTQ h\'ibrida};
-\node[stage, fill=green!6, draw=green!45!black, right=of quant] (app)
-  {\textbf{App DoctorMa\'iz}\\[1pt]React Native\\y Fast-TFLite};
-\node[stage, fill=green!6, draw=green!45!black, right=of app] (ood)
-  {\textbf{Captura y OOD}\\[1pt]Marco gu\'ia y\\distancia RMD};
-\node[stage, fill=green!6, draw=green!45!black, right=of ood] (off)
-  {\textbf{Inferencia local}\\[1pt]CPU, sin conexi\'on};
+% Fase 2: Despliegue móvil
+\node[phase, text=green!50!black] (lbl2) at (6.48, -2.40) {Fase de despliegue m\'ovil aut\'onomo};
+\node[mob] (quant) at (0,-3.80) {\textbf{Cuantizaci\'on Int8}\\[2pt]PTQ de 3.74~MB\\Calibraci\'on por capa};
+\node[mob] (app) at (4.32,-3.80) {\textbf{App DoctorMa\'iz}\\[2pt]React Native (Expo)\\Motor Fast-TFLite};
+\node[mob] (ood) at (8.64,-3.80) {\textbf{Captura y OOD}\\[2pt]Marco gu\'ia en c\'amara\\Distancia RMD y PCA};
+\node[mob] (off) at (12.96,-3.80) {\textbf{Inferencia local}\\[2pt]CPU m\'ovil aut\'onoma\\Diagn\'ostico \textit{offline}};
+
 \draw[arrow] (quant) -- (app);
 \draw[arrow] (app) -- (ood);
 \draw[arrow] (ood) -- (off);
 
-\node[stage, fill=orange!6, draw=orange!60!black, below=0.82cm of app] (api)
-  {\textbf{API DoctorMa\'iz}\\[1pt]FastAPI y MySQL\\Cuentas,\\correcciones y aportes};
-\draw[arrow, dashed, {Latex[length=2.6mm]}-{Latex[length=2.6mm]}] (app.south) -- node[right, font=\scriptsize\itshape, text=gray!60!black] {sincronizaci\'on opcional} (api.north);
+% Conexión Fase 1 -> Fase 2
+\draw[xarr] (lite0.south) -- ++(0,-0.75) -| node[pos=0.28, fill=white, inner sep=2.5pt, font=\fontsize{7.5}{8.5}\selectfont\itshape, text=gray!60!black] {entrega de modelo Int8 y estad\'isticas OOD} (quant.north);
 
-\draw[arrow, dashed] (lite0.south) |- ++(0,-0.42) -| (quant.north);
+% Fase 3: Sincronización en la nube
+\node[api] (api_node) at (4.32,-6.70) {\textbf{API DoctorMa\'iz}\\[2pt]FastAPI + MySQL 8.4\\Sincronizaci\'on diferida};
+\draw[biarr] (app.south) -- node[right=8pt, font=\fontsize{7.5}{8.5}\selectfont\itshape, text=gray!60!black] {sincronizaci\'on opcional} (api_node.north);
+
 \end{tikzpicture}
 \caption{Arquitectura general del sistema DoctorMa\'iz.}
 \label{fig:arquitectura_flujo}
 \end{figure}
 
 \subsection{Automatizaci\'on y Documentaci\'on del Proyecto}
-Conforme al lineamiento de trazabilidad, el proyecto mantiene un portal web de documentaci\'on t\'ecnica viva bajo control de versiones Git y organiza sus flujos automatizados en tres repositorios internos independientes (sin publicar enlaces a su c\'odigo fuente), cuyo ciclo integral se sintetiza en la Figura~\ref{fig:automatizacion_repos}:
+Conforme al lineamiento de trazabilidad, el proyecto mantiene un portal web de documentaci\'on t\'ecnica viva bajo control de versiones Git y organiza sus flujos automatizados en tres repositorios internos independientes, cuyo ciclo integral se sintetiza en la Figura~\ref{fig:automatizacion_repos}:
 \begin{itemize}\setlength{\itemsep}{2pt}
 \item \textbf{Repositorio del clasificador y documentaci\'on cient\'ifica:} automatiza la curaci\'on (pHash y doble SHA-256), el entrenamiento determinista con AdamW en Modal, la calibraci\'on OOD, la exportaci\'on PT2E Int8 con validaci\'on cruzada entre motores y el portal documental.
 \item \textbf{Repositorio de la aplicaci\'on m\'ovil:} integra los binarios versionados, ejecuta pruebas unitarias y verificaci\'on de paridad (143/143), compila el paquete ARM con Gradle/R8 y aloja el manual extendido.
@@ -391,41 +397,94 @@ Conforme al lineamiento de trazabilidad, el proyecto mantiene un portal web de d
 
 \begin{figure}[H]
 \centering
+\vspace*{0.4cm}
 \begin{tikzpicture}[
-    node distance=0.35cm and 0.42cm,
-    lane/.style={font=\scriptsize\bfseries, text width=1.95cm, align=right},
-    ml/.style={rectangle, rounded corners=3pt, draw=blue!55!black, fill=blue!6, line width=0.65pt, minimum height=0.92cm, text width=2.85cm, align=center, font=\tiny},
-    mob/.style={rectangle, rounded corners=3pt, draw=green!45!black, fill=green!6, line width=0.65pt, minimum height=0.92cm, text width=2.85cm, align=center, font=\tiny},
-    api/.style={rectangle, rounded corners=3pt, draw=orange!65!black, fill=orange!6, line width=0.65pt, minimum height=0.92cm, text width=2.85cm, align=center, font=\tiny},
-    arr/.style={-{Latex[length=2.1mm]}, line width=0.7pt, draw=gray!65!black}
+    boxbase/.style={
+        rectangle, rounded corners=4pt, line width=0.75pt,
+        minimum width=4.60cm, text width=4.35cm, minimum height=1.80cm,
+        align=center, font=\fontsize{8.5}{10.5}\selectfont, inner sep=4.5pt
+    },
+    ml/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    mob/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    api/.style={boxbase, draw=gray!60!black, fill=gray!8},
+    arr/.style={-{Latex[length=2.4mm, width=1.5mm]}, line width=0.75pt, draw=gray!65!black},
+    xarr/.style={-{Latex[length=2.4mm, width=1.5mm]}, line width=0.85pt, dashed, draw=gray!60!black},
+    lbl/.style={fill=white, inner sep=2.5pt, font=\fontsize{7.5}{8.5}\selectfont\itshape, text=gray!60!black, rotate=90}
 ]
-% Lane 1: ML
-\node[lane, text=blue!55!black] (lml) at (0,0) {Repo ML};
-\node[ml, right=0.3cm of lml] (m1) {\textbf{Curaci\'on y auditor\'ia}\\pHash + doble SHA-256\\y partici\'on estratificada};
-\node[ml, right=of m1] (m2) {\textbf{Entrenamiento Modal}\\AdamW + Aug. reforzado\\y manifiesto determinista};
-\node[ml, right=of m2] (m3) {\textbf{Exportaci\'on y OOD}\\PT2E Int8, PCA-RMD y\\paridad \textit{cross-runtime}};
-\node[ml, right=of m3] (m4) {\textbf{Artefactos y portal}\\Binario 3.74~MB + Base64\\y documentaci\'on Git};
 
-% Lane 2: App
-\node[lane, text=green!45!black, below=0.72cm of lml] (lmob) {Repo M\'ovil};
-\node[mob, right=0.3cm of lmob] (a1) {\textbf{Ingesta de binarios}\\Integraci\'on TFLite Int8\\y estad\'isticas OOD};
-\node[mob, right=of a1] (a2) {\textbf{Pruebas y paridad}\\Tests unitarios y 100\%\\paridad (143/143)};
-\node[mob, right=of a2] (a3) {\textbf{Compilaci\'on ARM}\\Gradle + R8 (32/64 bits)\\Expo / Nitro C++ / Skia};
-\node[mob, right=of a3] (a4) {\textbf{Distribuci\'on campo}\\Paquete \texttt{.apk} \textit{offline}\\y chequeo de versi\'on};
+% =========================================================================
+% ENCABEZADOS DE COLUMNA (Sin contenedores ni fondos externos)
+% =========================================================================
+\node[align=center] (hml) at (0, 0.50) {\textbf{\large Pipeline ML}\\[2pt]{\footnotesize\color{gray!60!black} Entrenamiento y modelo}};
+\node[align=center] (hmob) at (5.60, 0.50) {\textbf{\large DoctorMa\'iz}\\[2pt]{\footnotesize\color{gray!60!black} Aplicaci\'on m\'ovil}};
+\node[align=center] (hapi) at (11.20, 0.50) {\textbf{\large API}\\[2pt]{\footnotesize\color{gray!60!black} Servicio de sincronizaci\'on}};
 
-% Lane 3: API
-\node[lane, text=orange!65!black, below=0.72cm of lmob] (lapi) {Repo API};
-\node[api, right=0.3cm of lapi] (s1) {\textbf{Contenedores Docker}\\FastAPI + Alembic +\\MySQL 8.4 desplegados};
-\node[api, right=of s1] (s2) {\textbf{Validaci\'on y seguridad}\\JWT HS256, \texttt{bcrypt},\\l\'imite 30 req/min};
-\node[api, right=of s2] (s3) {\textbf{Recepci\'on idempotente}\\Aportes y correcciones\\sin duplicados por corte};
-\node[api, right=of s3] (s4) {\textbf{Banco fotogr\'afico}\\Evidencia local curada\\para reentrenamiento};
+% =========================================================================
+% PASOS: PIPELINE ML
+% =========================================================================
+\node[ml] (m1) at (0, -1.25)
+  {\textbf{Curaci\'on y auditor\'ia}\\[2.5pt]pHash y doble SHA-256\\Partici\'on estratificada 70/15/15};
 
-\draw[arr] (m1) -- (m2); \draw[arr] (m2) -- (m3); \draw[arr] (m3) -- (m4);
-\draw[arr] (a1) -- (a2); \draw[arr] (a2) -- (a3); \draw[arr] (a3) -- (a4);
-\draw[arr] (s1) -- (s2); \draw[arr] (s2) -- (s3); \draw[arr] (s3) -- (s4);
-\draw[arr, dashed] (m4.south) -- ++(0,-0.18) -| (a1.north);
-\draw[arr, dashed] (a4.south) -- ++(0,-0.18) -| (s1.north);
+\node[ml] (m2) at (0, -3.50)
+  {\textbf{Entrenamiento Modal}\\[2.5pt]AdamW con aumento reforzado\\Manifiesto determinista};
+
+\node[ml] (m3) at (0, -5.75)
+  {\textbf{Exportaci\'on y OOD}\\[2.5pt]PT2E Int8 y filtro PCA-RMD\\Paridad \textit{cross-runtime} (143/143)};
+
+\node[ml] (m4) at (0, -8.00)
+  {\textbf{Artefactos y portal}\\[2.5pt]Binario de 3.74~MB versionado\\Portal documental bajo Git};
+
+\draw[arr] (m1) -- (m2);
+\draw[arr] (m2) -- (m3);
+\draw[arr] (m3) -- (m4);
+
+% =========================================================================
+% PASOS: DOCTORMAÍZ (MÓVIL)
+% =========================================================================
+\node[mob] (a1) at (5.60, -1.25)
+  {\textbf{Ingesta de binarios}\\[2.5pt]Modelo TFLite Int8 cuantizado\\Vector de calibraci\'on OOD};
+
+\node[mob] (a2) at (5.60, -3.50)
+  {\textbf{Pruebas y paridad}\\[2.5pt]Tests unitarios automatizados\\Paridad de inferencia al 100\%};
+
+\node[mob] (a3) at (5.60, -5.75)
+  {\textbf{Compilaci\'on ARM}\\[2.5pt]Gradle y R8 (32 y 64 bits)\\Expo 57, Nitro C++ y Skia};
+
+\node[mob] (a4) at (5.60, -8.00)
+  {\textbf{Distribuci\'on en campo}\\[2.5pt]Paquete aut\'onomo \texttt{.apk}\\Verificaci\'on de versiones};
+
+\draw[arr] (a1) -- (a2);
+\draw[arr] (a2) -- (a3);
+\draw[arr] (a3) -- (a4);
+
+% =========================================================================
+% PASOS: API
+% =========================================================================
+\node[api] (s1) at (11.20, -1.25)
+  {\textbf{Contenedores Docker}\\[2.5pt]FastAPI as\'incrono y Alembic\\MySQL 8.4 en Docker Compose};
+
+\node[api] (s2) at (11.20, -3.50)
+  {\textbf{Validaci\'on y seguridad}\\[2.5pt]Autenticaci\'on JWT y \texttt{bcrypt}\\L\'imite de tasa 30 req/min};
+
+\node[api] (s3) at (11.20, -5.75)
+  {\textbf{Ingesta idempotente}\\[2.5pt]Aportes y correcciones\\Control de env\'ios sin duplicar};
+
+\node[api] (s4) at (11.20, -8.00)
+  {\textbf{Banco fotogr\'afico}\\[2.5pt]Evidencia local curada\\para reentrenamiento};
+
+\draw[arr] (s1) -- (s2);
+\draw[arr] (s2) -- (s3);
+\draw[arr] (s3) -- (s4);
+
+% =========================================================================
+% CONEXIONES ENTRE REPOSITORIOS (Líneas discontinuas con rótulos en cursiva y gris)
+% =========================================================================
+\draw[xarr] (m4.east) -- ++(0.50, 0) -- ++(0, 6.75) node[midway, lbl] {entrega de modelo} -- (a1.west);
+
+\draw[xarr] (a4.east) -- ++(0.50, 0) -- ++(0, 6.75) node[midway, lbl] {sincronizaci\'on diferida} -- (s1.west);
+
 \end{tikzpicture}
-\caption{Flujo automatizado de integraci\'on y entrega entre los tres repositorios del proyecto.}
+\vspace*{0.3cm}
+\caption{Flujo automatizado de integraci\'on.}
 \label{fig:automatizacion_repos}
 \end{figure}
